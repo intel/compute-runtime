@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -3940,7 +3941,7 @@ HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenInitializedThenSamplerStateI
     auto *samplerState = static_cast<SAMPLER_STATE *>(ptrOffset(ssHeapInfo->ssPtr, sizeof(RENDER_SURFACE_STATE) * NEO::BindlessImageSlot::sampler));
 
     EXPECT_NE(nullptr, bindlessHelper->borderColorStates.load());
-    EXPECT_EQ(bindlessHelper->getDefaultBorderColorOffset(), static_cast<uint32_t>(samplerState->getIndirectStatePointer()));
+    EXPECT_EQ(bindlessHelper->getDefaultBorderColorOffset(), NEO::EncodeStates<FamilyType>::getSamplerStateBorderColorOffset(samplerState));
 }
 
 HWTEST2_F(ImageCreate, GivenBindlessSampledImageViewAndBorderColorAllocationFailsWhenInitializedThenOutOfMemoryErrorIsReturnedAndLaterCallSucceeds, SupportsLegacyRenderSurfaceStateAndImageSupport) {

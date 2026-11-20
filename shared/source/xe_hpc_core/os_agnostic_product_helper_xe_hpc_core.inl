@@ -16,14 +16,7 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported() const {
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
-    using SAMPLER_STATE = typename XeHpcCoreFamily::SAMPLER_STATE;
-
-    auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
-    if (debugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
-        samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
-    }
-}
+void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {}
 
 template <>
 bool ProductHelperHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {

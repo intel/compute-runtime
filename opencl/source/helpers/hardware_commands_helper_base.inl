@@ -33,15 +33,16 @@ namespace NEO {
 
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(const Kernel &kernel) {
-    constexpr auto samplerStateSize = sizeof(typename GfxFamily::SAMPLER_STATE);
-    constexpr auto maxIndirectSamplerStateSize = alignUp(sizeof(typename GfxFamily::SAMPLER_BORDER_COLOR_STATE), MemoryConstants::cacheLineSize);
-    const auto numSamplers = kernel.getKernelInfo().kernelDescriptor.payloadMappings.samplerTable.numSamplers;
+    constexpr auto samplerStateSize = EncodeStates<GfxFamily>::getSamplerStateSize();
+    const auto &samplerTable = kernel.getKernelInfo().kernelDescriptor.payloadMappings.samplerTable;
+    const auto numSamplers = samplerTable.numSamplers;
 
     if (numSamplers == 0U) {
         return alignUp(additionalSizeRequiredDsh(), MemoryConstants::cacheLineSize);
     }
 
-    auto calculatedTotalSize = alignUp(maxIndirectSamplerStateSize + numSamplers * samplerStateSize + additionalSizeRequiredDsh(),
+    const auto borderColorSize = alignUp(static_cast<size_t>(samplerTable.tableOffset - samplerTable.borderColor), MemoryConstants::cacheLineSize);
+    auto calculatedTotalSize = alignUp(borderColorSize + numSamplers * samplerStateSize + additionalSizeRequiredDsh(),
                                        MemoryConstants::cacheLineSize);
     DEBUG_BREAK_IF(calculatedTotalSize > kernel.getDynamicStateHeapSize());
     return calculatedTotalSize;

@@ -74,11 +74,13 @@ void EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs(ImplicitArg
 }
 
 template <typename Family>
-void EncodeStates<Family>::adjustSamplerStateBorderColor(SAMPLER_STATE &samplerState, const SAMPLER_BORDER_COLOR_STATE &borderColorState) {
+void EncodeStates<Family>::adjustSamplerStateBorderColor(void *samplerState, const void *borderColorState) {
+    using SAMPLER_STATE = typename Family::SAMPLER_STATE;
     constexpr auto borderColorOffsetInSamplerState = 16u;
 
-    void *borderColorStateInSamplerState = reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(&samplerState) + borderColorOffsetInSamplerState);
-    memcpy_s(borderColorStateInSamplerState, sizeof(SAMPLER_BORDER_COLOR_STATE), &borderColorState, sizeof(SAMPLER_BORDER_COLOR_STATE));
+    constexpr auto borderColorSize = sizeof(SAMPLER_STATE) - borderColorOffsetInSamplerState;
+    void *borderColorStateInSamplerState = ptrOffset(samplerState, borderColorOffsetInSamplerState);
+    memcpy_s(borderColorStateInSamplerState, borderColorSize, borderColorState, borderColorSize);
 }
 
 } // namespace NEO

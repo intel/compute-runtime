@@ -2242,18 +2242,18 @@ typedef struct tagSAMPLER_STATE {
             uint32_t AllowLowQualityLodCalculation : BITFIELD_RANGE(24, 24);
             uint32_t Reserved_121 : BITFIELD_RANGE(25, 25);
             uint32_t LowQualityFilter : BITFIELD_RANGE(26, 26);
-            uint32_t AnisotropicQuality : BITFIELD_RANGE(27, 28);
+            uint32_t SampleDPerformance : BITFIELD_RANGE(27, 28);
             uint32_t Reserved_125 : BITFIELD_RANGE(29, 31);
             // DWORD 4
-            float Reserved_128;
+            uint32_t BorderColorRed;
             // DWORD 5
             uint32_t Reserved_160;
             // DWORD 6
-            float BorderColorBlue;
+            uint32_t BorderColorBlue;
             // DWORD 7
-            float BorderColorAlpha;
+            uint32_t BorderColorAlpha;
         } Common;
-        struct tagChromakeyEnableIsFalse {
+        struct tagChromaKeyEnableIsFALSE {
             // DWORD 0
             uint32_t Reserved_0;
             // DWORD 1
@@ -2263,15 +2263,15 @@ typedef struct tagSAMPLER_STATE {
             // DWORD 3
             uint32_t Reserved_96;
             // DWORD 4
-            float BorderColorRed;
+            uint32_t Reserved_128;
             // DWORD 5
-            float BorderColorGreen;
+            uint32_t BorderColorGreen;
             // DWORD 6
-            float Reserved_192;
+            uint32_t Reserved_192;
             // DWORD 7
-            float Reserved_224;
-        } ChromakeyEnableIsFalse;
-        struct tagChromakeyEnableIsTrue {
+            uint32_t Reserved_224;
+        } ChromaKeyEnableIsFALSE;
+        struct tagChromaKeyEnableIsTRUE {
             // DWORD 0
             uint32_t Reserved_0;
             // DWORD 1
@@ -2281,14 +2281,14 @@ typedef struct tagSAMPLER_STATE {
             // DWORD 3
             uint32_t Reserved_96;
             // DWORD 4
-            float Reserved_128;
+            uint32_t Reserved_128;
             // DWORD 5
             uint32_t ChromakeyHigh;
             // DWORD 6
-            float Reserved_192;
+            uint32_t Reserved_192;
             // DWORD 7
-            float Reserved_224;
-        } ChromakeyEnableIsTrue;
+            uint32_t Reserved_224;
+        } ChromaKeyEnableIsTRUE;
         uint32_t RawData[8];
     } TheStructure;
     typedef enum tagLOD_ALGORITHM {
@@ -2312,18 +2312,14 @@ typedef struct tagSAMPLER_STATE {
         MIP_MODE_FILTER_NEAREST = 0x1,
         MIP_MODE_FILTER_LINEAR = 0x3,
     } MIP_MODE_FILTER;
-    typedef enum tagLOW_QUALITY_CUBE_CORNER_MODE_ENABLE {
-        LOW_QUALITY_CUBE_CORNER_MODE_ENABLE_DISABLE = 0x0,
-        LOW_QUALITY_CUBE_CORNER_MODE_ENABLE_ENABLE = 0x1,
-    } LOW_QUALITY_CUBE_CORNER_MODE_ENABLE;
     typedef enum tagLOD_PRECLAMP_MODE {
         LOD_PRECLAMP_MODE_NONE = 0x0,
         LOD_PRECLAMP_MODE_OGL = 0x2,
         LOD_PRECLAMP_MODE_D3D = 0x3,
     } LOD_PRECLAMP_MODE;
     typedef enum tagYCRCB_BORDER_MODE {
-        YCRCB_BORDER_MODE_PASSTHROUGH = 0x0,
-        YCRCB_BORDER_MODE_TRANSFORM_BLACK = 0x1,
+        YCRCB_BORDER_MODE_TRANSFORM_BLACK = 0x0,
+        YCRCB_BORDER_MODE_PASSTHROUGH = 0x1,
     } YCRCB_BORDER_MODE;
     typedef enum tagCUBE_SURFACE_CONTROL_MODE {
         CUBE_SURFACE_CONTROL_MODE_PROGRAMMED = 0x0,
@@ -2351,6 +2347,10 @@ typedef struct tagSAMPLER_STATE {
         SRGB_DECODE_DECODE_EXT = 0x0,
         SRGB_DECODE_SKIP_DECODE_EXT = 0x1,
     } SRGB_DECODE;
+    typedef enum tagINDIRECTSTATEPOINTER {
+        INDIRECTSTATEPOINTER_BIT_SHIFT = 0x6,
+        INDIRECTSTATEPOINTER_ALIGN_SIZE = 0x40,
+    } INDIRECTSTATEPOINTER;
     typedef enum tagTEXTURE_COORDINATE_MODE {
         TEXTURE_COORDINATE_MODE_WRAP = 0x0,
         TEXTURE_COORDINATE_MODE_MIRROR = 0x1,
@@ -2359,6 +2359,7 @@ typedef struct tagSAMPLER_STATE {
         TEXTURE_COORDINATE_MODE_CLAMP_BORDER = 0x4,
         TEXTURE_COORDINATE_MODE_MIRROR_ONCE = 0x5,
         TEXTURE_COORDINATE_MODE_HALF_BORDER = 0x6,
+        TEXTURE_COORDINATE_MODE_RESERVED7 = 0x7,
     } TEXTURE_COORDINATE_MODE;
     typedef enum tagMIP_LINEAR_FILTER_QUALITY {
         MIP_LINEAR_FILTER_QUALITY_FULL = 0x0,
@@ -2382,38 +2383,14 @@ typedef struct tagSAMPLER_STATE {
         REDUCTION_TYPE_MINIMUM = 0x2,
         REDUCTION_TYPE_MAXIMUM = 0x3,
     } REDUCTION_TYPE;
-    typedef enum tagLOW_QUALITY_FILTER { // patched
-        LOW_QUALITY_FILTER_DISABLE = 0x0,
-        LOW_QUALITY_FILTER_ENABLE = 0x1,
-    } LOW_QUALITY_FILTER;
-    typedef enum tagANISOTROPIC_QUALITY {
-        ANISOTROPIC_QUALITY_FULL = 0x0,
-        ANISOTROPIC_QUALITY_HIGH = 0x1,
-        ANISOTROPIC_QUALITY_MEDIUM = 0x2,
-        ANISOTROPIC_QUALITY_LOW = 0x3,
-    } ANISOTROPIC_QUALITY;
+    typedef enum tagSAMPLE_D_PERFORMANCE {
+        SAMPLE_D_PERFORMANCE_DISABLE_SAMPLE_D_OPTIMIZATION = 0x0,
+        SAMPLE_D_PERFORMANCE_SAMPLE_D_IGNORE12B = 0x1,
+        SAMPLE_D_PERFORMANCE_SAMPLE_D_IGNORE16B = 0x2,
+        SAMPLE_D_PERFORMANCE_SAMPLE_D_IGNORE20B = 0x3,
+    } SAMPLE_D_PERFORMANCE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.LodAlgorithm = LOD_ALGORITHM_LEGACY;
-        TheStructure.Common.MinModeFilter = MIN_MODE_FILTER_NEAREST;
-        TheStructure.Common.MagModeFilter = MAG_MODE_FILTER_NEAREST;
-        TheStructure.Common.MipModeFilter = MIP_MODE_FILTER_NONE;
-        TheStructure.Common.LowQualityCubeCornerModeEnable = LOW_QUALITY_CUBE_CORNER_MODE_ENABLE_DISABLE;
-        TheStructure.Common.LodPreclampMode = LOD_PRECLAMP_MODE_NONE;
-        TheStructure.Common.YcrcbBorderMode = YCRCB_BORDER_MODE_PASSTHROUGH;
-        TheStructure.Common.CubeSurfaceControlMode = CUBE_SURFACE_CONTROL_MODE_PROGRAMMED;
-        TheStructure.Common.ShadowFunction = SHADOW_FUNCTION_PREFILTEROP_ALWAYS;
-        TheStructure.Common.ChromakeyMode = CHROMAKEY_MODE_KEYFILTER_KILL_ON_ANY_MATCH;
-        TheStructure.Common.LodClampMagnificationMode = LOD_CLAMP_MAGNIFICATION_MODE_MIPNONE;
-        TheStructure.Common.SrgbDecode = SRGB_DECODE_DECODE_EXT;
-        TheStructure.Common.MipLinearFilterQuality = MIP_LINEAR_FILTER_QUALITY_FULL;
-        TheStructure.Common.MaximumAnisotropy = MAXIMUM_ANISOTROPY_RATIO_21;
-        TheStructure.Common.ReductionType = REDUCTION_TYPE_STD_FILTER;
-        TheStructure.Common.AnisotropicQuality = ANISOTROPIC_QUALITY_FULL;
-        TheStructure.Common.BorderColorBlue = 0.0;
-        TheStructure.Common.BorderColorAlpha = 0.0;
-        TheStructure.ChromakeyEnableIsFalse.BorderColorRed = 0.0;
-        TheStructure.ChromakeyEnableIsFalse.BorderColorGreen = 0.0;
     }
     static tagSAMPLER_STATE sInit() {
         SAMPLER_STATE state;
@@ -2431,7 +2408,7 @@ typedef struct tagSAMPLER_STATE {
         return static_cast<LOD_ALGORITHM>(TheStructure.Common.LodAlgorithm);
     }
     inline void setTextureLodBias(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x1fff);
+        UNRECOVERABLE_IF(value > 0x1fffu);
         TheStructure.Common.TextureLodBias = value;
     }
     inline uint32_t getTextureLodBias() const {
@@ -2455,11 +2432,11 @@ typedef struct tagSAMPLER_STATE {
     inline MIP_MODE_FILTER getMipModeFilter() const {
         return static_cast<MIP_MODE_FILTER>(TheStructure.Common.MipModeFilter);
     }
-    inline void setLowQualityCubeCornerModeEnable(const LOW_QUALITY_CUBE_CORNER_MODE_ENABLE value) {
+    inline void setLowQualityCubeCornerModeEnable(const bool value) {
         TheStructure.Common.LowQualityCubeCornerModeEnable = value;
     }
-    inline LOW_QUALITY_CUBE_CORNER_MODE_ENABLE getLowQualityCubeCornerModeEnable() const {
-        return static_cast<LOW_QUALITY_CUBE_CORNER_MODE_ENABLE>(TheStructure.Common.LowQualityCubeCornerModeEnable);
+    inline bool getLowQualityCubeCornerModeEnable() const {
+        return TheStructure.Common.LowQualityCubeCornerModeEnable;
     }
     inline void setLodPreclampMode(const LOD_PRECLAMP_MODE value) {
         TheStructure.Common.LodPreclampMode = value;
@@ -2504,7 +2481,7 @@ typedef struct tagSAMPLER_STATE {
         return static_cast<CHROMAKEY_MODE>(TheStructure.Common.ChromakeyMode);
     }
     inline void setChromakeyIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3);
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.ChromakeyIndex = value;
     }
     inline uint32_t getChromakeyIndex() const {
@@ -2517,14 +2494,14 @@ typedef struct tagSAMPLER_STATE {
         return TheStructure.Common.ChromakeyEnable;
     }
     inline void setMaxLod(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xfff);
+        UNRECOVERABLE_IF(value > 0xfffu);
         TheStructure.Common.MaxLod = value;
     }
     inline uint32_t getMaxLod() const {
         return TheStructure.Common.MaxLod;
     }
     inline void setMinLod(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xfff);
+        UNRECOVERABLE_IF(value > 0xfffu);
         TheStructure.Common.MinLod = value;
     }
     inline uint32_t getMinLod() const {
@@ -2548,21 +2525,18 @@ typedef struct tagSAMPLER_STATE {
     inline bool getForceGather4Behavior() const {
         return TheStructure.Common.ForceGather4Behavior;
     }
-    typedef enum tagINDIRECTSTATEPOINTER {
-        INDIRECTSTATEPOINTER_BIT_SHIFT = 0x6,
-        INDIRECTSTATEPOINTER_ALIGN_SIZE = 0x40,
-    } INDIRECTSTATEPOINTER;
-    inline void setIndirectStatePointer(const uint32_t value) { // patched
-        UNRECOVERABLE_IF(value & 0x3f);
-        TheStructure.Common.IndirectStatePointer = static_cast<uint32_t>(value & 0xffffc0) >> INDIRECTSTATEPOINTER_BIT_SHIFT;
-        setExtendedIndirectStatePointer(static_cast<uint32_t>(value) >> 24);
+    inline void setIndirectStatePointer(const uint32_t value) {
+        TheStructure.Common.IndirectStatePointer = value >> INDIRECTSTATEPOINTER_BIT_SHIFT;
+    }
+    inline uint32_t getIndirectStatePointer() const {
+        return TheStructure.Common.IndirectStatePointer << INDIRECTSTATEPOINTER_BIT_SHIFT;
     }
     inline void setExtendedIndirectStatePointer(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xff);
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.ExtendedIndirectStatePointer = value;
     }
-    inline uint64_t getIndirectStatePointer() const { // patched
-        return (TheStructure.Common.ExtendedIndirectStatePointer << 24) | (TheStructure.Common.IndirectStatePointer << INDIRECTSTATEPOINTER_BIT_SHIFT);
+    inline uint32_t getExtendedIndirectStatePointer() const {
+        return TheStructure.Common.ExtendedIndirectStatePointer;
     }
     inline void setTczAddressControlMode(const TEXTURE_COORDINATE_MODE value) {
         TheStructure.Common.TczAddressControlMode = value;
@@ -2660,41 +2634,41 @@ typedef struct tagSAMPLER_STATE {
     inline bool getLowQualityFilter() const {
         return TheStructure.Common.LowQualityFilter;
     }
-    inline void setAnisotropicQuality(const ANISOTROPIC_QUALITY value) {
-        TheStructure.Common.AnisotropicQuality = value;
+    inline void setSampleDPerformance(const SAMPLE_D_PERFORMANCE value) {
+        TheStructure.Common.SampleDPerformance = value;
     }
-    inline ANISOTROPIC_QUALITY getAnisotropicQuality() const {
-        return static_cast<ANISOTROPIC_QUALITY>(TheStructure.Common.AnisotropicQuality);
+    inline SAMPLE_D_PERFORMANCE getSampleDPerformance() const {
+        return static_cast<SAMPLE_D_PERFORMANCE>(TheStructure.Common.SampleDPerformance);
     }
-    inline void setBorderColorBlue(const float value) {
-        TheStructure.Common.BorderColorBlue = value;
+    inline void setBorderColorRed(const uint32_t value) {
+        TheStructure.Common.BorderColorRed = value;
     }
-    inline float getBorderColorBlue() const {
-        return TheStructure.Common.BorderColorBlue;
+    inline uint32_t getBorderColorRed() const {
+        return TheStructure.Common.BorderColorRed;
     }
-    inline void setBorderColorAlpha(const float value) {
-        TheStructure.Common.BorderColorAlpha = value;
+    inline void setBorderColorGreen(const uint32_t value) {
+        TheStructure.ChromaKeyEnableIsFALSE.BorderColorGreen = value;
     }
-    inline float getBorderColorAlpha() const {
-        return TheStructure.Common.BorderColorAlpha;
-    }
-    inline void setBorderColorRed(const float value) {
-        TheStructure.ChromakeyEnableIsFalse.BorderColorRed = value;
-    }
-    inline float getBorderColorRed() const {
-        return TheStructure.ChromakeyEnableIsFalse.BorderColorRed;
-    }
-    inline void setBorderColorGreen(const float value) {
-        TheStructure.ChromakeyEnableIsFalse.BorderColorGreen = value;
-    }
-    inline float getBorderColorGreen() const {
-        return TheStructure.ChromakeyEnableIsFalse.BorderColorGreen;
+    inline uint32_t getBorderColorGreen() const {
+        return TheStructure.ChromaKeyEnableIsFALSE.BorderColorGreen;
     }
     inline void setChromakeyHigh(const uint32_t value) {
-        TheStructure.ChromakeyEnableIsTrue.ChromakeyHigh = value;
+        TheStructure.ChromaKeyEnableIsTRUE.ChromakeyHigh = value;
     }
     inline uint32_t getChromakeyHigh() const {
-        return TheStructure.ChromakeyEnableIsTrue.ChromakeyHigh;
+        return TheStructure.ChromaKeyEnableIsTRUE.ChromakeyHigh;
+    }
+    inline void setBorderColorBlue(const uint32_t value) {
+        TheStructure.Common.BorderColorBlue = value;
+    }
+    inline uint32_t getBorderColorBlue() const {
+        return TheStructure.Common.BorderColorBlue;
+    }
+    inline void setBorderColorAlpha(const uint32_t value) {
+        TheStructure.Common.BorderColorAlpha = value;
+    }
+    inline uint32_t getBorderColorAlpha() const {
+        return TheStructure.Common.BorderColorAlpha;
     }
 } SAMPLER_STATE;
 STATIC_ASSERT(32 == sizeof(SAMPLER_STATE));
@@ -4429,15 +4403,15 @@ typedef struct tag_3DSTATE_BTD {
             uint32_t Reserved_53 : BITFIELD_RANGE(21, 29);
             uint32_t RtMemStructures64BModeEnable : BITFIELD_RANGE(30, 30);
             uint32_t BtdMidThreadPreemption : BITFIELD_RANGE(31, 31);
-            // DWORD 2
+            // DWORD 2-3
             uint64_t PerDssMemoryBackedBufferSize : BITFIELD_RANGE(0, 2);
             uint64_t Reserved_67 : BITFIELD_RANGE(3, 9);
             uint64_t MemoryBackedBufferBasePointer : BITFIELD_RANGE(10, 63);
             // DWORD 4
-            uint64_t Reserved_128 : BITFIELD_RANGE(0, 9);
-            uint64_t ScratchSpaceBuffer : BITFIELD_RANGE(10, 31);
+            uint32_t Reserved_128 : BITFIELD_RANGE(0, 9);
+            uint32_t ScratchSpaceBuffer : BITFIELD_RANGE(10, 31);
             // DWORD 5
-            uint64_t Reserved_160 : BITFIELD_RANGE(32, 63);
+            uint32_t Reserved_160;
         } Common;
         uint32_t RawData[6];
     } TheStructure;
@@ -4476,7 +4450,7 @@ typedef struct tag_3DSTATE_BTD {
         CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS_512 = 0x2,
         CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS_1024 = 0x3,
     } CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS;
-    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY { // patched
+    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY {
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_1 = 0x0,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_2 = 0x1,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_4 = 0x2,
@@ -4486,7 +4460,7 @@ typedef struct tag_3DSTATE_BTD {
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_64 = 0x6,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_128 = 0x7,
     } DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY;
-    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD { // patched
+    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD {
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_1 = 0x0,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_2 = 0x1,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_4 = 0x2,
@@ -4496,7 +4470,7 @@ typedef struct tag_3DSTATE_BTD {
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_64 = 0x6,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_128 = 0x7,
     } DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD;
-    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR { // patched
+    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR {
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_1 = 0x0,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_2 = 0x1,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_4 = 0x2,
@@ -4506,7 +4480,7 @@ typedef struct tag_3DSTATE_BTD {
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_64 = 0x6,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_128 = 0x7,
     } DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR;
-    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP { // patched
+    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP {
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_128 = 0x0,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_256 = 0x1,
         DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_384 = 0x2,
@@ -4525,20 +4499,24 @@ typedef struct tag_3DSTATE_BTD {
         PER_DSS_MEMORY_BACKED_BUFFER_SIZE_64KB = 0x5,
         PER_DSS_MEMORY_BACKED_BUFFER_SIZE_128KB = 0x6,
     } PER_DSS_MEMORY_BACKED_BUFFER_SIZE;
+    typedef enum tagMEMORYBACKEDBUFFERBASEPOINTER {
+        MEMORYBACKEDBUFFERBASEPOINTER_BIT_SHIFT = 0xa,
+        MEMORYBACKEDBUFFERBASEPOINTER_ALIGN_SIZE = 0x400,
+    } MEMORYBACKEDBUFFERBASEPOINTER;
+    typedef enum tagSCRATCHSPACEBUFFER {
+        SCRATCHSPACEBUFFER_BIT_SHIFT = 0x6,
+        SCRATCHSPACEBUFFER_ALIGN_SIZE = 0x40,
+    } SCRATCHSPACEBUFFER;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.DispatchTimeoutCounter = DISPATCH_TIMEOUT_COUNTER_64;
-        TheStructure.Common.MaximumBtdLaneOccupancy = MAXIMUM_BTD_LANE_OCCUPANCY_MAX_OCCUPANCY_32;
-        TheStructure.Common.ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs = CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS_128;
-        TheStructure.Common.DynamicStackManagementMechanismMissPenalty = DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_16;     // patched
-        TheStructure.Common.DynamicStackManagementMechanismHitReward = DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_1;          // patched
-        TheStructure.Common.DynamicStackManagementMechanismScalingFactor = DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_16; // patched
-        TheStructure.Common.DynamicStackManagementMechanismReductionCap = DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_256;  // patched
+        TheStructure.Common.DynamicStackManagementMechanismMissPenalty = DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_16;
+        TheStructure.Common.DynamicStackManagementMechanismScalingFactor = DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_16;
+        TheStructure.Common.DynamicStackManagementMechanismReductionCap = DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_256;
+        TheStructure.Common.RtMemStructures64BModeEnable = true;
         TheStructure.Common.PerDssMemoryBackedBufferSize = PER_DSS_MEMORY_BACKED_BUFFER_SIZE_128KB;
     }
     static tag_3DSTATE_BTD sInit() {
@@ -4549,6 +4527,30 @@ typedef struct tag_3DSTATE_BTD {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 6);
         return TheStructure.RawData[index];
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setDispatchTimeoutCounter(const DISPATCH_TIMEOUT_COUNTER value) {
         TheStructure.Common.DispatchTimeoutCounter = value;
@@ -4568,28 +4570,28 @@ typedef struct tag_3DSTATE_BTD {
     inline CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS getControlsTheMaximumNumberOfOutstandingRayqueriesPerSs() const {
         return static_cast<CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS>(TheStructure.Common.ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs);
     }
-    inline void setDynamicStackManagementMechanismMissPenalty(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY value) { // patched
+    inline void setDynamicStackManagementMechanismMissPenalty(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY value) {
         TheStructure.Common.DynamicStackManagementMechanismMissPenalty = value;
     }
-    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY getDynamicStackManagementMechanismMissPenalty() const { // patched
+    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY getDynamicStackManagementMechanismMissPenalty() const {
         return static_cast<DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY>(TheStructure.Common.DynamicStackManagementMechanismMissPenalty);
     }
-    inline void setDynamicStackManagementMechanismHitReward(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD value) { // patched
+    inline void setDynamicStackManagementMechanismHitReward(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD value) {
         TheStructure.Common.DynamicStackManagementMechanismHitReward = value;
     }
-    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD getDynamicStackManagementMechanismHitReward() const { // patched
+    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD getDynamicStackManagementMechanismHitReward() const {
         return static_cast<DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD>(TheStructure.Common.DynamicStackManagementMechanismHitReward);
     }
-    inline void setDynamicStackManagementMechanismScalingFactor(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR value) { // patched
+    inline void setDynamicStackManagementMechanismScalingFactor(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR value) {
         TheStructure.Common.DynamicStackManagementMechanismScalingFactor = value;
     }
-    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR getDynamicStackManagementMechanismScalingFactor() const { // patched
+    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR getDynamicStackManagementMechanismScalingFactor() const {
         return static_cast<DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR>(TheStructure.Common.DynamicStackManagementMechanismScalingFactor);
     }
-    inline void setDynamicStackManagementMechanismReductionCap(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP value) { // patched
+    inline void setDynamicStackManagementMechanismReductionCap(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP value) {
         TheStructure.Common.DynamicStackManagementMechanismReductionCap = value;
     }
-    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP getDynamicStackManagementMechanismReductionCap() const { // patched
+    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP getDynamicStackManagementMechanismReductionCap() const {
         return static_cast<DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP>(TheStructure.Common.DynamicStackManagementMechanismReductionCap);
     }
     inline void setRtMemStructures64BModeEnable(const bool value) {
@@ -4610,25 +4612,17 @@ typedef struct tag_3DSTATE_BTD {
     inline PER_DSS_MEMORY_BACKED_BUFFER_SIZE getPerDssMemoryBackedBufferSize() const {
         return static_cast<PER_DSS_MEMORY_BACKED_BUFFER_SIZE>(TheStructure.Common.PerDssMemoryBackedBufferSize);
     }
-    typedef enum tagMEMORYBACKEDBUFFERBASEPOINTER {
-        MEMORYBACKEDBUFFERBASEPOINTER_BIT_SHIFT = 0xa,
-        MEMORYBACKEDBUFFERBASEPOINTER_ALIGN_SIZE = 0x400,
-    } MEMORYBACKEDBUFFERBASEPOINTER;
     inline void setMemoryBackedBufferBasePointer(const uint64_t value) {
         TheStructure.Common.MemoryBackedBufferBasePointer = value >> MEMORYBACKEDBUFFERBASEPOINTER_BIT_SHIFT;
     }
     inline uint64_t getMemoryBackedBufferBasePointer() const {
         return TheStructure.Common.MemoryBackedBufferBasePointer << MEMORYBACKEDBUFFERBASEPOINTER_BIT_SHIFT;
     }
-    typedef enum tagSCRATCHSPACEBUFFER {
-        SCRATCHSPACEBUFFER_BIT_SHIFT = 0x6,
-        SCRATCHSPACEBUFFER_ALIGN_SIZE = 0x40,
-    } SCRATCHSPACEBUFFER;
-    inline void setScratchSpaceBuffer(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xfffffff);
-        TheStructure.Common.ScratchSpaceBuffer = static_cast<uint32_t>(value) >> SCRATCHSPACEBUFFER_BIT_SHIFT;
+    inline void setScratchSpaceBuffer(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffffu);
+        TheStructure.Common.ScratchSpaceBuffer = value >> SCRATCHSPACEBUFFER_BIT_SHIFT;
     }
-    inline uint64_t getScratchSpaceBuffer() const {
+    inline uint32_t getScratchSpaceBuffer() const {
         return TheStructure.Common.ScratchSpaceBuffer << SCRATCHSPACEBUFFER_BIT_SHIFT;
     }
 } _3DSTATE_BTD;
@@ -7673,22 +7667,18 @@ typedef struct tagSAMPLER_BORDER_COLOR_STATE {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
-            float BorderColorRed;
+            uint32_t BorderColorRed;
             // DWORD 1
-            float BorderColorGreen;
+            uint32_t BorderColorGreen;
             // DWORD 2
-            float BorderColorBlue;
+            uint32_t BorderColorBlue;
             // DWORD 3
-            float BorderColorAlpha;
+            uint32_t BorderColorAlpha;
         } Common;
         uint32_t RawData[4];
     } TheStructure;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.BorderColorRed = 0.0;
-        TheStructure.Common.BorderColorGreen = 0.0;
-        TheStructure.Common.BorderColorBlue = 0.0;
-        TheStructure.Common.BorderColorAlpha = 0.0;
     }
     static tagSAMPLER_BORDER_COLOR_STATE sInit() {
         SAMPLER_BORDER_COLOR_STATE state;
@@ -7699,28 +7689,28 @@ typedef struct tagSAMPLER_BORDER_COLOR_STATE {
         UNRECOVERABLE_IF(index >= 4);
         return TheStructure.RawData[index];
     }
-    inline void setBorderColorRed(const float value) {
+    inline void setBorderColorRed(const uint32_t value) {
         TheStructure.Common.BorderColorRed = value;
     }
-    inline float getBorderColorRed() const {
+    inline uint32_t getBorderColorRed() const {
         return TheStructure.Common.BorderColorRed;
     }
-    inline void setBorderColorGreen(const float value) {
+    inline void setBorderColorGreen(const uint32_t value) {
         TheStructure.Common.BorderColorGreen = value;
     }
-    inline float getBorderColorGreen() const {
+    inline uint32_t getBorderColorGreen() const {
         return TheStructure.Common.BorderColorGreen;
     }
-    inline void setBorderColorBlue(const float value) {
+    inline void setBorderColorBlue(const uint32_t value) {
         TheStructure.Common.BorderColorBlue = value;
     }
-    inline float getBorderColorBlue() const {
+    inline uint32_t getBorderColorBlue() const {
         return TheStructure.Common.BorderColorBlue;
     }
-    inline void setBorderColorAlpha(const float value) {
+    inline void setBorderColorAlpha(const uint32_t value) {
         TheStructure.Common.BorderColorAlpha = value;
     }
-    inline float getBorderColorAlpha() const {
+    inline uint32_t getBorderColorAlpha() const {
         return TheStructure.Common.BorderColorAlpha;
     }
 } SAMPLER_BORDER_COLOR_STATE;

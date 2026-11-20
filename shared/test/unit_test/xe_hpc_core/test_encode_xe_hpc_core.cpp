@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -531,4 +532,53 @@ XE_HPC_CORETEST_F(XeHpcSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProg
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+}
+
+using XeHpcCoreSamplerStateTest = ::testing::Test;
+
+XE_HPC_CORETEST_F(XeHpcCoreSamplerStateTest, whenCopySamplerStateIsCalledThenNothingIsCopiedAndZeroOffsetIsReturned) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    uint8_t dynamicStateHeap[64] = {};
+
+    EXPECT_EQ(0u, EncodeStates<FamilyType>::copySamplerState(nullptr, 32u, 1u, 0u, dynamicStateHeap, nullptr, rootDeviceEnvironment));
+}
+
+XE_HPC_CORETEST_F(XeHpcCoreSamplerStateTest, whenSettingSamplerStateBorderColorOffsetThenMemoryIsNotChangedAndGetterReturnsZero) {
+    uint8_t samplerState[64];
+    memset(samplerState, 0xab, sizeof(samplerState));
+    uint8_t expectedSamplerState[64];
+    memcpy(expectedSamplerState, samplerState, sizeof(samplerState));
+
+    EncodeStates<FamilyType>::setSamplerStateBorderColorOffset(samplerState, 0x12345640u);
+
+    EXPECT_EQ(0, memcmp(expectedSamplerState, samplerState, sizeof(samplerState)));
+    EXPECT_EQ(0u, EncodeStates<FamilyType>::getSamplerStateBorderColorOffset(samplerState));
+}
+
+XE_HPC_CORETEST_F(XeHpcCoreSamplerStateTest, whenGettingBindlessBorderColorOffsetThenZeroIsReturned) {
+    float borderColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+    EXPECT_EQ(0u, EncodeStates<FamilyType>::getBindlessBorderColorOffset(borderColor, 0x40u, 0x80u));
+}
+
+XE_HPC_CORETEST_F(XeHpcCoreSamplerStateTest, whenGettingSamplerStateSizeThenZeroIsReturned) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    EXPECT_EQ(0u, rootDeviceEnvironment.getHelper<GfxCoreHelper>().getSamplerStateSize());
+}
+
+XE_HPC_CORETEST_F(XeHpcCoreSamplerStateTest, givenForceSamplerLowFilteringPrecisionWhenAdjustSamplerStateIsCalledThenMemoryIsNotChanged) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    uint32_t sampler[4] = {};
+
+    rootDeviceEnvironment.getHelper<ProductHelper>().adjustSamplerState(sampler, *rootDeviceEnvironment.getHardwareInfo());
+
+    for (auto dword : sampler) {
+        EXPECT_EQ(0u, dword);
+    }
 }

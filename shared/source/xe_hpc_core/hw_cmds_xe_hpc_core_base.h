@@ -108,7 +108,6 @@ struct XeHpcCoreFamily : public XeHpcCore {
     static const PIPELINE_SELECT cmdInitPipelineSelect;
     static const MI_ARB_CHECK cmdInitArbCheck;
     static const STATE_BASE_ADDRESS cmdInitStateBaseAddress;
-    static const SAMPLER_STATE cmdInitSamplerState;
     static const BINDING_TABLE_STATE cmdInitBindingTableState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
     static const MI_CONDITIONAL_BATCH_BUFFER_END cmdInitConditionalBatchBufferEnd;

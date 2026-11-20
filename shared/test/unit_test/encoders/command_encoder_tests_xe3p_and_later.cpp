@@ -30,6 +30,8 @@
 
 #include "implicit_args.h"
 
+#include <bit>
+
 using namespace NEO;
 
 using CommandEncodeStatesTestXe3pAndLater = Test<CommandEncodeStatesFixture>;
@@ -334,7 +336,9 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagWhenProgrammingStat
     }
 }
 
-HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, whenAdjustSamplerStateBorderColorIsCalledThenBorderColorInSamplerStateIsCorrect, IsAtLeastXe3pCore) {
+using IsAtLeastXe3pCoreWithSamplerBorderColorState = MatchAll<IsAtLeastXe3pCore, HasSamplerBorderColorState>;
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, whenAdjustSamplerStateBorderColorIsCalledThenBorderColorInSamplerStateIsCorrect, IsAtLeastXe3pCoreWithSamplerBorderColorState) {
 
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
@@ -342,33 +346,33 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, whenAdjustSamplerStateBorderColor
     {
         SAMPLER_STATE samplerState{};
         SAMPLER_BORDER_COLOR_STATE borderColorState{};
-        borderColorState.setBorderColorRed(0.0f);
-        borderColorState.setBorderColorGreen(0.0f);
-        borderColorState.setBorderColorBlue(0.0f);
-        borderColorState.setBorderColorAlpha(1.0f);
+        borderColorState.setBorderColorRed(std::bit_cast<decltype(borderColorState.getBorderColorRed())>(0.0f));
+        borderColorState.setBorderColorGreen(std::bit_cast<decltype(borderColorState.getBorderColorGreen())>(0.0f));
+        borderColorState.setBorderColorBlue(std::bit_cast<decltype(borderColorState.getBorderColorBlue())>(0.0f));
+        borderColorState.setBorderColorAlpha(std::bit_cast<decltype(borderColorState.getBorderColorAlpha())>(1.0f));
 
-        EncodeStates<FamilyType>::adjustSamplerStateBorderColor(samplerState, borderColorState);
+        EncodeStates<FamilyType>::adjustSamplerStateBorderColor(&samplerState, &borderColorState);
 
-        EXPECT_EQ(0.0f, samplerState.getBorderColorRed());
-        EXPECT_EQ(0.0f, samplerState.getBorderColorGreen());
-        EXPECT_EQ(0.0f, samplerState.getBorderColorBlue());
-        EXPECT_EQ(1.0f, samplerState.getBorderColorAlpha());
+        EXPECT_EQ(0.0f, std::bit_cast<float>(samplerState.getBorderColorRed()));
+        EXPECT_EQ(0.0f, std::bit_cast<float>(samplerState.getBorderColorGreen()));
+        EXPECT_EQ(0.0f, std::bit_cast<float>(samplerState.getBorderColorBlue()));
+        EXPECT_EQ(1.0f, std::bit_cast<float>(samplerState.getBorderColorAlpha()));
     }
 
     {
         SAMPLER_STATE samplerState{};
         SAMPLER_BORDER_COLOR_STATE borderColorState{};
-        borderColorState.setBorderColorRed(0.0f);
-        borderColorState.setBorderColorGreen(0.0f);
-        borderColorState.setBorderColorBlue(0.0f);
-        borderColorState.setBorderColorAlpha(0.0f);
+        borderColorState.setBorderColorRed(std::bit_cast<decltype(borderColorState.getBorderColorRed())>(0.0f));
+        borderColorState.setBorderColorGreen(std::bit_cast<decltype(borderColorState.getBorderColorGreen())>(0.0f));
+        borderColorState.setBorderColorBlue(std::bit_cast<decltype(borderColorState.getBorderColorBlue())>(0.0f));
+        borderColorState.setBorderColorAlpha(std::bit_cast<decltype(borderColorState.getBorderColorAlpha())>(0.0f));
 
-        EncodeStates<FamilyType>::adjustSamplerStateBorderColor(samplerState, borderColorState);
+        EncodeStates<FamilyType>::adjustSamplerStateBorderColor(&samplerState, &borderColorState);
 
-        EXPECT_EQ(0.0f, samplerState.getBorderColorRed());
-        EXPECT_EQ(0.0f, samplerState.getBorderColorGreen());
-        EXPECT_EQ(0.0f, samplerState.getBorderColorBlue());
-        EXPECT_EQ(0.0f, samplerState.getBorderColorAlpha());
+        EXPECT_EQ(0.0f, std::bit_cast<float>(samplerState.getBorderColorRed()));
+        EXPECT_EQ(0.0f, std::bit_cast<float>(samplerState.getBorderColorGreen()));
+        EXPECT_EQ(0.0f, std::bit_cast<float>(samplerState.getBorderColorBlue()));
+        EXPECT_EQ(0.0f, std::bit_cast<float>(samplerState.getBorderColorAlpha()));
     }
 }
 

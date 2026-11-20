@@ -1526,7 +1526,7 @@ HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest, given
     testAppendResetEvent<FamilyType::gfxCoreFamily>(0);
 }
 
-using RayTracingMatcher = IsAtLeastXeCore;
+using RayTracingMatcher = MatchAll<IsAtLeastXeCore, Has3dStateBtd>;
 
 using CommandListAppendLaunchRayTracingKernelTest = Test<CommandListAppendLaunchRayTracingKernelFixture>;
 

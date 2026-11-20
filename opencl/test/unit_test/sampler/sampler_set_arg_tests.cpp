@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/utilities/numeric.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -94,7 +95,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
 };
 
 typedef Test<SamplerSetArgFixture> SamplerSetArgTest;
-HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorrect) {
+HWTEST2_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorrect, HasSamplerState) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto sampler = createSampler();
 
@@ -124,7 +125,7 @@ HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorre
     EXPECT_EQ(0u, surfaces.size());
 }
 
-HWTEST_F(SamplerSetArgTest, givenSamplerStateMemoryWithStaleContentWhenSettingSamplerArgThenSamplerStateIsTheSameAsForZeroedMemoryAndIndirectStatePointerIsKept) {
+HWTEST2_F(SamplerSetArgTest, givenSamplerStateMemoryWithStaleContentWhenSettingSamplerArgThenSamplerStateIsTheSameAsForZeroedMemoryAndIndirectStatePointerIsKept, HasSamplerIndirectStatePointer) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     constexpr uint32_t indirectStatePointer = 0x1c0;
     auto sampler = createSampler();
@@ -132,14 +133,14 @@ HWTEST_F(SamplerSetArgTest, givenSamplerStateMemoryWithStaleContentWhenSettingSa
     SAMPLER_STATE zeroedSamplerState{};
     SAMPLER_STATE staleSamplerState;
     memset(&staleSamplerState, 0xFF, sizeof(staleSamplerState));
-    zeroedSamplerState.setIndirectStatePointer(indirectStatePointer);
-    staleSamplerState.setIndirectStatePointer(indirectStatePointer);
+    EncodeStates<FamilyType>::setSamplerStateBorderColorOffset(&zeroedSamplerState, indirectStatePointer);
+    EncodeStates<FamilyType>::setSamplerStateBorderColorOffset(&staleSamplerState, indirectStatePointer);
 
     sampler->setArg(&zeroedSamplerState, pClDevice->getRootDeviceEnvironment());
     sampler->setArg(&staleSamplerState, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(0, memcmp(&zeroedSamplerState, &staleSamplerState, sizeof(SAMPLER_STATE)));
-    EXPECT_EQ(indirectStatePointer, staleSamplerState.getIndirectStatePointer());
+    EXPECT_EQ(indirectStatePointer, EncodeStates<FamilyType>::getSamplerStateBorderColorOffset(&staleSamplerState));
 }
 
 HWTEST_F(SamplerSetArgTest, WhenGettingKernelArgThenSamplerIsReturned) {
@@ -406,7 +407,7 @@ TEST_F(SamplerSetArgTest, givenSamplerTypeStrAndAndIsSamplerFalseWhenInitializeK
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
+HWTEST2_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect, HasSamplerState) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     for (cl_bool normalizedCoordinates : {CL_FALSE, CL_TRUE}) {
         auto sampler = clUniquePtr(Sampler::create(
@@ -439,7 +440,7 @@ HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
+HWTEST2_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenModesAreCorrect, HasSamplerState) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     for (cl_addressing_mode addressingMode : {CL_ADDRESS_NONE, CL_ADDRESS_CLAMP_TO_EDGE, CL_ADDRESS_CLAMP, CL_ADDRESS_REPEAT, CL_ADDRESS_MIRRORED_REPEAT}) {
         auto sampler = clUniquePtr(Sampler::create(
@@ -504,7 +505,7 @@ HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
     }
 }
 
-HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCorrect) {
+HWTEST2_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCorrect, HasSamplerState) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
 
     FixedU4D8 minLod = 2.0f;
@@ -539,7 +540,7 @@ HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCor
 ////////////////////////////////////////////////////////////////////////////////
 using SamplerFilterModeTest = Test<ClDeviceFixture>;
 
-HWTEST_F(SamplerFilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
+HWTEST2_F(SamplerFilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect, HasSamplerState) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     MockContext context(pClDevice);
     cl_int retVal = CL_INVALID_VALUE;

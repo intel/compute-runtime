@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
+#include "shared/source/command_container/command_encoder_3dstate_btd_xe3_and_later.inl"
 #include "shared/source/command_container/command_encoder_from_xe3_and_later.inl"
 #include "shared/source/command_container/command_encoder_from_xe3p_and_later.inl"
 #include "shared/source/command_container/command_encoder_heapless_addressing.inl"

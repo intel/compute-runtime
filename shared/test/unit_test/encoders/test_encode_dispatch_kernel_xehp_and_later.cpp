@@ -356,7 +356,6 @@ struct SamplerSupportedMatcher {
 HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensamplerStateWasCopied, SamplerSupportedMatcher) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
 
     if (!pDevice->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
@@ -397,11 +396,10 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
     auto &idd = cmd->getInterfaceDescriptor();
 
     if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(dispatchInterface->getDynamicStateHeapData(), samplerTableBorderColorOffset));
-        EncodeStates<FamilyType>::adjustSamplerStateBorderColor(samplerState, *borderColor);
+        auto borderColor = ptrOffset(dispatchInterface->getDynamicStateHeapData(), samplerTableBorderColorOffset);
+        EncodeStates<FamilyType>::adjustSamplerStateBorderColor(&samplerState, borderColor);
     } else {
-        auto borderColorOffsetInDsh = usedBefore;
-        samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+        EncodeStates<FamilyType>::setSamplerStateBorderColorOffset(&samplerState, static_cast<uint32_t>(usedBefore));
     }
 
     if constexpr (requires { idd.getSamplerStatePointer(); }) {
@@ -486,14 +484,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatc
 HWTEST2_F(CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatchingKernelThenCorrectValuesAreSetUp, CommandEncodeStatesTestBindingTableStateMatcher) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
     DebugManagerStateRestore restorer;
     uint32_t dims[] = {2, 1, 1};
     uint32_t numBindingTable = 1;
     uint32_t numSamplers = 1;
-    SAMPLER_STATE samplerState{};
+    alignas(MemoryConstants::cacheLineSize) uint8_t dynamicStateHeapData[MemoryConstants::cacheLineSize] = {};
     BINDING_TABLE_STATE bindingTable{};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -502,8 +499,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatc
     dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
     dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0;
     dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
-    unsigned char *samplerStateRaw = reinterpret_cast<unsigned char *>(&samplerState);
-    dispatchInterface->getDynamicStateHeapDataResult = samplerStateRaw;
+    dispatchInterface->getDynamicStateHeapDataResult = dynamicStateHeapData;
     unsigned char *bindingTableRaw = reinterpret_cast<unsigned char *>(&bindingTable);
     dispatchInterface->getSurfaceStateHeapDataResult = bindingTableRaw;
 

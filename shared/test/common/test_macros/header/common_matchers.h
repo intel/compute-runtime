@@ -145,6 +145,12 @@ struct MatchAny {
     static constexpr bool isMatched() { return true; }
 };
 
+template <typename... Matchers>
+struct MatchAll {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() { return (... && Matchers::template isMatched<productFamily>()); }
+};
+
 struct SupportsSampler {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
@@ -175,6 +181,42 @@ struct SupportsLegacyRenderSurfaceState {
         [[maybe_unused]] const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
         return supportsLegacyRenderSurfaceState<FamilyType>();
+    }
+};
+
+struct HasSamplerState {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        [[maybe_unused]] const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        return requires { typename FamilyType::SAMPLER_STATE; };
+    }
+};
+
+struct HasSamplerBorderColorState {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        [[maybe_unused]] const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        return requires { typename FamilyType::SAMPLER_BORDER_COLOR_STATE; };
+    }
+};
+
+struct HasSamplerIndirectStatePointer {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        [[maybe_unused]] const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        return requires { &FamilyType::SAMPLER_STATE::getIndirectStatePointer; };
+    }
+};
+
+struct Has3dStateBtd {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        [[maybe_unused]] const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        return requires { typename FamilyType::_3DSTATE_BTD; };
     }
 };
 
@@ -209,6 +251,8 @@ struct SupportsLegacyRenderSurfaceStateAnd {
 
 using SupportsLegacyRenderSurfaceStateAndAtLeastXeCore = SupportsLegacyRenderSurfaceStateAnd<IsAtLeastXeCore>;
 using IsAtMostXe3pCore = IsAtMostGfxCore<IGFX_XE3P_CORE>;
+
+using IsAtMostXe3pCoreWithSamplerState = MatchAll<IsAtMostXe3pCore, HasSamplerState>;
 
 using IsWithinXeCoreAndXe2HpgCore = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE2_HPG_CORE>;
 using IsWithinXeCoreAndXe3Core = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE3_CORE>;

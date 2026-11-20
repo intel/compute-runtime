@@ -1636,7 +1636,7 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerStateWhenInitCalledThenFieldsSet
     EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, cmd.TheStructure.Common.MinModeFilter);
     EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_NEAREST, cmd.TheStructure.Common.MagModeFilter);
     EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NONE, cmd.TheStructure.Common.MipModeFilter);
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_CUBE_CORNER_MODE_ENABLE_DISABLE, cmd.TheStructure.Common.LowQualityCubeCornerModeEnable);
+    EXPECT_FALSE(cmd.TheStructure.Common.LowQualityCubeCornerModeEnable);
     EXPECT_EQ(SAMPLER_STATE::LOD_PRECLAMP_MODE_NONE, cmd.TheStructure.Common.LodPreclampMode);
     EXPECT_EQ(SAMPLER_STATE::CUBE_SURFACE_CONTROL_MODE_PROGRAMMED, cmd.TheStructure.Common.CubeSurfaceControlMode);
     EXPECT_EQ(SAMPLER_STATE::SHADOW_FUNCTION_PREFILTEROP_ALWAYS, cmd.TheStructure.Common.ShadowFunction);
@@ -1650,9 +1650,8 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerStateWhenInitCalledThenFieldsSet
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TczAddressControlMode);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TcyAddressControlMode);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TcxAddressControlMode);
-    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_FULL_QUALITY, cmd.TheStructure.Common.MipLinearFilterQuality); // patched
+    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_FULL, cmd.TheStructure.Common.MipLinearFilterQuality); // patched
     EXPECT_EQ(SAMPLER_STATE::MAXIMUM_ANISOTROPY_RATIO_21, cmd.TheStructure.Common.MaximumAnisotropy);
-    EXPECT_EQ(SAMPLER_STATE::REDUCTION_TYPE_STD_FILTER, cmd.TheStructure.Common.ReductionType);
 }
 
 XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerStateWhenSetterUsedThenGetterReturnsValidValue) { // patched
@@ -1698,11 +1697,11 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerStateWhenSetterUsedThenGetterRet
     cmd.setMipModeFilter(SAMPLER_STATE::MIP_MODE_FILTER_LINEAR);
     EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_LINEAR, cmd.getMipModeFilter());
 
-    cmd.setLowQualityCubeCornerModeEnable(SAMPLER_STATE::LOW_QUALITY_CUBE_CORNER_MODE_ENABLE_DISABLE);
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_CUBE_CORNER_MODE_ENABLE_DISABLE, cmd.getLowQualityCubeCornerModeEnable());
+    cmd.setLowQualityCubeCornerModeEnable(false);
+    EXPECT_FALSE(cmd.getLowQualityCubeCornerModeEnable());
 
-    cmd.setLowQualityCubeCornerModeEnable(SAMPLER_STATE::LOW_QUALITY_CUBE_CORNER_MODE_ENABLE_ENABLE);
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_CUBE_CORNER_MODE_ENABLE_ENABLE, cmd.getLowQualityCubeCornerModeEnable());
+    cmd.setLowQualityCubeCornerModeEnable(true);
+    EXPECT_TRUE(cmd.getLowQualityCubeCornerModeEnable());
 
     cmd.setLodPreclampMode(SAMPLER_STATE::LOD_PRECLAMP_MODE_NONE);
     EXPECT_EQ(SAMPLER_STATE::LOD_PRECLAMP_MODE_NONE, cmd.getLodPreclampMode());
@@ -1778,8 +1777,8 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerStateWhenSetterUsedThenGetterRet
 
     cmd.setExtendedIndirectStatePointer(0x0u);
     EXPECT_EQ(0x0u, cmd.getExtendedIndirectStatePointer());
-    cmd.setExtendedIndirectStatePointer(0xff000000u);        // patched
-    EXPECT_EQ(0xffu, cmd.getExtendedIndirectStatePointer()); // patched
+    cmd.setExtendedIndirectStatePointer(0xffu);
+    EXPECT_EQ(0xffu, cmd.getExtendedIndirectStatePointer());
 
     cmd.setTczAddressControlMode(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP);
     EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP, cmd.getTczAddressControlMode());
@@ -1844,17 +1843,17 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerStateWhenSetterUsedThenGetterRet
     cmd.setTcxAddressControlMode(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_HALF_BORDER);
     EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_HALF_BORDER, cmd.getTcxAddressControlMode());
 
-    cmd.setMipLinearFilterQuality(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_FULL_QUALITY);              // patched
-    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_FULL_QUALITY, cmd.getMipLinearFilterQuality()); // patched
+    cmd.setMipLinearFilterQuality(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_FULL);              // patched
+    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_FULL, cmd.getMipLinearFilterQuality()); // patched
 
-    cmd.setMipLinearFilterQuality(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_HIGH_QUALITY);              // patched
-    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_HIGH_QUALITY, cmd.getMipLinearFilterQuality()); // patched
+    cmd.setMipLinearFilterQuality(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_HIGH);              // patched
+    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_HIGH, cmd.getMipLinearFilterQuality()); // patched
 
-    cmd.setMipLinearFilterQuality(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_MEDIUM_QUALITY);              // patched
-    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_MEDIUM_QUALITY, cmd.getMipLinearFilterQuality()); // patched
+    cmd.setMipLinearFilterQuality(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_MEDIUM);              // patched
+    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_MEDIUM, cmd.getMipLinearFilterQuality()); // patched
 
-    cmd.setMipLinearFilterQuality(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_LOW_QUALITY);              // patched
-    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_LOW_QUALITY, cmd.getMipLinearFilterQuality()); // patched
+    cmd.setMipLinearFilterQuality(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_LOW);              // patched
+    EXPECT_EQ(SAMPLER_STATE::MIP_LINEAR_FILTER_QUALITY_LOW, cmd.getMipLinearFilterQuality()); // patched
 
     cmd.setMaximumAnisotropy(SAMPLER_STATE::MAXIMUM_ANISOTROPY_RATIO_21);
     EXPECT_EQ(SAMPLER_STATE::MAXIMUM_ANISOTROPY_RATIO_21, cmd.getMaximumAnisotropy());
@@ -4004,7 +4003,7 @@ XE3_CORETEST_F(CommandsXe3CoreTest, Given3dstateBindingTablePoolAllocWhenInitCal
     EXPECT_EQ(_3DSTATE_BINDING_TABLE_POOL_ALLOC::_3D_COMMAND_OPCODE_3DSTATE_NONPIPELINED, cmd.TheStructure.Common._3DCommandOpcode);
     EXPECT_EQ(_3DSTATE_BINDING_TABLE_POOL_ALLOC::COMMAND_SUBTYPE_GFXPIPE_3D, cmd.TheStructure.Common.CommandSubtype);
     EXPECT_EQ(_3DSTATE_BINDING_TABLE_POOL_ALLOC::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.IndexToMocsTables);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.BindingTablePoolBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindingTablePoolBufferSize); // patched
 }
@@ -4035,10 +4034,10 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerBorderColorStateWhenInitCalledTh
     SAMPLER_BORDER_COLOR_STATE cmd;
     cmd.init();
 
-    EXPECT_EQ(0.0f, cmd.TheStructure.Common.BorderColorRed);
-    EXPECT_EQ(0.0f, cmd.TheStructure.Common.BorderColorGreen);
-    EXPECT_EQ(0.0f, cmd.TheStructure.Common.BorderColorBlue);
-    EXPECT_EQ(0.0f, cmd.TheStructure.Common.BorderColorAlpha);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BorderColorRed);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BorderColorGreen);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BorderColorBlue);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BorderColorAlpha);
 }
 
 XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerBorderColorStateWhenSetterUsedThenGetterReturnsValidValue) {
@@ -4046,25 +4045,25 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenSamplerBorderColorStateWhenSetterUsedTh
     SAMPLER_BORDER_COLOR_STATE cmd;
     cmd.init();
 
-    cmd.setBorderColorRed(0.0f);
-    EXPECT_FLOAT_EQ(0.0f, cmd.getBorderColorRed());
-    cmd.setBorderColorRed(0xffffffff.0p0f);
-    EXPECT_FLOAT_EQ(0xffffffff.0p0f, cmd.getBorderColorRed());
+    cmd.setBorderColorRed(0x0u);
+    EXPECT_EQ(0x0u, cmd.getBorderColorRed());
+    cmd.setBorderColorRed(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getBorderColorRed());
 
-    cmd.setBorderColorGreen(0.0f);
-    EXPECT_FLOAT_EQ(0.0f, cmd.getBorderColorGreen());
-    cmd.setBorderColorGreen(0xffffffff.0p0f);
-    EXPECT_FLOAT_EQ(0xffffffff.0p0f, cmd.getBorderColorGreen());
+    cmd.setBorderColorGreen(0x0u);
+    EXPECT_EQ(0x0u, cmd.getBorderColorGreen());
+    cmd.setBorderColorGreen(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getBorderColorGreen());
 
-    cmd.setBorderColorBlue(0.0f);
-    EXPECT_FLOAT_EQ(0.0f, cmd.getBorderColorBlue());
-    cmd.setBorderColorBlue(0xffffffff.0p0f);
-    EXPECT_FLOAT_EQ(0xffffffff.0p0f, cmd.getBorderColorBlue());
+    cmd.setBorderColorBlue(0x0u);
+    EXPECT_EQ(0x0u, cmd.getBorderColorBlue());
+    cmd.setBorderColorBlue(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getBorderColorBlue());
 
-    cmd.setBorderColorAlpha(0.0f);
-    EXPECT_FLOAT_EQ(0.0f, cmd.getBorderColorAlpha());
-    cmd.setBorderColorAlpha(0xffffffff.0p0f);
-    EXPECT_FLOAT_EQ(0xffffffff.0p0f, cmd.getBorderColorAlpha());
+    cmd.setBorderColorAlpha(0x0u);
+    EXPECT_EQ(0x0u, cmd.getBorderColorAlpha());
+    cmd.setBorderColorAlpha(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getBorderColorAlpha());
 }
 
 XE3_CORETEST_F(CommandsXe3CoreTest, GivenStateSystemMemFenceAddressWhenInitCalledThenFieldsSetToDefault) {

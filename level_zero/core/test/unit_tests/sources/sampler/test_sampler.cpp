@@ -255,7 +255,6 @@ struct SupportsLowQualityFilterSampler {
 };
 
 HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsFalseThenLowQualityFilterIsDisabled, SupportsLowQualityFilterSampler) {
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     EXPECT_FALSE(debugManager.flags.ForceSamplerLowFilteringPrecision.get());
     ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_REPEAT;
     ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_NEAREST;
@@ -269,13 +268,12 @@ HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPreci
     auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[FamilyType::gfxCoreFamily])());
     sampler->initialize(device, &desc);
 
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, sampler->samplerState.getLowQualityFilter());
+    EXPECT_FALSE(sampler->samplerState.getLowQualityFilter());
 
     sampler->destroy();
 }
 
 HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPrecisionIsTrueThenLowQualityFilterIsEnabled, SupportsLowQualityFilterSampler) {
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
     EXPECT_TRUE(debugManager.flags.ForceSamplerLowFilteringPrecision.get());
@@ -291,7 +289,7 @@ HWTEST2_F(SamplerInitTest, whenInitializeSamplerAndForceSamplerLowFilteringPreci
     auto sampler = static_cast<MockSamplerHw<FamilyType::gfxCoreFamily> *>((*samplerFactory[FamilyType::gfxCoreFamily])());
     sampler->initialize(device, &desc);
 
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, sampler->samplerState.getLowQualityFilter());
+    EXPECT_TRUE(sampler->samplerState.getLowQualityFilter());
 
     sampler->destroy();
 }

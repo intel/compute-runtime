@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -18,9 +19,9 @@ template <typename GfxFamily>
 void SamplerHw<GfxFamily>::setArg(void *memory, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(memory);
-    const auto indirectStatePointer = static_cast<uint32_t>(samplerState->getIndirectStatePointer());
+    const auto borderColorOffset = EncodeStates<GfxFamily>::getSamplerStateBorderColorOffset(samplerState);
     *samplerState = GfxFamily::cmdInitSamplerState;
-    samplerState->setIndirectStatePointer(indirectStatePointer);
+    EncodeStates<GfxFamily>::setSamplerStateBorderColorOffset(samplerState, borderColorOffset);
     samplerState->setNonNormalizedCoordinateEnable(!this->normalizedCoordinates);
 
     samplerState->setLodPreclampMode(SAMPLER_STATE::LOD_PRECLAMP_MODE::LOD_PRECLAMP_MODE_OGL);

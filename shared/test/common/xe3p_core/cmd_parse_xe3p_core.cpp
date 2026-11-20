@@ -117,6 +117,7 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
     }
     return "UNKNOWN";
 }
+#include "shared/test/common/cmd_parse/cmd_parse_3d_state_btd.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_xe_hpg_and_later_no_heap.inl"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse_base.inl"

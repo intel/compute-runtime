@@ -20,7 +20,7 @@ void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwa
     using SAMPLER_STATE = typename XeHpgCoreFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
     if (debugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
-        samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
+        samplerState->setLowQualityFilter(true);
     }
 
     auto isMirrorAddressMode = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR == samplerState->getTcxAddressControlMode();

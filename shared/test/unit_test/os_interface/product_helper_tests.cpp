@@ -620,7 +620,7 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 }
 
-HWTEST_F(ProductHelperTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsChanged) {
+HWTEST2_F(ProductHelperTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIsChanged, HasSamplerState) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
 
     auto state = FamilyType::cmdInitSamplerState;

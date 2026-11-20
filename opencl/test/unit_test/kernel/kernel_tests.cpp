@@ -595,7 +595,7 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchBindlessSurfaceStatesInC
     EXPECT_EQ(globalConstantsSurfaceAddress, crossThreadData[4]);
 }
 
-HWTEST_F(BindlessKernelTests, givenBindlessKernelAndSamplersWhenPatchBindlessSamplerStatesInCrossThreadDataThenCorrectAddressesAreWritten) {
+HWTEST2_F(BindlessKernelTests, givenBindlessKernelAndSamplersWhenPatchBindlessSamplerStatesInCrossThreadDataThenCorrectAddressesAreWritten, HasSamplerState) {
     auto argDescriptorSampler1 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
     argDescriptorSampler1.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
     argDescriptorSampler1.as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;

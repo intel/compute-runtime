@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -460,8 +461,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 if (bindlessHeapsHelper->getBorderColorStates() == nullptr) {
                     return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
                 }
-                auto samplerState = reinterpret_cast<typename GfxFamily::SAMPLER_STATE *>(ptrOffset(ssInHeap->ssPtr, samplerStateOffset));
-                samplerState->setIndirectStatePointer(bindlessHeapsHelper->getDefaultBorderColorOffset());
+                NEO::EncodeStates<GfxFamily>::setSamplerStateBorderColorOffset(ptrOffset(ssInHeap->ssPtr, samplerStateOffset), bindlessHeapsHelper->getDefaultBorderColorOffset());
             }
         }
 

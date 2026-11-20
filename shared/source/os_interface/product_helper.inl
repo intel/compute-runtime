@@ -79,7 +79,7 @@ void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwa
     using SAMPLER_STATE = typename HwMapper<gfxProduct>::GfxFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
     if (debugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
-        samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
+        samplerState->setLowQualityFilter(true);
     }
 }
 

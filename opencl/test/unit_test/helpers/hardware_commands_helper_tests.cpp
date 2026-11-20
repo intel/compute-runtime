@@ -988,6 +988,7 @@ HWTEST2_F(HardwareCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgra
 
     for (uint32_t i = 0; i < 2; i++) {
         pSamplerState[i].setIndirectStatePointer(0);
+        pSamplerState[i].setMagModeFilter(SAMPLER_STATE::MAG_MODE_FILTER_LINEAR);
     }
 
     mockKernelWithInternal->mockKernel->setCrossThreadData(mockKernelWithInternal->crossThreadData, sizeof(mockKernelWithInternal->crossThreadData));

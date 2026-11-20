@@ -74,6 +74,7 @@ endif()
 
 if(SUPPORT_XE3_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_3dstate_btd_xe3_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_from_xe3_and_later.inl
   )
 endif()

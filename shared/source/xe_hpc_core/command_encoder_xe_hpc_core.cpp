@@ -28,6 +28,31 @@ using Family = NEO::XeHpcCoreFamily;
 namespace NEO {
 
 template <>
+uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
+                                                uint32_t samplerStateOffset,
+                                                uint32_t samplerCount,
+                                                uint32_t borderColorOffset,
+                                                const void *fnDynamicStateHeap,
+                                                BindlessHeapsHelper *bindlessHeapHelper,
+                                                const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return 0;
+}
+
+template <>
+void EncodeStates<Family>::setSamplerStateBorderColorOffset(void *samplerState, uint32_t borderColorOffset) {
+}
+
+template <>
+uint32_t EncodeStates<Family>::getSamplerStateBorderColorOffset(const void *samplerState) {
+    return 0;
+}
+
+template <>
+uint32_t EncodeStates<Family>::getBindlessBorderColorOffset(const void *borderColor, uint32_t defaultBorderColorOffset, uint32_t alphaBorderColorOffset) {
+    return 0;
+}
+
+template <>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;

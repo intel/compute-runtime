@@ -1675,8 +1675,6 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenSamplerStateWhenInitCalledThenFiel
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MinLod);
     EXPECT_EQ(SAMPLER_STATE::LOD_CLAMP_MAGNIFICATION_MODE_MIPNONE, cmd.TheStructure.Common.LodClampMagnificationMode);
     EXPECT_EQ(SAMPLER_STATE::SRGB_DECODE_DECODE_EXT, cmd.TheStructure.Common.SrgbDecode);
-    EXPECT_EQ(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS_DISABLE, cmd.TheStructure.Common.ReturnFilterWeightForNullTexels);
-    EXPECT_EQ(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS_DISABLE, cmd.TheStructure.Common.ReturnFilterWeightForBorderTexels);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ExtendedIndirectStatePointer);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TczAddressControlMode);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TcyAddressControlMode);
@@ -1797,22 +1795,10 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenSamplerStateWhenSetterUsedThenGett
     cmd.setSrgbDecode(SAMPLER_STATE::SRGB_DECODE_SKIP_DECODE_EXT);
     EXPECT_EQ(SAMPLER_STATE::SRGB_DECODE_SKIP_DECODE_EXT, cmd.getSrgbDecode());
 
-    cmd.setReturnFilterWeightForNullTexels(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS_DISABLE);
-    EXPECT_EQ(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS_DISABLE, cmd.getReturnFilterWeightForNullTexels());
-
-    cmd.setReturnFilterWeightForNullTexels(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS_ENABLE);
-    EXPECT_EQ(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_NULL_TEXELS_ENABLE, cmd.getReturnFilterWeightForNullTexels());
-
-    cmd.setReturnFilterWeightForBorderTexels(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS_DISABLE);
-    EXPECT_EQ(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS_DISABLE, cmd.getReturnFilterWeightForBorderTexels());
-
-    cmd.setReturnFilterWeightForBorderTexels(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS_ENABLE);
-    EXPECT_EQ(SAMPLER_STATE::RETURN_FILTER_WEIGHT_FOR_BORDER_TEXELS_ENABLE, cmd.getReturnFilterWeightForBorderTexels());
-
     cmd.setExtendedIndirectStatePointer(0x0u);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.ExtendedIndirectStatePointer);  // patched
-    cmd.setExtendedIndirectStatePointer(0xff000000u);                       // patched
-    EXPECT_EQ(0xffu, cmd.TheStructure.Common.ExtendedIndirectStatePointer); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.ExtendedIndirectStatePointer);
+    cmd.setExtendedIndirectStatePointer(0xffu);
+    EXPECT_EQ(0xffu, cmd.TheStructure.Common.ExtendedIndirectStatePointer);
 
     cmd.setTczAddressControlMode(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP);
     EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP, cmd.getTczAddressControlMode());
@@ -3202,7 +3188,7 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, Given3dstateBindingTablePoolAllocWhenIn
     EXPECT_EQ(_3DSTATE_BINDING_TABLE_POOL_ALLOC::_3D_COMMAND_OPCODE_3DSTATE_NONPIPELINED, cmd.TheStructure.Common._3DCommandOpcode);
     EXPECT_EQ(_3DSTATE_BINDING_TABLE_POOL_ALLOC::COMMAND_SUBTYPE_GFXPIPE_3D, cmd.TheStructure.Common.CommandSubtype);
     EXPECT_EQ(_3DSTATE_BINDING_TABLE_POOL_ALLOC::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.IndexToMocsTables);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.BindingTablePoolBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindingTablePoolBufferSize); // patched
 }
@@ -3233,10 +3219,10 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenSamplerBorderColorStateWhenInitCal
     SAMPLER_BORDER_COLOR_STATE cmd;
     cmd.init();
 
-    EXPECT_EQ(0.0f, cmd.TheStructure.Common.BorderColorRed);
-    EXPECT_EQ(0.0f, cmd.TheStructure.Common.BorderColorGreen);
-    EXPECT_EQ(0.0f, cmd.TheStructure.Common.BorderColorBlue);
-    EXPECT_EQ(0.0f, cmd.TheStructure.Common.BorderColorAlpha);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BorderColorRed);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BorderColorGreen);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BorderColorBlue);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BorderColorAlpha);
 }
 
 XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenSamplerBorderColorStateWhenSetterUsedThenGetterReturnsValidValue) {
@@ -3244,25 +3230,25 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenSamplerBorderColorStateWhenSetterU
     SAMPLER_BORDER_COLOR_STATE cmd;
     cmd.init();
 
-    cmd.setBorderColorRed(0.0f);
-    EXPECT_FLOAT_EQ(0.0f, cmd.getBorderColorRed());
-    cmd.setBorderColorRed(0xffffffff.0p0f);
-    EXPECT_FLOAT_EQ(0xffffffff.0p0f, cmd.getBorderColorRed());
+    cmd.setBorderColorRed(0x0u);
+    EXPECT_EQ(0x0u, cmd.getBorderColorRed());
+    cmd.setBorderColorRed(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getBorderColorRed());
 
-    cmd.setBorderColorGreen(0.0f);
-    EXPECT_FLOAT_EQ(0.0f, cmd.getBorderColorGreen());
-    cmd.setBorderColorGreen(0xffffffff.0p0f);
-    EXPECT_FLOAT_EQ(0xffffffff.0p0f, cmd.getBorderColorGreen());
+    cmd.setBorderColorGreen(0x0u);
+    EXPECT_EQ(0x0u, cmd.getBorderColorGreen());
+    cmd.setBorderColorGreen(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getBorderColorGreen());
 
-    cmd.setBorderColorBlue(0.0f);
-    EXPECT_FLOAT_EQ(0.0f, cmd.getBorderColorBlue());
-    cmd.setBorderColorBlue(0xffffffff.0p0f);
-    EXPECT_FLOAT_EQ(0xffffffff.0p0f, cmd.getBorderColorBlue());
+    cmd.setBorderColorBlue(0x0u);
+    EXPECT_EQ(0x0u, cmd.getBorderColorBlue());
+    cmd.setBorderColorBlue(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getBorderColorBlue());
 
-    cmd.setBorderColorAlpha(0.0f);
-    EXPECT_FLOAT_EQ(0.0f, cmd.getBorderColorAlpha());
-    cmd.setBorderColorAlpha(0xffffffff.0p0f);
-    EXPECT_FLOAT_EQ(0xffffffff.0p0f, cmd.getBorderColorAlpha());
+    cmd.setBorderColorAlpha(0x0u);
+    EXPECT_EQ(0x0u, cmd.getBorderColorAlpha());
+    cmd.setBorderColorAlpha(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getBorderColorAlpha());
 }
 
 XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, Given3dstateBtdWhenInitCalledThenFieldsSetToDefault) { // patched

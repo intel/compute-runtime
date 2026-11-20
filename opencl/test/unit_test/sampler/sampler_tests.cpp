@@ -90,8 +90,7 @@ TEST(castToSamplerTest, GivenGenericPointerWhichDoestNotHoldSamplerObjectWhenCas
 
 using SamplerHwTest = Test<ClDeviceFixture>;
 
-HWTEST2_F(SamplerHwTest, GivenDefaultThenLowQualityFilterIsDisabled, IsAtMostXe3pCore) {
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+HWTEST2_F(SamplerHwTest, GivenDefaultThenLowQualityFilterIsDisabled, IsAtMostXe3pCoreWithSamplerState) {
     auto state = FamilyType::cmdInitSamplerState;
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
+    EXPECT_FALSE(state.getLowQualityFilter());
 }

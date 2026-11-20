@@ -977,7 +977,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotD
     EXPECT_NE(initialAllocation, reallocatedAllocation);
 }
 
-HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenDshIsNotDepletedButReallocated) {
+HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenDshIsNotDepletedButReallocated, HasSamplerState) {
     if (!neoDevice->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
     }

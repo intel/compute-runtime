@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/cmd_parse/cmd_parse_3d_state_btd.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_walker_no_heap.inl"
@@ -14,6 +13,25 @@
 #include "gtest/gtest.h"
 
 using STATE_SIP = GenStruct::STATE_SIP;
+
+template <typename Struct>
+size_t get3dStateBtdLength(void *cmd) {
+    if constexpr (requires { typename Struct::_3DSTATE_BTD; }) {
+        auto pCmd = genCmdCast<typename Struct::_3DSTATE_BTD *>(cmd);
+        if (pCmd) {
+            return pCmd->TheStructure.Common.DwordLength + 2;
+        }
+    }
+    return 0;
+}
+
+template <typename Struct>
+bool is3dStateBtd(void *cmd) {
+    if constexpr (requires { typename Struct::_3DSTATE_BTD; }) {
+        return nullptr != genCmdCast<typename Struct::_3DSTATE_BTD *>(cmd);
+    }
+    return false;
+}
 
 template <>
 size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {
@@ -30,9 +48,9 @@ size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {
         }
     }
     {
-        auto pCmd = genCmdCast<_3DSTATE_BTD *>(cmd);
-        if (pCmd) {
-            return pCmd->TheStructure.Common.DwordLength + 2;
+        auto length = get3dStateBtdLength<GenStruct>(cmd);
+        if (length) {
+            return length;
         }
     }
     {
@@ -61,7 +79,7 @@ const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
         return "MI_SET_PREDICATE";
     }
 
-    if (nullptr != genCmdCast<_3DSTATE_BTD *>(cmd)) {
+    if (is3dStateBtd<GenStruct>(cmd)) {
         return "_3DSTATE_BTD";
     }
 

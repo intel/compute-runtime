@@ -431,8 +431,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDi
 
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
-    auto borderColorOffsetInDsh = usedBefore;
-    samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+    EncodeStates<FamilyType>::setSamplerStateBorderColorOffset(&samplerState, static_cast<uint32_t>(usedBefore));
 
     auto samplerStateOffset = interfaceDescriptorData->getSamplerStatePointer();
 
@@ -467,8 +466,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersZeroWhenD
 
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
-    auto borderColorOffsetInDsh = usedBefore;
-    samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+    EncodeStates<FamilyType>::setSamplerStateBorderColorOffset(&samplerState, static_cast<uint32_t>(usedBefore));
 
     auto samplerStateOffset = interfaceDescriptorData->getSamplerStatePointer();
 
@@ -877,8 +875,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenHe
 
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
-    auto borderColorOffsetInDsh = 0;
-    samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+    EncodeStates<FamilyType>::setSamplerStateBorderColorOffset(&samplerState, 0u);
 
     auto samplerStateOffset = interfaceDescriptorData->getSamplerStatePointer();
 
@@ -933,8 +930,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneAndNex
 
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
 
-    auto borderColorOffsetInDsh = usedBefore;
-    samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+    EncodeStates<FamilyType>::setSamplerStateBorderColorOffset(&samplerState, static_cast<uint32_t>(usedBefore));
 
     auto samplerStateOffset = interfaceDescriptorData->getSamplerStatePointer();
 
@@ -1665,7 +1661,7 @@ HWTEST2_F(NgenGeneratorDispatchKernelEncodeTest, givenBindfulKernelAndIsNotGener
 
 HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThenReturnCorrectValues) {
     using INTERFACE_DESCRIPTOR_DATA = typename EncodeStates<FamilyType>::INTERFACE_DESCRIPTOR_DATA;
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    constexpr size_t samplerStateSize = EncodeStates<FamilyType>::getSamplerStateSize();
 
     size_t additionalSize = UnitTestHelper<FamilyType>::getAdditionalDshSize(cmdContainer->getNumIddPerBlock());
     size_t expectedSize = alignUp(additionalSize, EncodeStates<FamilyType>::alignInterfaceDescriptorData);
@@ -1681,7 +1677,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
     kernelInfo.kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
 
     // align samplers
-    size_t alignedSamplers = alignUp(2 * sizeof(SAMPLER_STATE), InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
+    size_t alignedSamplers = alignUp(2 * samplerStateSize, InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
 
     // additional IDD for requiring platforms
     if (additionalSize > 0) {
@@ -1698,7 +1694,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
     kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset = 32;
 
     // align border color state and samplers
-    alignedSamplers = alignUp(alignUp(32, FamilyType::cacheLineSize) + 3 * sizeof(SAMPLER_STATE), InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
+    alignedSamplers = alignUp(alignUp(32, FamilyType::cacheLineSize) + 3 * samplerStateSize, InterfaceDescriptorTraits<INTERFACE_DESCRIPTOR_DATA>::samplerStatePointerAlignSize);
 
     // additional IDD for requiring platforms
     if (additionalSize > 0) {

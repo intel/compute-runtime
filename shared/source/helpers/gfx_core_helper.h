@@ -232,10 +232,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     size_t getScratchSurfaceStateSize(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
-    size_t getSamplerStateSize() const override {
-        using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-        return sizeof(SAMPLER_STATE);
-    }
+    size_t getSamplerStateSize() const override;
 
     uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const override {
         using DataPortBindlessSurfaceExtendedMessageDescriptor = typename GfxFamily::DataPortBindlessSurfaceExtendedMessageDescriptor;

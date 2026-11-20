@@ -43,6 +43,7 @@
 #include "encode_surface_state_args.h"
 
 #include <algorithm>
+#include <bit>
 
 namespace NEO {
 
@@ -59,6 +60,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
                                                 const void *fnDynamicStateHeap,
                                                 BindlessHeapsHelper *bindlessHeapHelper,
                                                 const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using SAMPLER_STATE = typename Family::SAMPLER_STATE;
     auto sizeSamplerState = sizeof(SAMPLER_STATE) * samplerCount;
     auto borderColorSize = samplerStateOffset - borderColorOffset;
 
@@ -67,7 +69,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 
     dsh->align(NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
     uint32_t borderColorOffsetInDsh = 0;
-    auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(fnDynamicStateHeap, borderColorOffset));
+    auto borderColor = ptrOffset(fnDynamicStateHeap, borderColorOffset);
 
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
@@ -87,16 +89,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 
         dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(dsh->getSpace(sizeSamplerState));
     } else {
-        if (borderColor->getBorderColorRed() != 0.0f ||
-            borderColor->getBorderColorGreen() != 0.0f ||
-            borderColor->getBorderColorBlue() != 0.0f ||
-            (borderColor->getBorderColorAlpha() != 0.0f && borderColor->getBorderColorAlpha() != 1.0f)) {
-            UNRECOVERABLE_IF(true);
-        } else if (borderColor->getBorderColorAlpha() == 0.0f) {
-            borderColorOffsetInDsh = bindlessHeapHelper->getDefaultBorderColorOffset();
-        } else {
-            borderColorOffsetInDsh = bindlessHeapHelper->getAlphaBorderColorOffset();
-        }
+        borderColorOffsetInDsh = getBindlessBorderColorOffset(borderColor, bindlessHeapHelper->getDefaultBorderColorOffset(), bindlessHeapHelper->getAlphaBorderColorOffset());
         dshAlign(dsh);
         auto samplerStateInDsh = bindlessHeapHelper->allocateSSInHeap(sizeSamplerState, nullptr, BindlessHeapsHelper::BindlesHeapType::globalDsh);
         UNRECOVERABLE_IF(samplerStateInDsh.ssPtr == nullptr);
@@ -111,15 +104,41 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
         state = srcSamplerState[i];
 
         if (heaplessEnabled) {
-            EncodeStates<Family>::adjustSamplerStateBorderColor(state, *borderColor);
+            EncodeStates<Family>::adjustSamplerStateBorderColor(&state, borderColor);
         } else {
-            state.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+            EncodeStates<Family>::setSamplerStateBorderColorOffset(&state, borderColorOffsetInDsh);
         }
         helper.adjustSamplerState(&state, hwInfo);
         dstSamplerState[i] = state;
     }
 
     return samplerStateOffsetInDsh;
+}
+
+template <typename Family>
+uint32_t EncodeStates<Family>::getBindlessBorderColorOffset(const void *borderColor, uint32_t defaultBorderColorOffset, uint32_t alphaBorderColorOffset) {
+    auto borderColorState = static_cast<const typename Family::SAMPLER_BORDER_COLOR_STATE *>(borderColor);
+    const auto borderColorAlpha = std::bit_cast<float>(borderColorState->getBorderColorAlpha());
+    if (std::bit_cast<float>(borderColorState->getBorderColorRed()) != 0.0f ||
+        std::bit_cast<float>(borderColorState->getBorderColorGreen()) != 0.0f ||
+        std::bit_cast<float>(borderColorState->getBorderColorBlue()) != 0.0f ||
+        (borderColorAlpha != 0.0f && borderColorAlpha != 1.0f)) {
+        UNRECOVERABLE_IF(true);
+    }
+    return borderColorAlpha == 0.0f ? defaultBorderColorOffset : alphaBorderColorOffset;
+}
+
+template <typename Family>
+void EncodeStates<Family>::setSamplerStateBorderColorOffset(void *samplerState, uint32_t borderColorOffset) {
+    auto state = static_cast<typename Family::SAMPLER_STATE *>(samplerState);
+    state->setExtendedIndirectStatePointer(borderColorOffset >> extendedIndirectStatePointerShift);
+    state->setIndirectStatePointer(borderColorOffset);
+}
+
+template <typename Family>
+uint32_t EncodeStates<Family>::getSamplerStateBorderColorOffset(const void *samplerState) {
+    auto state = static_cast<const typename Family::SAMPLER_STATE *>(samplerState);
+    return (state->getExtendedIndirectStatePointer() << extendedIndirectStatePointerShift) | state->getIndirectStatePointer();
 }
 
 template <typename Family>
@@ -834,7 +853,7 @@ void EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefetch(InterfaceD
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount) {
-    constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);
+    constexpr auto samplerStateSize = EncodeStates<Family>::getSamplerStateSize();
     const auto numSamplers = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
     const auto additionalDshSize = additionalSizeRequiredDsh(iddCount);
     if (numSamplers == 0U) {

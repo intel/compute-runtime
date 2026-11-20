@@ -24,7 +24,7 @@ void EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs(ImplicitArg
 }
 
 template <typename Family>
-void EncodeStates<Family>::adjustSamplerStateBorderColor(SAMPLER_STATE &samplerState, const SAMPLER_BORDER_COLOR_STATE &borderColorState) {
+void EncodeStates<Family>::adjustSamplerStateBorderColor(void *samplerState, const void *borderColorState) {
 }
 
 } // namespace NEO

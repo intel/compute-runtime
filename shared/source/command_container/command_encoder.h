@@ -329,10 +329,17 @@ template <typename GfxFamily>
 struct EncodeStates {
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
-    using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-    using SAMPLER_BORDER_COLOR_STATE = typename GfxFamily::SAMPLER_BORDER_COLOR_STATE;
 
     static constexpr uint32_t alignIndirectStatePointer = MemoryConstants::cacheLineSize;
+    static constexpr uint32_t extendedIndirectStatePointerShift = 24;
+
+    static constexpr size_t getSamplerStateSize() {
+        if constexpr (requires { typename GfxFamily::SAMPLER_STATE; }) {
+            return sizeof(typename GfxFamily::SAMPLER_STATE);
+        } else {
+            return 0;
+        }
+    }
     static constexpr size_t alignInterfaceDescriptorData = MemoryConstants::cacheLineSize;
 
     static uint32_t copySamplerState(IndirectHeap *dsh,
@@ -343,7 +350,10 @@ struct EncodeStates {
                                      BindlessHeapsHelper *bindlessHeapHelper,
                                      const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    static void adjustSamplerStateBorderColor(SAMPLER_STATE &samplerState, const SAMPLER_BORDER_COLOR_STATE &borderColorState);
+    static void adjustSamplerStateBorderColor(void *samplerState, const void *borderColorState);
+    static void setSamplerStateBorderColorOffset(void *samplerState, uint32_t borderColorOffset);
+    static uint32_t getSamplerStateBorderColorOffset(const void *samplerState);
+    static uint32_t getBindlessBorderColorOffset(const void *borderColor, uint32_t defaultBorderColorOffset, uint32_t alphaBorderColorOffset);
     static size_t getSshHeapSize();
     static void dshAlign(IndirectHeap *dsh);
 };

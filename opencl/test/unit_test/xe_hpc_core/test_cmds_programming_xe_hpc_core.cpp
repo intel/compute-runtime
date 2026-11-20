@@ -18,6 +18,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -107,4 +108,21 @@ XE_HPC_CORETEST_F(CmdsProgrammingTestsXeHpcCore, givenAlignedCacheableReadOnlyBu
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
 
     alignedFree(ptr);
+}
+
+using SamplerXeHpcCoreTest = ::testing::Test;
+
+XE_HPC_CORETEST_F(SamplerXeHpcCoreTest, whenSettingSamplerArgThenSamplerStateMemoryIsNotChanged) {
+    MockContext context;
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Sampler> sampler(Sampler::create(&context, CL_TRUE, CL_ADDRESS_CLAMP, CL_FILTER_LINEAR, retVal));
+    ASSERT_NE(nullptr, sampler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    uint32_t samplerState[8] = {};
+    sampler->setArg(samplerState, context.getDevice(0)->getRootDeviceEnvironment());
+
+    for (auto dword : samplerState) {
+        EXPECT_EQ(0u, dword);
+    }
 }

@@ -1124,18 +1124,17 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformsWhenGet
     EXPECT_EQ(expectedSize, EncodeStates<FamilyType>::getSshHeapSize());
 }
 
-HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsAtMostXe3pCore) {
+HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsAtMostXe3pCoreWithSamplerState) {
     EXPECT_FALSE(debugManager.flags.ForceSamplerLowFilteringPrecision.get());
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 
     auto state = FamilyType::cmdInitSamplerState;
 
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
+    EXPECT_FALSE(state.getLowQualityFilter());
     productHelper.adjustSamplerState(&state, *defaultHwInfo);
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
+    EXPECT_FALSE(state.getLowQualityFilter());
 }
 
 HWTEST_F(CommandEncoderTests, givenMiStoreRegisterMemWhenEncodeAndIsBcsThenRegisterOffsetsBcs0Base) {
@@ -1213,7 +1212,7 @@ HWTEST_F(CommandEncoderTests, givenMiLoadRegisterRegwhenencoderegAndIsBcsThenReg
     EXPECT_EQ(storeRegReg->getDestinationRegisterAddress(), dstOffset);
 }
 
-HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsAtMostXe3pCore) {
+HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsAtMostXe3pCoreWithSamplerState) {
 
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
@@ -1221,13 +1220,11 @@ HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerSta
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-
     auto state = FamilyType::cmdInitSamplerState;
 
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
+    EXPECT_FALSE(state.getLowQualityFilter());
     productHelper.adjustSamplerState(&state, *defaultHwInfo);
-    EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
+    EXPECT_TRUE(state.getLowQualityFilter());
 }
 
 HWTEST_F(CommandEncoderTests, givenSdiCommandWhenProgrammingThenForceWriteCompletionCheck) {

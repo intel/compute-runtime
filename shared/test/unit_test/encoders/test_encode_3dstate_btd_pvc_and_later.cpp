@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,9 @@ using namespace NEO;
 
 using CommandEncodeEnableRayTracing = Test<CommandEncodeStatesFixture>;
 
-HWTEST2_F(CommandEncodeEnableRayTracing, whenEnableRayTracingIsProgrammedThen3DStateBtdIsEncodedInStream, IsAtLeastXeHpcCore) {
+using IsAtLeastXeHpcCoreWith3dStateBtd = MatchAll<IsAtLeastXeHpcCore, Has3dStateBtd>;
+
+HWTEST2_F(CommandEncodeEnableRayTracing, whenEnableRayTracingIsProgrammedThen3DStateBtdIsEncodedInStream, IsAtLeastXeHpcCoreWith3dStateBtd) {
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
 
     uint32_t pCmdBuffer[1024];

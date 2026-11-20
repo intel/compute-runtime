@@ -76,6 +76,11 @@ size_t GfxCoreHelperHw<Family>::getScratchSurfaceStateSize(const RootDeviceEnvir
 }
 
 template <typename Family>
+size_t GfxCoreHelperHw<Family>::getSamplerStateSize() const {
+    return EncodeStates<Family>::getSamplerStateSize();
+}
+
+template <typename Family>
 void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                                       void *surfaceStateBuffer,
                                                                       size_t bufferSize,
