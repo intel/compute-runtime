@@ -19,7 +19,7 @@ endfunction()
 ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 
 add_executable(${TARGET_NAME}
-               ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
+               ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
 )
 
 target_sources(${TARGET_NAME} PRIVATE

@@ -53,7 +53,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
                  ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                  ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
                  ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
-                 ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
+                 ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
   )
 
   target_sources(${TARGET_NAME} PRIVATE
