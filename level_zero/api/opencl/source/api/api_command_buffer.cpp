@@ -582,6 +582,10 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandFillImageKHR(
     if (pImage->isMultiDevice()) {
         return CL_INVALID_OPERATION;
     }
+    retVal = NEO::LEO::validateImageRegionAndOrigin(origin, region, pImage->getClImageDesc());
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
 
     auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
     if (result != ZE_RESULT_SUCCESS) {

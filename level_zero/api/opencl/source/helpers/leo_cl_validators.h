@@ -232,6 +232,20 @@ inline void applyDefaultRectPitches(const size_t *region, size_t &rowPitch, size
     }
 }
 
+inline uint32_t getMipLevelOriginIndex(cl_mem_object_type imageType) {
+    switch (imageType) {
+    case CL_MEM_OBJECT_IMAGE1D:
+    case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+        return 1u;
+    case CL_MEM_OBJECT_IMAGE2D:
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        return 2u;
+    default:
+        return 3u;
+    }
+}
+
+[[nodiscard]] cl_int validateImageRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imageDesc) noexcept;
 [[nodiscard]] cl_int validateYuvOperation(const size_t *origin, const size_t *region) noexcept;
 [[nodiscard]] bool isPackedYuvImage(const cl_image_format *imageFormat) noexcept;
 [[nodiscard]] bool isNV12Image(const cl_image_format *imageFormat) noexcept;

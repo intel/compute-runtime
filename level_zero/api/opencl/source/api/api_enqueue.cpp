@@ -477,6 +477,11 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
         return tracingScope.exit(retVal);
     }
 
+    retVal = NEO::LEO::validateImageRegionAndOrigin(origin, region, pImage->getClImageDesc());
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        return tracingScope.exit(retVal);
+    }
+
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_FILL_IMAGE, pCommandQueue);
 
     auto queueLock = pCommandQueue->takeOwnership();

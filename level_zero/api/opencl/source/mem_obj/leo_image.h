@@ -44,6 +44,7 @@ class Image : public MemObj {
                         size_t paramValueSize,
                         void *paramValue,
                         size_t *paramValueSizeRet);
+    cl_image_desc getClImageDesc();
 
     size_t calculateTotalSizeForImage(const std::array<size_t, 3> &sizes) const;
     size_t calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes, const MipLevelHostLayout &layout) const;

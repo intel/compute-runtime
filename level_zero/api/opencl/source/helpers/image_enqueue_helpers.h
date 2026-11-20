@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 
@@ -53,19 +54,7 @@ inline uint32_t getOclMipLevel(NEO::LEO::Image *pImage, const size_t *origin) {
     if (numMipLevels <= 1u) {
         return 0u;
     }
-    switch (pImage->getClObjectType()) {
-    case CL_MEM_OBJECT_IMAGE1D:
-    case CL_MEM_OBJECT_IMAGE1D_BUFFER:
-        return static_cast<uint32_t>(origin[1]);
-    case CL_MEM_OBJECT_IMAGE2D:
-    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-        return static_cast<uint32_t>(origin[2]);
-    case CL_MEM_OBJECT_IMAGE3D:
-    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-        return static_cast<uint32_t>(origin[3]);
-    default:
-        return 0u;
-    }
+    return static_cast<uint32_t>(origin[getMipLevelOriginIndex(pImage->getClObjectType())]);
 }
 
 inline L0::ze_image_region_mip_level_exp_desc_t createZeImageRegionWithMipLevel(

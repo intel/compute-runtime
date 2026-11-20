@@ -20,6 +20,10 @@
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 
+#include <algorithm>
+#include <array>
+#include <limits>
+
 namespace NEO {
 namespace LEO {
 namespace ult {
@@ -354,6 +358,154 @@ TEST(RectArgsFitInUint32Tests, givenPitchAboveUint32MaxWhenCheckingThenReturnsFa
     const size_t region[3] = {4u, 5u, 6u};
     EXPECT_FALSE(rectArgsFitInUint32(origin, region, aboveUint32Max, 64u));
     EXPECT_FALSE(rectArgsFitInUint32(origin, region, 16u, aboveUint32Max));
+}
+
+struct ValidateImageRegionAndOriginTests : public ::testing::Test {
+    struct ImageTypeExtent {
+        cl_mem_object_type imageType;
+        std::array<size_t, 3> extentInPixels;
+        uint32_t mipLevelOriginIndex;
+    };
+
+    static constexpr size_t imageWidth = 16u;
+    static constexpr size_t imageHeight = 8u;
+    static constexpr size_t imageDepth = 4u;
+    static constexpr size_t imageArraySize = 3u;
+
+    static constexpr std::array<ImageTypeExtent, 6> imageTypeExtents = {{
+        {CL_MEM_OBJECT_IMAGE1D, {imageWidth, 1u, 1u}, 1u},
+        {CL_MEM_OBJECT_IMAGE1D_BUFFER, {imageWidth, 1u, 1u}, 1u},
+        {CL_MEM_OBJECT_IMAGE1D_ARRAY, {imageWidth, imageArraySize, 1u}, 2u},
+        {CL_MEM_OBJECT_IMAGE2D, {imageWidth, imageHeight, 1u}, 2u},
+        {CL_MEM_OBJECT_IMAGE2D_ARRAY, {imageWidth, imageHeight, imageArraySize}, 3u},
+        {CL_MEM_OBJECT_IMAGE3D, {imageWidth, imageHeight, imageDepth}, 3u},
+    }};
+
+    static cl_image_desc createImageDesc(cl_mem_object_type imageType, cl_uint numMipLevels) {
+        cl_image_desc imageDesc{};
+        imageDesc.image_type = imageType;
+        imageDesc.image_width = imageWidth;
+        imageDesc.image_height = imageHeight;
+        imageDesc.image_depth = imageDepth;
+        imageDesc.image_array_size = imageArraySize;
+        imageDesc.num_mip_levels = numMipLevels;
+        return imageDesc;
+    }
+};
+
+TEST_F(ValidateImageRegionAndOriginTests, givenNullOriginOrRegionWhenValidatingThenInvalidValueIsReturned) {
+    const auto imageDesc = createImageDesc(CL_MEM_OBJECT_IMAGE2D, 1u);
+    const size_t origin[3] = {0u, 0u, 0u};
+    const size_t region[3] = {1u, 1u, 1u};
+    EXPECT_EQ(CL_INVALID_VALUE, validateImageRegionAndOrigin(nullptr, region, imageDesc));
+    EXPECT_EQ(CL_INVALID_VALUE, validateImageRegionAndOrigin(origin, nullptr, imageDesc));
+}
+
+TEST_F(ValidateImageRegionAndOriginTests, givenRegionInsideImageWhenValidatingThenSuccessIsReturned) {
+    for (const auto &[imageType, extent, mipLevelOriginIndex] : imageTypeExtents) {
+        const auto imageDesc = createImageDesc(imageType, 1u);
+        const size_t zeroOrigin[3] = {0u, 0u, 0u};
+        const size_t wholeImageRegion[3] = {extent[0], extent[1], extent[2]};
+        EXPECT_EQ(CL_SUCCESS, validateImageRegionAndOrigin(zeroOrigin, wholeImageRegion, imageDesc)) << "image type " << imageType;
+
+        const size_t lastPixelOrigin[3] = {extent[0] - 1u, extent[1] - 1u, extent[2] - 1u};
+        const size_t singlePixelRegion[3] = {1u, 1u, 1u};
+        EXPECT_EQ(CL_SUCCESS, validateImageRegionAndOrigin(lastPixelOrigin, singlePixelRegion, imageDesc)) << "image type " << imageType;
+    }
+}
+
+TEST_F(ValidateImageRegionAndOriginTests, givenZeroInAnyRegionDimensionWhenValidatingThenInvalidValueIsReturned) {
+    for (const auto &[imageType, extent, mipLevelOriginIndex] : imageTypeExtents) {
+        const auto imageDesc = createImageDesc(imageType, 1u);
+        for (uint32_t dimension = 0u; dimension < 3u; dimension++) {
+            const size_t origin[3] = {0u, 0u, 0u};
+            size_t region[3] = {1u, 1u, 1u};
+            region[dimension] = 0u;
+            EXPECT_EQ(CL_INVALID_VALUE, validateImageRegionAndOrigin(origin, region, imageDesc)) << "image type " << imageType << ", dimension " << dimension;
+        }
+    }
+}
+
+TEST_F(ValidateImageRegionAndOriginTests, givenRegionEndingPastImageExtentWhenValidatingThenInvalidValueIsReturned) {
+    for (const auto &[imageType, extent, mipLevelOriginIndex] : imageTypeExtents) {
+        const auto imageDesc = createImageDesc(imageType, 1u);
+        for (uint32_t dimension = 0u; dimension < 3u; dimension++) {
+            size_t originPastEnd[3] = {0u, 0u, 0u};
+            originPastEnd[dimension] = extent[dimension];
+            const size_t singlePixelRegion[3] = {1u, 1u, 1u};
+            EXPECT_EQ(CL_INVALID_VALUE, validateImageRegionAndOrigin(originPastEnd, singlePixelRegion, imageDesc)) << "image type " << imageType << ", dimension " << dimension;
+
+            const size_t zeroOrigin[3] = {0u, 0u, 0u};
+            size_t tooLargeRegion[3] = {1u, 1u, 1u};
+            tooLargeRegion[dimension] = extent[dimension] + 1u;
+            EXPECT_EQ(CL_INVALID_VALUE, validateImageRegionAndOrigin(zeroOrigin, tooLargeRegion, imageDesc)) << "image type " << imageType << ", dimension " << dimension;
+
+            size_t lastPixelOrigin[3] = {0u, 0u, 0u};
+            lastPixelOrigin[dimension] = extent[dimension] - 1u;
+            size_t wrappingRegion[3] = {1u, 1u, 1u};
+            wrappingRegion[dimension] = std::numeric_limits<size_t>::max();
+            EXPECT_EQ(CL_INVALID_VALUE, validateImageRegionAndOrigin(lastPixelOrigin, wrappingRegion, imageDesc)) << "image type " << imageType << ", dimension " << dimension;
+        }
+    }
+}
+
+TEST_F(ValidateImageRegionAndOriginTests, givenMipMappedImageWhenValidatingThenMipLevelInOriginIsNotTreatedAsCoordinateAndMustBeBelowMipLevelCount) {
+    constexpr cl_uint numMipLevels = 3u;
+    for (const auto &[imageType, extent, mipLevelOriginIndex] : imageTypeExtents) {
+        if (imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+            continue;
+        }
+        const auto imageDesc = createImageDesc(imageType, numMipLevels);
+        const size_t singlePixelRegion[3] = {1u, 1u, 1u};
+
+        size_t lastMipLevelOrigin[4] = {0u, 0u, 0u, 0u};
+        lastMipLevelOrigin[mipLevelOriginIndex] = numMipLevels - 1u;
+        EXPECT_EQ(CL_SUCCESS, validateImageRegionAndOrigin(lastMipLevelOrigin, singlePixelRegion, imageDesc)) << "image type " << imageType;
+
+        size_t mipLevelPastEndOrigin[4] = {0u, 0u, 0u, 0u};
+        mipLevelPastEndOrigin[mipLevelOriginIndex] = numMipLevels;
+        EXPECT_EQ(CL_INVALID_MIP_LEVEL, validateImageRegionAndOrigin(mipLevelPastEndOrigin, singlePixelRegion, imageDesc)) << "image type " << imageType;
+    }
+}
+
+TEST_F(ValidateImageRegionAndOriginTests, givenMipMappedImageWhenValidatingThenSpatialDimensionsAreThoseOfSelectedMipLevelAndArrayLayerCountIsNotReduced) {
+    constexpr cl_uint numMipLevels = 3u;
+    constexpr size_t mipLevel = 2u;
+    for (const auto &[imageType, extent, mipLevelOriginIndex] : imageTypeExtents) {
+        if (imageType == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+            continue;
+        }
+        const auto imageDesc = createImageDesc(imageType, numMipLevels);
+        const size_t singlePixelRegion[3] = {1u, 1u, 1u};
+        for (uint32_t dimension = 0u; dimension < 3u; dimension++) {
+            if (dimension == mipLevelOriginIndex) {
+                continue;
+            }
+            const bool isArrayLayerDimension = (imageType == CL_MEM_OBJECT_IMAGE1D_ARRAY && dimension == 1u) ||
+                                               (imageType == CL_MEM_OBJECT_IMAGE2D_ARRAY && dimension == 2u);
+            const size_t mipExtent = isArrayLayerDimension ? extent[dimension] : std::max<size_t>(extent[dimension] >> mipLevel, 1u);
+
+            size_t lastPixelOrigin[4] = {0u, 0u, 0u, 0u};
+            lastPixelOrigin[mipLevelOriginIndex] = mipLevel;
+            lastPixelOrigin[dimension] = mipExtent - 1u;
+            EXPECT_EQ(CL_SUCCESS, validateImageRegionAndOrigin(lastPixelOrigin, singlePixelRegion, imageDesc)) << "image type " << imageType << ", dimension " << dimension;
+
+            size_t originPastMipEnd[4] = {0u, 0u, 0u, 0u};
+            originPastMipEnd[mipLevelOriginIndex] = mipLevel;
+            originPastMipEnd[dimension] = mipExtent;
+            EXPECT_EQ(CL_INVALID_VALUE, validateImageRegionAndOrigin(originPastMipEnd, singlePixelRegion, imageDesc)) << "image type " << imageType << ", dimension " << dimension;
+        }
+    }
+}
+
+TEST_F(ValidateImageRegionAndOriginTests, givenMipLevelAtOrAboveShiftWidthWhenValidatingThenSpatialExtentIsOnePixel) {
+    constexpr size_t mipLevel = std::numeric_limits<size_t>::digits;
+    const auto imageDesc = createImageDesc(CL_MEM_OBJECT_IMAGE2D, static_cast<cl_uint>(mipLevel + 1u));
+    const size_t origin[3] = {0u, 0u, mipLevel};
+    const size_t singlePixelRegion[3] = {1u, 1u, 1u};
+    const size_t twoPixelRegion[3] = {2u, 1u, 1u};
+    EXPECT_EQ(CL_SUCCESS, validateImageRegionAndOrigin(origin, singlePixelRegion, imageDesc));
+    EXPECT_EQ(CL_INVALID_VALUE, validateImageRegionAndOrigin(origin, twoPixelRegion, imageDesc));
 }
 
 TEST(ValidateNullHandleTests, givenNullCommandBufferWhenValidateObjectThenReturnsCLInvalidCommandBufferKhr) {

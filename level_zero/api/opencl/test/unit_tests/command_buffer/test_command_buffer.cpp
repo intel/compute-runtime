@@ -1335,6 +1335,43 @@ TEST_F(LeoCommandBufferImageTest, givenImageFromBufferWhenRecordingFillImageThen
     clReleaseMemObject(imageFromBuffer);
 }
 
+TEST_F(LeoCommandBufferImageTest, givenFillRegionOutsideImageFromBufferWhenRecordingFillImageThenInvalidValueIsReturnedAndNothingIsRecorded) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    desc.image_width = imageWidth;
+    desc.mem_object = buffer;
+    cl_int errcode = CL_INVALID_VALUE;
+    auto imageFromBuffer = clCreateImage(clContext, CL_MEM_READ_WRITE, &rgbaFormat, &desc, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    auto pImage = castToObject<Image>(imageFromBuffer);
+    const auto refCount = pImage->getRefInternalCount();
+    const size_t fillOrigin[3] = {imageWidth - 1u, 0u, 0u};
+    const size_t fillRegion[3] = {2u, 1u, 1u};
+
+    cl_sync_point_khr syncPoint = 7u;
+    EXPECT_EQ(CL_INVALID_VALUE, clCommandFillImageKHR(commandBuffer, nullptr, nullptr, imageFromBuffer, fillColor, fillOrigin, fillRegion, 0u, nullptr, &syncPoint, nullptr));
+    EXPECT_EQ(7u, syncPoint);
+    EXPECT_EQ(0u, recordedCmdList.appendMemoryFillArgs.count());
+    EXPECT_EQ(0u, recordedCmdList.appendLaunchKernelArgs.count());
+    EXPECT_EQ(refCount, pImage->getRefInternalCount());
+
+    releaseCommandBuffer();
+    clReleaseMemObject(imageFromBuffer);
+}
+
+TEST_F(LeoCommandBufferImageTest, givenFillRegionOutsideImageWhenRecordingFillImageThenInvalidValueIsReturnedAndNothingIsRecorded) {
+    auto pDstImage = castToObject<Image>(dstImage);
+    const auto refCount = pDstImage->getRefInternalCount();
+    const size_t fillOrigin[3] = {0u, imageHeight - 1u, 0u};
+    const size_t fillRegion[3] = {1u, 2u, 1u};
+
+    cl_sync_point_khr syncPoint = 7u;
+    EXPECT_EQ(CL_INVALID_VALUE, clCommandFillImageKHR(commandBuffer, nullptr, nullptr, dstImage, fillColor, fillOrigin, fillRegion, 0u, nullptr, &syncPoint, nullptr));
+    EXPECT_EQ(7u, syncPoint);
+    EXPECT_EQ(0u, recordedCmdList.appendLaunchKernelArgs.count());
+    EXPECT_EQ(refCount, pDstImage->getRefInternalCount());
+}
+
 TEST_F(LeoCommandBufferImageTest, givenAppendFailureWhenRecordingImageCommandsThenErrorIsReturnedAndObjectsAreNotRetained) {
     auto pSrcImage = castToObject<Image>(srcImage);
     auto pDstImage = castToObject<Image>(dstImage);

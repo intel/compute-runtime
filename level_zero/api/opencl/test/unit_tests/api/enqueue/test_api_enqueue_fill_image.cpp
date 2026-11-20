@@ -68,7 +68,7 @@ HWTEST2_F(LeoEnqueueFillImageTest, givenMipMappedImageWhenEnqueueFillImageThenMi
 
     const uint32_t fillColor[4] = {1u, 2u, 3u, 4u};
     const size_t origin[3] = {1u, 1u, mipLevel};
-    const size_t region[3] = {4u, 4u, 1u};
+    const size_t region[3] = {(imageWidth >> mipLevel) - 1u, (imageHeight >> mipLevel) - 1u, 1u};
 
     auto retVal = clEnqueueFillImage(getCommandQueue(), image, fillColor, origin, region, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -97,6 +97,61 @@ HWTEST2_F(LeoEnqueueFillImageTest, givenImageWithoutMipMapsWhenEnqueueFillImageT
 
     const std::array<uint32_t, 4> expectedDstOffset{2u, 3u, 0u, 0u};
     EXPECT_EQ(expectedDstOffset, recordingKernel->dstOffset);
+
+    clReleaseMemObject(image);
+}
+
+HWTEST2_F(LeoEnqueueFillImageTest, givenFillRegionOutsideImageWhenEnqueueFillImageThenInvalidValueIsReturnedAndNothingIsAppended, ImageSupport) {
+    auto image = createImage2d(0u);
+    ASSERT_EQ(CL_SUCCESS, createImageResult);
+    ASSERT_NE(nullptr, image);
+
+    const uint32_t fillColor[4] = {1u, 2u, 3u, 4u};
+    const size_t origin[3] = {0u, imageHeight - 1u, 0u};
+    const size_t region[3] = {1u, 2u, 1u};
+    capturingCmdList.clearCaptures();
+
+    cl_event event = nullptr;
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueFillImage(getCommandQueue(), image, fillColor, origin, region, 0, nullptr, &event));
+    EXPECT_EQ(nullptr, event);
+    EXPECT_EQ(0u, capturingCmdList.appendLaunchKernelArgs.count());
+
+    clReleaseMemObject(image);
+}
+
+HWTEST2_F(LeoEnqueueFillImageTest, givenRegionInsideBaseLevelButOutsideSelectedMipLevelWhenEnqueueFillImageThenInvalidValueIsReturnedAndNothingIsAppended, ImageSupport) {
+    constexpr cl_uint numMipLevels = 4u;
+    constexpr size_t mipLevel = 2u;
+
+    auto image = createImage2d(numMipLevels);
+    ASSERT_EQ(CL_SUCCESS, createImageResult);
+    ASSERT_NE(nullptr, image);
+
+    const uint32_t fillColor[4] = {1u, 2u, 3u, 4u};
+    const size_t origin[3] = {imageWidth >> mipLevel, 0u, mipLevel};
+    const size_t region[3] = {1u, 1u, 1u};
+    capturingCmdList.clearCaptures();
+
+    EXPECT_EQ(CL_INVALID_VALUE, clEnqueueFillImage(getCommandQueue(), image, fillColor, origin, region, 0, nullptr, nullptr));
+    EXPECT_EQ(0u, capturingCmdList.appendLaunchKernelArgs.count());
+
+    clReleaseMemObject(image);
+}
+
+HWTEST2_F(LeoEnqueueFillImageTest, givenMipLevelNotPresentInImageWhenEnqueueFillImageThenInvalidMipLevelIsReturnedAndNothingIsAppended, ImageSupport) {
+    constexpr cl_uint numMipLevels = 4u;
+
+    auto image = createImage2d(numMipLevels);
+    ASSERT_EQ(CL_SUCCESS, createImageResult);
+    ASSERT_NE(nullptr, image);
+
+    const uint32_t fillColor[4] = {1u, 2u, 3u, 4u};
+    const size_t origin[3] = {0u, 0u, numMipLevels};
+    const size_t region[3] = {1u, 1u, 1u};
+    capturingCmdList.clearCaptures();
+
+    EXPECT_EQ(CL_INVALID_MIP_LEVEL, clEnqueueFillImage(getCommandQueue(), image, fillColor, origin, region, 0, nullptr, nullptr));
+    EXPECT_EQ(0u, capturingCmdList.appendLaunchKernelArgs.count());
 
     clReleaseMemObject(image);
 }

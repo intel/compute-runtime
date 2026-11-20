@@ -23,6 +23,7 @@
 #include "level_zero/api/opencl/source/sampler/leo_sampler.h"
 
 #include <algorithm>
+#include <array>
 
 namespace NEO {
 namespace LEO {
@@ -267,7 +268,49 @@ cl_int validateImageDescriptor(const ClDevice &device,
     return CL_SUCCESS;
 }
 
+constexpr bool isRangeInsideDimension(size_t origin, size_t size, size_t dimension) noexcept {
+    return origin <= dimension && size <= dimension - origin;
+}
+
+std::array<size_t, 3> getImageExtentInPixels(const cl_image_desc &imageDesc, size_t mipLevel) noexcept {
+    auto atMipLevel = [mipLevel](size_t dimension) {
+        return mipLevel < static_cast<size_t>(std::numeric_limits<size_t>::digits) ? std::max<size_t>(dimension >> mipLevel, 1u) : size_t{1u};
+    };
+    switch (imageDesc.image_type) {
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        return {atMipLevel(imageDesc.image_width), imageDesc.image_array_size, 1u};
+    case CL_MEM_OBJECT_IMAGE2D:
+        return {atMipLevel(imageDesc.image_width), atMipLevel(imageDesc.image_height), 1u};
+    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+        return {atMipLevel(imageDesc.image_width), atMipLevel(imageDesc.image_height), imageDesc.image_array_size};
+    case CL_MEM_OBJECT_IMAGE3D:
+        return {atMipLevel(imageDesc.image_width), atMipLevel(imageDesc.image_height), atMipLevel(imageDesc.image_depth)};
+    default:
+        return {atMipLevel(imageDesc.image_width), 1u, 1u};
+    }
+}
+
 } // namespace
+
+cl_int validateImageRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imageDesc) noexcept {
+    if (!origin || !region) {
+        return CL_INVALID_VALUE;
+    }
+    const bool isMipMapped = imageDesc.num_mip_levels > 1u;
+    const auto mipLevelOriginIndex = getMipLevelOriginIndex(imageDesc.image_type);
+    const size_t mipLevel = isMipMapped ? origin[mipLevelOriginIndex] : 0u;
+    if (mipLevel >= std::max<size_t>(imageDesc.num_mip_levels, 1u)) {
+        return CL_INVALID_MIP_LEVEL;
+    }
+    const auto extent = getImageExtentInPixels(imageDesc, mipLevel);
+    for (uint32_t dimension = 0u; dimension < extent.size(); dimension++) {
+        const size_t pixelOrigin = (isMipMapped && dimension == mipLevelOriginIndex) ? 0u : origin[dimension];
+        if (region[dimension] == 0u || !isRangeInsideDimension(pixelOrigin, region[dimension], extent[dimension])) {
+            return CL_INVALID_VALUE;
+        }
+    }
+    return CL_SUCCESS;
+}
 
 cl_int validateImageFormat(const cl_image_format *imageFormat) noexcept {
     if (!imageFormat) {

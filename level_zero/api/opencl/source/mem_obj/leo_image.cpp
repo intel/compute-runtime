@@ -336,6 +336,37 @@ size_t Image::getRowPitchForImageFromBuffer(cl_mem_flags flags, const cl_image_f
     return imageDesc->image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
 }
 
+cl_image_desc Image::getClImageDesc() {
+    const auto &imgInfo = getL0Object()->getImageInfo();
+    const auto imageType = imgInfo.imgDesc.imageType;
+    auto getBaseMipLevelDimension = [&imgInfo](size_t dimension) {
+        if ((dimension == 0) || (imgInfo.baseMipLevel == 0)) {
+            return dimension;
+        }
+        return std::max(dimension >> imgInfo.baseMipLevel, static_cast<size_t>(1));
+    };
+
+    cl_image_desc clImageDesc{};
+    clImageDesc.image_type = this->getClObjectType();
+    clImageDesc.image_width = getBaseMipLevelDimension(imgInfo.imgDesc.imageWidth);
+    clImageDesc.image_height = getBaseMipLevelDimension(imgInfo.imgDesc.imageHeight * !((imageType == ImageType::image1D) ||
+                                                                                        (imageType == ImageType::image1DArray) ||
+                                                                                        (imageType == ImageType::image1DBuffer)));
+    clImageDesc.image_depth = getBaseMipLevelDimension(imgInfo.imgDesc.imageDepth * (imageType == ImageType::image3D));
+    clImageDesc.image_array_size = imgInfo.imgDesc.imageArraySize * ((imageType == ImageType::image1DArray) ||
+                                                                     (imageType == ImageType::image2DArray));
+    clImageDesc.num_mip_levels = static_cast<cl_uint>(imgInfo.imgDesc.numMipLevels);
+    clImageDesc.num_samples = static_cast<cl_uint>(imgInfo.imgDesc.numSamples);
+    if (clImageDesc.num_samples > 1) {
+        clImageDesc.image_row_pitch = imgInfo.imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes * clImageDesc.num_samples;
+    } else {
+        clImageDesc.image_row_pitch = this->getHostRowPitch();
+    }
+    clImageDesc.image_slice_pitch = this->getHostSlicePitch();
+    clImageDesc.mem_object = static_cast<cl_mem>(this->associatedMemObject);
+    return clImageDesc;
+}
+
 cl_int Image::getImageInfo(cl_image_info paramName,
                            size_t paramValueSize,
                            void *paramValue,
@@ -344,44 +375,8 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     size_t srcParamSize = GetInfo::invalidSourceSize;
     void *srcParam = nullptr;
 
-    auto imgInfo = getL0Object()->getImageInfo();
-    size_t arraySize = imgInfo.imgDesc.imageArraySize * (imgInfo.imgDesc.imageType == ImageType::image1DArray ||
-                                                         imgInfo.imgDesc.imageType == ImageType::image2DArray);
-    size_t elementSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
-    cl_uint numSamples = static_cast<cl_uint>(imgInfo.imgDesc.numSamples);
-    cl_uint numMipLevels = static_cast<cl_uint>(imgInfo.imgDesc.numMipLevels);
-
-    size_t imageWidth = imgInfo.imgDesc.imageWidth;
-    if (imgInfo.baseMipLevel) {
-        imageWidth >>= imgInfo.baseMipLevel;
-        imageWidth = std::max(imageWidth, static_cast<size_t>(1));
-    }
-
-    size_t imageHeight = imgInfo.imgDesc.imageHeight * !((imgInfo.imgDesc.imageType == ImageType::image1D) ||
-                                                         (imgInfo.imgDesc.imageType == ImageType::image1DArray) ||
-                                                         (imgInfo.imgDesc.imageType == ImageType::image1DBuffer));
-
-    if ((imageHeight != 0) && (imgInfo.baseMipLevel > 0)) {
-        imageHeight >>= imgInfo.baseMipLevel;
-        imageHeight = std::max(imageHeight, static_cast<size_t>(1));
-    }
-
-    size_t imageDepth = imgInfo.imgDesc.imageDepth * (imgInfo.imgDesc.imageType == ImageType::image3D);
-    if ((imageDepth != 0) && (imgInfo.baseMipLevel > 0)) {
-        imageDepth >>= imgInfo.baseMipLevel;
-        imageDepth = std::max(imageDepth, static_cast<size_t>(1));
-    }
-
-    size_t rowPitch;
-    if (numSamples > 1) {
-        rowPitch = imgInfo.imgDesc.imageWidth * elementSize * numSamples;
-    } else {
-        rowPitch = this->getHostRowPitch();
-    }
-
-    size_t slicePitch = this->getHostSlicePitch();
-
-    cl_mem bufferMem = static_cast<cl_mem>(this->associatedMemObject);
+    auto clImageDesc = this->getClImageDesc();
+    size_t elementSize = getL0Object()->getImageInfo().surfaceFormat->imageElementSizeInBytes;
     std::vector<ze_image_handle_t> l0Handles{};
 
     switch (paramName) {
@@ -397,47 +392,47 @@ cl_int Image::getImageInfo(cl_image_info paramName,
 
     case CL_IMAGE_ROW_PITCH:
         srcParamSize = sizeof(size_t);
-        srcParam = &rowPitch;
+        srcParam = &clImageDesc.image_row_pitch;
         break;
 
     case CL_IMAGE_SLICE_PITCH:
         srcParamSize = sizeof(size_t);
-        srcParam = &slicePitch;
+        srcParam = &clImageDesc.image_slice_pitch;
         break;
 
     case CL_IMAGE_WIDTH:
         srcParamSize = sizeof(size_t);
-        srcParam = &imageWidth;
+        srcParam = &clImageDesc.image_width;
         break;
 
     case CL_IMAGE_HEIGHT:
         srcParamSize = sizeof(size_t);
-        srcParam = &imageHeight;
+        srcParam = &clImageDesc.image_height;
         break;
 
     case CL_IMAGE_DEPTH:
         srcParamSize = sizeof(size_t);
-        srcParam = &imageDepth;
+        srcParam = &clImageDesc.image_depth;
         break;
 
     case CL_IMAGE_ARRAY_SIZE:
         srcParamSize = sizeof(size_t);
-        srcParam = &(arraySize);
+        srcParam = &clImageDesc.image_array_size;
         break;
 
     case CL_IMAGE_BUFFER:
         srcParamSize = sizeof(cl_mem);
-        srcParam = &bufferMem;
+        srcParam = &clImageDesc.mem_object;
         break;
 
     case CL_IMAGE_NUM_MIP_LEVELS:
         srcParamSize = sizeof(cl_uint);
-        srcParam = &numMipLevels;
+        srcParam = &clImageDesc.num_mip_levels;
         break;
 
     case CL_IMAGE_NUM_SAMPLES:
         srcParamSize = sizeof(cl_uint);
-        srcParam = &numSamples;
+        srcParam = &clImageDesc.num_samples;
         break;
 
     case CL_IMAGE_L0_HANDLE_INTEL:
