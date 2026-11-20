@@ -179,6 +179,41 @@ TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupported
     EXPECT_EQ(1u, mockHwContext1->deviceIndex);
 }
 
+TEST_F(HardwareContextContainerTests, givenAdditionalMmioListWhenInitializingHwContextsThenAdditionalMmiosAreWrittenAfterInitialization) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AubDumpAddMmioRegistersList.set("0x1A09C;0x10001000;0x2000;0x5");
+
+    MockAubManager aubManager;
+    MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor(0b11));
+    HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    hwContextContainer.createHardwareContexts(aubManager);
+    ASSERT_EQ(2u, hwContextContainer.hardwareContexts.size());
+
+    hwContextContainer.initialize();
+
+    auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
+    auto mockHwContext1 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[1].get());
+    const std::vector<std::pair<uint32_t, uint32_t>> expectedMmios = {{0x1A09Cu, 0x10001000u}, {0x2000u, 0x5u}};
+    EXPECT_TRUE(mockHwContext0->initializeCalled);
+    EXPECT_TRUE(mockHwContext1->initializeCalled);
+    EXPECT_EQ(expectedMmios, mockHwContext0->writtenMmios);
+    EXPECT_TRUE(mockHwContext0->initializedBeforeWriteMMIO);
+    EXPECT_TRUE(mockHwContext1->writtenMmios.empty());
+}
+
+TEST_F(HardwareContextContainerTests, givenNoAdditionalMmioListWhenInitializingHwContextsThenNoMmioIsWritten) {
+    MockAubManager aubManager;
+    MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor());
+    HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    hwContextContainer.createHardwareContexts(aubManager);
+
+    hwContextContainer.initialize();
+
+    auto mockHwContext0 = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
+    EXPECT_TRUE(mockHwContext0->initializeCalled);
+    EXPECT_FALSE(mockHwContext0->writeMMIOCalled);
+}
+
 TEST_F(HardwareContextContainerTests, givenSingleHwContextWhenSubmitMethodIsCalledOnHwContextControllerThenSubmitIsCalled) {
     MockAubManager aubManager;
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor());

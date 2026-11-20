@@ -30,6 +30,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <memory>
 #include <unordered_map>
 
@@ -298,7 +299,10 @@ TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCr
     device.createSubDevices();
     device.createEngines();
     EXPECT_EQ(2u, device.getNumGenericSubDevices());
-    EXPECT_EQ(1u, device.allEngines.size());
+    EXPECT_EQ(1, std::count_if(device.allEngines.begin(), device.allEngines.end(), [](const EngineControl &engine) { return engine.osContext->isRegular(); }));
+    for (auto &engine : device.allEngines) {
+        EXPECT_TRUE(engine.osContext->isRootDevice());
+    }
 }
 
 TEST(SubDevicesTest, givenRootDeviceWithSubDevicesAndLocalMemoryWhenGettingGlobalMemorySizeThenSubDevicesReturnReducedAmountOfGlobalMemAllocSize) {
@@ -356,8 +360,8 @@ struct DeviceTests : public ::testing::Test {
     }
 
     bool hasRootCsrOnly(MockDevice *device) {
-        return ((device->allEngines.size() == 1) &&
-                device->allEngines[0].osContext->isRootDevice());
+        return !device->allEngines.empty() &&
+               std::all_of(device->allEngines.begin(), device->allEngines.end(), [](const EngineControl &engine) { return engine.osContext->isRootDevice(); });
     }
 
     template <typename MockDeviceT>

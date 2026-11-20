@@ -390,6 +390,11 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesRequiredForDebugger() con
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isLowPriorityContextGroupSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
     return false;
 }

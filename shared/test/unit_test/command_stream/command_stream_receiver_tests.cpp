@@ -7658,23 +7658,17 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenContextGroupWhenCreatingEng
     device->getExecutionEnvironment()->calculateMaxOsContextCount();
 
     auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    uint32_t numRegularEngines = 0;
-    uint32_t numHpEngines = 0;
+    uint32_t numContextGroupEngines = 0;
 
     for (const auto &engine : engineInstances) {
-        if (engine.second == EngineUsage::regular) {
-            numRegularEngines++;
-        }
-        if (engine.second == EngineUsage::highPriority) {
-            numHpEngines++;
+        if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || engine.second == EngineUsage::lowPriority) {
+            numContextGroupEngines++;
         }
     }
 
-    auto nonGroupCount = static_cast<uint32_t>(engineInstances.size()) - numRegularEngines - numHpEngines;
+    auto nonGroupCount = static_cast<uint32_t>(engineInstances.size()) - numContextGroupEngines;
 
-    auto osContextCount = nonGroupCount +
-                          (numRegularEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) +
-                          (numHpEngines * device->getGfxCoreHelper().getContextGroupContextsCount());
+    auto osContextCount = nonGroupCount + (numContextGroupEngines * device->getGfxCoreHelper().getContextGroupContextsCount());
 
     EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
 }
@@ -7701,25 +7695,19 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenMultipleSubDevicesAndContex
     device->getExecutionEnvironment()->calculateMaxOsContextCount();
 
     auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    uint32_t numRegularEngines = 0;
-    uint32_t numHpEngines = 0;
+    uint32_t numContextGroupEngines = 0;
 
     for (const auto &engine : engineInstances) {
-        if (engine.second == EngineUsage::regular) {
-            numRegularEngines++;
-        }
-        if (engine.second == EngineUsage::highPriority) {
-            numHpEngines++;
+        if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || engine.second == EngineUsage::lowPriority) {
+            numContextGroupEngines++;
         }
     }
 
-    auto nonGroupCount = static_cast<uint32_t>(engineInstances.size()) - numRegularEngines - numHpEngines;
+    auto nonGroupCount = static_cast<uint32_t>(engineInstances.size()) - numContextGroupEngines;
 
-    auto osContextCount = nonGroupCount +
-                          (numRegularEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) +
-                          (numHpEngines * device->getGfxCoreHelper().getContextGroupContextsCount());
+    auto osContextCount = nonGroupCount + (numContextGroupEngines * device->getGfxCoreHelper().getContextGroupContextsCount());
 
-    osContextCount = osContextCount * 2 + 1 * device->getGfxCoreHelper().getContextGroupContextsCount();
+    osContextCount = osContextCount * 2 + 2 * device->getGfxCoreHelper().getContextGroupContextsCount();
 
     EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
 }

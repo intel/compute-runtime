@@ -4059,6 +4059,54 @@ HWTEST_F(CommandQueueSecondaryContextOwnershipTest, givenLowPriorityQueueWhenEng
     }
 }
 
+HWTEST_F(CommandQueueSecondaryContextOwnershipTest, givenTwoLiveLowPriorityQueuesWhenCreatedThenDifferentSecondaryContextsFromLowPriorityGroupAreAssigned) {
+    cl_queue_properties lowPriorityProps[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+
+    auto &mockDevice = static_cast<MockDevice &>(clDevice->getDevice());
+    if (!mockDevice.getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+    auto lowPriorityEnginesIt = mockDevice.lowPrioritySecondaryEngines.find(aub_stream::ENGINE_CCS);
+    ASSERT_NE(mockDevice.lowPrioritySecondaryEngines.end(), lowPriorityEnginesIt);
+    auto &lowPriorityEngines = lowPriorityEnginesIt->second;
+    ASSERT_LE(2u, lowPriorityEngines.engines.size());
+    {
+        MockCommandQueueHw<FamilyType> firstQueue(context.get(), clDevice.get(), lowPriorityProps);
+        MockCommandQueueHw<FamilyType> secondQueue(context.get(), clDevice.get(), lowPriorityProps);
+        auto firstCsr = &firstQueue.getGpgpuCommandStreamReceiver();
+        auto secondCsr = &secondQueue.getGpgpuCommandStreamReceiver();
+
+        EXPECT_NE(firstCsr, secondCsr);
+        EXPECT_EQ(lowPriorityEngines.engines[0].commandStreamReceiver, firstCsr);
+        EXPECT_EQ(lowPriorityEngines.engines[1].commandStreamReceiver, secondCsr);
+        EXPECT_TRUE(firstCsr->getOsContext().isLowPriority());
+        EXPECT_TRUE(secondCsr->getOsContext().isLowPriority());
+        EXPECT_TRUE(firstQueue.gpgpuQueueOwnershipTaken);
+        EXPECT_TRUE(secondQueue.gpgpuQueueOwnershipTaken);
+        EXPECT_EQ(1u, firstCsr->getOwningQueueCount());
+        EXPECT_EQ(1u, secondCsr->getOwningQueueCount());
+    }
+
+    for (auto &engine : lowPriorityEngines.engines) {
+        EXPECT_EQ(0u, engine.commandStreamReceiver->getOwningQueueCount());
+    }
+}
+
+HWTEST_F(CommandQueueSecondaryContextOwnershipTest, givenLowPriorityEngineNotPartOfContextGroupWhenCreatingLowPriorityQueueThenStandaloneLowPriorityEngineIsUsedWithoutOwnership) {
+    cl_queue_properties lowPriorityProps[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+
+    auto lowPriorityEngine = clDevice->getDevice().tryGetEngine(getChosenEngineType(clDevice->getHardwareInfo()), EngineUsage::lowPriority);
+    ASSERT_NE(nullptr, lowPriorityEngine);
+    const auto contextGroupCount = lowPriorityEngine->osContext->getContextGroupCount();
+    lowPriorityEngine->osContext->setContextGroupCount(0);
+    {
+        MockCommandQueueHw<FamilyType> queue(context.get(), clDevice.get(), lowPriorityProps);
+        EXPECT_EQ(lowPriorityEngine->commandStreamReceiver, &queue.getGpgpuCommandStreamReceiver());
+        EXPECT_FALSE(queue.gpgpuQueueOwnershipTaken);
+    }
+    lowPriorityEngine->osContext->setContextGroupCount(contextGroupCount);
+}
+
 HWTEST_F(CommandQueueSecondaryContextOwnershipTest, givenInternalQueueWhenEngineIsOverwrittenThenPreviousOwnershipIsReleased) {
     cl_queue_properties internalProps[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto &secondaryEngines = static_cast<MockDevice &>(clDevice->getDevice()).secondaryEngines[aub_stream::ENGINE_CCS];

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
@@ -22,6 +23,7 @@
 #include "hw_cmds_default.h"
 
 #include <memory>
+#include <set>
 
 namespace NEO {
 class MockDevice;
@@ -129,8 +131,15 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
                 mock->ioctlExpected.gemClose += 1;
                 mock->ioctlExpected.gemWait += 1;
             }
-            mock->ioctlExpected.gemClose += 1;
-            mock->ioctlExpected.gemWait += 1;
+            std::set<BufferObject *> commandBufferBos;
+            for (auto &engine : device->getAllEngines()) {
+                auto commandBuffer = static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(engine.commandStreamReceiver)->commandStream.getGraphicsAllocation();
+                if (commandBuffer != nullptr) {
+                    commandBufferBos.insert(static_cast<DrmAllocation *>(commandBuffer)->getBO());
+                }
+            }
+            mock->ioctlExpected.gemClose += static_cast<int>(commandBufferBos.size());
+            mock->ioctlExpected.gemWait += static_cast<int>(commandBufferBos.size());
         }
 
         mock->ioctlExpected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();

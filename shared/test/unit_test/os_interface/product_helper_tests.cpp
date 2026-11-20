@@ -1249,6 +1249,11 @@ HWTEST2_F(ProductHelperTest, givenProductHelperBeforeXe2WhenOverrideDirectSubmis
     EXPECT_EQ(5000ull, timeoutUs);
 }
 
+TEST(ProductHelperDefaultTest, givenDefaultProductHelperWhenCheckingLowPriorityContextGroupSupportThenTrueIsReturned) {
+    auto productHelper = ProductHelperHw<IGFX_UNKNOWN>::create();
+    EXPECT_TRUE(productHelper->isLowPriorityContextGroupSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingIsPrimaryContextsAggregationSupportedThenReturnCorrectValue) {
     EXPECT_FALSE(productHelper->isPrimaryContextsAggregationSupported());
 }

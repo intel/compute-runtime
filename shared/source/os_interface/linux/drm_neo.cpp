@@ -2297,6 +2297,10 @@ uint32_t Drm::getAggregatedProcessCount() const {
     return ioctlHelper->getNumProcesses();
 }
 
+bool Drm::isLowPriorityContextGroupSupported() const {
+    return ioctlHelper->isLowPriorityContextGroupSupported();
+}
+
 uint32_t Drm::getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const {
     auto osContextLinux = static_cast<const OsContextLinux *>(&osContext);
     return osContextLinux->getDrmVmIds().size() > 0 ? osContextLinux->getDrmVmIds()[vmHandleId] : getVirtualMemoryAddressSpace(vmHandleId);

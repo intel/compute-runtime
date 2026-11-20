@@ -2228,13 +2228,12 @@ void IoctlHelperXe::setOptionalContextProperties(const OsContextLinux &osContext
 }
 
 void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut) {
-    DEBUG_BREAK_IF(osContext.isLowPriority() && osContext.isPartOfContextGroup());
-
     auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
 
     XELOG(" -> IoctlHelperXe::%s\n", NEO_FUNCTION_NAME);
 
-    if (osContext.isLowPriority()) {
+    const bool isPrimaryOrStandaloneContext = !osContext.isPartOfContextGroup() || isPrimaryContext(osContext, deviceIndex);
+    if (osContext.isLowPriority() && isPrimaryOrStandaloneContext) {
         UNRECOVERABLE_IF(extIndexInOut >= maxContextSetProperties);
         XELOG(" -> low priority ctx, DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY value = 0\n");
         ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;

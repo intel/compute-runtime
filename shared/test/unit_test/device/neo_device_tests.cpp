@@ -52,6 +52,8 @@
 
 #include "spirv/unified1/spirv.hpp"
 
+#include <set>
+
 using namespace NEO;
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 namespace NEO {
@@ -2525,6 +2527,277 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
     EXPECT_FALSE(secondaryEngines.engines[reservedInternalEngineIndex].osContext->isInitialized());
 }
 
+using LowPriorityContextGroupTests = InternalEngineFromSecondaryContextMultiProcessTests;
+
+HWTEST_F(LowPriorityContextGroupTests, givenContextGroupSupportedWhenDeviceIsCreatedThenLowPriorityEngineIsPrimaryOfSeparateLowPriorityContextGroup) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
+    auto device = createDevice();
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr || !device->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+    EXPECT_TRUE(lowPriorityEngine->osContext->isPartOfContextGroup());
+    EXPECT_TRUE(lowPriorityEngine->osContext->getIsPrimaryEngine());
+    EXPECT_EQ(nullptr, lowPriorityEngine->osContext->getPrimaryContext());
+
+    auto lowPrioritySecondaryEnginesIt = device->lowPrioritySecondaryEngines.find(aub_stream::EngineType::ENGINE_CCS);
+    ASSERT_NE(device->lowPrioritySecondaryEngines.end(), lowPrioritySecondaryEnginesIt);
+    auto &lowPrioritySecondaryEngines = lowPrioritySecondaryEnginesIt->second;
+    ASSERT_EQ(contextGroupSize, lowPrioritySecondaryEngines.engines.size());
+    EXPECT_EQ(contextGroupSize, lowPrioritySecondaryEngines.regularEnginesTotal);
+    EXPECT_EQ(0u, lowPrioritySecondaryEngines.highPriorityEnginesTotal);
+    EXPECT_EQ(0u, lowPrioritySecondaryEngines.internalEngineIndex);
+    EXPECT_EQ(lowPriorityEngine->commandStreamReceiver, lowPrioritySecondaryEngines.engines[0].commandStreamReceiver);
+
+    for (uint32_t i = 1; i < lowPrioritySecondaryEngines.engines.size(); i++) {
+        auto &secondaryOsContext = *lowPrioritySecondaryEngines.engines[i].osContext;
+        EXPECT_TRUE(secondaryOsContext.isLowPriority());
+        EXPECT_TRUE(secondaryOsContext.isPartOfContextGroup());
+        EXPECT_FALSE(secondaryOsContext.isReservedForInternalEngine());
+        EXPECT_EQ(lowPriorityEngine->osContext, secondaryOsContext.getPrimaryContext());
+    }
+
+    auto &regularSecondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    for (auto &regularEngine : regularSecondaryEngines.engines) {
+        EXPECT_FALSE(regularEngine.osContext->isLowPriority());
+    }
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenLowPriorityContextGroupWhenGettingLowPrioritySecondaryEnginesThenEnginesFromLowPriorityGroupAreReturned) {
+    auto device = createDevice();
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr || !device->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+    auto &lowPrioritySecondaryEngines = device->lowPrioritySecondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+
+    std::set<CommandStreamReceiver *> assignedCsrs;
+    for (uint32_t i = 0; i < contextGroupSize; i++) {
+        auto engine = device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority}, std::nullopt);
+        ASSERT_NE(nullptr, engine);
+        EXPECT_EQ(&lowPrioritySecondaryEngines.engines[i], engine);
+        EXPECT_TRUE(engine->osContext->isLowPriority());
+        assignedCsrs.insert(engine->commandStreamReceiver);
+    }
+    EXPECT_EQ(contextGroupSize, assignedCsrs.size());
+
+    auto sharedEngine = device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority}, std::nullopt);
+    ASSERT_NE(nullptr, sharedEngine);
+    EXPECT_TRUE(sharedEngine->osContext->isLowPriority());
+    EXPECT_NE(assignedCsrs.end(), assignedCsrs.find(sharedEngine->commandStreamReceiver));
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenNoLowPriorityContextGroupForEngineTypeWhenGettingLowPrioritySecondaryEngineThenNullptrIsReturned) {
+    auto device = createDevice();
+
+    EXPECT_FALSE(device->lowPrioritySecondaryEngines.contains(aub_stream::EngineType::ENGINE_CCS3));
+    EXPECT_EQ(nullptr, device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS3, EngineUsage::lowPriority}, std::nullopt));
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenContextGroupNotSupportedWhenDeviceIsCreatedThenLowPriorityEngineIsNotPartOfContextGroup) {
+    debugManager.flags.ContextGroupSize.set(0);
+    auto device = createDevice();
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr) {
+        GTEST_SKIP();
+    }
+    EXPECT_FALSE(lowPriorityEngine->osContext->isPartOfContextGroup());
+    EXPECT_FALSE(lowPriorityEngine->osContext->getIsPrimaryEngine());
+    EXPECT_TRUE(device->lowPrioritySecondaryEngines.empty());
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenComputeEngineExcludedFromSecondaryContextsWhenDeviceIsCreatedThenLowPriorityComputeEngineIsNotPartOfContextGroup) {
+    debugManager.flags.SecondaryContextEngineTypeMask.set(~(1 << static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS)));
+    auto device = createDevice();
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr) {
+        GTEST_SKIP();
+    }
+    EXPECT_FALSE(lowPriorityEngine->osContext->isPartOfContextGroup());
+    EXPECT_FALSE(device->lowPrioritySecondaryEngines.contains(aub_stream::EngineType::ENGINE_CCS));
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenMultipleProcessesWhenDeviceIsCreatedThenLowPriorityContextGroupSizeIsReduced) {
+    constexpr uint32_t processCount = 4;
+    auto device = createDeviceForProcessCount(processCount);
+    ASSERT_NE(nullptr, device);
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr || !device->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+    auto &lowPrioritySecondaryEngines = device->lowPrioritySecondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    EXPECT_EQ(fullContextGroupSize / processCount, lowPrioritySecondaryEngines.engines.size());
+    EXPECT_EQ(fullContextGroupSize / processCount, lowPrioritySecondaryEngines.regularEnginesTotal);
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenMultipleSubDevicesWhenRootDeviceIsCreatedThenRootLowPriorityEngineIsPrimaryOfLowPriorityContextGroup) {
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    ASSERT_NE(nullptr, device);
+    if (!device->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    ASSERT_NE(nullptr, lowPriorityEngine);
+    EXPECT_TRUE(lowPriorityEngine->osContext->isRootDevice());
+    EXPECT_TRUE(lowPriorityEngine->osContext->isPartOfContextGroup());
+
+    auto lowPrioritySecondaryEnginesIt = device->lowPrioritySecondaryEngines.find(aub_stream::EngineType::ENGINE_CCS);
+    ASSERT_NE(device->lowPrioritySecondaryEngines.end(), lowPrioritySecondaryEnginesIt);
+    auto &lowPrioritySecondaryEngines = lowPrioritySecondaryEnginesIt->second;
+    ASSERT_EQ(contextGroupSize, lowPrioritySecondaryEngines.engines.size());
+    EXPECT_EQ(lowPriorityEngine->commandStreamReceiver, lowPrioritySecondaryEngines.engines[0].commandStreamReceiver);
+    for (uint32_t i = 1; i < lowPrioritySecondaryEngines.engines.size(); i++) {
+        EXPECT_TRUE(lowPrioritySecondaryEngines.engines[i].osContext->isLowPriority());
+        EXPECT_TRUE(lowPrioritySecondaryEngines.engines[i].osContext->isRootDevice());
+    }
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenMultipleSubDevicesAndContextGroupNotSupportedWhenRootDeviceIsCreatedThenRootLowPriorityEngineIsNotCreated) {
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.ContextGroupSize.set(0);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    ASSERT_NE(nullptr, device);
+
+    EXPECT_EQ(nullptr, device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority));
+    EXPECT_TRUE(device->lowPrioritySecondaryEngines.empty());
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenMultipleSubDevicesAndImplicitScalingEnabledWhenRootDeviceIsCreatedThenRootLowPriorityEngineIsNotCreated) {
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(1);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    ASSERT_NE(nullptr, device);
+
+    EXPECT_EQ(nullptr, device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority));
+    EXPECT_TRUE(device->lowPrioritySecondaryEngines.empty());
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenOsInterfaceNotSupportingLowPriorityContextGroupWhenDeviceIsCreatedThenLowPriorityEngineIsNotPartOfContextGroup) {
+    executionEnvironment = new MockExecutionEnvironment(&hwInfo, false, 1);
+    executionEnvironment->incRefInternal();
+    auto osInterface = new MockOsInterface();
+    osInterface->setDriverModel(std::make_unique<MockDriverModel>());
+    osInterface->lowPriorityContextGroupSupported = false;
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+    ASSERT_NE(nullptr, device);
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr) {
+        GTEST_SKIP();
+    }
+    EXPECT_FALSE(lowPriorityEngine->osContext->isPartOfContextGroup());
+    EXPECT_FALSE(lowPriorityEngine->osContext->getIsPrimaryEngine());
+    EXPECT_TRUE(device->lowPrioritySecondaryEngines.empty());
+    EXPECT_FALSE(device->secondaryEngines.empty());
+}
+
+HWTEST2_PRODUCT_F(LowPriorityContextGroupTests, givenProductHelperNotSupportingLowPriorityContextGroupWhenDeviceIsCreatedThenLowPriorityEngineIsNotPartOfContextGroup, MatchAny) {
+    struct ProductHelperWithoutLowPriorityContextGroup : ProductHelperHw<productFamily> {
+        bool isLowPriorityContextGroupSupported() const override {
+            return false;
+        }
+    };
+
+    executionEnvironment = new MockExecutionEnvironment(&hwInfo, false, 1);
+    executionEnvironment->incRefInternal();
+    RAIIProductHelperFactory<ProductHelperWithoutLowPriorityContextGroup> raiiProductHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+    ASSERT_NE(nullptr, device);
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr) {
+        GTEST_SKIP();
+    }
+    EXPECT_FALSE(lowPriorityEngine->osContext->isPartOfContextGroup());
+    EXPECT_FALSE(lowPriorityEngine->osContext->getIsPrimaryEngine());
+    EXPECT_TRUE(device->lowPrioritySecondaryEngines.empty());
+    EXPECT_FALSE(device->secondaryEngines.empty());
+}
+
+template <typename GfxFamily>
+struct FirstSubmissionOrderRecordingCsr : public UltCommandStreamReceiver<GfxFamily> {
+    using UltCommandStreamReceiver<GfxFamily>::UltCommandStreamReceiver;
+
+    SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) override {
+        if (firstSubmissionOrder == 0) {
+            firstSubmissionOrder = ++firstSubmissionsCount;
+        }
+        return UltCommandStreamReceiver<GfxFamily>::initializeDeviceWithFirstSubmission(device);
+    }
+
+    uint32_t firstSubmissionOrder = 0;
+    static inline uint32_t firstSubmissionsCount = 0;
+};
+
+HWTEST_F(LowPriorityContextGroupTests, givenLowPriorityContextGroupWhenDeviceIsCreatedThenLowPriorityPrimaryIsInitializedBeforeRegularEngine) {
+    using RecordingCsr = FirstSubmissionOrderRecordingCsr<FamilyType>;
+    VariableBackup<uint32_t> firstSubmissionsCountBackup(&RecordingCsr::firstSubmissionsCount, 0u);
+    EnvironmentWithCsrWrapper environment;
+    environment.setCsrType<RecordingCsr>();
+
+    auto device = createDevice();
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr || !device->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+    auto regularEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular);
+    ASSERT_NE(nullptr, regularEngine);
+
+    auto lowPriorityCsr = static_cast<RecordingCsr *>(lowPriorityEngine->commandStreamReceiver);
+    auto regularCsr = static_cast<RecordingCsr *>(regularEngine->commandStreamReceiver);
+    EXPECT_NE(0u, lowPriorityCsr->firstSubmissionOrder);
+    EXPECT_NE(0u, regularCsr->firstSubmissionOrder);
+    EXPECT_LT(lowPriorityCsr->firstSubmissionOrder, regularCsr->firstSubmissionOrder);
+}
+
+HWTEST_F(LowPriorityContextGroupTests, givenExposeSingleDeviceModeWhenRootDeviceIsCreatedThenLowPriorityRootEngineIsPrimaryOfLowPriorityContextGroup) {
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    auto rootExecutionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0);
+    rootExecutionEnvironment->rootDeviceEnvironments[0]->setExposeSingleDeviceMode(true);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, rootExecutionEnvironment, 0));
+    ASSERT_NE(nullptr, device);
+
+    auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
+    if (lowPriorityEngine == nullptr || !device->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+    EXPECT_TRUE(lowPriorityEngine->osContext->isRootDevice());
+    EXPECT_TRUE(lowPriorityEngine->osContext->isPartOfContextGroup());
+    EXPECT_TRUE(lowPriorityEngine->osContext->getIsPrimaryEngine());
+
+    auto lowPrioritySecondaryEnginesIt = device->lowPrioritySecondaryEngines.find(aub_stream::EngineType::ENGINE_CCS);
+    ASSERT_NE(device->lowPrioritySecondaryEngines.end(), lowPrioritySecondaryEnginesIt);
+    auto &lowPrioritySecondaryEngines = lowPrioritySecondaryEnginesIt->second;
+    ASSERT_EQ(contextGroupSize, lowPrioritySecondaryEngines.engines.size());
+    for (uint32_t i = 1; i < lowPrioritySecondaryEngines.engines.size(); i++) {
+        auto &secondaryOsContext = *lowPrioritySecondaryEngines.engines[i].osContext;
+        EXPECT_TRUE(secondaryOsContext.isLowPriority());
+        EXPECT_TRUE(secondaryOsContext.isRootDevice());
+        EXPECT_EQ(lowPriorityEngine->osContext, secondaryOsContext.getPrimaryContext());
+    }
+
+    auto &regularSecondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    ASSERT_FALSE(regularSecondaryEngines.engines.empty());
+    EXPECT_FALSE(regularSecondaryEngines.engines[0].osContext->isLowPriority());
+}
+
 HWTEST_F(DeviceTests, givenRootDeviceWithCCSEngineAndContextGroupSizeEnabledWhenDeviceIsCreatedThenSecondaryEnginesAreCreated) {
     if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
         GTEST_SKIP();
@@ -3505,7 +3778,11 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenDeviceIsDestroyedThenSecondary
     auto secondaryEnginesCount = secondaryEngines.engines.size();
     ASSERT_EQ(5u, secondaryEnginesCount);
     ASSERT_LE(1u, memoryManager->secondaryEngines.size());
-    EXPECT_EQ(secondaryEnginesCount - 1, memoryManager->secondaryEngines[0].size());
+    auto expectedSecondaryContextsCount = secondaryEnginesCount - 1;
+    for (auto &lowPrioritySecondaryEngines : device->lowPrioritySecondaryEngines) {
+        expectedSecondaryContextsCount += lowPrioritySecondaryEngines.second.engines.size() - 1;
+    }
+    EXPECT_EQ(expectedSecondaryContextsCount, memoryManager->secondaryEngines[0].size());
 
     device.reset(nullptr);
 
@@ -4088,10 +4365,13 @@ HWTEST_F(DeviceTests, givenEngineUsageWhenCreatingRootDeviceEngineThenIsPartOfCo
         bool expectedIsPartOfContextGroup;
     };
 
+    MockExecutionEnvironment mockExecutionEnvironment;
+    const bool lowPriorityContextGroupSupported = mockExecutionEnvironment.rootDeviceEnvironments[0]->getProductHelper().isLowPriorityContextGroupSupported();
+
     std::vector<TestCase> testCases = {
         {EngineUsage::regular, true},       // Regular engine should be part of context group
         {EngineUsage::highPriority, false}, // High-priority engine should NOT be part of context group
-        {EngineUsage::lowPriority, false},  // Low-priority engine should NOT be part of context group
+        {EngineUsage::lowPriority, lowPriorityContextGroupSupported},
     };
 
     for (const auto &testCase : testCases) {

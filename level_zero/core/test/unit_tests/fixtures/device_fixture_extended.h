@@ -337,6 +337,15 @@ struct MultiSubDeviceWithContextGroupAndImplicitScalingTest : public MultiSubDev
     HardwareInfo hardwareInfo;
 };
 
+struct DeviceWithoutContextGroupFixture : public DeviceFixture {
+    void setUp() {
+        debugManager.flags.ContextGroupSize.set(0);
+        DeviceFixture::setUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
 struct MultiSubDeviceEnabledImplicitScalingAndSingleDeviceModeTest : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
         debugManager.flags.CreateMultipleSubDevices.set(2);

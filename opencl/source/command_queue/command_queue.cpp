@@ -213,6 +213,16 @@ void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, Eng
     }
 }
 
+void CommandQueue::selectLowPriorityGpgpuEngine() {
+    this->releaseGpgpuQueueOwnership();
+    auto &lowPriorityDevice = this->device->getNearestGenericSubDevice(0)->getDevice();
+    const auto lowPriorityEngineType = getChosenEngineType(this->device->getHardwareInfo());
+    this->gpgpuEngine = &lowPriorityDevice.getEngine(lowPriorityEngineType, EngineUsage::lowPriority);
+    if (this->gpgpuEngine->osContext->isPartOfContextGroup()) {
+        tryAssignSecondaryEngine(lowPriorityDevice, this->gpgpuEngine, {lowPriorityEngineType, EngineUsage::lowPriority}, this->gpgpuQueueOwnershipTaken);
+    }
+}
+
 void CommandQueue::initializeGpgpu() const {
     if (gpgpuEngine == nullptr) {
         static std::mutex mutex;

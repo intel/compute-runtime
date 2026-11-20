@@ -299,6 +299,7 @@ class Drm : public DriverModel {
     std::vector<DataType> query(uint32_t queryId, uint32_t queryItemFlags);
     static std::string getDrmVersion(int fileDescriptor);
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
+    bool isLowPriorityContextGroupSupported() const;
     uint32_t getVmIdForContext(OsContext &osContext, uint32_t vmHandleId) const;
     MOCKABLE_VIRTUAL void setSharedSystemAllocAddressRange(uint64_t value) { this->sharedSystemAllocAddressRange = value; }
     MOCKABLE_VIRTUAL uint64_t getSharedSystemAllocAddressRange() const { return this->sharedSystemAllocAddressRange; }

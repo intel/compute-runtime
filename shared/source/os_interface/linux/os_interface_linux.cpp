@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,13 @@ uint32_t OSInterface::getAggregatedProcessCount() const {
         return driverModel->as<Drm>()->getAggregatedProcessCount();
     }
     return 0;
+}
+
+bool OSInterface::isLowPriorityContextGroupSupported() const {
+    if (driverModel && driverModel->getDriverModelType() == DriverModelType::drm) {
+        return driverModel->as<Drm>()->isLowPriorityContextGroupSupported();
+    }
+    return true;
 }
 
 void OSInterface::registerTrimCallback() {}

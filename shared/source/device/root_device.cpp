@@ -7,6 +7,7 @@
 
 #include "shared/source/device/root_device.h"
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -81,6 +82,12 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     EngineTypeUsage engineTypeUsage = {defaultEngineType, EngineUsage::regular};
 
     createRootDeviceEngine(engineTypeUsage, getDeviceBitfield());
+
+    const bool implicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(getDeviceBitfield(), getGfxCoreHelper().platformSupportsImplicitScaling(getRootDeviceEnvironment()));
+    if (this->isLowPriorityContextGroupSupported() && !implicitScalingEnabled) {
+        EngineTypeUsage lowPriorityEngineTypeUsage = {defaultEngineType, EngineUsage::lowPriority};
+        createRootDeviceEngine(lowPriorityEngineTypeUsage, getDeviceBitfield());
+    }
 }
 
 bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceBitfield deviceBitfield) {
@@ -96,7 +103,8 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
     bool isPrimaryEngine = EngineHelpers::isCcs(engineType);
     DEBUG_BREAK_IF(EngineHelpers::isBcs(engineType));
 
-    isPrimaryEngine &= engineTypeUsage.second == EngineUsage::regular;
+    const bool isLowPriorityPrimaryEngine = engineTypeUsage.second == EngineUsage::lowPriority && this->isLowPriorityContextGroupSupported();
+    isPrimaryEngine &= (engineTypeUsage.second == EngineUsage::regular || isLowPriorityPrimaryEngine);
 
     if (debugManager.flags.SecondaryContextEngineTypeMask.get() != -1) {
         isPrimaryEngine &= (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0;
@@ -126,6 +134,10 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
     EngineControl engine{commandStreamReceivers.back().get(), osContext};
     allEngines.push_back(engine);
     addEngineToEngineGroup(engine);
+
+    if (useContextGroup && osContext->isLowPriority()) {
+        return this->createLowPrioritySecondaryContexts(engine);
+    }
 
     if (useContextGroup) {
         bool hpEngineAvailable = engineTypeUsage.second == EngineUsage::highPriority;

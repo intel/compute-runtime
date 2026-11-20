@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -955,6 +956,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithL
 struct DeferredContextCreationDeviceCreateCommandQueueTest : DeviceCreateCommandQueueTest {
     void SetUp() override {
         debugManager.flags.DeferOsContextInitialization.set(1);
+        debugManager.flags.ContextGroupSize.set(0);
         DeviceCreateCommandQueueTest::SetUp();
     }
 
@@ -1075,14 +1077,16 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescAndWithoutLowPriorityCs
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, device->createCommandQueue(&desc, &commandQueueHandle));
 }
 
+template <int32_t contextGroupSize>
 struct MultiDeviceCreateCommandQueueFixture : MultiDeviceFixture {
     void setUp() {
         debugManager.flags.EnableImplicitScaling.set(false);
+        debugManager.flags.ContextGroupSize.set(contextGroupSize);
         MultiDeviceFixture::setUp();
     }
 };
 
-using MultiDeviceCreateCommandQueueTest = Test<MultiDeviceCreateCommandQueueFixture>;
+using MultiDeviceCreateCommandQueueTest = Test<MultiDeviceCreateCommandQueueFixture<0>>;
 
 TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenLowPriorityCsrIsAssigned) {
     auto device = driverHandle->devices[0];
@@ -1102,6 +1106,39 @@ TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQ
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForLowPriority(&csr, false);
     EXPECT_EQ(commandQueue->getCsr(), csr);
+    commandQueue->destroy();
+}
+
+using MultiDeviceWithContextGroupCreateCommandQueueTest = Test<MultiDeviceCreateCommandQueueFixture<8>>;
+
+TEST_F(MultiDeviceWithContextGroupCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueIsCalledThenSecondaryContextFromRootLowPriorityContextGroupIsAssigned) {
+    auto device = driverHandle->devices[0];
+    auto neoRootDevice = static_cast<NEO::MockDevice *>(device->getNEODevice());
+    auto defaultEngineType = neoRootDevice->getDefaultEngine().getEngineType();
+    if (!NEO::EngineHelpers::isCcs(defaultEngineType) || !neoRootDevice->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+
+    auto rootLowPriorityEngine = neoRootDevice->tryGetEngine(defaultEngineType, NEO::EngineUsage::lowPriority);
+    ASSERT_NE(nullptr, rootLowPriorityEngine);
+    EXPECT_TRUE(rootLowPriorityEngine->osContext->isRootDevice());
+    EXPECT_TRUE(rootLowPriorityEngine->osContext->isPartOfContextGroup());
+    auto lowPrioritySecondaryEnginesIt = neoRootDevice->lowPrioritySecondaryEngines.find(defaultEngineType);
+    ASSERT_NE(neoRootDevice->lowPrioritySecondaryEngines.end(), lowPrioritySecondaryEnginesIt);
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = 0u;
+    desc.index = 0u;
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+
+    ze_command_queue_handle_t commandQueueHandle = {};
+
+    ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
+    ASSERT_NE(commandQueue, nullptr);
+    EXPECT_EQ(lowPrioritySecondaryEnginesIt->second.engines[0].commandStreamReceiver, commandQueue->getCsr());
+    EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
     commandQueue->destroy();
 }
 

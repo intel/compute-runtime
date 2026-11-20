@@ -2053,14 +2053,16 @@ ze_result_t Device::selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         if (contextPriority == NEO::EngineUsage::lowPriority) {
             auto result = getCsrForLowPriority(csr, copyOnly);
             DEBUG_BREAK_IF(result != ZE_RESULT_SUCCESS);
-            return result;
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
+        } else {
+            auto &engines = engineGroups[ordinal].engines;
+            if (index >= engines.size()) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            *csr = engines[index].commandStreamReceiver;
         }
-
-        auto &engines = engineGroups[ordinal].engines;
-        if (index >= engines.size()) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-        *csr = engines[index].commandStreamReceiver;
 
     } else {
         auto subDeviceOrdinal = ordinal - numEngineGroups;
@@ -2069,20 +2071,21 @@ ze_result_t Device::selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         }
         *csr = this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines[index].commandStreamReceiver;
         selectedDevice = this->subDevices[subDeviceOrdinal];
-    }
 
-    if (copyOnly) {
-
-        if (contextPriority == NEO::EngineUsage::highPriority) {
-            selectedDevice->getCsrForHighPriority(csr, copyOnly);
-        } else if (contextPriority == NEO::EngineUsage::lowPriority) {
-            if (selectedDevice->getCsrForLowPriority(csr, copyOnly) == ZE_RESULT_SUCCESS) {
-                return ZE_RESULT_SUCCESS;
-            }
+        if (contextPriority == NEO::EngineUsage::lowPriority && selectedDevice->getCsrForLowPriority(csr, copyOnly) != ZE_RESULT_SUCCESS) {
+            contextPriority = NEO::EngineUsage::regular;
         }
     }
 
+    if (copyOnly && contextPriority == NEO::EngineUsage::highPriority) {
+        selectedDevice->getCsrForHighPriority(csr, copyOnly);
+    }
+
     auto &osContext = (*csr)->getOsContext();
+
+    if (osContext.isLowPriority() && !osContext.isPartOfContextGroup()) {
+        return ZE_RESULT_SUCCESS;
+    }
 
     if (secondaryContextsEnabled &&
         neoDevice->areSecondaryEnginesAvailable() &&

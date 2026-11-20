@@ -302,6 +302,7 @@ class IoctlHelper {
 
     virtual bool isTimestampsRefreshEnabled() { return false; }
     virtual uint32_t getNumProcesses() const { return 1; }
+    virtual bool isLowPriorityContextGroupSupported() const { return true; }
 
     virtual bool isDeferBackingEnabledForAllocation(size_t allocationSize, AllocationType allocationType) const { return false; }
     virtual bool hasContextFreqHint() { return false; }

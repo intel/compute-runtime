@@ -257,6 +257,9 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegisteredInMemory
     for (const auto &secondaryContexts : device->secondaryEngines) {
         numEnginesForDevice += secondaryContexts.second.engines.size() - 1;
     }
+    for (const auto &lowPrioritySecondaryContexts : device->lowPrioritySecondaryEngines) {
+        numEnginesForDevice += lowPrioritySecondaryContexts.second.engines.size() - 1;
+    }
 
     EXPECT_EQ(numEnginesForDevice, memoryManager->getRegisteredEngines(device->getRootDeviceIndex()).size());
 }
@@ -306,13 +309,16 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
             contextId++;
             contextWithinRootDevice++;
         }
-        for (uint32_t j = 0; j < numExpectedGenericEnginesPerDevice; j++) {
-            auto &engine = device->getEngine(j);
-            if (engine.osContext->getIsPrimaryEngine()) {
-                for (size_t secondaryEngineId = 1; secondaryEngineId < device->secondaryEngines[engine.getEngineType()].engines.size(); secondaryEngineId++) {
+        for (const bool lowPriorityContextGroups : {false, true}) {
+            for (uint32_t j = 0; j < numExpectedGenericEnginesPerDevice; j++) {
+                auto &engine = device->getEngine(j);
+                if (engine.osContext->getIsPrimaryEngine() && engine.osContext->isLowPriority() == lowPriorityContextGroups) {
+                    auto &secondaryEnginesForType = lowPriorityContextGroups ? device->lowPrioritySecondaryEngines[engine.getEngineType()] : device->secondaryEngines[engine.getEngineType()];
+                    for (size_t secondaryEngineId = 1; secondaryEngineId < secondaryEnginesForType.engines.size(); secondaryEngineId++) {
 
-                    EXPECT_EQ(contextId, device->secondaryEngines[engine.getEngineType()].engines[secondaryEngineId].osContext->getContextId());
-                    contextId++;
+                        EXPECT_EQ(contextId, secondaryEnginesForType.engines[secondaryEngineId].osContext->getContextId());
+                        contextId++;
+                    }
                 }
             }
         }
@@ -627,7 +633,7 @@ TEST(DeviceGetEngineTest, givenDeferredContextInitializationEnabledWhenCreatingE
     for (const EngineControl &engine : device->getAllEngines()) {
         OsContext *osContext = engine.osContext;
         const bool isDefaultEngine = defaultEngineType == osContext->getEngineType() && osContext->isRegular();
-        const bool shouldBeInitialized = osContext->isImmediateContextInitializationEnabled(isDefaultEngine);
+        const bool shouldBeInitialized = osContext->isImmediateContextInitializationEnabled(isDefaultEngine) || osContext->isPartOfContextGroup();
         EXPECT_EQ(shouldBeInitialized, osContext->isInitialized());
     }
 }

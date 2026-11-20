@@ -4714,6 +4714,40 @@ TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingHighPriorityDrmCon
     EXPECT_EQ(2u, drm->execQueueProperties[3].value);
 }
 
+TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenCreatingLowPriorityPrimaryAndSecondaryDrmContextsThenPriorityIsSetOnlyForPrimaryContext) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    drm->ioctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+    drm->ioctlHelper->initialize();
+    drm->memoryInfoQueried = true;
+    drm->queryEngineInfo();
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    OsContextLinux primaryOsContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}));
+    OsContextLinux secondaryOsContext(*drm, 0, 6u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}));
+
+    primaryOsContext.setContextGroupCount(8);
+    primaryOsContext.ensureContextInitialized();
+
+    ASSERT_EQ(3u, drm->execQueueProperties.size());
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY), drm->execQueueProperties[0].property);
+    EXPECT_EQ(0u, drm->execQueueProperties[0].value);
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP), drm->execQueueProperties[1].property);
+    EXPECT_EQ(DRM_XE_MULTI_GROUP_CREATE, drm->execQueueProperties[1].value);
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY), drm->execQueueProperties[2].property);
+    EXPECT_EQ(0u, drm->execQueueProperties[2].value);
+
+    secondaryOsContext.setPrimaryContext(&primaryOsContext);
+    secondaryOsContext.ensureContextInitialized();
+
+    ASSERT_EQ(5u, drm->execQueueProperties.size());
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP), drm->execQueueProperties[3].property);
+    EXPECT_EQ(primaryOsContext.getDrmContextIds()[0], drm->execQueueProperties[3].value);
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_QUEUE_PRIORITY), drm->execQueueProperties[4].property);
+    EXPECT_EQ(0u, drm->execQueueProperties[4].value);
+}
+
 TEST_F(IoctlHelperXeTest, givenContextGroupEnabledWhenSettingPriorityThenExecQueueSetPropertyForMultiQueuePriorityIsSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);

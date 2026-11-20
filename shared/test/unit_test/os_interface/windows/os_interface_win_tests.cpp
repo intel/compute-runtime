@@ -64,6 +64,11 @@ TEST(OsInterfaceSimpleTest, GivenOsInterfaceWhenCallingGetAggregatedProcessCount
     EXPECT_EQ(0u, osInterface.getAggregatedProcessCount());
 }
 
+TEST(OsInterfaceSimpleTest, GivenOsInterfaceWhenCallingIsLowPriorityContextGroupSupportedThenTrueIsReturned) {
+    OSInterface osInterface;
+    EXPECT_TRUE(osInterface.isLowPriorityContextGroupSupported());
+}
+
 TEST_F(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];

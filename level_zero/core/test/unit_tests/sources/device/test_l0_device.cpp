@@ -4195,6 +4195,9 @@ HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlag
 }
 
 HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingLowPriorityCsrThenCorrectCsrAndContextIsReturned) {
+    if (!neoDevice->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
 
         const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
@@ -4258,9 +4261,136 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingLowPriorityCsrThenCorr
             EXPECT_NE(secondaryEngines.engines[i].commandStreamReceiver, lowPriorityCsr);
         }
 
-        EXPECT_FALSE(lowPriorityCsr->getOsContext().isPartOfContextGroup());
+        EXPECT_TRUE(lowPriorityCsr->getOsContext().isPartOfContextGroup());
         EXPECT_EQ(nullptr, lowPriorityCsr->getOsContext().getPrimaryContext());
     }
+}
+
+HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingCsrForLowPriorityQueuesThenSecondaryContextsFromLowPriorityContextGroupsAreReturned) {
+    if (!neoDevice->getProductHelper().isLowPriorityContextGroupSupported()) {
+        GTEST_SKIP();
+    }
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+
+        const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            EngineInstancesContainer engines;
+            engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::regular});
+            engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::lowPriority});
+            engines.push_back({aub_stream::ENGINE_BCS1, EngineUsage::regular});
+            engines.push_back({aub_stream::ENGINE_BCS1, EngineUsage::lowPriority});
+            return engines;
+        }
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
+            if (engineType == aub_stream::ENGINE_BCS1) {
+                return EngineGroupType::copy;
+            }
+            return EngineGroupType::compute;
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    constexpr uint32_t contextGroupSize = 8;
+    debugManager.flags.ContextGroupSize.set(contextGroupSize);
+
+    const uint32_t rootDeviceIndex = 0u;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.featureTable.ftrBcsInfo = 0b10;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+
+    MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment{&hwInfo};
+    auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, rootDeviceIndex);
+    MockDeviceImp mockDevice(neoMockDevice);
+
+    auto &engineGroups = neoMockDevice->getRegularEngineGroups();
+    uint32_t computeOrdinal = 0u;
+    uint32_t copyOrdinal = 0u;
+    for (uint32_t i = 0; i < static_cast<uint32_t>(engineGroups.size()); i++) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::compute) {
+            computeOrdinal = i;
+        } else if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
+            copyOrdinal = i;
+        }
+    }
+    ASSERT_EQ(NEO::EngineGroupType::compute, engineGroups[computeOrdinal].engineGroupType);
+    ASSERT_EQ(NEO::EngineGroupType::copy, engineGroups[copyOrdinal].engineGroupType);
+
+    auto &computeLowPriorityEngines = neoMockDevice->lowPrioritySecondaryEngines[aub_stream::ENGINE_CCS];
+    ASSERT_EQ(contextGroupSize, computeLowPriorityEngines.engines.size());
+
+    for (uint32_t i = 0; i < contextGroupSize; i++) {
+        NEO::CommandStreamReceiver *csr = nullptr;
+        bool queueOwnershipTaken = false;
+        auto result = mockDevice.getCsrForOrdinalAndIndex(&csr, computeOrdinal, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, 0u, &queueOwnershipTaken);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_TRUE(queueOwnershipTaken);
+        EXPECT_EQ(computeLowPriorityEngines.engines[i].commandStreamReceiver, csr);
+        EXPECT_TRUE(csr->getOsContext().isLowPriority());
+        EXPECT_TRUE(csr->getOsContext().isPartOfContextGroup());
+    }
+
+    auto &copyLowPriorityEngines = neoMockDevice->lowPrioritySecondaryEngines[aub_stream::ENGINE_BCS1];
+    ASSERT_EQ(contextGroupSize, copyLowPriorityEngines.engines.size());
+
+    for (uint32_t i = 0; i < 2; i++) {
+        NEO::CommandStreamReceiver *csr = nullptr;
+        bool queueOwnershipTaken = false;
+        auto result = mockDevice.getCsrForOrdinalAndIndex(&csr, copyOrdinal, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, 0u, &queueOwnershipTaken);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_TRUE(queueOwnershipTaken);
+        EXPECT_EQ(copyLowPriorityEngines.engines[i].commandStreamReceiver, csr);
+        EXPECT_TRUE(csr->getOsContext().isLowPriority());
+        EXPECT_EQ(aub_stream::ENGINE_BCS1, csr->getOsContext().getEngineType());
+    }
+}
+
+HWTEST_F(DeviceTest, givenLowPriorityEngineNotPartOfContextGroupWhenGettingCsrForLowPriorityQueueThenLowPriorityEngineIsReturnedWithoutOwnership) {
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+
+        const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            EngineInstancesContainer engines;
+            engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::regular});
+            engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::lowPriority});
+            return engines;
+        }
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
+            return EngineGroupType::compute;
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.SecondaryContextEngineTypeMask.set(~(1 << static_cast<int32_t>(aub_stream::ENGINE_CCS)));
+
+    const uint32_t rootDeviceIndex = 0u;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+
+    MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment{&hwInfo};
+    auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, rootDeviceIndex);
+    MockDeviceImp mockDevice(neoMockDevice);
+
+    auto lowPriorityEngine = neoMockDevice->tryGetEngine(aub_stream::ENGINE_CCS, EngineUsage::lowPriority);
+    ASSERT_NE(nullptr, lowPriorityEngine);
+    EXPECT_FALSE(lowPriorityEngine->osContext->isPartOfContextGroup());
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    bool queueOwnershipTaken = true;
+    auto result = mockDevice.getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, 0u, &queueOwnershipTaken);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(queueOwnershipTaken);
+    EXPECT_EQ(lowPriorityEngine->commandStreamReceiver, csr);
 }
 
 HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCorrectCsrAndContextIsReturned) {

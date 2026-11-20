@@ -127,6 +127,7 @@ class ProductHelper {
     virtual bool isL1PolicyMissmatchCheckNeeded() const = 0;
     virtual bool isDisableScratchPagesSupported() const = 0;
     virtual bool isDisableScratchPagesRequiredForDebugger() const = 0;
+    virtual bool isLowPriorityContextGroupSupported() const = 0;
     virtual bool areSecondaryContextsSupported() const = 0;
     virtual bool isPrimaryContextsAggregationSupported() const = 0;
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;

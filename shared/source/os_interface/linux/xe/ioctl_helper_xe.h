@@ -171,7 +171,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool setContextGroupPriority(uint32_t drmContextId, uint32_t hwPriority) override;
 
   protected:
-    static constexpr uint32_t maxContextSetProperties = 4;
+    static constexpr uint32_t maxContextSetProperties = 5;
 
     bool isDeferBackingSupported() const;
     virtual const char *xeGetClassName(int className) const;

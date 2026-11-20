@@ -120,13 +120,10 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         bool hasRootCsr = subDevicesCount > 1;
 
-        uint32_t numRegularEngines = 0;
-        uint32_t numHpEngines = 0;
+        uint32_t numContextGroupEngines = 0;
         for (const auto &engine : engineInstances) {
-            if (engine.second == EngineUsage::regular) {
-                numRegularEngines++;
-            } else if (engine.second == EngineUsage::highPriority) {
-                numHpEngines++;
+            if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || engine.second == EngineUsage::lowPriority) {
+                numContextGroupEngines++;
             }
         }
 
@@ -138,11 +135,11 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
             if (rootDeviceEnvironment->osInterface && rootDeviceEnvironment->osInterface->getAggregatedProcessCount() > 1) {
                 groupCount = std::max(groupCount / rootDeviceEnvironment->osInterface->getAggregatedProcessCount(), 2u);
             }
-            numSecondaryContexts += numRegularEngines * groupCount;
-            numSecondaryContexts += numHpEngines * groupCount;
-            osContextCount -= (numRegularEngines + numHpEngines);
+            numSecondaryContexts += numContextGroupEngines * groupCount;
+            osContextCount -= numContextGroupEngines;
 
-            numRootContexts *= groupCount;
+            constexpr uint32_t rootContextGroupsCount = 2;
+            numRootContexts *= rootContextGroupsCount * groupCount;
         }
 
         MemoryManager::maxOsContextCount += (numSecondaryContexts + osContextCount) * subDevicesCount + numRootContexts;

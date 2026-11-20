@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,11 @@ struct MockOsInterface : public OSInterface {
     uint32_t getAggregatedProcessCount() const override {
         return numberOfProcesses;
     }
+    bool isLowPriorityContextGroupSupported() const override {
+        return lowPriorityContextGroupSupported;
+    }
 
     uint32_t numberOfProcesses = 1;
+    bool lowPriorityContextGroupSupported = true;
 };
 } // namespace NEO

@@ -472,15 +472,17 @@ bool Device::createEngines() {
 
                 auto primaryEngine = *hpCopyEngine;
 
-                auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
-
-                if (getRootDeviceEnvironment().osInterface && getRootDeviceEnvironment().osInterface->getAggregatedProcessCount() > 1) {
-                    const auto numProcesses = getRootDeviceEnvironment().osInterface->getAggregatedProcessCount();
-
-                    contextCount = std::max(contextCount / numProcesses, 2u);
-                }
+                auto contextCount = this->getContextGroupContextsCountForAggregatedProcesses();
 
                 if (!createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, contextCount)) {
+                    return false;
+                }
+            }
+        }
+
+        for (auto &engine : this->allEngines) {
+            if (engine.osContext->isLowPriority() && engine.osContext->isPartOfContextGroup()) {
+                if (!this->createLowPrioritySecondaryContexts(engine)) {
                     return false;
                 }
             }
@@ -488,6 +490,36 @@ bool Device::createEngines() {
     }
 
     return true;
+}
+
+uint32_t Device::getContextGroupContextsCountForAggregatedProcesses() const {
+    auto contextCount = this->getGfxCoreHelper().getContextGroupContextsCount();
+    auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
+
+    if (rootDeviceEnvironment.osInterface && rootDeviceEnvironment.osInterface->getAggregatedProcessCount() > 1) {
+        const auto numProcesses = rootDeviceEnvironment.osInterface->getAggregatedProcessCount();
+
+        contextCount = std::max(contextCount / numProcesses, 2u);
+    }
+    return contextCount;
+}
+
+bool Device::isLowPriorityContextGroupSupported() const {
+    auto osInterface = this->getRootDeviceEnvironment().osInterface.get();
+    return this->getGfxCoreHelper().areSecondaryContextsSupported() && this->getProductHelper().isLowPriorityContextGroupSupported() &&
+           (osInterface == nullptr || osInterface->isLowPriorityContextGroupSupported());
+}
+
+bool Device::createLowPrioritySecondaryContexts(const EngineControl &primaryEngine) {
+    auto engineType = primaryEngine.getEngineType();
+    auto [secondaryEnginesIt, inserted] = this->lowPrioritySecondaryEngines.try_emplace(engineType);
+    if (!inserted) {
+        return true;
+    }
+    auto &secondaryEnginesForType = secondaryEnginesIt->second;
+
+    constexpr uint32_t highPriorityContextCount = 0;
+    return this->createSecondaryContexts(primaryEngine, secondaryEnginesForType, this->getContextGroupContextsCountForAggregatedProcesses(), highPriorityContextCount);
 }
 
 bool Device::createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount) {
@@ -499,7 +531,8 @@ bool Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
     secondaryEnginesForType.assignedContextsCounter = 1;
 
     constexpr uint32_t reservedInternalEngineIndex = 1;
-    if (isInternalEngineFromSecondaryContextEnabled() && regularContextCount > reservedInternalEngineIndex) {
+    const bool isLowPriorityGroup = primaryEngine.osContext->isLowPriority();
+    if (isInternalEngineFromSecondaryContextEnabled() && !isLowPriorityGroup && regularContextCount > reservedInternalEngineIndex) {
         secondaryEnginesForType.internalEngineIndex = reservedInternalEngineIndex;
         secondaryEnginesForType.assignedContextsCounter = reservedInternalEngineIndex + 1;
     }
@@ -508,7 +541,7 @@ bool Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
     engineTypeUsage.first = primaryEngine.getEngineType();
     engineTypeUsage.second = primaryEngine.getEngineUsage();
 
-    UNRECOVERABLE_IF(engineTypeUsage.second != EngineUsage::regular && engineTypeUsage.second != EngineUsage::highPriority);
+    UNRECOVERABLE_IF(engineTypeUsage.second != EngineUsage::regular && engineTypeUsage.second != EngineUsage::highPriority && engineTypeUsage.second != EngineUsage::lowPriority);
 
     secondaryEnginesForType.engines.push_back(primaryEngine);
     for (uint32_t i = 1; i < contextCount; i++) {
@@ -516,7 +549,7 @@ bool Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
         if (i >= regularContextCount) {
             engineTypeUsage.second = EngineUsage::highPriority;
         }
-        this->createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage);
+        this->createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage, secondaryEnginesForType);
         if (regularContextCount == 0) {
             this->secondaryCsrs.back()->getOsContext().setExclusivelyHpContext();
         }
@@ -602,7 +635,8 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
         primaryEngineTypeAllowed &= (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0;
     }
 
-    const bool isPrimaryEngine = primaryEngineTypeAllowed && (engineUsage == EngineUsage::regular || engineUsage == EngineUsage::highPriority);
+    const bool isLowPriorityPrimaryEngine = engineUsage == EngineUsage::lowPriority && this->isLowPriorityContextGroupSupported();
+    const bool isPrimaryEngine = primaryEngineTypeAllowed && (engineUsage == EngineUsage::regular || engineUsage == EngineUsage::highPriority || isLowPriorityPrimaryEngine);
     const bool useContextGroup = isPrimaryEngine && gfxCoreHelper.areSecondaryContextsSupported();
 
     UNRECOVERABLE_IF(EngineHelpers::isBcs(engineType) && !hwInfo.capabilityTable.blitterOperationsSupported);
@@ -663,42 +697,47 @@ bool Device::initializeEngines() {
     if (NEO::debugManager.flags.NEO_L0_SYSMAN_NO_CONTEXT_MODE.get()) {
         return true;
     }
-    uint32_t deviceCsrIndex = 0;
+    auto &compilerProductHelper = this->getCompilerProductHelper();
+    auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(this->getHardwareInfo());
+
     bool defaultEngineAlreadySet = false;
-    for (auto &engine : allEngines) {
-        bool firstSubmissionDone = false;
-        if (engine.osContext->getIsDefaultEngine() && !defaultEngineAlreadySet) {
-            defaultEngineAlreadySet = true;
-            defaultEngineIndex = deviceCsrIndex;
+    for (auto initializeLowPriorityEngines : {true, false}) {
+        for (uint32_t engineIndex = 0; engineIndex < allEngines.size(); engineIndex++) {
+            auto &engine = allEngines[engineIndex];
+            if (engine.osContext->isLowPriority() != initializeLowPriorityEngines) {
+                continue;
+            }
 
-            if (engine.osContext->isDebuggableContext() ||
-                this->isInitDeviceWithFirstSubmissionSupported(engine.commandStreamReceiver->getType())) {
-                if (SubmissionStatus::success != engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this)) {
-                    return false;
+            bool firstSubmissionDone = false;
+            if (engine.osContext->getIsDefaultEngine() && !defaultEngineAlreadySet) {
+                defaultEngineAlreadySet = true;
+                defaultEngineIndex = engineIndex;
+
+                if (engine.osContext->isDebuggableContext() ||
+                    this->isInitDeviceWithFirstSubmissionSupported(engine.commandStreamReceiver->getType())) {
+                    if (SubmissionStatus::success != engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this)) {
+                        return false;
+                    }
+                    firstSubmissionDone = true;
                 }
-                firstSubmissionDone = true;
+            }
+
+            bool isHeaplessPrologRequired = engine.osContext->getIsPrimaryEngine() && heaplessModeEnabled;
+            bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessPrologRequired) && !firstSubmissionDone;
+
+            if (initializeDevice) {
+                engine.commandStreamReceiver->initializeResources(this->getPreemptionMode());
+
+                if (debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() != 1) {
+                    engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
+                }
             }
         }
-
-        auto &compilerProductHelper = this->getCompilerProductHelper();
-        auto heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(this->getHardwareInfo());
-
-        bool isHeaplessPrologRequired = engine.osContext->getIsPrimaryEngine() && heaplessModeEnabled;
-        bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessPrologRequired) && !firstSubmissionDone;
-
-        if (initializeDevice) {
-            engine.commandStreamReceiver->initializeResources(this->getPreemptionMode());
-
-            if (debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() != 1) {
-                engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
-            }
-        }
-        deviceCsrIndex++;
     }
     return true;
 }
 
-bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineTypeUsage engineTypeUsage) {
+bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineTypeUsage engineTypeUsage, SecondaryContexts &secondaryEnginesForType) {
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver = createCommandStreamReceiver();
     if (!commandStreamReceiver) {
         return false;
@@ -716,7 +755,7 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
 
-    secondaryEngines[engineTypeUsage.first].engines.push_back(engine);
+    secondaryEnginesForType.engines.push_back(engine);
     secondaryCsrs.push_back(std::move(commandStreamReceiver));
 
     return true;
@@ -731,8 +770,9 @@ EngineControl *Device::getSecondaryEngineCsrWithoutSharedContextPriorityOverride
 }
 
 EngineControl *Device::acquireSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority, bool sharedContextPriorityOverrideAllowed) {
-    auto secondaryEnginesIt = secondaryEngines.find(engineTypeUsage.first);
-    if (secondaryEnginesIt == secondaryEngines.end()) {
+    auto &secondaryEnginesForUsage = engineTypeUsage.second == EngineUsage::lowPriority ? this->lowPrioritySecondaryEngines : this->secondaryEngines;
+    auto secondaryEnginesIt = secondaryEnginesForUsage.find(engineTypeUsage.first);
+    if (secondaryEnginesIt == secondaryEnginesForUsage.end()) {
         return nullptr;
     }
 
@@ -1511,7 +1551,8 @@ EngineControl *SecondaryContexts::selectEngine(EngineUsage usage, std::optional<
 
     std::lock_guard<std::mutex> guard(mutex);
 
-    const bool poolSelectionSupported = (usage == EngineUsage::regular || usage == EngineUsage::highPriority);
+    const bool regularPoolUsage = (usage == EngineUsage::regular || usage == EngineUsage::lowPriority);
+    const bool poolSelectionSupported = (regularPoolUsage || usage == EngineUsage::highPriority);
     const auto &assignedIndices = usage == EngineUsage::highPriority ? hpIndices : npIndices;
 
     std::optional<int32_t> reusableIndex;
@@ -1549,7 +1590,7 @@ EngineControl *SecondaryContexts::selectEngine(EngineUsage usage, std::optional<
             engines[secondaryEngineIndex].osContext->overrideEngineUsage(EngineUsage::highPriority);
         }
 
-    } else if (usage == EngineUsage::regular) {
+    } else if (regularPoolUsage) {
         if (regularEnginesTotal == 0) {
             return nullptr;
         }

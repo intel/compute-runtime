@@ -17,6 +17,8 @@
 #include <functional>
 #include <optional>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 struct MockHardwareContext : public aub_stream::HardwareContext {
     using SurfaceInfo = aub_stream::SurfaceInfo;
@@ -40,7 +42,11 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
             storedAllocationParams.push_back(allocationParams);
         }
     }
-    void writeMMIO(uint32_t offset, uint32_t value) override { writeMMIOCalled = true; }
+    void writeMMIO(uint32_t offset, uint32_t value) override {
+        writeMMIOCalled = true;
+        writtenMmios.push_back({offset, value});
+        initializedBeforeWriteMMIO = initializeCalled;
+    }
     void freeMemory(uint64_t gfxAddress, size_t size) override { freeMemoryCalled = true; }
     void expectMemory(uint64_t gfxAddress, const void *memory, size_t size, uint32_t compareOperation) override { expectMemoryCalled = true; }
     void readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBank, size_t pageSize) override {
@@ -54,6 +60,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     void resubmit() override { resubmitCalled = true; }
 
     std::vector<aub_stream::AllocationParams> storedAllocationParams;
+    std::vector<std::pair<uint32_t, uint32_t>> writtenMmios;
     uint64_t latestGpuVaForMemoryRead = 0;
     bool storeAllocationParams = false;
     bool initializeCalled = false;
@@ -67,6 +74,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     bool expectMemoryCalled = false;
     bool readMemoryCalled = false;
     bool writeMMIOCalled = false;
+    bool initializedBeforeWriteMMIO = false;
     bool dumpBufferBINCalled = false;
     bool dumpSurfaceCalled = false;
 

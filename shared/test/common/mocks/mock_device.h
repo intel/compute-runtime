@@ -39,6 +39,7 @@ inline bool invokeMockQueryPeerAccess(Device &device, const MockQueryPeerAccessF
 struct MockSubDevice : public SubDevice {
     using Device::allEngines;
     using Device::createEngines;
+    using Device::lowPrioritySecondaryEngines;
     using Device::secondaryEngines;
     using Device::tryGetInternalSecondaryEngine;
     using SubDevice::getDeviceBitfield;
@@ -93,6 +94,7 @@ class MockDevice : public RootDevice {
     using Device::initializePeerAccessForDevices;
     using Device::initUsmReuseLimits;
     using Device::isaPoolAllocator;
+    using Device::lowPrioritySecondaryEngines;
     using Device::maxBufferPoolCount;
     using Device::microsecondResolution;
     using Device::preemptionMode;

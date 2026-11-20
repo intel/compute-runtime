@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
@@ -66,6 +67,24 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenCallingGetAggregatedProcessCountT
     osInterface.setDriverModel(std::unique_ptr<DriverModel>(drm));
     drm->mockProcessCount = 5;
     EXPECT_EQ(5u, osInterface.getAggregatedProcessCount());
+}
+
+TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenCallingIsLowPriorityContextGroupSupportedThenCallRedirectedToIoctlHelper) {
+    struct IoctlHelperWithoutLowPriorityContextGroup : public IoctlHelperUpstream {
+        using IoctlHelperUpstream::IoctlHelperUpstream;
+        bool isLowPriorityContextGroupSupported() const override { return false; }
+    };
+
+    OSInterface osInterface;
+    EXPECT_TRUE(osInterface.isLowPriorityContextGroupSupported());
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock *drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    osInterface.setDriverModel(std::unique_ptr<DriverModel>(drm));
+    EXPECT_EQ(drm->getIoctlHelper()->isLowPriorityContextGroupSupported(), osInterface.isLowPriorityContextGroupSupported());
+
+    drm->ioctlHelper = std::make_unique<IoctlHelperWithoutLowPriorityContextGroup>(*drm);
+    EXPECT_FALSE(osInterface.isLowPriorityContextGroupSupported());
 }
 
 TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenFileDescriptorIsSetWithValueOfAdapterBdf) {

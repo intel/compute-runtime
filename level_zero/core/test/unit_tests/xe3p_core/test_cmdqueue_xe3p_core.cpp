@@ -25,6 +25,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue_handle_indirect_allocs.h"
@@ -524,7 +525,7 @@ XE3P_CORETEST_F(CommandQueueWithAssertXe3p, givenCmdListWithAssertAndStateHeaple
     commandQueue->destroy();
 }
 
-using CommandQueueWithXe3p = Test<DeviceFixture>;
+using CommandQueueWithXe3p = Test<DeviceWithoutContextGroupFixture>;
 
 XE3P_CORETEST_F(CommandQueueWithXe3p, givenHeaplessAndNonDefaultCsrWhenExecutingCmdListsForTheFirstTimeThenHeaplessPrologIsSent) {
 

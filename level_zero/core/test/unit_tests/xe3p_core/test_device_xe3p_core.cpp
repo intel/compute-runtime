@@ -174,7 +174,7 @@ XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndCCSEngineEnabl
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ASSERT_NE(nullptr, lowPriorityCsr);
-    EXPECT_FALSE(lowPriorityCsr->getOsContext().isPartOfContextGroup());
+    EXPECT_TRUE(lowPriorityCsr->getOsContext().isPartOfContextGroup());
     EXPECT_EQ(nullptr, lowPriorityCsr->getOsContext().getPrimaryContext());
 }
 

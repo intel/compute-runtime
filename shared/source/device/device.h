@@ -360,7 +360,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     void addEngineToEngineGroup(EngineControl &engine);
     MOCKABLE_VIRTUAL bool createEngine(EngineTypeUsage engineTypeUsage);
     MOCKABLE_VIRTUAL bool initializeEngines();
-    MOCKABLE_VIRTUAL bool createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineTypeUsage engineTypeUsage);
+    MOCKABLE_VIRTUAL bool createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineTypeUsage engineTypeUsage, SecondaryContexts &secondaryEnginesForType);
 
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
@@ -374,6 +374,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     bool genericSubDevicesAllowed();
     void finalizeRayTracing();
     bool createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount);
+    bool createLowPrioritySecondaryContexts(const EngineControl &primaryEngine);
+    uint32_t getContextGroupContextsCountForAggregatedProcesses() const;
+    bool isLowPriorityContextGroupSupported() const;
     MOCKABLE_VIRTUAL bool initializeSecondaryEngine(const EngineControl &engineControl);
     bool isInternalEngineFromSecondaryContextEnabled() const;
     EngineControl *tryGetInternalSecondaryEngine(aub_stream::EngineType engineType);
@@ -387,6 +390,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     EnginesT allEngines;
 
     std::unordered_map<aub_stream::EngineType, SecondaryContexts> secondaryEngines;
+    std::unordered_map<aub_stream::EngineType, SecondaryContexts> lowPrioritySecondaryEngines;
     CsrContainer secondaryCsrs;
 
     EngineGroupsT regularEngineGroups;

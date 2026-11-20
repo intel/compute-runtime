@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/hardware_context_controller.h"
 
+#include "shared/source/aub/aub_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/os_context.h"
 
@@ -48,6 +49,9 @@ void HardwareContextController::createHardwareContexts(aub_stream::AubManager &a
 void HardwareContextController::initialize() {
     for (auto &hardwareContext : hardwareContexts) {
         hardwareContext->initialize();
+    }
+    for (const auto &additionalMmio : AubHelper::getAdditionalMmioList()) {
+        this->writeMMIO(additionalMmio.first, additionalMmio.second);
     }
 }
 

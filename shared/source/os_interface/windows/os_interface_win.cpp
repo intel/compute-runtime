@@ -35,6 +35,10 @@ uint32_t OSInterface::getAggregatedProcessCount() const {
     return 0;
 }
 
+bool OSInterface::isLowPriorityContextGroupSupported() const {
+    return true;
+}
+
 void OSInterface::registerTrimCallback() {
     if (driverModel && driverModel->getDriverModelType() == DriverModelType::wddm) {
 

@@ -34,6 +34,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::deferredTimestampPackets;
     using BaseClass::getDevice;
     using BaseClass::gpgpuEngine;
+    using BaseClass::gpgpuQueueOwnershipTaken;
     using BaseClass::heaplessModeEnabled;
     using BaseClass::isBlitAuxTranslationRequired;
     using BaseClass::isCacheFlushOnNextBcsWriteRequired;

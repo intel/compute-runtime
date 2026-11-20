@@ -2325,7 +2325,7 @@ TEST_F(CommandListCsrReuseTests, givenDynamicQueueReassignmentDebugKeyWhenCreati
         EXPECT_EQ(heaplessModeEnabled, commandListOwningQueue->csrReassignmentAllowed);
 
         auto lowPriorityCommandList = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW);
-        EXPECT_FALSE(lowPriorityCommandList->csrReassignmentAllowed);
+        EXPECT_EQ(heaplessModeEnabled && neoDevice->getProductHelper().isLowPriorityContextGroupSupported(), lowPriorityCommandList->csrReassignmentAllowed);
 
         lowPriorityCommandList->destroy();
         commandListOwningQueue->destroy();
@@ -3685,11 +3685,15 @@ HWTEST_F(CommandListCsrReassignmentTests, givenCsrSelectionNotTakingOwnershipWhe
     setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
     const auto requestedPriority = queue->desc.priority;
     queue->desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+    auto lowPriorityOsContext = neoDevice->tryGetEngine(aub_stream::ENGINE_CCS, NEO::EngineUsage::lowPriority)->osContext;
+    const auto lowPriorityContextGroupCount = lowPriorityOsContext->getContextGroupCount();
+    lowPriorityOsContext->setContextGroupCount(0);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
     EXPECT_EQ(initialCsr, commandList->getCsr(false));
     EXPECT_EQ(2u, initialCsr->getOwningQueueCount());
 
+    lowPriorityOsContext->setContextGroupCount(lowPriorityContextGroupCount);
     queue->desc.priority = requestedPriority;
     initialCsr->releaseQueueOwnership();
     markCsrIdle(initialCsr);
