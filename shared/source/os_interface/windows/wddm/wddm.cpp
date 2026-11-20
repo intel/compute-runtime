@@ -1006,9 +1006,8 @@ bool Wddm::openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAll
 
 void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size) {
 
-    if (applyMakeResidentPriorToLock) {
-        temporaryResources->makeResidentResource(handle, size);
-    }
+    const bool madeResident = applyMakeResidentPriorToLock &&
+                              temporaryResources->makeResidentResource(handle, size) == MemoryOperationsStatus::success;
 
     D3DKMT_LOCK2 lock2 = {};
 
@@ -1017,6 +1016,9 @@ void *Wddm::lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPrio
 
     NTSTATUS status = getGdi()->lock2(&lock2);
     if (status != STATUS_SUCCESS) {
+        if (madeResident) {
+            temporaryResources->evictResource(handle);
+        }
         return nullptr;
     }
 

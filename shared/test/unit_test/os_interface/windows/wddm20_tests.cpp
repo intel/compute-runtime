@@ -1299,6 +1299,24 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatNeedsMakeResidentBefore
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
 }
 
+TEST_F(WddmLockWithMakeResidentTests, givenAllocationThatNeedsMakeResidentBeforeLockWhenLockFailsThenItIsEvictedIfItWasMadeResident) {
+    struct FailingLock {
+        static NTSTATUS APIENTRY mockLock2(D3DKMT_LOCK2 *param) {
+            return STATUS_INVALID_PARAMETER;
+        }
+    };
+    gdi->lock2 = FailingLock::mockLock2;
+
+    wddm->makeResidentStatus = true;
+    EXPECT_EQ(nullptr, wddm->lockResource(ALLOCATION_HANDLE, true, 0x1000));
+    EXPECT_EQ(1u, mockTemporaryResources->evictResourceResult.called);
+    EXPECT_TRUE(mockTemporaryResources->resourceHandles.empty());
+
+    wddm->makeResidentStatus = false;
+    EXPECT_EQ(nullptr, wddm->lockResource(ALLOCATION_HANDLE, true, 0x1000));
+    EXPECT_EQ(1u, mockTemporaryResources->evictResourceResult.called);
+}
+
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenAcquireUniqueLock) {
     wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE, 0x1000);
     EXPECT_EQ(1u, mockTemporaryResources->acquireLockResult.called);
