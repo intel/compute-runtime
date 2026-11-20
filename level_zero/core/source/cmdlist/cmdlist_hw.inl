@@ -2806,7 +2806,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
             dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnlyEnabled);
             appendSignalInOrderDependencyCounter(signalEvent, isDualStreamCopyOffloadOperation(memoryCopyParams.copyOffloadAllowed), false, false, false);
         } else if ((!useAdditionalBlitProperties || size == 0) && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
-            appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled);
+            appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled, memoryCopyParams.forceAggregatedEventIncValue);
         }
 
         if (!isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed) {
@@ -2952,7 +2952,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                 .apiRequiredExternalGraphEvent = false};
             handleInOrderDependencyCounter(signalEvent, inOrderDependencyParams);
         } else if ((!useAdditionalBlitProperties || srcRegion->width == 0) && isCopyOnlyEnabled && Event::isAggregatedEvent(signalEvent)) {
-            appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled);
+            appendSignalAggregatedEventAtomic(*signalEvent, isCopyOnlyEnabled, memoryCopyParams.forceAggregatedEventIncValue);
         }
     } else {
         CmdListHandleInOrderDependencyParams inOrderDependencyParams{
@@ -4350,13 +4350,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uin
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalAggregatedEventAtomic(Event &event, bool dualStreamCopyOffload) {
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalAggregatedEventAtomic(Event &event, bool dualStreamCopyOffload, uint64_t forceIncValue) {
     using ATOMIC_OPCODE = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
     auto partitionCountForAtomic = dualStreamCopyOffload ? 1u : this->partitionCount;
 
-    auto incValue = event.getInOrderIncrementValue(partitionCountForAtomic);
+    auto incValue = (forceIncValue > 0) ? forceIncValue : event.getInOrderIncrementValue(partitionCountForAtomic);
 
     NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*commandContainer.getCommandStream(), event.getInOrderExecEventHelper().getBaseDeviceAddress(), ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B,
                                                   DATA_SIZE::DATA_SIZE_QWORD, 0, 0, incValue, 0);
@@ -4415,7 +4415,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
     }
 
     if (!skipAggregatedEventSignaling && Event::isAggregatedEvent(signalEvent)) {
-        appendSignalAggregatedEventAtomic(*signalEvent, copyOffloadOperation);
+        appendSignalAggregatedEventAtomic(*signalEvent, copyOffloadOperation, 0);
     }
 
     const bool interruptModeEmit = (NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1 || isCopyOnly(copyOffloadOperation)) && signalEvent && signalEvent->isInterruptModeEnabled();

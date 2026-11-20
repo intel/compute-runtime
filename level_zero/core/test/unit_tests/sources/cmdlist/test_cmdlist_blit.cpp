@@ -1759,6 +1759,86 @@ HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhen
     bcsSplit.releaseResources();
 }
 
+struct SingleH2DEngineAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
+    void SetUp() override {
+        debugManager.flags.SplitBcsMaskH2D.set(0b10);
+        AggregatedBcsSplitTests::SetUp();
+    }
+
+    template <typename FamilyType>
+    void expectFullSplitIncrementInAggregatedEventAtomic(LinearStream &subCmdStream, size_t subOffset) {
+        using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+        auto &packages = bcsSplit->events.getEventResources().packages;
+        ASSERT_FALSE(packages.empty());
+        auto aggregatedEventAddress = packages[0]->subcopyEvents[0]->getInOrderExecEventHelper().getBaseDeviceAddress();
+        const auto expectedIncValue = static_cast<uint64_t>(device->getAggregatedCopyOffloadIncrementValue());
+
+        GenCmdList genCmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(subCmdStream.getCpuBase(), subOffset), (subCmdStream.getUsed() - subOffset)));
+
+        bool miAtomicFound = false;
+        for (auto itor = find<MI_ATOMIC *>(genCmdList.begin(), genCmdList.end()); itor != genCmdList.end(); itor = find<MI_ATOMIC *>(++itor, genCmdList.end())) {
+            auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(*itor);
+            if (aggregatedEventAddress == miAtomicCmd->getMemoryAddress()) {
+                EXPECT_EQ(getLowPart(expectedIncValue), miAtomicCmd->getOperand1DataDword0());
+                EXPECT_EQ(getHighPart(expectedIncValue), miAtomicCmd->getOperand1DataDword1());
+                miAtomicFound = true;
+            }
+        }
+        EXPECT_TRUE(miAtomicFound);
+    }
+};
+
+HWTEST2_F(SingleH2DEngineAggregatedBcsSplitTests, givenFewerEnginesUsedThanCreatedWhenSubCopySignalsAggregatedEventWithAtomicThenFullSplitIncrementIsProgrammed, IsAtLeastXeHpcCore) {
+    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+    if (cmdListHw->isUsingAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+
+    ASSERT_EQ(1u, bcsSplit->h2dCmdLists.size());
+    ASSERT_LT(bcsSplit->h2dCmdLists.size(), bcsSplit->cmdLists.size());
+
+    auto hostPtr = allocHostMem();
+    auto devicePtr = allocDeviceMem(device);
+
+    auto subCmdList = static_cast<CommandListCoreFamily<FamilyType::gfxCoreFamily> *>(bcsSplit->h2dCmdLists[0]);
+    auto subCmdStream = subCmdList->getCmdContainer().getCommandStream();
+    auto subOffset = subCmdStream->getUsed();
+
+    cmdListHw->appendMemoryCopy(devicePtr, hostPtr, copySize, nullptr, 0, nullptr, copyParams);
+
+    expectFullSplitIncrementInAggregatedEventAtomic<FamilyType>(*subCmdStream, subOffset);
+
+    context->freeMem(hostPtr);
+    context->freeMem(devicePtr);
+}
+
+HWTEST2_F(SingleH2DEngineAggregatedBcsSplitTests, givenFewerEnginesUsedThanCreatedWhenRegionSubCopySignalsAggregatedEventWithAtomicThenFullSplitIncrementIsProgrammed, IsAtLeastXeHpcCore) {
+    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+    if (cmdListHw->isUsingAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+
+    ASSERT_EQ(1u, bcsSplit->h2dCmdLists.size());
+    ASSERT_LT(bcsSplit->h2dCmdLists.size(), bcsSplit->cmdLists.size());
+
+    auto hostPtr = allocHostMem();
+    auto devicePtr = allocDeviceMem(device);
+
+    auto subCmdList = static_cast<CommandListCoreFamily<FamilyType::gfxCoreFamily> *>(bcsSplit->h2dCmdLists[0]);
+    auto subCmdStream = subCmdList->getCmdContainer().getCommandStream();
+    auto subOffset = subCmdStream->getUsed();
+
+    ze_copy_region_t region = {0, 0, 0, static_cast<uint32_t>(copySize), 1, 1};
+    cmdListHw->appendMemoryCopyRegion(devicePtr, &region, 0, 0, hostPtr, &region, 0, 0, nullptr, 0, nullptr, copyParams);
+
+    expectFullSplitIncrementInAggregatedEventAtomic<FamilyType>(*subCmdStream, subOffset);
+
+    context->freeMem(hostPtr);
+    context->freeMem(devicePtr);
+}
+
 HWTEST2_F(AggregatedBcsSplitTests, whenObtainCalledThenAggregatedEventsCreated, IsAtLeastXeHpcCore) {
     auto &eventResources = bcsSplit->events.getEventResources();
     EXPECT_EQ(0u, eventResources.packages.size());

@@ -413,7 +413,7 @@ struct CommandListCoreFamily : public CommandList {
     void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, bool dualStreamCopyOffload);
 
     void appendSdiInOrderCounterSignalling(uint64_t baseGpuVa, uint64_t signalValue, bool copyOffloadOperation);
-    void appendSignalAggregatedEventAtomic(Event &event, bool dualStreamCopyOffload);
+    void appendSignalAggregatedEventAtomic(Event &event, bool dualStreamCopyOffload, uint64_t forceIncValue);
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
     void updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect);
