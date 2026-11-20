@@ -88,10 +88,10 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    EXPECT_FALSE(cmdBufferList.peekIsEmpty());
+    EXPECT_FALSE(cmdBufferList.empty());
 
-    EXPECT_EQ(cmdBufferList.peekHead(), cmdBufferList.peekTail());
-    auto cmdBuffer = cmdBufferList.peekHead();
+    EXPECT_EQ(cmdBufferList.front().get(), cmdBufferList.back().get());
+    auto cmdBuffer = cmdBufferList.front().get();
     // two more because of preemption allocation and sipKernel in Mid Thread preemption mode
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
@@ -136,10 +136,10 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenTaskS
     mockCsr->flushTask(commandStream, startOffset, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    EXPECT_FALSE(cmdBufferList.peekIsEmpty());
+    EXPECT_FALSE(cmdBufferList.empty());
 
-    EXPECT_EQ(cmdBufferList.peekHead(), cmdBufferList.peekTail());
-    auto cmdBuffer = cmdBufferList.peekHead();
+    EXPECT_EQ(cmdBufferList.front().get(), cmdBufferList.back().get());
+    auto cmdBuffer = cmdBufferList.front().get();
 
     uint64_t expectedAddress = commandStream.getGpuBase() + startOffset;
 
@@ -182,8 +182,8 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        dispatchFlags,
                        *pDevice);
 
-    auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    auto secondBatchBuffer = primaryBatch->next;
+    auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
+    auto secondBatchBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[1].get();
 
     auto bbEndLocation = primaryBatch->batchBufferEndLocation;
     auto secondBatchBufferAddress = (uint64_t)ptrOffset(secondBatchBuffer->batchBuffer.commandBufferAllocation->getGpuAddress(),
@@ -262,10 +262,9 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        dispatchFlags,
                        *pDevice);
 
-    auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    auto lastBatchBuffer = primaryBatch->next->next;
+    auto lastBatchBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[2].get();
 
-    auto bbEndLocation = primaryBatch->next->batchBufferEndLocation;
+    auto bbEndLocation = mockedSubmissionsAggregator->peekCommandBuffers()[1]->batchBufferEndLocation;
     auto lastBatchBufferAddress = (uint64_t)ptrOffset(lastBatchBuffer->batchBuffer.commandBufferAllocation->getGpuAddress(),
                                                       lastBatchBuffer->batchBuffer.startOffset);
 
@@ -336,9 +335,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        dispatchFlags,
                        *pDevice);
 
-    auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-
-    auto bbEndLocation = primaryBatch->next->batchBufferEndLocation;
+    auto bbEndLocation = mockedSubmissionsAggregator->peekCommandBuffers()[1]->batchBufferEndLocation;
 
     mockCsr->flushBatchedSubmissions();
 
@@ -405,14 +402,14 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     EXPECT_GT(usedAfterSecondFlushTask, usedAfterFirstFlushTask);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    EXPECT_FALSE(cmdBufferList.peekIsEmpty());
+    EXPECT_FALSE(cmdBufferList.empty());
 
-    EXPECT_NE(cmdBufferList.peekHead(), cmdBufferList.peekTail());
-    EXPECT_NE(nullptr, cmdBufferList.peekTail());
-    EXPECT_NE(nullptr, cmdBufferList.peekHead());
+    EXPECT_NE(cmdBufferList.front().get(), cmdBufferList.back().get());
+    EXPECT_NE(nullptr, cmdBufferList.back().get());
+    EXPECT_NE(nullptr, cmdBufferList.front().get());
 
-    auto cmdBuffer1 = cmdBufferList.peekHead();
-    auto cmdBuffer2 = cmdBufferList.peekTail();
+    auto cmdBuffer1 = cmdBufferList.front().get();
+    auto cmdBuffer2 = cmdBufferList.back().get();
 
     EXPECT_GT(cmdBuffer2->batchBufferEndLocation, cmdBuffer1->batchBufferEndLocation);
 
@@ -458,8 +455,8 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
     EXPECT_EQ(0u, surfacesForResidency.size());
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    EXPECT_FALSE(cmdBufferList.peekIsEmpty());
-    auto cmdBuffer = cmdBufferList.peekHead();
+    EXPECT_FALSE(cmdBufferList.empty());
+    auto cmdBuffer = cmdBufferList.front().get();
 
     // preemption allocation + sip kernel
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
@@ -482,7 +479,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
     EXPECT_EQ(4u, mockCsr->recordedCommandBuffer->batchBuffer.startOffset);
     EXPECT_EQ(1u, mockCsr->flushCalledCount);
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().empty());
 
     EXPECT_EQ(0u, surfacesForResidency.size());
 
@@ -522,7 +519,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        *pDevice);
 
     EXPECT_EQ(flushCalledCountBeforeFlush + 1u, mockCsr->flushCalledCount);
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenBufferToFlushWhenFlushTaskCalledThenUpdateFlushStamp) {
@@ -769,18 +766,18 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    EXPECT_FALSE(cmdBufferList.peekIsEmpty());
+    EXPECT_FALSE(cmdBufferList.empty());
 
     EXPECT_EQ(0u, mockCsr->peekLatestFlushedTaskCount());
 
-    auto cmdBuffer = cmdBufferList.peekHead();
+    auto cmdBuffer = cmdBufferList.front().get();
     EXPECT_EQ(1u, cmdBuffer->taskCount);
 
     mockCsr->waitForCompletionWithTimeout(WaitParams{false, false, false, 1}, 1);
 
     EXPECT_EQ(1u, mockCsr->peekLatestFlushedTaskCount());
 
-    EXPECT_TRUE(cmdBufferList.peekIsEmpty());
+    EXPECT_TRUE(cmdBufferList.empty());
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrInBatchingModeWhenEnqueueIsMadeThenCurrentMemoryUsedIsTracked) {
@@ -810,7 +807,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        dispatchFlags,
                        *pDevice);
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
 
     uint64_t expectedUsed = 0;
     for (const auto &resource : cmdBuffer->surfaces) {
@@ -852,7 +849,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        dispatchFlags,
                        *pDevice);
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
 
     uint64_t expectedUsed = 0;
     for (const auto &resource : cmdBuffer->surfaces) {
@@ -922,7 +919,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
                        dispatchFlags,
                        *pDevice);
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
 
     uint64_t expectedUsed = 0;
     for (const auto &resource : cmdBuffer->surfaces) {
@@ -947,7 +944,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     // expect 2 flushes, since we cannot batch those submissions
     EXPECT_EQ(2u, mockCsr->peekLatestFlushedTaskCount());
     EXPECT_EQ(0u, mockCsr->peekTotalMemoryUsed());
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().empty());
 }
 
 HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
@@ -997,9 +994,9 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
     // validate if we recorded ppc positions
-    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     EXPECT_NE(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
-    auto secondCmdBuffer = firstCmdBuffer->next;
+    auto secondCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[1].get();
     EXPECT_NE(nullptr, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(firstCmdBuffer->pipeControlThatMayBeErasedLocation, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
 
@@ -1291,7 +1288,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        dispatchFlags,
                        *pDevice);
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     EXPECT_EQ(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
 }
@@ -1324,7 +1321,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenEpilo
                        dispatchFlags,
                        *pDevice);
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     ASSERT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(cmdBuffer->epiloguePipeControlLocation);
     ASSERT_NE(nullptr, pipeControl);
@@ -1371,7 +1368,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenEpilo
                        dispatchFlags,
                        *pDevice);
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     ASSERT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
     auto pipeControl = genCmdCast<PIPE_CONTROL *>(cmdBuffer->epiloguePipeControlLocation);
     ASSERT_NE(nullptr, pipeControl);
@@ -1421,9 +1418,9 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
     // validate if we recorded ppc positions
-    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     EXPECT_EQ(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
-    auto secondCmdBuffer = firstCmdBuffer->next;
+    auto secondCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[1].get();
     EXPECT_EQ(nullptr, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
 
     mockCsr->flushBatchedSubmissions();
@@ -1461,9 +1458,9 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
     mockCsr->flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
 
-    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     EXPECT_EQ(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
-    auto secondCmdBuffer = firstCmdBuffer->next;
+    auto secondCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[1].get();
     EXPECT_EQ(nullptr, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
 
     mockCsr->flushBatchedSubmissions();
@@ -1472,9 +1469,9 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
     mockCsr->flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
     mockCsr->flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
 
-    firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     EXPECT_NE(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
-    secondCmdBuffer = firstCmdBuffer->next;
+    secondCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[1].get();
     EXPECT_NE(nullptr, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
 }
 
@@ -1517,7 +1514,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenCsrIn
                        *pDevice);
 
     // validate if we recorded ppc positions
-    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     auto ppc1Location = firstCmdBuffer->pipeControlThatMayBeErasedLocation;
 
     firstCmdBuffer->pipeControlThatMayBeErasedLocation = nullptr;
@@ -1590,9 +1587,9 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2,
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
     // validate if we recorded ppc positions
-    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    auto secondCmdBuffer = firstCmdBuffer->next;
-    auto thirdCmdBuffer = firstCmdBuffer->next->next;
+    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
+    auto secondCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[1].get();
+    auto thirdCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[2].get();
 
     EXPECT_NE(nullptr, thirdCmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(firstCmdBuffer->pipeControlThatMayBeErasedLocation, thirdCmdBuffer->pipeControlThatMayBeErasedLocation);
@@ -1711,7 +1708,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
                        *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    auto cmdBuffer = cmdBufferList.peekHead();
+    auto cmdBuffer = cmdBufferList.front().get();
 
     EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::LOW);
 }
@@ -1744,7 +1741,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
                        *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    auto cmdBuffer = cmdBufferList.peekHead();
+    auto cmdBuffer = cmdBufferList.front().get();
 
     EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::MEDIUM);
 }
@@ -1793,7 +1790,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
                        *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    auto cmdBuffer = cmdBufferList.peekHead();
+    auto cmdBuffer = cmdBufferList.front().get();
 
     EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::HIGH);
 }
@@ -1877,7 +1874,7 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskTestsWithMockCsrHw2, givenDispa
                        *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    auto cmdBuffer = cmdBufferList.peekHead();
+    auto cmdBuffer = cmdBufferList.front().get();
 
     EXPECT_EQ(cmdBuffer->batchBuffer.sliceCount, newSliceCount);
 }
@@ -1991,6 +1988,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutI
     mockCsr.setupContext(osContext);
     mockCsr.latestSentTaskCount = 1;
     auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);
-    mockCsr.submissionAggregator->recordCommandBuffer(cmdBuffer.release());
+    mockCsr.submissionAggregator->recordCommandBuffer(std::move(cmdBuffer));
     EXPECT_EQ(NEO::WaitStatus::notReady, mockCsr.waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, 1));
 }

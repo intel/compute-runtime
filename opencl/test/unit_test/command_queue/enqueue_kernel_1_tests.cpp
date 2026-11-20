@@ -963,9 +963,9 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     size_t gws[3] = {1, 0, 0};
     auto ret = pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().front().get();
 
     // Three more surfaces from preemptionAllocation, SipKernel and clearColorAllocation
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
@@ -1087,12 +1087,12 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
 
     auto ret = clFlush(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, ret);
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
     EXPECT_EQ(mockCsrmockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsrmockCsr->flushCalledCount);
 }
 
@@ -1112,7 +1112,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     ret = clFlush(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, ret);
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
     EXPECT_EQ(mockCsrmockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsrmockCsr->flushCalledCount);
 }
 
@@ -1134,13 +1134,13 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIs
     mockCsrmockCsr.mediaVfeStateDirty = true;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCmdBufferList();
-    EXPECT_NE(nullptr, cmdBufferList.peekHead());
-    EXPECT_NE(cmdBufferList.peekTail(), cmdBufferList.peekHead());
+    EXPECT_NE(nullptr, cmdBufferList.front().get());
+    EXPECT_NE(cmdBufferList.back().get(), cmdBufferList.front().get());
 
-    auto cmdBuffer1 = cmdBufferList.peekHead();
-    auto cmdBuffer2 = cmdBufferList.peekTail();
+    auto cmdBuffer1 = cmdBufferList.front().get();
+    auto cmdBuffer2 = cmdBufferList.back().get();
 
     EXPECT_EQ(cmdBuffer1->surfaces.size(), cmdBuffer2->surfaces.size());
     EXPECT_EQ(cmdBuffer1->batchBuffer.commandBufferAllocation, cmdBuffer2->batchBuffer.commandBufferAllocation);
@@ -1162,7 +1162,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCommandStreamReceiverIn
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->flush();
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
     EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 }
 
@@ -1208,7 +1208,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
 
     pCmdQ->finish(false);
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
     EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 }
 
@@ -1233,7 +1233,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenTh
 
     pCmdQ->finish(false);
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
     EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 }
 
@@ -1257,7 +1257,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenWa
     auto status = clWaitForEvents(1, &event);
 
     EXPECT_EQ(CL_SUCCESS, status);
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
     EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 
     status = clReleaseEvent(event);
@@ -1400,7 +1400,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenWa
     auto status = clWaitForEvents(1, &event);
 
     EXPECT_EQ(CL_SUCCESS, status);
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
 
     auto expectedFlushCalledCount = mockCsr->heaplessPrologProgrammed ? 2u : 1u;
     if (mockCsr->isUpdateTagFromWaitEnabled()) {
@@ -1433,7 +1433,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenCsrInBatchingModeWhenFi
     auto status = clFinish(pCmdQ);
 
     EXPECT_EQ(CL_SUCCESS, status);
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
     EXPECT_EQ(mockCsr->heaplessPrologProgrammed ? 2u : 1u, mockCsr->flushCalledCount);
 
     status = clReleaseEvent(event);
@@ -1459,8 +1459,8 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenOutOfOrderCommandQueueW
     size_t gws[3] = {1, 0, 0};
     clEnqueueNDRangeKernel(ooq, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().front().get();
     EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
 
     clReleaseCommandQueue(ooq);
@@ -1484,8 +1484,8 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelIsMadeThenP
     size_t gws[3] = {1, 0, 0};
     clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().front().get();
     EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
 
     clReleaseCommandQueue(inOrderQueue);
@@ -1510,8 +1510,8 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenInOrderCommandQueueWhen
     mockKernel.mockKernel->setUsingSharedArgs(true);
     clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().front().get();
     EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
 
@@ -1549,8 +1549,8 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenInOrderCommandQueueWhen
 
     clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
 
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().front().get();
     EXPECT_EQ(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
 
     if (mockCsr->isUpdateTagFromWaitEnabled()) {
@@ -1586,8 +1586,8 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenInOrderCommandQueueWhen
 
     clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
 
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().front().get();
     EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
 
@@ -1616,8 +1616,8 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenOutOfOrderCommandQueueW
 
     clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
 
-    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().front().get();
     EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_EQ(cmdBuffer->epiloguePipeControlLocation, cmdBuffer->pipeControlThatMayBeErasedLocation);
 

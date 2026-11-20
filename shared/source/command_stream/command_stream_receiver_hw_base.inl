@@ -690,8 +690,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
     bool submitResult = true;
 
     auto &commandBufferList = this->submissionAggregator->peekCmdBufferList();
-    if (!commandBufferList.peekIsEmpty()) {
-        const auto totalMemoryBudget = static_cast<size_t>(commandBufferList.peekHead()->device.getDeviceInfo().globalMemSize / 2);
+    if (!commandBufferList.empty()) {
+        const auto totalMemoryBudget = static_cast<size_t>(commandBufferList.front()->device.getDeviceInfo().globalMemSize / 2);
 
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
@@ -700,11 +700,12 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
         std::vector<BatchBuffer> chainedBatchBuffers;
         std::vector<std::pair<const void *, size_t>> commandBufferPatches;
 
-        while (!commandBufferList.peekIsEmpty()) {
+        size_t primaryCmdBufferIndex = 0u;
+        while (primaryCmdBufferIndex < commandBufferList.size()) {
             size_t totalUsedSize = 0u;
-            this->submissionAggregator->aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, osContext->getContextId());
-            auto primaryCmdBuffer = commandBufferList.removeFrontOne();
-            auto nextCommandBuffer = commandBufferList.peekHead();
+            this->submissionAggregator->aggregateCommandBuffers(primaryCmdBufferIndex, resourcePackage, totalUsedSize, totalMemoryBudget, osContext->getContextId());
+            auto primaryCmdBuffer = commandBufferList[primaryCmdBufferIndex].get();
+            auto nextCmdBufferIndex = primaryCmdBufferIndex + 1;
             auto currentBBendLocation = primaryCmdBuffer->batchBufferEndLocation;
             auto lastTaskCount = primaryCmdBuffer->taskCount;
             auto lastPipeControlArgs = primaryCmdBuffer->epiloguePipeControlArgs;
@@ -721,7 +722,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 flatBatchBufferHelper->registerCommandChunk(primaryCmdBuffer->batchBuffer, sizeof(MI_BATCH_BUFFER_START));
             }
 
-            while (nextCommandBuffer && nextCommandBuffer->inspectionId == primaryCmdBuffer->inspectionId) {
+            while (nextCmdBufferIndex < commandBufferList.size() && commandBufferList[nextCmdBufferIndex]->inspectionId == primaryCmdBuffer->inspectionId) {
+                auto nextCommandBuffer = commandBufferList[nextCmdBufferIndex].get();
 
                 // noop pipe control
                 if (currentPipeControlForNooping) {
@@ -759,10 +761,9 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 lastTaskCount = nextCommandBuffer->taskCount;
                 lastPipeControlArgs = nextCommandBuffer->epiloguePipeControlArgs;
                 chainedBatchBuffers.push_back(nextCommandBuffer->batchBuffer);
-                nextCommandBuffer = nextCommandBuffer->next;
-
-                commandBufferList.removeFrontOne();
+                nextCmdBufferIndex++;
             }
+            primaryCmdBufferIndex = nextCmdBufferIndex;
             surfacesForSubmit.reserve(resourcePackage.size() + 1);
             for (auto &surface : resourcePackage) {
                 surfacesForSubmit.push_back(surface);
@@ -816,6 +817,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             this->makeSurfacePackNonResident(surfacesForSubmit, true);
             resourcePackage.clear();
         }
+        commandBufferList.erase(commandBufferList.begin(), commandBufferList.begin() + primaryCmdBufferIndex);
         this->totalMemoryUsed = 0;
     }
 
@@ -2112,7 +2114,7 @@ inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleFlushTaskSubmis
             }
         } else {
             args.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
-            auto commandBuffer = new CommandBuffer(device);
+            auto commandBuffer = std::make_unique<CommandBuffer>(device);
             commandBuffer->batchBufferEndLocation = batchBuffer.endCmdPtr;
             commandBuffer->batchBuffer = std::move(batchBuffer);
             commandBuffer->surfaces.swap(this->getResidencyAllocations());
@@ -2121,7 +2123,7 @@ inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleFlushTaskSubmis
             commandBuffer->pipeControlThatMayBeErasedLocation = currentPipeControlForNooping;
             commandBuffer->epiloguePipeControlLocation = epiloguePipeControlLocation;
             commandBuffer->epiloguePipeControlArgs = args;
-            this->submissionAggregator->recordCommandBuffer(commandBuffer);
+            this->submissionAggregator->recordCommandBuffer(std::move(commandBuffer));
         }
     } else {
         this->makeSurfacePackNonResident(this->getResidencyAllocations(), true);

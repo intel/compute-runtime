@@ -562,8 +562,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
 
     // make sure command buffer is recorded
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
-    EXPECT_FALSE(cmdBuffers.peekIsEmpty());
-    EXPECT_NE(nullptr, cmdBuffers.peekHead());
+    EXPECT_FALSE(cmdBuffers.empty());
+    EXPECT_NE(nullptr, cmdBuffers.front().get());
 
     // preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
@@ -571,7 +571,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     csrSurfaceCount += testedCsr->clearColorAllocation ? 1 : 0;
     csrSurfaceCount += device->getRTMemoryBackedBuffer() ? 1u : 0u;
 
-    auto recordedCmdBuffer = cmdBuffers.peekHead();
+    auto recordedCmdBuffer = cmdBuffers.front().get();
     EXPECT_EQ(3u + csrSurfaceCount, recordedCmdBuffer->surfaces.size());
 
     // try to find all allocations
@@ -635,14 +635,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     csr->flushTask(cs, 0u, &cs, &cs, &cs, 0u, dispatchFlags, *device);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
-    auto storedCommandBuffer = cmdBuffers.peekHead();
+    auto storedCommandBuffer = cmdBuffers.front().get();
 
     ResidencyContainer copyOfResidency = storedCommandBuffer->surfaces;
     copyOfResidency.push_back(storedCommandBuffer->batchBuffer.commandBufferAllocation);
 
     csr->flushBatchedSubmissions();
 
-    EXPECT_TRUE(cmdBuffers.peekIsEmpty());
+    EXPECT_TRUE(cmdBuffers.empty());
 
     if (!csr->getHeaplessModeEnabled()) {
         auto commandBufferGraphicsAllocation = submittedCommandBuffer.getGraphicsAllocation();

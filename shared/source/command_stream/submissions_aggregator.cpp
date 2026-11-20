@@ -12,17 +12,17 @@
 
 #include <algorithm>
 
-void NEO::SubmissionAggregator::recordCommandBuffer(CommandBuffer *commandBuffer) {
-    this->cmdBuffers.pushTailOne(*commandBuffer);
+void NEO::SubmissionAggregator::recordCommandBuffer(std::unique_ptr<CommandBuffer> commandBuffer) {
+    this->cmdBuffers.push_back(std::move(commandBuffer));
 }
 
-void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourcePackage, size_t &totalUsedSize, size_t totalMemoryBudget, uint32_t osContextId) {
-    auto primaryCommandBuffer = this->cmdBuffers.peekHead();
+void NEO::SubmissionAggregator::aggregateCommandBuffers(size_t primaryCommandBufferIndex, ResourcePackage &resourcePackage, size_t &totalUsedSize, size_t totalMemoryBudget, uint32_t osContextId) {
     auto currentInspection = this->inspectionId;
 
-    if (!primaryCommandBuffer) {
+    if (primaryCommandBufferIndex >= this->cmdBuffers.size()) {
         return;
     }
+    auto primaryCommandBuffer = this->cmdBuffers[primaryCommandBufferIndex].get();
     auto primaryBatchGraphicsAllocation = primaryCommandBuffer->batchBuffer.commandBufferAllocation;
 
     this->inspectionId++;
@@ -68,23 +68,24 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
     }
 
     // check if we have anything for merge
-    if (!primaryCommandBuffer->next) {
+    auto nextCommandBufferIndex = primaryCommandBufferIndex + 1;
+    if (nextCommandBufferIndex == this->cmdBuffers.size()) {
         return;
     }
 
-    if (primaryCommandBuffer->next->batchBuffer.lowPriority != primaryCommandBuffer->batchBuffer.lowPriority) {
+    const auto &firstMergeCandidate = *this->cmdBuffers[nextCommandBufferIndex];
+    if (firstMergeCandidate.batchBuffer.lowPriority != primaryCommandBuffer->batchBuffer.lowPriority) {
         return;
     }
 
-    if (primaryCommandBuffer->next->batchBuffer.throttle != primaryCommandBuffer->batchBuffer.throttle) {
+    if (firstMergeCandidate.batchBuffer.throttle != primaryCommandBuffer->batchBuffer.throttle) {
         return;
     }
 
-    if (primaryCommandBuffer->next->batchBuffer.sliceCount != primaryCommandBuffer->batchBuffer.sliceCount) {
+    if (firstMergeCandidate.batchBuffer.sliceCount != primaryCommandBuffer->batchBuffer.sliceCount) {
         return;
     }
 
-    auto nextCommandBuffer = primaryCommandBuffer->next;
     auto addMergedResource = [&](GraphicsAllocation *graphicsAllocation, size_t &newResourcesSize) {
         if (graphicsAllocation == nullptr) {
             return;
@@ -109,7 +110,8 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
         }
     };
 
-    while (nextCommandBuffer) {
+    for (; nextCommandBufferIndex < this->cmdBuffers.size(); nextCommandBufferIndex++) {
+        auto nextCommandBuffer = this->cmdBuffers[nextCommandBufferIndex].get();
         size_t nextCommandBufferNewResourcesSize = 0;
         // evaluate if buffer fits
         for (auto &graphicsAllocation : nextCommandBuffer->surfaces) {
@@ -124,10 +126,8 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
         }
 
         if (nextCommandBufferNewResourcesSize + totalUsedSize <= totalMemoryBudget) {
-            auto currentNode = nextCommandBuffer;
-            nextCommandBuffer = nextCommandBuffer->next;
             totalUsedSize += nextCommandBufferNewResourcesSize;
-            currentNode->inspectionId = currentInspection;
+            nextCommandBuffer->inspectionId = currentInspection;
 
             for (auto &newResource : newResources) {
                 resourcePackage.push_back(newResource);

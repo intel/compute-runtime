@@ -11,8 +11,8 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipe_control_args.h"
-#include "shared/source/utilities/idlist.h"
 
+#include <memory>
 #include <vector>
 namespace NEO {
 class Device;
@@ -73,9 +73,9 @@ struct BatchBuffer {
     bool taskCountUpdateOnly = false;
 };
 
-struct CommandBuffer : public IDNode<CommandBuffer>, NEO::NonCopyableAndNonMovableClass {
+struct CommandBuffer : NEO::NonCopyableAndNonMovableClass {
     CommandBuffer(Device &device);
-    ~CommandBuffer() override;
+    ~CommandBuffer();
     ResidencyContainer surfaces;
     BatchBuffer batchBuffer;
     void *batchBufferEndLocation = nullptr;
@@ -90,14 +90,14 @@ struct CommandBuffer : public IDNode<CommandBuffer>, NEO::NonCopyableAndNonMovab
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandBuffer>);
 
-struct CommandBufferList : public IDList<CommandBuffer, false, true, false> {};
+using CommandBufferList = std::vector<std::unique_ptr<CommandBuffer>>;
 
 using ResourcePackage = StackVec<GraphicsAllocation *, 128>;
 
 class SubmissionAggregator {
   public:
-    void recordCommandBuffer(CommandBuffer *commandBuffer);
-    void aggregateCommandBuffers(ResourcePackage &resourcePackage, size_t &totalUsedSize, size_t totalMemoryBudget, uint32_t osContextId);
+    void recordCommandBuffer(std::unique_ptr<CommandBuffer> commandBuffer);
+    void aggregateCommandBuffers(size_t primaryCommandBufferIndex, ResourcePackage &resourcePackage, size_t &totalUsedSize, size_t totalMemoryBudget, uint32_t osContextId);
     CommandBufferList &peekCmdBufferList() { return cmdBuffers; }
 
   protected:

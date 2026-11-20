@@ -590,7 +590,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
 
     EXPECT_EQ(0u, mockCsr->flushCalledCount);
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
 
     // surfaces are non resident
     auto &surfacesForResidency = mockCsr->getResidencyAllocations();
@@ -633,8 +633,8 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
     EXPECT_EQ(0u, surfacesForResidency.size());
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
-    EXPECT_FALSE(cmdBufferList.peekIsEmpty());
-    auto cmdBuffer = cmdBufferList.peekHead();
+    EXPECT_FALSE(cmdBufferList.empty());
+    auto cmdBuffer = cmdBufferList.front().get();
 
     // preemption allocation + sip kernel
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
@@ -660,7 +660,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLate
     EXPECT_EQ(4u, mockCsr->recordedCommandBuffer->batchBuffer.startOffset);
     EXPECT_EQ(1u, mockCsr->flushCalledCount);
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().empty());
 
     EXPECT_EQ(0u, surfacesForResidency.size());
 

@@ -4296,13 +4296,13 @@ HWTEST2_F(LatePreemptionStartCsrTest, givenBatchedDispatchWhenFlushingTaskWithLa
     flushTaskFlags.hasMidThreadPreemptionKernel = false;
     commandStreamReceiver.newResources = false;
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
-    EXPECT_FALSE(commandBufferList.peekIsEmpty());
+    EXPECT_FALSE(commandBufferList.empty());
     EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
 
     flushTaskFlags.hasMidThreadPreemptionKernel = true;
     commandStreamReceiver.newResources = false;
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
-    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandBufferList.empty());
     EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
     EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
     EXPECT_EQ(1u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
@@ -4310,7 +4310,7 @@ HWTEST2_F(LatePreemptionStartCsrTest, givenBatchedDispatchWhenFlushingTaskWithLa
     commandStream.getSpace(4);
     commandStreamReceiver.newResources = false;
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
-    EXPECT_FALSE(commandBufferList.peekIsEmpty());
+    EXPECT_FALSE(commandBufferList.empty());
     EXPECT_EQ(1u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
 
     EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
@@ -4335,14 +4335,14 @@ HWTEST2_F(LatePreemptionStartCsrTest, givenBatchedDispatchAndFailedLateStartSubm
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
     commandStreamReceiver.newResources = false;
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
-    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandBufferList.empty());
     EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
     EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
 
     commandStreamReceiver.flushReturnValue.reset();
     commandStreamReceiver.newResources = false;
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
-    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandBufferList.empty());
     EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
     EXPECT_EQ(2u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
 }
@@ -4373,13 +4373,13 @@ HWTEST2_F(LatePreemptionStartCsrTest, givenBatchedDispatchAndFailedEarlierBatchW
     commandStreamReceiver.newResources = false;
     auto completionStamp = commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *ccsCsrDevice);
     EXPECT_EQ(commandStreamReceiver.peekTaskCount(), completionStamp.taskCount);
-    EXPECT_FALSE(commandBufferList.peekIsEmpty());
+    EXPECT_FALSE(commandBufferList.empty());
     EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
     EXPECT_FALSE(commandStreamReceiver.lateMidThreadPreemptionStartSubmissionPending);
 
     commandStreamReceiver.flushReturnValue.reset();
     EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
-    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandBufferList.empty());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenPendingLateMidThreadPreemptionStartWhenSubmittingBatchBufferThenPreemptionAllocationIsSkippedAgainOnlyOnFailure) {
@@ -8126,8 +8126,8 @@ HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndBatchedCommandBuffer
     auto secondTaskStartOffset = commandStream.getUsed();
     commandStream.getSpace(32);
     commandStreamReceiver.flushTask(commandStream, secondTaskStartOffset, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
-    ASSERT_NE(commandBufferList.peekHead(), commandBufferList.peekTail());
-    auto chainedBatchBuffer = commandBufferList.peekTail()->batchBuffer;
+    ASSERT_NE(commandBufferList.front().get(), commandBufferList.back().get());
+    auto chainedBatchBuffer = commandBufferList.back()->batchBuffer;
     enableSimulationChunkWriteTracking(commandStreamReceiver);
 
     EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
@@ -8169,8 +8169,8 @@ void verifyBatchedCommandBufferPatchesAreUploaded(UltCommandStreamReceiver<Famil
     secondCommandBuffer->epiloguePipeControlLocation = epiloguePipeControlLocation;
     secondCommandBuffer->taskCount = 2u;
 
-    commandStreamReceiver.submissionAggregator->recordCommandBuffer(firstCommandBuffer.release());
-    commandStreamReceiver.submissionAggregator->recordCommandBuffer(secondCommandBuffer.release());
+    commandStreamReceiver.submissionAggregator->recordCommandBuffer(std::move(firstCommandBuffer));
+    commandStreamReceiver.submissionAggregator->recordCommandBuffer(std::move(secondCommandBuffer));
 
     auto batchBufferEndPatchSize = gapBetweenTasks == 0u ? ptrDiff(commandBufferEndingSection, batchBufferEndLocation) : sizeof(MI_BATCH_BUFFER_START);
     WrittenMemoryChunk nooppedPipeControlChunk{&commandBufferAllocation, 0u, pipeControlSize};
@@ -8180,7 +8180,7 @@ void verifyBatchedCommandBufferPatchesAreUploaded(UltCommandStreamReceiver<Famil
 
     EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
 
-    EXPECT_TRUE(commandStreamReceiver.submissionAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.submissionAggregator->peekCmdBufferList().empty());
     EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, nooppedPipeControlChunk));
     EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, batchBufferEndChunk));
     EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, epiloguePipeControlChunk));
@@ -8494,11 +8494,11 @@ HWTEST_F(CommandStreamReceiverTest, givenPrimaryCommandBufferWithTwoViewsFromSam
     primaryCommandBuffer->batchBuffer.commandBufferAllocation = firstView.get();
     primaryCommandBuffer->surfaces.push_back(firstView.get());
     primaryCommandBuffer->surfaces.push_back(secondView.get());
-    aggregator.recordCommandBuffer(primaryCommandBuffer.release());
+    aggregator.recordCommandBuffer(std::move(primaryCommandBuffer));
 
     ResourcePackage resourcePackage;
     size_t totalUsedSize = 0u;
-    aggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, std::numeric_limits<size_t>::max(), contextId);
+    aggregator.aggregateCommandBuffers(0u, resourcePackage, totalUsedSize, std::numeric_limits<size_t>::max(), contextId);
 
     bool firstViewTracked = false;
     bool secondViewTracked = false;
@@ -8535,12 +8535,12 @@ HWTEST_F(CommandStreamReceiverTest, givenMergedCommandBuffersWithViewsFromSamePa
     primaryCommandBuffer->surfaces.push_back(firstView.get());
     secondaryCommandBuffer->batchBuffer.commandBufferAllocation = secondView.get();
 
-    aggregator.recordCommandBuffer(primaryCommandBuffer.release());
-    aggregator.recordCommandBuffer(secondaryCommandBuffer.release());
+    aggregator.recordCommandBuffer(std::move(primaryCommandBuffer));
+    aggregator.recordCommandBuffer(std::move(secondaryCommandBuffer));
 
     ResourcePackage resourcePackage;
     size_t totalUsedSize = 0u;
-    aggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, std::numeric_limits<size_t>::max(), contextId);
+    aggregator.aggregateCommandBuffers(0u, resourcePackage, totalUsedSize, std::numeric_limits<size_t>::max(), contextId);
 
     bool secondViewTracked = false;
     for (auto *allocation : resourcePackage) {
@@ -9326,14 +9326,14 @@ HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingTaskInBat
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
-    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandBufferList.empty());
     EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
     EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
 
     commandStreamReceiver.flushReturnValue.reset();
     auto csrStreamStart = commandStreamReceiver.commandStream.getUsed();
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
-    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_TRUE(commandBufferList.empty());
     EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
     EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
     EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
@@ -9341,7 +9341,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingTaskInBat
     commandStream.getSpace(4);
     csrStreamStart = commandStreamReceiver.commandStream.getUsed();
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
-    EXPECT_FALSE(commandBufferList.peekIsEmpty());
+    EXPECT_FALSE(commandBufferList.empty());
     EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
     EXPECT_EQ(0u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
 

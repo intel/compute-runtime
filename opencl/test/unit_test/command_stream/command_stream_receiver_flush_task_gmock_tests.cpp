@@ -115,10 +115,9 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2,
                        dispatchFlags,
                        *pDevice);
 
-    auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    auto lastBatchBuffer = primaryBatch->next->next;
+    auto lastBatchBuffer = mockedSubmissionsAggregator->peekCommandBuffers()[2].get();
 
-    auto bbEndLocation = primaryBatch->next->batchBufferEndLocation;
+    auto bbEndLocation = mockedSubmissionsAggregator->peekCommandBuffers()[1]->batchBufferEndLocation;
     auto lastBatchBufferAddress = (uint64_t)ptrOffset(lastBatchBuffer->batchBuffer.commandBufferAllocation->getGpuAddress(),
                                                       lastBatchBuffer->batchBuffer.startOffset);
 

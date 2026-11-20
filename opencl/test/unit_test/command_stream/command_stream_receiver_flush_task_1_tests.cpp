@@ -218,7 +218,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
                       dispatchFlags,
                       *mockDevice);
 
-    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().front().get();
     auto sipAllocation = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation();
     bool found = false;
     for (auto allocation : cmdBuffer->surfaces) {

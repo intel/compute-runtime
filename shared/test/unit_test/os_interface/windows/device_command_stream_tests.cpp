@@ -792,7 +792,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
     mockCsr->flushTask(cs, 0u, &dsh, &ioh, &ssh, 0u, dispatchFlags, *device);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
-    auto storedCommandBuffer = cmdBuffers.peekHead();
+    auto storedCommandBuffer = cmdBuffers.front().get();
 
     ResidencyContainer copyOfResidency = storedCommandBuffer->surfaces;
     copyOfResidency.push_back(storedCommandBuffer->batchBuffer.commandBufferAllocation);
@@ -801,7 +801,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
 
     csrSurfaceCount += mockCsr->clearColorAllocation ? 1 : 0;
     csrSurfaceCount -= device->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
-    EXPECT_TRUE(cmdBuffers.peekIsEmpty());
+    EXPECT_TRUE(cmdBuffers.empty());
 
     EXPECT_EQ(1u, wddm->submitResult.called);
     auto csrCommandStream = mockCsr->commandStream.getGraphicsAllocation();

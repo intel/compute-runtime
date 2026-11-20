@@ -966,7 +966,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
 
     EXPECT_EQ(0u, mockCsr->flushCalledCount);
 
-    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().empty());
 
     // surfaces are non resident
     auto &surfacesForResidency = mockCsr->getResidencyAllocations();
