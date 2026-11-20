@@ -99,6 +99,8 @@ zexMemOpenIpcHandles(
 ///    - The implementation of this function should be lock-free.
 ///    - Host address is only valid on the host, using it on device is invalid.
 ///    - Freeing the memory will unmap the host memory mapping.
+///    - ptr may point inside an allocation; the returned host pointer is at the
+///       same offset from the start of the allocation.
 ///    - The application must only use the memory allocation for the context
 ///       which was provided during allocation.
 ///    - The application is responsible for properly flushing/sequencing host
