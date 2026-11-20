@@ -253,6 +253,7 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionAndVendorIdIsK
     const std::vector<std::pair<uint32_t, std::string>> knownVendors = {
         {mockSamsungMemoryVendorIdValue, "Samsung"},
         {mockCxmtMemoryVendorIdValue, "CXMT"},
+        {mockCxshMemoryVendorIdValue, "CXSH"},
         {mockMicronMemoryVendorIdValue, "Micron"},
     };
 
