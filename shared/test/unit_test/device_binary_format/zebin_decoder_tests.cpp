@@ -521,6 +521,23 @@ TEST(ExtractZebinSections, GivenSpecConstantsValuesSectionThenCapturesItProperly
     ASSERT_EQ(1U, sections.specConstantsValuesSection.size());
 }
 
+TEST(DecodeSingleDeviceBinaryZebin, GivenMissingElfHeaderWhenDecodingThenReturnInvalidBinaryAndPreserveError) {
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_32> elf32;
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf64;
+    NEO::ProgramInfo programInfo;
+    const std::string elfError = "ELF decoding failed";
+    std::string errors = elfError;
+    std::string warnings;
+
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, decodeZebin(programInfo, elf32, errors, warnings));
+    EXPECT_EQ(elfError, errors);
+    EXPECT_TRUE(warnings.empty());
+
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, decodeZebin(programInfo, elf64, errors, warnings));
+    EXPECT_EQ(elfError, errors);
+    EXPECT_TRUE(warnings.empty());
+}
+
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoSectionIsEmptyThenEmitsWarning) {
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();

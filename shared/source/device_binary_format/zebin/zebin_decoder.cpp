@@ -404,6 +404,10 @@ template DecodeError decodeZebin<Elf::EI_CLASS_32>(ProgramInfo &dst, NEO::Elf::E
 template DecodeError decodeZebin<Elf::EI_CLASS_64>(ProgramInfo &dst, NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, std::string &outErrReason, std::string &outWarning);
 template <Elf::ElfIdentifierClass numBits>
 DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::string &outErrReason, std::string &outWarning) {
+    if (nullptr == elf.elfFileHeader) {
+        return DecodeError::invalidBinary;
+    }
+
     ZebinSections<numBits> zebinSections;
     auto extractError = extractZebinSections(elf, zebinSections, outErrReason, outWarning);
     if (DecodeError::success != extractError) {
