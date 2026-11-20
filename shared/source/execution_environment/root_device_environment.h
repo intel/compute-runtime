@@ -108,6 +108,10 @@ struct RootDeviceEnvironment : NonCopyableClass {
     template <typename HelperType>
     HelperType &getHelper() const;
     const ProductHelper &getProductHelper() const;
+    bool isLowPriorityContextGroupSupported() const;
+    bool isRootLowPriorityContextGroupSupported(const DeviceBitfield &rootDeviceBitfield) const;
+    DeviceBitfield getRootDeviceBitfield() const;
+    uint32_t getContextGroupContextsCountForAggregatedProcesses() const;
     GraphicsAllocation *getDummyAllocation() const;
     void releaseDummyAllocation();
 

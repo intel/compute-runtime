@@ -379,8 +379,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     void finalizeRayTracing();
     bool createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount);
     bool createLowPrioritySecondaryContexts(const EngineControl &primaryEngine);
-    uint32_t getContextGroupContextsCountForAggregatedProcesses() const;
-    bool isLowPriorityContextGroupSupported() const;
     MOCKABLE_VIRTUAL bool initializeSecondaryEngine(const EngineControl &engineControl);
     bool isInternalEngineFromSecondaryContextEnabled() const;
     EngineControl *tryGetInternalSecondaryEngine(aub_stream::EngineType engineType);

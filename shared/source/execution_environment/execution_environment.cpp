@@ -119,10 +119,12 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         auto osContextCount = static_cast<uint32_t>(engineInstances.size());
         auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         bool hasRootCsr = subDevicesCount > 1;
+        const bool lowPriorityContextGroupSupported = rootDeviceEnvironment->isLowPriorityContextGroupSupported();
 
         uint32_t numContextGroupEngines = 0;
         for (const auto &engine : engineInstances) {
-            if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || engine.second == EngineUsage::lowPriority) {
+            const bool lowPriorityContextGroupEngine = engine.second == EngineUsage::lowPriority && lowPriorityContextGroupSupported;
+            if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || lowPriorityContextGroupEngine) {
                 numContextGroupEngines++;
             }
         }
@@ -131,14 +133,14 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         uint32_t numSecondaryContexts = 0;
         if (gfxCoreHelper.areSecondaryContextsSupported()) {
 
-            auto groupCount = gfxCoreHelper.getContextGroupContextsCount();
-            if (rootDeviceEnvironment->osInterface && rootDeviceEnvironment->osInterface->getAggregatedProcessCount() > 1) {
-                groupCount = std::max(groupCount / rootDeviceEnvironment->osInterface->getAggregatedProcessCount(), 2u);
-            }
+            auto groupCount = rootDeviceEnvironment->getContextGroupContextsCountForAggregatedProcesses();
             numSecondaryContexts += numContextGroupEngines * groupCount;
             osContextCount -= numContextGroupEngines;
 
-            constexpr uint32_t rootContextGroupsCount = 2;
+            uint32_t rootContextGroupsCount = 1;
+            if (hasRootCsr && rootDeviceEnvironment->isRootLowPriorityContextGroupSupported(rootDeviceEnvironment->getRootDeviceBitfield())) {
+                rootContextGroupsCount++;
+            }
             numRootContexts *= rootContextGroupsCount * groupCount;
         }
 

@@ -7657,11 +7657,14 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenContextGroupWhenCreatingEng
 
     device->getExecutionEnvironment()->calculateMaxOsContextCount();
 
-    auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &rootDeviceEnvironment = *device->getExecutionEnvironment()->rootDeviceEnvironments[0];
+    auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(rootDeviceEnvironment);
+    const bool lowPriorityContextGroupSupported = rootDeviceEnvironment.isLowPriorityContextGroupSupported();
     uint32_t numContextGroupEngines = 0;
 
     for (const auto &engine : engineInstances) {
-        if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || engine.second == EngineUsage::lowPriority) {
+        const bool lowPriorityContextGroupEngine = engine.second == EngineUsage::lowPriority && lowPriorityContextGroupSupported;
+        if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || lowPriorityContextGroupEngine) {
             numContextGroupEngines++;
         }
     }
@@ -7682,6 +7685,7 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenMultipleSubDevicesAndContex
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ContextGroupSize.set(8);
     debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(0);
 
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 0b110;
@@ -7694,11 +7698,14 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenMultipleSubDevicesAndContex
 
     device->getExecutionEnvironment()->calculateMaxOsContextCount();
 
-    auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &rootDeviceEnvironment = *device->getExecutionEnvironment()->rootDeviceEnvironments[0];
+    auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(rootDeviceEnvironment);
+    const bool lowPriorityContextGroupSupported = rootDeviceEnvironment.isLowPriorityContextGroupSupported();
     uint32_t numContextGroupEngines = 0;
 
     for (const auto &engine : engineInstances) {
-        if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || engine.second == EngineUsage::lowPriority) {
+        const bool lowPriorityContextGroupEngine = engine.second == EngineUsage::lowPriority && lowPriorityContextGroupSupported;
+        if (engine.second == EngineUsage::regular || engine.second == EngineUsage::highPriority || lowPriorityContextGroupEngine) {
             numContextGroupEngines++;
         }
     }
@@ -7707,7 +7714,8 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenMultipleSubDevicesAndContex
 
     auto osContextCount = nonGroupCount + (numContextGroupEngines * device->getGfxCoreHelper().getContextGroupContextsCount());
 
-    osContextCount = osContextCount * 2 + 2 * device->getGfxCoreHelper().getContextGroupContextsCount();
+    const uint32_t rootContextGroupsCount = lowPriorityContextGroupSupported ? 2 : 1;
+    osContextCount = osContextCount * 2 + rootContextGroupsCount * device->getGfxCoreHelper().getContextGroupContextsCount();
 
     EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
 }

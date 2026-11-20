@@ -53,6 +53,7 @@
 
 #include "spirv/unified1/spirv.hpp"
 
+#include <algorithm>
 #include <set>
 
 using namespace NEO;
@@ -2424,15 +2425,23 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
 }
 
 struct InternalEngineFromSecondaryContextMultiProcessTests : public InternalEngineFromSecondaryContextTests {
-    std::unique_ptr<MockDevice> createDeviceForProcessCount(uint32_t processCount) {
-        debugManager.flags.ContextGroupSize.set(fullContextGroupSize);
+    void createExecutionEnvironmentWithOsInterface() {
         executionEnvironment = new MockExecutionEnvironment(&hwInfo, false, 1);
         executionEnvironment->incRefInternal();
-        auto osInterface = new MockOsInterface();
+        osInterface = new MockOsInterface();
         osInterface->setDriverModel(std::make_unique<MockDriverModel>());
-        osInterface->numberOfProcesses = processCount;
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    }
+
+    std::unique_ptr<MockDevice> createDeviceWithOsInterface() {
         return std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+    }
+
+    std::unique_ptr<MockDevice> createDeviceForProcessCount(uint32_t processCount) {
+        debugManager.flags.ContextGroupSize.set(fullContextGroupSize);
+        createExecutionEnvironmentWithOsInterface();
+        osInterface->numberOfProcesses = processCount;
+        return createDeviceWithOsInterface();
     }
 
     void TearDown() override {
@@ -2444,6 +2453,7 @@ struct InternalEngineFromSecondaryContextMultiProcessTests : public InternalEngi
 
     static constexpr uint32_t fullContextGroupSize = 64;
     MockExecutionEnvironment *executionEnvironment = nullptr;
+    MockOsInterface *osInterface = nullptr;
 };
 
 HWTEST_F(InternalEngineFromSecondaryContextMultiProcessTests, givenUseSecondaryContextForInternalEngineEnabledAndMaxProcessCountWhenDeviceIsCreatedThenSecondaryContextIsReservedForInternalEngine) {
@@ -2715,13 +2725,9 @@ HWTEST_F(LowPriorityContextGroupTests, givenMultipleSubDevicesAndImplicitScaling
 }
 
 HWTEST_F(LowPriorityContextGroupTests, givenOsInterfaceNotSupportingLowPriorityContextGroupWhenDeviceIsCreatedThenLowPriorityEngineIsNotPartOfContextGroup) {
-    executionEnvironment = new MockExecutionEnvironment(&hwInfo, false, 1);
-    executionEnvironment->incRefInternal();
-    auto osInterface = new MockOsInterface();
-    osInterface->setDriverModel(std::make_unique<MockDriverModel>());
+    createExecutionEnvironmentWithOsInterface();
     osInterface->lowPriorityContextGroupSupported = false;
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+    auto device = createDeviceWithOsInterface();
     ASSERT_NE(nullptr, device);
 
     auto lowPriorityEngine = device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::lowPriority);
@@ -2755,6 +2761,125 @@ HWTEST2_PRODUCT_F(LowPriorityContextGroupTests, givenProductHelperNotSupportingL
     EXPECT_FALSE(lowPriorityEngine->osContext->getIsPrimaryEngine());
     EXPECT_TRUE(device->lowPrioritySecondaryEngines.empty());
     EXPECT_FALSE(device->secondaryEngines.empty());
+}
+
+struct LowPriorityContextGroupMaxOsContextCountTests : public LowPriorityContextGroupTests {
+    uint32_t calculateMaxOsContextCount() {
+        executionEnvironment->calculateMaxOsContextCount();
+        return MemoryManager::maxOsContextCount;
+    }
+
+    uint32_t getLowPriorityEnginesCount() const {
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+        auto &engineInstances = rootDeviceEnvironment.getHelper<GfxCoreHelper>().getGpgpuEngineInstances(rootDeviceEnvironment);
+        return static_cast<uint32_t>(std::count_if(engineInstances.begin(), engineInstances.end(), [](const auto &engine) { return engine.second == EngineUsage::lowPriority; }));
+    }
+
+    bool isLowPriorityContextGroupCounted() const {
+        return getLowPriorityEnginesCount() > 0 && executionEnvironment->rootDeviceEnvironments[0]->isLowPriorityContextGroupSupported();
+    }
+};
+
+HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenOsInterfaceNotSupportingLowPriorityContextGroupWhenCalculatingMaxOsContextCountThenEachLowPriorityEngineIsCountedAsSingleContext) {
+    createExecutionEnvironmentWithOsInterface();
+    if (!isLowPriorityContextGroupCounted()) {
+        GTEST_SKIP();
+    }
+    const auto maxOsContextCountWithLowPriorityContextGroups = calculateMaxOsContextCount();
+
+    osInterface->lowPriorityContextGroupSupported = false;
+    EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[0]->isLowPriorityContextGroupSupported());
+    EXPECT_EQ(maxOsContextCountWithLowPriorityContextGroups - getLowPriorityEnginesCount() * (contextGroupSize - 1), calculateMaxOsContextCount());
+}
+
+HWTEST2_PRODUCT_F(LowPriorityContextGroupMaxOsContextCountTests, givenProductHelperNotSupportingLowPriorityContextGroupWhenCalculatingMaxOsContextCountThenEachLowPriorityEngineIsCountedAsSingleContext, MatchAny) {
+    struct ProductHelperWithoutLowPriorityContextGroup : ProductHelperHw<productFamily> {
+        bool isLowPriorityContextGroupSupported() const override {
+            return false;
+        }
+    };
+
+    createExecutionEnvironmentWithOsInterface();
+    if (!isLowPriorityContextGroupCounted()) {
+        GTEST_SKIP();
+    }
+    const auto maxOsContextCountWithLowPriorityContextGroups = calculateMaxOsContextCount();
+    const auto lowPriorityEnginesCount = getLowPriorityEnginesCount();
+
+    RAIIProductHelperFactory<ProductHelperWithoutLowPriorityContextGroup> raiiProductHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[0]->isLowPriorityContextGroupSupported());
+    EXPECT_EQ(maxOsContextCountWithLowPriorityContextGroups - lowPriorityEnginesCount * (contextGroupSize - 1), calculateMaxOsContextCount());
+}
+
+HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenContextGroupNotSupportedWhenCheckingLowPriorityContextGroupSupportThenFalseIsReturned) {
+    debugManager.flags.ContextGroupSize.set(0);
+    createExecutionEnvironmentWithOsInterface();
+
+    EXPECT_FALSE(executionEnvironment->rootDeviceEnvironments[0]->isLowPriorityContextGroupSupported());
+}
+
+HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenMultipleSubDevicesAndOsInterfaceNotSupportingLowPriorityContextGroupWhenCalculatingMaxOsContextCountThenRootLowPriorityContextGroupIsNotCounted) {
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(0);
+    createExecutionEnvironmentWithOsInterface();
+    if (!isLowPriorityContextGroupCounted()) {
+        GTEST_SKIP();
+    }
+    const auto maxOsContextCountWithLowPriorityContextGroups = calculateMaxOsContextCount();
+
+    osInterface->lowPriorityContextGroupSupported = false;
+    constexpr uint32_t subDevicesCount = 2;
+    const auto lowPrioritySubDeviceContextsCount = subDevicesCount * getLowPriorityEnginesCount() * (contextGroupSize - 1);
+    EXPECT_EQ(maxOsContextCountWithLowPriorityContextGroups - lowPrioritySubDeviceContextsCount - contextGroupSize, calculateMaxOsContextCount());
+}
+
+HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenMultipleSubDevicesAndImplicitScalingEnabledWhenCalculatingMaxOsContextCountThenRootLowPriorityContextGroupIsNotCounted) {
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(0);
+    createExecutionEnvironmentWithOsInterface();
+    if (!isLowPriorityContextGroupCounted()) {
+        GTEST_SKIP();
+    }
+    const auto maxOsContextCountWithRootLowPriorityContextGroup = calculateMaxOsContextCount();
+
+    debugManager.flags.EnableImplicitScaling.set(1);
+    EXPECT_EQ(maxOsContextCountWithRootLowPriorityContextGroup - contextGroupSize, calculateMaxOsContextCount());
+}
+
+HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenImplicitScalingEnabledAndAffinityMaskWithSingleSubDeviceWhenCalculatingMaxOsContextCountThenRootLowPriorityContextGroupIsCounted) {
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(1);
+    createExecutionEnvironmentWithOsInterface();
+    if (!isLowPriorityContextGroupCounted()) {
+        GTEST_SKIP();
+    }
+    const auto maxOsContextCountWithoutRootLowPriorityContextGroup = calculateMaxOsContextCount();
+
+    auto &deviceAffinityMask = executionEnvironment->rootDeviceEnvironments[0]->deviceAffinityMask;
+    deviceAffinityMask = AffinityMaskHelper(false);
+    deviceAffinityMask.enableGenericSubDevice(0);
+    EXPECT_EQ(maxOsContextCountWithoutRootLowPriorityContextGroup + contextGroupSize, calculateMaxOsContextCount());
+}
+
+HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenMultipleSubDevicesWhenDeviceIsCreatedThenRegisteredOsContextsFitInMaxOsContextCount) {
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    for (auto enableImplicitScaling : {0, 1}) {
+        for (auto lowPriorityContextGroupSupported : {true, false}) {
+            debugManager.flags.EnableImplicitScaling.set(enableImplicitScaling);
+            createExecutionEnvironmentWithOsInterface();
+            osInterface->lowPriorityContextGroupSupported = lowPriorityContextGroupSupported;
+            auto device = createDeviceWithOsInterface();
+            ASSERT_NE(nullptr, device);
+
+            EXPECT_LE(device->getMemoryManager()->getRegisteredEngines(0).size(), MemoryManager::maxOsContextCount);
+
+            device.reset();
+            executionEnvironment->decRefInternal();
+            executionEnvironment = nullptr;
+        }
+    }
 }
 
 template <typename GfxFamily>

@@ -128,13 +128,8 @@ SubDevice *Device::createSubDevice(uint32_t subDeviceIndex) {
 }
 
 bool Device::genericSubDevicesAllowed() {
-    auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask.getGenericSubDevicesMask();
     uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
-    deviceBitfield = maxNBitValue(subDeviceCount);
-
-    if (!executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->isExposeSingleDeviceMode()) {
-        deviceBitfield &= deviceMask;
-    }
+    deviceBitfield = this->getRootDeviceEnvironment().getRootDeviceBitfield();
 
     numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
     if (numSubDevices == 1 && (executionEnvironment->getDeviceHierarchyMode() != DeviceHierarchyMode::combined || subDeviceCount == 1)) {
@@ -474,7 +469,7 @@ bool Device::createEngines() {
 
                 auto primaryEngine = *hpCopyEngine;
 
-                auto contextCount = this->getContextGroupContextsCountForAggregatedProcesses();
+                auto contextCount = this->getRootDeviceEnvironment().getContextGroupContextsCountForAggregatedProcesses();
 
                 if (!createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, contextCount)) {
                     return false;
@@ -494,24 +489,6 @@ bool Device::createEngines() {
     return true;
 }
 
-uint32_t Device::getContextGroupContextsCountForAggregatedProcesses() const {
-    auto contextCount = this->getGfxCoreHelper().getContextGroupContextsCount();
-    auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
-
-    if (rootDeviceEnvironment.osInterface && rootDeviceEnvironment.osInterface->getAggregatedProcessCount() > 1) {
-        const auto numProcesses = rootDeviceEnvironment.osInterface->getAggregatedProcessCount();
-
-        contextCount = std::max(contextCount / numProcesses, 2u);
-    }
-    return contextCount;
-}
-
-bool Device::isLowPriorityContextGroupSupported() const {
-    auto osInterface = this->getRootDeviceEnvironment().osInterface.get();
-    return this->getGfxCoreHelper().areSecondaryContextsSupported() && this->getProductHelper().isLowPriorityContextGroupSupported() &&
-           (osInterface == nullptr || osInterface->isLowPriorityContextGroupSupported());
-}
-
 bool Device::createLowPrioritySecondaryContexts(const EngineControl &primaryEngine) {
     auto engineType = primaryEngine.getEngineType();
     auto [secondaryEnginesIt, inserted] = this->lowPrioritySecondaryEngines.try_emplace(engineType);
@@ -521,7 +498,7 @@ bool Device::createLowPrioritySecondaryContexts(const EngineControl &primaryEngi
     auto &secondaryEnginesForType = secondaryEnginesIt->second;
 
     constexpr uint32_t highPriorityContextCount = 0;
-    return this->createSecondaryContexts(primaryEngine, secondaryEnginesForType, this->getContextGroupContextsCountForAggregatedProcesses(), highPriorityContextCount);
+    return this->createSecondaryContexts(primaryEngine, secondaryEnginesForType, this->getRootDeviceEnvironment().getContextGroupContextsCountForAggregatedProcesses(), highPriorityContextCount);
 }
 
 bool Device::createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount) {
@@ -637,7 +614,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
         primaryEngineTypeAllowed &= (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0;
     }
 
-    const bool isLowPriorityPrimaryEngine = engineUsage == EngineUsage::lowPriority && this->isLowPriorityContextGroupSupported();
+    const bool isLowPriorityPrimaryEngine = engineUsage == EngineUsage::lowPriority && this->getRootDeviceEnvironment().isLowPriorityContextGroupSupported();
     const bool isPrimaryEngine = primaryEngineTypeAllowed && (engineUsage == EngineUsage::regular || engineUsage == EngineUsage::highPriority || isLowPriorityPrimaryEngine);
     const bool useContextGroup = isPrimaryEngine && gfxCoreHelper.areSecondaryContextsSupported();
 

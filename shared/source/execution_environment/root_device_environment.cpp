@@ -12,6 +12,7 @@
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/front_end_controller.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
@@ -40,6 +41,8 @@
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/source/utilities/wait_util.h"
+
+#include <algorithm>
 
 namespace NEO {
 
@@ -154,6 +157,34 @@ BindlessHeapsHelper *RootDeviceEnvironment::getBindlessHeapsHelper() const {
 
 const ProductHelper &RootDeviceEnvironment::getProductHelper() const {
     return *productHelper;
+}
+
+bool RootDeviceEnvironment::isLowPriorityContextGroupSupported() const {
+    return this->getHelper<GfxCoreHelper>().areSecondaryContextsSupported() && this->getProductHelper().isLowPriorityContextGroupSupported() &&
+           (this->osInterface == nullptr || this->osInterface->isLowPriorityContextGroupSupported());
+}
+
+bool RootDeviceEnvironment::isRootLowPriorityContextGroupSupported(const DeviceBitfield &rootDeviceBitfield) const {
+    const bool implicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(rootDeviceBitfield, this->getHelper<GfxCoreHelper>().platformSupportsImplicitScaling(*this));
+    return this->isLowPriorityContextGroupSupported() && !implicitScalingEnabled;
+}
+
+DeviceBitfield RootDeviceEnvironment::getRootDeviceBitfield() const {
+    DeviceBitfield rootDeviceBitfield = maxNBitValue(GfxCoreHelper::getSubDevicesCount(this->getHardwareInfo()));
+    if (!this->isExposeSingleDeviceMode()) {
+        rootDeviceBitfield &= this->deviceAffinityMask.getGenericSubDevicesMask();
+    }
+    return rootDeviceBitfield;
+}
+
+uint32_t RootDeviceEnvironment::getContextGroupContextsCountForAggregatedProcesses() const {
+    auto contextCount = this->getHelper<GfxCoreHelper>().getContextGroupContextsCount();
+    const auto numProcesses = this->osInterface ? this->osInterface->getAggregatedProcessCount() : 1u;
+
+    if (numProcesses > 1) {
+        contextCount = std::max(contextCount / numProcesses, 2u);
+    }
+    return contextCount;
 }
 
 void RootDeviceEnvironment::createBindlessHeapsHelper(Device *rootDevice, bool availableDevices) {
