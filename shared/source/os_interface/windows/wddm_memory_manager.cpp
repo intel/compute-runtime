@@ -1019,14 +1019,13 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHelper<ProductHelper>();
     if (hasGpuVirtualAddress && gfxAllocation->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*hwInfo)) {
         for (auto &engine : registeredEngines) {
-            if (engine.commandStreamReceiver->pageTableManager.get()) {
-                std::unique_lock<CommandStreamReceiver::MutexType> lock;
-                if (engine.commandStreamReceiver->isAnyDirectSubmissionEnabled()) {
-                    engine.commandStreamReceiver->stopDirectSubmission(true, true);
-                }
-                [[maybe_unused]] auto status = engine.commandStreamReceiver->pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
-                DEBUG_BREAK_IF(!status);
+            auto pageTableManager = engine.commandStreamReceiver->pageTableManager.get();
+            UNRECOVERABLE_IF(pageTableManager == nullptr);
+            if (engine.commandStreamReceiver->isAnyDirectSubmissionEnabled()) {
+                engine.commandStreamReceiver->stopDirectSubmission(true, true);
             }
+            [[maybe_unused]] auto status = pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
+            DEBUG_BREAK_IF(!status);
         }
     }
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {

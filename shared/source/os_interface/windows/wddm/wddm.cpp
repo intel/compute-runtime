@@ -622,17 +622,37 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
         return false;
     }
 
-    bool ret = true;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (gmm->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
+        bool auxTablesUpdated = true;
+        uint32_t updatedAuxTablesCount = 0u;
         this->forEachContextWithinWddm<false>([&](const EngineControl &engine) {
-            if (engine.commandStreamReceiver->pageTableManager.get()) {
-                ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
+            if (!auxTablesUpdated) {
+                return;
+            }
+            auto pageTableManager = engine.commandStreamReceiver->pageTableManager.get();
+            UNRECOVERABLE_IF(pageTableManager == nullptr);
+            if (pageTableManager->updateAuxTable(gpuPtr, gmm, true)) {
+                updatedAuxTablesCount++;
+            } else {
+                auxTablesUpdated = false;
             }
         });
+        if (!auxTablesUpdated) {
+            this->forEachContextWithinWddm<false>([&](const EngineControl &engine) {
+                if (updatedAuxTablesCount == 0u) {
+                    return;
+                }
+                engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, false);
+                updatedAuxTablesCount--;
+            });
+            freeGmmGpuVirtualAddress(gmm, gpuPtr, size);
+            gpuPtr = 0;
+            return false;
+        }
     }
 
-    return ret;
+    return true;
 }
 
 NTSTATUS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress,

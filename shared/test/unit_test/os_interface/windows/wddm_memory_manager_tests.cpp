@@ -3941,6 +3941,7 @@ HWTEST2_F(WddmMemoryManagerSimpleTest, givenPreferCompressionFlagWhenAllocating6
     if (memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
     }
+    csr->pageTableManager = std::make_unique<MockGmmPageTableMngr>();
     auto nonCompressedAllocation = memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 1u, AllocationType::buffer, mockDeviceBitfield});
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(nonCompressedAllocation->getDefaultGmm()->resourceParamsData.data());
     EXPECT_EQ(0u, gmmResourceParams->Flags.Info.RenderCompressed);
@@ -5454,6 +5455,47 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenMappedGpuVaAndPag
     EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
 }
 
+TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationWhenUpdatingAuxTableFailsWhileMappingGpuVaThenMappingIsUndone) {
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[1].get();
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, GmmRequirements{});
+    gmm->setCompressionEnabled(true);
+    WddmMock wddm(*rootDeviceEnvironment);
+    wddm.init();
+    const auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo));
+    auto updatedCsr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
+    auto failingCsr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
+    auto skippedCsr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
+    executionEnvironment.memoryManager->createAndRegisterOsContext(updatedCsr.get(), engineDescriptor);
+    executionEnvironment.memoryManager->createAndRegisterOsContext(failingCsr.get(), engineDescriptor);
+    executionEnvironment.memoryManager->createAndRegisterOsContext(skippedCsr.get(), engineDescriptor);
+    auto updatedAuxTableOwner = std::make_unique<MockGmmPageTableMngr>();
+    auto failingAuxTableOwner = std::make_unique<MockGmmPageTableMngr>();
+    auto skippedAuxTableOwner = std::make_unique<MockGmmPageTableMngr>();
+    auto updatedAuxTable = updatedAuxTableOwner.get();
+    auto failingAuxTable = failingAuxTableOwner.get();
+    auto skippedAuxTable = skippedAuxTableOwner.get();
+    failingAuxTable->updateAuxTableResult = false;
+    updatedCsr->pageTableManager = std::move(updatedAuxTableOwner);
+    failingCsr->pageTableManager = std::move(failingAuxTableOwner);
+    skippedCsr->pageTableManager = std::move(skippedAuxTableOwner);
+    auto productHelper = std::make_unique<MockProductHelper>();
+    productHelper->isPageTableManagerSupportedResult = true;
+    rootDeviceEnvironment->productHelper = std::move(productHelper);
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto freeGpuVirtualAddressCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
+    D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
+
+    EXPECT_FALSE(wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u));
+    EXPECT_EQ(0u, gpuVa);
+    EXPECT_EQ(1u, failingAuxTable->updateAuxTableCalled);
+    EXPECT_EQ(0u, skippedAuxTable->updateAuxTableCalled);
+    ASSERT_EQ(2u, updatedAuxTable->updateAuxTableCalled);
+    EXPECT_TRUE(updatedAuxTable->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.Map);
+    EXPECT_FALSE(updatedAuxTable->updateAuxTableParamsPassed[1].ddiUpdateAuxTable.Map);
+    EXPECT_EQ(updatedAuxTable->updateAuxTableParamsPassed[0].ddiUpdateAuxTable.BaseGpuVA, updatedAuxTable->updateAuxTableParamsPassed[1].ddiUpdateAuxTable.BaseGpuVA);
+    EXPECT_EQ(freeGpuVirtualAddressCalledBefore + 1u, gmmClientContext->freeGpuVirtualAddressCalled);
+}
+
 TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndPageTableSupportedWhenReleaseingThenUnmapAuxVa) {
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     if (!productHelper.isPageTableManagerSupported(*defaultHwInfo)) {
@@ -5492,6 +5534,25 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndPageTableSupported
 
     EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &mockMngr->updateAuxTableParamsPassed[0].ddiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
     EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
+}
+
+TEST_F(MockWddmMemoryManagerTest, givenCompressedAllocationAndContextWithoutPageTableManagerWhenReleasingThenAbortIsCalled) {
+    wddm->init();
+    WddmMemoryManager memoryManager(executionEnvironment);
+    auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
+    memoryManager.createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(AllocationProperties(1, MemoryConstants::pageSize, AllocationType::internalHostMemory, mockDeviceBitfield)));
+    ASSERT_NE(nullptr, wddmAlloc);
+    wddmAlloc->setGpuAddress(123);
+    wddmAlloc->getDefaultGmm()->setCompressionEnabled(true);
+    auto productHelper = std::make_unique<MockProductHelper>();
+    productHelper->isPageTableManagerSupportedResult = true;
+    executionEnvironment.rootDeviceEnvironments[1]->productHelper = std::move(productHelper);
+
+    ASSERT_THROW(memoryManager.freeGraphicsMemoryImpl(wddmAlloc), std::exception);
+
+    csr->pageTableManager = std::make_unique<MockGmmPageTableMngr>();
+    memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenNonCompressedAllocationWhenReleaseingThenDontUnmapAuxVa) {
@@ -5646,49 +5707,20 @@ HWTEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenU
     EXPECT_EQ(expectedCallCount, mockMngr->updateAuxTableCalled);
 }
 
-TEST_F(MockWddmMemoryManagerTest, givenCompressedGmmWithForcedPageTableSupportWhenMapGpuVaCalledThenLambdaCoversAllBranches) {
-    struct ProductHelperWithPageTableSupport : ProductHelperHw<IGFX_UNKNOWN> {
-        bool isPageTableManagerSupported(const HardwareInfo &) const override { return true; }
-    };
-    auto rootDeviceEnvironment1 = executionEnvironment.rootDeviceEnvironments[1].get();
-    auto origProductHelper = std::move(rootDeviceEnvironment1->productHelper);
-    rootDeviceEnvironment1->productHelper = std::make_unique<ProductHelperWithPageTableSupport>();
-
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment1->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+TEST_F(MockWddmMemoryManagerTest, givenCompressedGmmAndContextWithoutPageTableManagerWhenMappingGpuVaThenAbortIsCalled) {
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[1].get();
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, GmmRequirements{});
     gmm->setCompressionEnabled(true);
-    D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
-    WddmMock localWddm(*rootDeviceEnvironment1);
-    localWddm.init();
-
+    WddmMock wddm(*rootDeviceEnvironment);
+    wddm.init();
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1u, 1));
-    auto hwInfo = *defaultHwInfo;
-    EngineInstancesContainer regularEngines = {{aub_stream::ENGINE_CCS, EngineUsage::regular}};
-    executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(),
-                                                                   EngineDescriptorHelper::getDefaultDescriptor(regularEngines[0],
-                                                                                                                PreemptionHelper::getDefaultPreemptionMode(hwInfo)));
+    executionEnvironment.memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
+    auto productHelper = std::make_unique<MockProductHelper>();
+    productHelper->isPageTableManagerSupportedResult = true;
+    rootDeviceEnvironment->productHelper = std::move(productHelper);
+    D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
 
-    auto result = localWddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE,
-                                                 localWddm.getGfxPartition().Standard.Base,
-                                                 localWddm.getGfxPartition().Standard.Limit,
-                                                 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
-    EXPECT_TRUE(result);
-
-    auto mockMngr = new MockGmmPageTableMngr();
-    for (auto engine : executionEnvironment.memoryManager->getRegisteredEngines(1u)) {
-        engine.commandStreamReceiver->pageTableManager.reset(mockMngr);
-    }
-    gpuVa = 0;
-    result = localWddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE,
-                                            localWddm.getGfxPartition().Standard.Base,
-                                            localWddm.getGfxPartition().Standard.Limit,
-                                            0u, gpuVa, AllocationType::unknown, nullptr, 0u);
-    EXPECT_TRUE(result);
-    EXPECT_GT(mockMngr->updateAuxTableCalled, 0u);
-
-    rootDeviceEnvironment1->productHelper = std::move(origProductHelper);
+    EXPECT_THROW(wddm.mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddm.getGfxPartition().Standard.Base, wddm.getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u), std::exception);
 }
 
 struct WddmMemoryManagerWithAsyncDeleterTest : public ::testing::Test {
