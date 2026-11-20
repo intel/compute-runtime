@@ -48,7 +48,13 @@ void sfence() {
 }
 
 void mfence() {
+#if defined(__ARM_ARCH)
+    // sse2neon does not provide _mm_mfence; a full barrier has the same
+    // ordering guarantees on ARM.
+    __sync_synchronize();
+#else
     _mm_mfence();
+#endif
 }
 
 void pause() {
