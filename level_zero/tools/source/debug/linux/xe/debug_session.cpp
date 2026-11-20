@@ -904,28 +904,27 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
 
                 auto &module = connection->elfHandleToModule[elfHandle];
 
-                size_t elfSize = 0;
-                if (!loadedElf) {
-                    auto elfData = NEO::loadDataFromFile(entry.pathName, elfSize);
-                    if (elfData == nullptr) {
-                        PRINT_DEBUGGER_ERROR_LOG("Failed to read ELF file: %s\n", entry.pathName);
-                        return false;
-                    }
-                    auto &elfEntry = connection->elfInfoMap[elfHandle];
-                    elfEntry.elfData = std::move(elfData);
-                    elfEntry.elfSize = elfSize;
-
-                    auto &elfMap = connection->elfMap;
-                    auto mapIndex = reinterpret_cast<uint64_t>(elfEntry.elfData.get());
-                    elfMap[mapIndex] = elfHandle;
-
-                    PRINT_DEBUGGER_INFO_LOG("Loaded ELF file: %s size=%zu addr=0x%" SCNx64 " handle=%" SCNx64 "\n",
-                                            entry.pathName, elfSize, entry.addr, elfHandle);
-                    loadedElf = true;
-                }
-
-                // now for all debug data in this bind, create isa allocations
                 if (!connection->isaMap[tileIndex].contains(entry.addr)) {
+                    if (!loadedElf) {
+                        size_t elfSize = 0;
+                        auto elfData = NEO::loadDataFromFile(entry.pathName, elfSize);
+                        if (elfData == nullptr) {
+                            PRINT_DEBUGGER_ERROR_LOG("Failed to read ELF file: %s\n", entry.pathName);
+                            return false;
+                        }
+                        auto &elfEntry = connection->elfInfoMap[elfHandle];
+                        elfEntry.elfData = std::move(elfData);
+                        elfEntry.elfSize = elfSize;
+
+                        auto &elfMap = connection->elfMap;
+                        auto mapIndex = reinterpret_cast<uint64_t>(elfEntry.elfData.get());
+                        elfMap[mapIndex] = elfHandle;
+
+                        PRINT_DEBUGGER_INFO_LOG("Loaded ELF file: %s size=%zu addr=0x%" SCNx64 " handle=%" SCNx64 "\n",
+                                                entry.pathName, elfSize, entry.addr, elfHandle);
+                        loadedElf = true;
+                    }
+
                     auto &isaMap = connection->isaMap[tileIndex];
                     auto isa = std::make_unique<IsaAllocation>();
 
@@ -947,7 +946,7 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
                     isa->validVMs.insert(vmBindData.vmBind.vmHandle);
                 }
 
-                if (&entry == &vmBindData.vmBindOpDebugDataVec.back() && connection->isaMap[tileIndex][entry.addr]->validVMs.size() == 1) {
+                if (loadedElf && &entry == &vmBindData.vmBindOpDebugDataVec.back() && connection->isaMap[tileIndex][entry.addr]->validVMs.size() == 1) {
 
                     // send module load event
                     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();

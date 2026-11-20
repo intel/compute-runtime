@@ -3251,6 +3251,98 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceAndBadElfFileWhenHandlingBindT
     EXPECT_EQ(connection->vmBindMap.size(), 1u); // debug data not processed, so still pending
 }
 
+struct DebugApiLinuxUpstreamIsaBindTestXe : public DebugApiLinuxTestXe {
+    void SetUp() override {
+        DebugApiLinuxTestXe::SetUp();
+
+        zet_debug_config_t config = {};
+        config.pid = 0x1234;
+        this->session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+
+        this->session->ioctlHandler.reset(new MockIoctlHandlerXe);
+        this->session->clientHandleToConnection.clear();
+        this->session->setCurrentInterfaceType(EuDebugInterfaceType::upstream);
+
+        NEO::EuDebugEventClient client;
+        client.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+        client.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+        client.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+        this->session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client));
+
+        this->connection = this->session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle].get();
+        this->connection->vmToTile[vmHandle1] = 0u;
+        this->connection->vmToTile[vmHandle2] = 0u;
+    }
+
+    void bindIsa(uint64_t vmHandle, uint64_t isaAddress, const char *elfPath) {
+        NEO::EuDebugEventVmBind vmBind{};
+        vmBind.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBind);
+        vmBind.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange)));
+        vmBind.base.len = sizeof(NEO::EuDebugEventVmBind);
+        vmBind.base.seqno = this->seqno++;
+        vmBind.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+        vmBind.vmHandle = vmHandle;
+        vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
+        vmBind.numBinds = 1;
+        this->session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBind.base));
+
+        NEO::EuDebugEventVmBindOpDebugData vmBindDebugData{};
+        vmBindDebugData.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOpDebugData);
+        vmBindDebugData.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+        vmBindDebugData.base.len = sizeof(NEO::EuDebugEventVmBindOpDebugData);
+        vmBindDebugData.base.seqno = this->seqno++;
+        vmBindDebugData.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+        vmBindDebugData.vmBindRefSeqno = vmBind.base.seqno;
+        vmBindDebugData.addr = isaAddress;
+        vmBindDebugData.range = isaRange;
+        strcpy_s(vmBindDebugData.pathName, sizeof(vmBindDebugData.pathName), elfPath);
+        this->session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugData.base));
+
+        NEO::EuDebugEventVmBindUfence vmBindUfence{};
+        vmBindUfence.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindUfence);
+        vmBindUfence.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))) | static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitNeedAck)));
+        vmBindUfence.base.len = sizeof(NEO::EuDebugEventVmBindUfence);
+        vmBindUfence.base.seqno = this->seqno++;
+        vmBindUfence.vmBindRefSeqno = vmBind.base.seqno;
+        this->session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence.base));
+        this->session->processPendingVmBindEvents();
+    }
+
+    static constexpr uint64_t vmHandle1 = 0x1234;
+    static constexpr uint64_t vmHandle2 = 0x1235;
+    static constexpr uint64_t firstModuleIsaAddress = 0x12345000;
+    static constexpr uint64_t secondModuleIsaAddress = 0x56780000;
+    static constexpr uint64_t isaRange = 16384;
+
+    std::unique_ptr<MockDebugSessionLinuxXe> session;
+    MockDebugSessionLinuxXe::ClientConnectionXe *connection = nullptr;
+    uint64_t seqno = 0;
+};
+
+TEST_F(DebugApiLinuxUpstreamIsaBindTestXe, GivenModuleBoundToSecondVmWhenNextModuleIsBoundThenEveryElfMapEntryPointsToItsOwnElfData) {
+    bindIsa(vmHandle1, firstModuleIsaAddress, "/path/to/elf-0");
+    bindIsa(vmHandle2, firstModuleIsaAddress, "/path/to/elf-0");
+    EXPECT_EQ(1u, connection->elfMap.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(2u, connection->isaMap[0][firstModuleIsaAddress]->validVMs.size());
+
+    bindIsa(vmHandle1, secondModuleIsaAddress, "/path/to/elf-1");
+    EXPECT_EQ(2u, connection->elfMap.size());
+    EXPECT_EQ(2u, session->apiEvents.size());
+
+    for (const auto &[elfBegin, elfHandle] : connection->elfMap) {
+        EXPECT_EQ(elfBegin, reinterpret_cast<uint64_t>(connection->getElfData(elfHandle)));
+    }
+}
+
+TEST_F(DebugApiLinuxUpstreamIsaBindTestXe, GivenModuleAlreadyBoundToVmWhenSameVmBindsItAgainThenNoSecondModuleLoadEventIsSent) {
+    bindIsa(vmHandle1, firstModuleIsaAddress, "/path/to/elf-0");
+    bindIsa(vmHandle1, firstModuleIsaAddress, "/path/to/elf-0");
+
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(1u, connection->elfMap.size());
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenSuccessfulReadGpuMemoryWhenCallingReadGpuMemoryThenFsyncIsCalledOnceBeforeReading) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
