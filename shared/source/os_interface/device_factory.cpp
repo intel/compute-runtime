@@ -31,6 +31,17 @@
 
 namespace NEO {
 
+static bool overrideAndCheckGpuAddressSpace(HardwareInfo &hwInfo) {
+    if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
+    }
+    if (hwInfo.capabilityTable.gpuAddressSpace < maxNBitValue(47)) {
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "GPU address space below 47 bits is not supported\n");
+        return false;
+    }
+    return true;
+}
+
 bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionEnvironment &executionEnvironment) {
     auto numRootDevices = 1u;
     if (debugManager.flags.CreateMultipleRootDevices.get()) {
@@ -119,8 +130,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             return false;
         }
 
-        if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-            hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
+        if (!overrideAndCheckGpuAddressSpace(*hardwareInfo)) {
+            return false;
         }
 
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
@@ -234,9 +245,8 @@ static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
         return false;
     }
 
-    if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
-        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
-            maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
+    if (!overrideAndCheckGpuAddressSpace(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo())) {
+        return false;
     }
 
     if (debugManager.flags.OverrideRevision.get() != -1) {

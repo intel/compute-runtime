@@ -257,22 +257,39 @@ struct DeviceFactoryOverrideTest : public ::testing::Test {
 
 TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideGpuAddressSpace) {
     DebugManagerStateRestore restore;
-    debugManager.flags.OverrideGpuAddressSpace.set(12);
+    debugManager.flags.OverrideGpuAddressSpace.set(47);
 
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
 
     EXPECT_TRUE(success);
-    EXPECT_EQ(maxNBitValue(12), executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+    EXPECT_EQ(maxNBitValue(47), executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
 }
 
 TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideGpuAddressSpace) {
     DebugManagerStateRestore restore;
-    debugManager.flags.OverrideGpuAddressSpace.set(12);
+    debugManager.flags.OverrideGpuAddressSpace.set(47);
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
 
     EXPECT_TRUE(success);
-    EXPECT_EQ(maxNBitValue(12), executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+    EXPECT_EQ(maxNBitValue(47), executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenGpuAddressSpaceBelow47BitsWhenPrepareDeviceEnvironmentsIsCalledThenFalseIsReturnedAndNoRootDeviceIsCreated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideGpuAddressSpace.set(46);
+
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+
+    EXPECT_FALSE(success);
+    EXPECT_EQ(0u, executionEnvironment.rootDeviceEnvironments.size());
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenGpuAddressSpaceBelow47BitsWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenFalseIsReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideGpuAddressSpace.set(46);
+
+    EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment));
 }
 
 TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideRevision) {
