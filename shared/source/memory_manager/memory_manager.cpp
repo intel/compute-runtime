@@ -304,7 +304,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const Alloc
         deferredDeleter->drain(true, false);
     }
     GraphicsAllocation *graphicsAllocation = nullptr;
-    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr, allocationData.rootDeviceIndex);
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr, allocationData.rootDeviceIndex, !allocationData.flags.isUSMHostAllocation);
     if (osStorage.fragmentCount > 0) {
         graphicsAllocation = createGraphicsAllocation(osStorage, allocationData);
         if (graphicsAllocation == nullptr) {

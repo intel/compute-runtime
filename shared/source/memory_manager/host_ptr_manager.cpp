@@ -249,10 +249,13 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(uint32_t rootDev
     return nullptr;
 }
 
-OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr, uint32_t rootDeviceIndex) {
+OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr, uint32_t rootDeviceIndex, bool abortOnOverlap) {
     std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
     auto requirements = HostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
-    UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::fatal);
+    if (checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::fatal) {
+        UNRECOVERABLE_IF(abortOnOverlap);
+        return {};
+    }
     auto osStorage = populateAlreadyAllocatedFragments(requirements);
     const auto rangeStart = reinterpret_cast<uintptr_t>(ptr);
     const auto rangeEnd = rangeStart + size;
@@ -277,23 +280,6 @@ OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &mem
         }
     }
     return osStorage;
-}
-
-bool HostPtrManager::canStoreFragments(size_t size, const void *ptr, uint32_t rootDeviceIndex) {
-    std::lock_guard<decltype(allocationsMutex)> lock(allocationsMutex);
-    auto requirements = HostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
-    if (requirements.requiredFragmentsCount == 0) {
-        return false;
-    }
-    for (auto fragmentId = 0u; fragmentId < requirements.requiredFragmentsCount; fragmentId++) {
-        auto overlapStatus = OverlapStatus::FRAGMENT_NOT_CHECKED;
-        getFragmentAndCheckForOverlaps(rootDeviceIndex, requirements.allocationFragments[fragmentId].allocationPtr,
-                                       requirements.allocationFragments[fragmentId].allocationSize, overlapStatus);
-        if (overlapStatus == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THAN_STORED_FRAGMENT) {
-            return false;
-        }
-    }
-    return true;
 }
 
 RequirementsStatus HostPtrManager::checkAllocationsForOverlapping(MemoryManager &memoryManager, AllocationRequirements *requirements) {

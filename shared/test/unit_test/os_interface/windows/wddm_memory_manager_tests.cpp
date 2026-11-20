@@ -1551,6 +1551,26 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenHostUsmWithHostPtrWhenAllocatingGraphic
     alignedFree(memory);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenHostUsmWithHostPtrOverlappingAndBiggerThanStoredFragmentWhenAllocatingUsmHostGraphicsMemoryThenNullptrIsReturned) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    constexpr size_t biggerRangeSize = 4 * MemoryConstants::pageSize;
+    auto memory = alignedMalloc(biggerRangeSize, MemoryConstants::pageSize);
+    AllocationData allocationData;
+    allocationData.flags.isUSMHostAllocation = true;
+    allocationData.hostPtr = ptrOffset(memory, MemoryConstants::pageSize);
+    allocationData.size = MemoryConstants::pageSize;
+
+    auto storedAllocation = memoryManager->allocateUSMHostGraphicsMemory(allocationData);
+    ASSERT_NE(nullptr, storedAllocation);
+
+    allocationData.hostPtr = memory;
+    allocationData.size = biggerRangeSize;
+    EXPECT_EQ(nullptr, memoryManager->allocateUSMHostGraphicsMemory(allocationData));
+
+    memoryManager->freeGraphicsMemory(storedAllocation);
+    alignedFree(memory);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, GivenMemoryManagerWhenAllocateByKmdThenAlignmentIsCorrect) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     AllocationData allocationData;

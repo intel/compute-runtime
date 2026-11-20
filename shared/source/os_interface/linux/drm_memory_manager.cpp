@@ -693,8 +693,7 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
     if (usmHostPtrFragmentsEnabled && gpuAddressEqualsHostPtr && !hostPtrRangePageAligned) {
         auto hostPtrManagerLock = hostPtrManager->obtainOwnership();
         const auto importStart = reinterpret_cast<uintptr_t>(allocationData.hostPtr);
-        if (overlapsFragmentBackedImport(allocationData.rootDeviceIndex, importStart, allocationData.size) ||
-            !hostPtrManager->canStoreFragments(allocationData.size, allocationData.hostPtr, allocationData.rootDeviceIndex)) {
+        if (overlapsFragmentBackedImport(allocationData.rootDeviceIndex, importStart, allocationData.size)) {
             return nullptr;
         }
         auto allocation = allocateUSMHostGraphicsMemoryFromFragments(allocationData);
@@ -770,7 +769,7 @@ bool DrmMemoryManager::overlapsFragmentBackedImport(uint32_t rootDeviceIndex, ui
 
 GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemoryFromFragments(const AllocationData &allocationData) {
     const auto rootDeviceIndex = allocationData.rootDeviceIndex;
-    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr, rootDeviceIndex);
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr, rootDeviceIndex, false);
     if (osStorage.fragmentCount == 0) {
         return nullptr;
     }

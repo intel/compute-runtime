@@ -39,8 +39,7 @@ class MemoryManager;
 class HostPtrManager {
   public:
     FragmentStorage *getFragment(HostPtrEntryKey key);
-    OsHandleStorage prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr, uint32_t rootDeviceIndex);
-    bool canStoreFragments(size_t size, const void *ptr, uint32_t rootDeviceIndex);
+    OsHandleStorage prepareOsStorageForAllocation(MemoryManager &memoryManager, size_t size, const void *ptr, uint32_t rootDeviceIndex, bool abortOnOverlap);
     void releaseHandleStorage(uint32_t rootDeviceIndex, OsHandleStorage &fragments);
     bool releaseHostPtr(uint32_t rootDeviceIndex, const void *ptr);
     void storeFragment(uint32_t rootDeviceIndex, AllocationStorageData &storageData);

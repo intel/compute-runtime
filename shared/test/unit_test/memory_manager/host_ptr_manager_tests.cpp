@@ -879,7 +879,7 @@ TEST_F(HostPtrAllocationTest, givenFragmentReusedFromLiveAllocationWhenPopulatin
 
     memoryManager->callBasePopulateOsHandles = false;
     memoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::Error;
-    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, MemoryConstants::pageSize, ptrOffset(storedPtr, MemoryConstants::pageSize / 2), rootDeviceIndex);
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, MemoryConstants::pageSize, ptrOffset(storedPtr, MemoryConstants::pageSize / 2), rootDeviceIndex, true);
     EXPECT_EQ(0u, osStorage.fragmentCount);
     EXPECT_EQ(1, hostPtrManager->getFragment({storedPtr, rootDeviceIndex})->refCount);
 
@@ -894,7 +894,7 @@ TEST_F(HostPtrAllocationTest, whenPrepareOsHandlesForAllocationThenPopulateAsMan
     for (uint32_t expectedFragmentCount = 1; expectedFragmentCount <= 3; expectedFragmentCount++, allocationSize += MemoryConstants::pageSize) {
         auto requirements = hostPtrManager->getAllocationRequirements(csr->getRootDeviceIndex(), cpuPtr, allocationSize);
         EXPECT_EQ(expectedFragmentCount, requirements.requiredFragmentsCount);
-        auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, allocationSize, cpuPtr, 0);
+        auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, allocationSize, cpuPtr, 0, true);
         EXPECT_EQ(expectedFragmentCount, osStorage.fragmentCount);
         EXPECT_EQ(expectedFragmentCount, hostPtrManager->getFragmentCount());
         hostPtrManager->releaseHandleStorage(csr->getRootDeviceIndex(), osStorage);
@@ -918,7 +918,7 @@ TEST_F(HostPtrAllocationTest, givenHostRangeWhenPreparingOsStorageThenOnlyFragme
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
     const auto rootDeviceIndex = csr->getRootDeviceIndex();
     for (const auto &hostRange : hostRanges) {
-        auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, hostRange.size, reinterpret_cast<void *>(hostRange.ptr), rootDeviceIndex);
+        auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, hostRange.size, reinterpret_cast<void *>(hostRange.ptr), rootDeviceIndex, true);
         ASSERT_EQ(hostRange.partiallyCoveredFragments.size(), osStorage.fragmentCount);
         for (auto fragmentId = 0u; fragmentId < osStorage.fragmentCount; fragmentId++) {
             EXPECT_EQ(hostRange.partiallyCoveredFragments[fragmentId], osStorage.fragmentStorageData[fragmentId].partiallyCoveredByAllocation);
@@ -1347,19 +1347,46 @@ TEST(HostPtrEntryKeyTest, givenTwoSameHostPtrEntryKeysWithSameRootDeviceIndexWhe
     EXPECT_FALSE(key1 < key0);
 }
 
-TEST_F(HostPtrAllocationTest, givenStoredFragmentWhenCheckingWhetherFragmentsCanBeStoredThenOnlyRangesWithoutBiggerOverlappingFragmentAreAccepted) {
+TEST_F(HostPtrAllocationTest, givenStoredFragmentOfLiveAllocationWhenPreparingOsStorageForBiggerOverlappingRangeWithoutAbortOnOverlapThenEmptyStorageIsReturned) {
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
     const auto rootDeviceIndex = csr->getRootDeviceIndex();
     void *storedPtr = reinterpret_cast<void *>(0x101000);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, storedPtr);
     ASSERT_NE(nullptr, allocation);
 
-    EXPECT_FALSE(hostPtrManager->canStoreFragments(4 * MemoryConstants::pageSize - 0x80, reinterpret_cast<void *>(0x100040), rootDeviceIndex));
-    EXPECT_TRUE(hostPtrManager->canStoreFragments(0x100, reinterpret_cast<void *>(0x101040), rootDeviceIndex));
-    EXPECT_TRUE(hostPtrManager->canStoreFragments(MemoryConstants::pageSize, storedPtr, rootDeviceIndex));
-    EXPECT_FALSE(hostPtrManager->canStoreFragments(0u, storedPtr, rootDeviceIndex));
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, 4 * MemoryConstants::pageSize - 0x80, reinterpret_cast<void *>(0x100040), rootDeviceIndex, false);
+    EXPECT_EQ(0u, osStorage.fragmentCount);
+    EXPECT_EQ(1u, hostPtrManager->getFragmentCount());
+    EXPECT_EQ(1, hostPtrManager->getFragment({storedPtr, rootDeviceIndex})->refCount);
 
     memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
+}
+
+TEST_F(HostPtrAllocationTest, givenStoredFragmentOfTemporaryAllocationCompletedDuringWaitWhenPreparingOsStorageForBiggerOverlappingRangeWithoutAbortOnOverlapThenTemporaryAllocationIsReleasedAndStorageIsPrepared) {
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
+    const auto rootDeviceIndex = csr->getRootDeviceIndex();
+    void *storedPtr = reinterpret_cast<void *>(0x101000);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, storedPtr);
+    ASSERT_NE(nullptr, allocation);
+
+    TaskCountType taskCountReady = 2;
+    auto storage = new MockInternalAllocationStorage(*csr);
+    csr->internalAllocationStorage.reset(storage);
+    storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION, taskCountReady);
+    storage->updateCompletionAfterCleaningList(taskCountReady);
+    currentGpuTag = 1;
+    csr->latestSentTaskCount = taskCountReady - 1;
+
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, 4 * MemoryConstants::pageSize, reinterpret_cast<void *>(0x100000), rootDeviceIndex, false);
+    EXPECT_EQ(1u, osStorage.fragmentCount);
+    EXPECT_EQ(1u, hostPtrManager->getFragmentCount());
+    EXPECT_EQ(reinterpret_cast<void *>(0x100000), osStorage.fragmentStorageData[0].cpuPtr);
+    EXPECT_EQ(4 * MemoryConstants::pageSize, osStorage.fragmentStorageData[0].fragmentSize);
+
+    hostPtrManager->releaseHandleStorage(rootDeviceIndex, osStorage);
+    memoryManager->cleanOsHandles(osStorage, rootDeviceIndex);
+    EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
 }
 
 TEST_F(HostPtrAllocationTest, givenUsmHostPtrFragmentsEnabledWhenFreeingAllocationBackedByFragmentsThenFenceCompletionIsHandled) {
