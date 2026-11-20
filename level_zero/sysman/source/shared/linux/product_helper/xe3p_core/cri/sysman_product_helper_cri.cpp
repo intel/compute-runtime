@@ -438,14 +438,20 @@ static ze_result_t readEnergyCounters(const std::map<std::string, uint64_t> &key
     const std::string &key = powerDomainToKeyMapIter->second;
     if (powerDomain == ZES_POWER_DOMAIN_MEMORY) {
         // bits [0:31] - VCCDDRQ_ENERGY_ACCUMULATOR, bits [32:63] - VCCDDRQX_ENERGY_ACCUMULATOR
-        uint64_t vramEnergyContainer = 0;
-        ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vramEnergyContainer);
+        uint32_t vramEnergyLower = 0;
+        ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, vramEnergyLower);
         if (result != ZE_RESULT_SUCCESS) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
-        energyCounters.push_back(static_cast<uint32_t>(vramEnergyContainer & 0xFFFFFFFF));
-        energyCounters.push_back(static_cast<uint32_t>(vramEnergyContainer >> 32));
+        uint32_t vramEnergyUpper = 0;
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, sizeof(uint32_t), vramEnergyUpper);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Energy counter from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+            return result;
+        }
+        energyCounters.push_back(vramEnergyLower);
+        energyCounters.push_back(vramEnergyUpper);
     } else {
         uint32_t energyCounter = 0;
         ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter);
@@ -561,13 +567,20 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
 
     // Power Values read from PMT are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
     if (pInstantPower != nullptr) {
-        uint64_t instantaneousPowerValue = 0;
         std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
-        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
+        uint32_t instantaneousPowerLower = 0;
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerLower);
         if (result != ZE_RESULT_SUCCESS) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
+        uint32_t instantaneousPowerUpper = 0;
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, sizeof(uint32_t), instantaneousPowerUpper);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+            return result;
+        }
+        const uint64_t instantaneousPowerValue = (static_cast<uint64_t>(instantaneousPowerUpper) << 32) | instantaneousPowerLower;
 
         if (powerDomain == ZES_POWER_DOMAIN_CARD) {
             // bits [32:47] - INSTANTANEOUS_PSYSGPU_POWER

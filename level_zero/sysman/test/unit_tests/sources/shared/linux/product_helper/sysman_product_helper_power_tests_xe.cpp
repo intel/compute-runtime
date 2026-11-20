@@ -73,6 +73,11 @@ inline static int mockStatSuccess(const std::string &filePath, struct stat *stat
     return 0;
 }
 
+static void copyFromMockContainer(void *buf, size_t count, off_t offset, off_t containerOffset, uint64_t containerValue) {
+    const auto containerBytes = reinterpret_cast<const uint8_t *>(&containerValue);
+    memcpy(buf, containerBytes + (offset - containerOffset), count);
+}
+
 HWTEST2_F(SysmanDevicePowerFixtureXe, GivenVariousPowerLimitFileExistanceStatesWhenIsPowerModuleSupportedIsCalledForRootDeviceHandleThenCorrectSupportStatusIsReturnedForCardDomain, IsBMG) {
     // Loop through all combinations of the three boolean flags (false/true) for the file existence
     for (bool isEnergyCounterFilePresent : {false, true}) {
@@ -470,8 +475,9 @@ static ssize_t mockPreadPunitEnergyCounters(int fd, void *buf, size_t count, off
         case 1640:
             memcpy(buf, &punitMockRawEnergyCounter, count);
             break;
-        case 200: // CRI: 64 bit VRAM energy accumulator container
-            memcpy(buf, &punitMockRawMemoryEnergyCounter, count);
+        case 200: // CRI: 64 bit VRAM energy accumulator container, read as lower and upper 32 bits
+        case 204:
+            copyFromMockContainer(buf, count, offset, 200, punitMockRawMemoryEnergyCounter);
             break;
         default:
             break;
@@ -1473,14 +1479,18 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
             memcpy(buf, validPunitGuid.data(), count);
         } else if (fd == 8) {
             if (offset == instantPowerContainerOffset && readFailCount == 1) {
-                // readFailCount == 1: fail the instantaneous power read.
+                // readFailCount == 1: fail the instantaneous power read of the lower 32 bits.
                 errno = ENOENT;
                 ret = -1;
-            } else if (offset == accumPsysEnergyOffset && readFailCount >= 2) {
-                // readFailCount == 2: fail the 1st energy read; == 3: fail the 2nd energy read.
+            } else if (offset == (instantPowerContainerOffset + sizeof(uint32_t)) && readFailCount == 2) {
+                // readFailCount == 2: fail the instantaneous power read of the upper 32 bits.
+                errno = ENOENT;
+                ret = -1;
+            } else if (offset == accumPsysEnergyOffset && readFailCount >= 3) {
+                // readFailCount == 3: fail the 1st energy read; == 4: fail the 2nd energy read.
                 // The energy counter is read twice, before and after the sampling interval, so the
                 // target index selects which of the two reads fails.
-                if (energyCounterReadCount == (readFailCount - 2)) {
+                if (energyCounterReadCount == (readFailCount - 3)) {
                     errno = ENOENT;
                     ret = -1;
                 }
@@ -1493,7 +1503,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t instantPower = 0u;
     uint32_t averagePower = 0u;
-    for (readFailCount = 1; readFailCount <= 3; readFailCount++) {
+    for (readFailCount = 1; readFailCount <= 4; readFailCount++) {
         energyCounterReadCount = 0; // Reset energy read counter before each getPowerUsage call
         auto result = pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, ZES_POWER_DOMAIN_CARD, &instantPower, &averagePower);
         EXPECT_NE(ZE_RESULT_SUCCESS, result);
@@ -1522,12 +1532,11 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         } else if (fd == 6) {
             memcpy(buf, validPunitGuid.data(), count);
         } else if (fd == 8) {
-            if (offset == instantPowerContainerOffset) {
-                memcpy(buf, &instantPowerContainerValue, count);
-            } else if (offset == vramEnergyAccumContainerOffset) {
-                // readFailCount == 1: fail the 1st energy read; == 2: fail the 2nd energy read.
-                // The VRAM energy container is read twice, before and after the sampling interval, so
-                // the target index selects which of the two reads fails.
+            if (offset == instantPowerContainerOffset || offset == (instantPowerContainerOffset + sizeof(uint32_t))) {
+                copyFromMockContainer(buf, count, offset, instantPowerContainerOffset, instantPowerContainerValue);
+            } else if (offset == vramEnergyAccumContainerOffset || offset == (vramEnergyAccumContainerOffset + sizeof(uint32_t))) {
+                // The lower and upper 32 bits of the VRAM energy container are read before and after the
+                // sampling interval, so readFailCount selects which of the four reads fails.
                 if (energyCounterReadCount == (readFailCount - 1)) {
                     errno = ENOENT;
                     ret = -1;
@@ -1541,7 +1550,7 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t instantPower = 0u;
     uint32_t averagePower = 0u;
-    for (readFailCount = 1; readFailCount <= 2; readFailCount++) {
+    for (readFailCount = 1; readFailCount <= 4; readFailCount++) {
         energyCounterReadCount = 0; // Reset energy read counter before each getPowerUsage call
         auto result = pSysmanProductHelper->getPowerUsage(pLinuxSysmanImp, ZES_POWER_DOMAIN_MEMORY, &instantPower, &averagePower);
         EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
@@ -1583,16 +1592,20 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         } else if (fd == 6) {
             memcpy(buf, validPunitGuid.data(), count);
         } else if (fd == 8) {
-            if (offset == instantPowerContainerOffset) {
-                memcpy(buf, &instantPowerContainerValue, count);
-            } else if (offset == criVramEnergyAccumContainerOffset) {
-                // VRAM energy container reads: first read returns e1, second returns e2
-                if (energyReadCount % 2 == 0) {
-                    memcpy(buf, &mockVramEnergyContainerE1, count);
-                } else {
-                    memcpy(buf, &mockVramEnergyContainerE2, count);
+            if (offset == instantPowerContainerOffset || offset == (instantPowerContainerOffset + sizeof(uint32_t))) {
+                // 64 bit container must be read as two 32 bit values, 64 bit PMT reads are not reliable
+                EXPECT_EQ(sizeof(uint32_t), count);
+                copyFromMockContainer(buf, count, offset, instantPowerContainerOffset, instantPowerContainerValue);
+            } else if (offset == criVramEnergyAccumContainerOffset || offset == (criVramEnergyAccumContainerOffset + sizeof(uint32_t))) {
+                // 64 bit container must be read as two 32 bit values, 64 bit PMT reads are not reliable
+                EXPECT_EQ(sizeof(uint32_t), count);
+                // VRAM energy container reads: first sample returns e1, second returns e2. The lower 32 bits are
+                // read first, so the sample index is advanced on the lower read and reused for the upper read.
+                if (offset == criVramEnergyAccumContainerOffset) {
+                    energyReadCount++;
                 }
-                energyReadCount++;
+                const uint64_t vramEnergyContainer = ((energyReadCount - 1) % 2 == 0) ? mockVramEnergyContainerE1 : mockVramEnergyContainerE2;
+                copyFromMockContainer(buf, count, offset, criVramEnergyAccumContainerOffset, vramEnergyContainer);
             } else if (offset == accumPackageEnergyOffset || offset == accumPsysEnergyOffset || offset == bmgVccgtEnergyOffset || offset == bmgVccddrEnergyOffset) {
                 // Energy counter reads: first read returns e1, second returns e2
                 if (energyReadCount % 2 == 0) {
@@ -1689,8 +1702,8 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysmanProductHelperInstanceWhenCa
         } else if (fd == 6) {
             memcpy(buf, validPunitGuid.data(), count);
         } else if (fd == 8) {
-            if (offset == instantPowerContainerOffset) {
-                memcpy(buf, &instantPowerContainerValue, count);
+            if (offset == instantPowerContainerOffset || offset == (instantPowerContainerOffset + sizeof(uint32_t))) {
+                copyFromMockContainer(buf, count, offset, instantPowerContainerOffset, instantPowerContainerValue);
                 instantPowerContainerReadCount++;
             } else if (offset == accumPsysEnergyOffset) {
                 // Energy counter reads: first read returns e1, second returns e2

@@ -1941,13 +1941,20 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerUsage(LinuxSysmanImp *pLi
 
     // Instantaneous power calculation
     if (pInstantPower != nullptr) {
-        uint64_t instantaneousPowerValue = 0;
         std::string key = "INSTANTANEOUS_POWER_CONTAINER"; // 64-bit container with Instantaneous power values at different bit offsets
-        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerValue);
+        uint32_t instantaneousPowerLower = 0;
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, instantaneousPowerLower);
         if (result != ZE_RESULT_SUCCESS) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
             return result;
         }
+        uint32_t instantaneousPowerUpper = 0;
+        result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, sizeof(uint32_t), instantaneousPowerUpper);
+        if (result != ZE_RESULT_SUCCESS) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Instantaneous Power from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+            return result;
+        }
+        const uint64_t instantaneousPowerValue = (static_cast<uint64_t>(instantaneousPowerUpper) << 32) | instantaneousPowerLower;
 
         // Instantaneous power values are in U13.3 format (13 integer bits + 3 fractional bits = 16 bits) and in Watts
         if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
