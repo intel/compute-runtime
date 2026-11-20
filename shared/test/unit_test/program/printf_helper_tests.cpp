@@ -609,6 +609,7 @@ class PrintFormatterOutputBoundsTest : public PrintFormatterTest {
     static constexpr char guardByte = 0x5a;
 
     void SetUp() override {
+        stderrCapture.captureStderr();
         guardedFormatter.output = std::make_unique_for_overwrite<char[]>(guardedOutputSize);
         memset(guardedFormatter.output.get(), guardByte, guardedOutputSize);
     }
@@ -626,6 +627,7 @@ class PrintFormatterOutputBoundsTest : public PrintFormatterTest {
     }
 
     MockPrintFormatter guardedFormatter{underlyingBuffer, printfBufferSize};
+    StreamCapture stderrCapture;
 };
 
 TEST_F(PrintFormatterOutputBoundsTest, GivenConversionFillingOutputBufferWhenPrintingTrailingCharactersThenNothingIsWrittenPastOutputBuffer) {

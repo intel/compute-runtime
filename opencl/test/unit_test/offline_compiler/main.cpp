@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_main_helpers.h"
+#include "shared/test/common/helpers/ult_output_guard_listener.h"
 #include "shared/test/common/libult/signal_utils.h"
 
 #include "environment.h"
@@ -155,6 +156,7 @@ int main(int argc, char **argv) {
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (!ultOptions.useDefaultListener) {
         NEO::replaceDefaultResultPrinter(listeners);
+        listeners.Append(new UltOutputGuardListener(true, ultOptions.allowOutput));
     }
     NEO::appendCommonUltListeners(listeners);
 

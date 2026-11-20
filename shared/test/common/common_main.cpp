@@ -24,6 +24,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/ult_main_helpers.h"
+#include "shared/test/common/helpers/ult_output_guard_listener.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_builtin_binaries.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -406,6 +407,7 @@ int main(int argc, char **argv) {
         if (!ultListenersInitialized) {
             if (!ultOptions.useDefaultListener) {
                 customEventListener = replaceDefaultResultPrinter(listeners);
+                listeners.Append(new UltOutputGuardListener(!isAubTestMode(testMode), ultOptions.allowOutput));
             }
 
             listeners.Append(new MockSipListener);

@@ -8,6 +8,7 @@
 #include "shared/test/common/libult/signal_utils.h"
 
 #include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/test/common/helpers/ult_output_guard.h"
 
 #include "gtest/gtest.h"
 
@@ -29,6 +30,7 @@ std::unique_ptr<std::thread> alarmThread;
 
 LONG WINAPI ultExceptionFilter(
     _In_ struct _EXCEPTION_POINTERS *exceptionInfo) {
+    UltOutputGuard::onFatal();
     std::cout << "UnhandledException: 0x" << std::hex << exceptionInfo->ExceptionRecord->ExceptionCode << std::dec
               << " on test: " << lastTest << std::endl;
     return EXCEPTION_CONTINUE_SEARCH;
@@ -36,6 +38,7 @@ LONG WINAPI ultExceptionFilter(
 
 void (*oldSigAbrt)(int) = nullptr;
 void handleSIGABRT(int sigNo) {
+    UltOutputGuard::onFatal();
     if (newStdOut != -1) {
         _dup2(newStdOut, 1);
     }

@@ -29,6 +29,8 @@ bool parseCommonUltOption(int argc, char **argv, int &argIndex, UltCommandLineOp
         options.useDefaultListener = true;
     } else if (!strcmp("--disable_alarm", arg)) {
         enableAlarm = false;
+    } else if (!strcmp("--allow_output", arg)) {
+        options.allowOutput = true;
     } else if (!strcmp("--show_test_stats", arg)) {
         options.showTestStats = true;
     } else if (!strcmp("--dump_test_stats", arg) && argIndex + 1 < argc) {

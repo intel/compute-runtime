@@ -19,6 +19,7 @@ namespace NEO {
 
 struct UltCommandLineOptions {
     bool useDefaultListener = false;
+    bool allowOutput = false;
     bool showTestStats = false;
     std::string dumpTestStatsFileName;
 };

@@ -124,6 +124,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/options_unit_tests.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils_common.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/ult_output_guard.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/sleep.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_aub_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h
@@ -203,6 +204,7 @@ set(neo_libult_common_SRCS_LIB_ULT_WIN
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/stream_capture_windows.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_output_guard_windows.cpp
 )
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_WIN ${neo_libult_common_SRCS_LIB_ULT_WIN})
 
@@ -211,6 +213,7 @@ set(neo_libult_common_SRCS_LIB_ULT_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_buffer_object_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/stream_capture_linux.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/ult_output_guard_linux.cpp
 )
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_LINUX ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 

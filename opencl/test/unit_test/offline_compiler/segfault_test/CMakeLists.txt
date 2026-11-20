@@ -13,6 +13,7 @@ set(CLOC_SEGFAULT_TEST_SOURCES
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils_common.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/ult_output_guard.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_helpers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.h
@@ -27,6 +28,7 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/stream_capture_windows.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_output_guard_windows.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
        ${OCLOC_DIRECTORY}/source/utilities/windows/safety_guard_windows.h
        ${OCLOC_DIRECTORY}/source/utilities/windows/seh_exception.cpp
@@ -40,6 +42,7 @@ else()
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/stream_capture_linux.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/ult_output_guard_linux.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
   )
 endif()

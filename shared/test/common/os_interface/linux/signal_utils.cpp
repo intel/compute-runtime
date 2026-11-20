@@ -7,6 +7,8 @@
 
 #include "shared/test/common/libult/signal_utils.h"
 
+#include "shared/test/common/helpers/ult_output_guard.h"
+
 #include "gtest/gtest.h"
 
 #include <unistd.h>
@@ -23,6 +25,7 @@ int newStdOut = -1;
 
 struct sigaction oldSigAbrt;
 void handleSIGABRT(int signal) {
+    UltOutputGuard::onFatal();
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }
@@ -54,6 +57,7 @@ void handleSIGALRM(int signal) {
 }
 
 void handleSIGSEGV(int signal) {
+    UltOutputGuard::onFatal();
     if (newStdOut != -1) {
         dup2(newStdOut, 1);
     }

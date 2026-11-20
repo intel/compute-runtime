@@ -28,6 +28,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/ult_main_helpers.h"
+#include "shared/test/common/helpers/ult_output_guard_listener.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/signal_utils.h"
@@ -902,6 +903,7 @@ int main(int argc, char **argv) {
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (!ultOptions.useDefaultListener) {
         replaceDefaultResultPrinter(listeners);
+        listeners.Append(new UltOutputGuardListener(true, ultOptions.allowOutput));
     }
     listeners.Append(new DebugVariablesListener);
 

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/helpers/ult_output_guard.h"
 #include "shared/test/common/libult/signal_utils.h"
 #if defined(_WIN32) && defined(__clang__)
 #pragma clang diagnostic push
@@ -33,6 +34,7 @@ void markIterationStart() {
 }
 
 void handleTestsTimeout(std::string_view testName, uint32_t elapsedTime) {
+    UltOutputGuard::onFatal();
     printf("Tests timeout in %s %s, after %u seconds on: %s\n", NEO::apiName, NEO::executionName, elapsedTime, testName.data());
 
     auto *unitTest = ::testing::UnitTest::GetInstance();
