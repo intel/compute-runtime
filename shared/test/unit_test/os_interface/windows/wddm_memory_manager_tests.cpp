@@ -1933,6 +1933,28 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryMappedAtDifferentAddr
     rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenHostUsmWithHostPtrWhenFragmentIsMappedAtDifferentGpuVaThanHostPtrThenAllocationFailsAndFragmentIsReleased) {
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.flags.isUSMHostAllocation = true;
+    auto memory = alignedMalloc(allocationData.size, MemoryConstants::pageSize);
+    allocationData.hostPtr = memory;
+
+    auto &mapGpuVirtualAddressFunc = wddm->getGdi()->mapGpuVirtualAddress.mFunc;
+    VariableBackup<MapGpuVirtualAddressFunc> originalBackup(&originalMapGpuVirtualAddressForHostMap, mapGpuVirtualAddressFunc);
+    VariableBackup<MapGpuVirtualAddressFunc> gdiBackup(&mapGpuVirtualAddressFunc, &mapGpuVirtualAddressAtShiftedAddressMock);
+    auto destroyAllocationsCalledBefore = wddm->destroyAllocationResult.called;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
+
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(nullptr, memoryManager->getHostPtrManager()->getFragment({memory, allocationData.rootDeviceIndex}));
+    EXPECT_EQ(destroyAllocationsCalledBefore + 1u, wddm->destroyAllocationResult.called);
+
+    memoryManager->freeGraphicsMemory(allocation);
+    alignedFree(memory);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndVirtualMemoryWhenUnmapReserveFailsThenUnmapFails) {
     if (rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily == IGFX_DG1) {
         GTEST_SKIP();

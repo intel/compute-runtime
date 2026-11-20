@@ -571,10 +571,14 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
 
 bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
     auto osHandle = static_cast<OsHandleWin *>(allocationStorageData->osHandleStorage);
-    return mapGpuVirtualAddress(osHandle->gmm,
-                                osHandle->handle,
-                                0u, MemoryConstants::maxSvmAddress, castToUint64(allocationStorageData->cpuPtr),
-                                osHandle->gpuPtr, AllocationType::externalHostPtr, nullptr, 0u);
+    const auto cpuAddress = castToUint64(allocationStorageData->cpuPtr);
+    if (!mapGpuVirtualAddress(osHandle->gmm,
+                              osHandle->handle,
+                              0u, MemoryConstants::maxSvmAddress, cpuAddress,
+                              osHandle->gpuPtr, AllocationType::externalHostPtr, nullptr, 0u)) {
+        return false;
+    }
+    return this->rootDeviceEnvironment.getGmmHelper()->decanonize(osHandle->gpuPtr) == cpuAddress;
 }
 
 bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type, const MemoryFlags *flags, D3DGPU_SIZE_T offsetInPages) {
