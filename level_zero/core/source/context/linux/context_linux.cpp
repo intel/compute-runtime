@@ -152,7 +152,7 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
     return {importHandle, handleRetrieved || socketFallbackSuccess, opaqueHandlesAttempted};
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> Context::importOpaqueFdHandle(NEO::Device *neoDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, uint64_t physicalOffset) {
+std::pair<NEO::GraphicsAllocation *, void *> Context::importOpaqueFdHandle(NEO::Device *neoDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, uint64_t physicalOffset, NEO::SvmAllocationData &importedAllocData) {
     const auto imported = importOpaqueHandleWithFallback(handle, processId, std::nullopt, reservedHandleData, neoDevice);
     if (!imported.success) {
         return {nullptr, nullptr};
@@ -173,8 +173,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::importOpaqueFdHandle(NEO::
         static_assert(NEO::NonCopyableAndNonMovable<ScopedImportFd>);
 
         NEO::GraphicsAllocation *alloc = nullptr;
-        NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
-        auto ptr = driverHandle->importFdHandle(neoDevice, flags, fd, allocationType, isHostIpcAllocation, nullptr, &alloc, allocData, compressedMemory, physicalOffset);
+        auto ptr = driverHandle->importFdHandle(neoDevice, flags, fd, allocationType, isHostIpcAllocation, nullptr, &alloc, importedAllocData, compressedMemory, physicalOffset);
         if (alloc && scopedFd.owned) {
             alloc->setSharedHandle(NEO::Sharing::nonSharedResource);
         }

@@ -344,6 +344,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice, bool ipcSupportedAllocationByDefault);
     MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset);
+    MOCKABLE_VIRTUAL std::pair<NEO::GraphicsAllocation *, void *> importMemHandle(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset, NEO::SvmAllocationData &importedAllocData);
     MOCKABLE_VIRTUAL void closeExternalHandle(uint64_t handle);
     MOCKABLE_VIRTUAL void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle);
     MOCKABLE_VIRTUAL uint8_t isOpaqueHandleSupported(IpcHandleType *handleType);
@@ -414,7 +415,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
                                                                              std::optional<uint64_t> cacheID,
                                                                              void *reservedHandleData,
                                                                              NEO::Device *neoDevice);
-    std::pair<NEO::GraphicsAllocation *, void *> importOpaqueFdHandle(NEO::Device *neoDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, uint64_t physicalOffset);
+    std::pair<NEO::GraphicsAllocation *, void *> importOpaqueFdHandle(NEO::Device *neoDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, uint64_t physicalOffset, NEO::SvmAllocationData &importedAllocData);
     // Releases per-chunk handles already imported by a range open that fails partway through, before the
     // merged allocation (which would otherwise own them) is created. Each entry is {importHandle, cacheID}.
     // OS-specific: Linux closes the imported fd and drops its import-cache entry; Windows only drops the

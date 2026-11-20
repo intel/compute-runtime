@@ -87,30 +87,14 @@ class RecordingRangeMemoryManager : public MemoryManagerOpenIpcMock {
     NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<NEO::osHandle> &handles,
                                                                                NEO::AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
         recordedHandles = handles;
+        lastPhysicalOffsets = properties.physicalOffsets;
+        lastUncachedBias = properties.flags.uncacheable;
         return MemoryManagerOpenIpcMock::createGraphicsAllocationFromMultipleSharedHandles(handles, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
     }
 
     std::vector<NEO::osHandle> recordedHandles;
-};
-
-class NullRangeAllocMemoryManager : public MemoryManagerOpenIpcMock {
-  public:
-    NullRangeAllocMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerOpenIpcMock(executionEnvironment) {}
-
-    void *importFdHandles(NEO::Device *neoDevice, NEO::SVMAllocsManager *svmAllocsManager, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, bool uncachedBias, const std::vector<uint64_t> &physicalOffsets) override {
-        importFdHandlesCalled = true;
-        lastPhysicalOffsets = physicalOffsets;
-        lastUncachedBias = uncachedBias;
-        if (pAlloc != nullptr) {
-            *pAlloc = nullptr;
-        }
-        return &returnedPtrStorage;
-    }
-
-    bool importFdHandlesCalled = false;
-    bool lastUncachedBias = false;
     std::vector<uint64_t> lastPhysicalOffsets;
-    uint64_t returnedPtrStorage = 0u;
+    bool lastUncachedBias = false;
 };
 
 class HostRangeAllocMemoryManager : public MemoryManagerOpenIpcMock {
@@ -203,25 +187,23 @@ struct RangeImportContext : public L0::Context {
         return openIpcRangeHandle(hDevice, ipcHandle, flags, pptr);
     }
 
-    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
-        getMemHandlePtrCalled = true;
+    std::pair<NEO::GraphicsAllocation *, void *> importMemHandle(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset, NEO::SvmAllocationData &importedAllocData) override {
+        importMemHandleCalled = true;
         if (transportImportFails) {
             return {nullptr, nullptr};
         }
         if (transportImportWithoutAllocation) {
             return {nullptr, gRangeTransportStorage};
         }
-        transportAllocation = std::make_unique<NEO::MockGraphicsAllocation>(0u, gRangeTransportStorage, transportAllocationSize);
-        return {transportAllocation.get(), gRangeTransportStorage};
+        return {new NEO::MockGraphicsAllocation(0u, gRangeTransportStorage, transportAllocationSize), gRangeTransportStorage};
     }
 
     uint32_t getMaxIpcRangeHandleCount() override { return maxIpcRangeHandleCount; }
 
-    bool getMemHandlePtrCalled = false;
+    bool importMemHandleCalled = false;
     bool transportImportFails = false;
     bool transportImportWithoutAllocation = false;
     size_t transportAllocationSize = sizeof(gRangeTransportStorage);
-    std::unique_ptr<NEO::MockGraphicsAllocation> transportAllocation;
     uint32_t maxIpcRangeHandleCount = 1024u;
 };
 
@@ -1264,7 +1246,7 @@ TEST_F(IpcMemHandleRangeTest, givenRangeHandleWhenOpeningIpcMemHandleThenHandles
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
-    EXPECT_TRUE(importContext->getMemHandlePtrCalled);
+    EXPECT_TRUE(importContext->importMemHandleCalled);
     ASSERT_EQ(numHandles, recordingMemoryManager->recordedHandles.size());
     for (uint32_t i = 0; i < numHandles; i++) {
         EXPECT_EQ(static_cast<NEO::osHandle>(baseHandleValue + i), recordingMemoryManager->recordedHandles[i]);
@@ -1290,7 +1272,7 @@ TEST_F(IpcMemHandleRangeTest, givenTransportImportFailureWhenOpeningRangeHandleT
     void *ptr = nullptr;
     auto result = importContext->openIpcMemHandle(device->toHandle(), ipcHandle, 0u, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-    EXPECT_TRUE(importContext->getMemHandlePtrCalled);
+    EXPECT_TRUE(importContext->importMemHandleCalled);
 }
 
 TEST_F(IpcMemHandleRangeTest, givenMismatchedTransportVersionWhenOpeningRangeHandleThenInvalidArgumentIsReturned) {
@@ -1450,27 +1432,6 @@ TEST_F(IpcMemHandleRangeTest, givenNullPtrOutputWhenOpeningRangeHandleThenInvali
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-TEST_F(IpcMemHandleRangeTest, givenImportReturningNullAllocationWhenOpeningRangeHandleThenSharedHandleIsNotSetAndSuccessIsReturned) {
-    auto nullAllocMemoryManager = new NullRangeAllocMemoryManager(*neoDevice->executionEnvironment);
-    driverHandle->setMemoryManager(nullAllocMemoryManager);
-    delete currMemoryManager;
-    currMemoryManager = nullAllocMemoryManager;
-
-    auto importContext = createImportContext();
-
-    const uint32_t numHandles = 2u;
-    buildRangeTransport(numHandles);
-    enableChunkImportMocks();
-
-    auto ipcHandle = buildRangeHandle();
-    void *ptr = nullptr;
-    auto result = importContext->openIpcMemHandle(device->toHandle(), ipcHandle, 0u, &ptr);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-    EXPECT_TRUE(nullAllocMemoryManager->importFdHandlesCalled);
-}
-
 TEST_F(IpcMemHandleRangeTest, givenStoredChunkHandleWithNonDeviceMemoryTypeWhenOpeningRangeHandleThenInvalidArgumentIsReturned) {
     auto importContext = createImportContext();
     const uint32_t numHandles = 1u;
@@ -1485,10 +1446,10 @@ TEST_F(IpcMemHandleRangeTest, givenStoredChunkHandleWithNonDeviceMemoryTypeWhenO
 }
 
 TEST_F(IpcMemHandleRangeTest, givenReservedDeviceChunksWithPhysicalOffsetWhenOpeningRangeHandleThenOffsetsArePassedToImport) {
-    auto nullAllocMemoryManager = new NullRangeAllocMemoryManager(*neoDevice->executionEnvironment);
-    driverHandle->setMemoryManager(nullAllocMemoryManager);
+    auto recordingMemoryManager = new RecordingRangeMemoryManager(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(recordingMemoryManager);
     delete currMemoryManager;
-    currMemoryManager = nullAllocMemoryManager;
+    currMemoryManager = recordingMemoryManager;
 
     auto importContext = createImportContext();
 
@@ -1502,17 +1463,19 @@ TEST_F(IpcMemHandleRangeTest, givenReservedDeviceChunksWithPhysicalOffsetWhenOpe
     auto result = importContext->openIpcMemHandle(device->toHandle(), ipcHandle, 0u, &ptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(nullAllocMemoryManager->importFdHandlesCalled);
-    ASSERT_EQ(numHandles, nullAllocMemoryManager->lastPhysicalOffsets.size());
-    EXPECT_EQ(physicalOffset, nullAllocMemoryManager->lastPhysicalOffsets[0]);
-    EXPECT_EQ(physicalOffset, nullAllocMemoryManager->lastPhysicalOffsets[1]);
+    EXPECT_FALSE(recordingMemoryManager->recordedHandles.empty());
+    ASSERT_EQ(numHandles, recordingMemoryManager->lastPhysicalOffsets.size());
+    EXPECT_EQ(physicalOffset, recordingMemoryManager->lastPhysicalOffsets[0]);
+    EXPECT_EQ(physicalOffset, recordingMemoryManager->lastPhysicalOffsets[1]);
+
+    importContext->closeIpcMemHandle(ptr);
 }
 
 TEST_F(IpcMemHandleRangeTest, givenHostRangeHandleWhenOpeningThenHostMergePathIsSelectedAndDeviceImportIsNotUsed) {
-    auto nullAllocMemoryManager = new NullRangeAllocMemoryManager(*neoDevice->executionEnvironment);
-    driverHandle->setMemoryManager(nullAllocMemoryManager);
+    auto recordingMemoryManager = new RecordingRangeMemoryManager(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(recordingMemoryManager);
     delete currMemoryManager;
-    currMemoryManager = nullAllocMemoryManager;
+    currMemoryManager = recordingMemoryManager;
 
     auto importContext = createImportContext();
 
@@ -1525,7 +1488,7 @@ TEST_F(IpcMemHandleRangeTest, givenHostRangeHandleWhenOpeningThenHostMergePathIs
     auto result = importContext->openIpcMemHandle(device->toHandle(), ipcHandle, 0u, &ptr);
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
-    EXPECT_FALSE(nullAllocMemoryManager->importFdHandlesCalled);
+    EXPECT_TRUE(recordingMemoryManager->recordedHandles.empty());
 }
 
 TEST_F(IpcMemHandleRangeTest, givenHostRangeHandleWhenHostMergeSucceedsThenSvmAllocIsInsertedAndSuccessIsReturned) {
@@ -1582,10 +1545,10 @@ TEST_F(IpcMemHandleRangeTest, givenRangeHandleWithLeadingOffsetWhenOpeningThenRe
 }
 
 TEST_F(IpcMemHandleRangeTest, givenUncachedBiasFlagWhenOpeningDeviceRangeHandleThenUncachedBiasIsForwardedToImport) {
-    auto nullAllocMemoryManager = new NullRangeAllocMemoryManager(*neoDevice->executionEnvironment);
-    driverHandle->setMemoryManager(nullAllocMemoryManager);
+    auto recordingMemoryManager = new RecordingRangeMemoryManager(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(recordingMemoryManager);
     delete currMemoryManager;
-    currMemoryManager = nullAllocMemoryManager;
+    currMemoryManager = recordingMemoryManager;
 
     auto importContext = createImportContext();
 
@@ -1598,8 +1561,10 @@ TEST_F(IpcMemHandleRangeTest, givenUncachedBiasFlagWhenOpeningDeviceRangeHandleT
     auto result = importContext->openIpcMemHandle(device->toHandle(), ipcHandle, ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED, &ptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(nullAllocMemoryManager->importFdHandlesCalled);
-    EXPECT_TRUE(nullAllocMemoryManager->lastUncachedBias);
+    EXPECT_FALSE(recordingMemoryManager->recordedHandles.empty());
+    EXPECT_TRUE(recordingMemoryManager->lastUncachedBias);
+
+    importContext->closeIpcMemHandle(ptr);
 }
 
 TEST_F(IpcMemHandleRangeTest, givenHostRangeHandleWithDeviceChunkTypeWhenOpeningRangeHandleThenInvalidArgumentIsReturned) {
@@ -1616,10 +1581,10 @@ TEST_F(IpcMemHandleRangeTest, givenHostRangeHandleWithDeviceChunkTypeWhenOpening
 }
 
 TEST_F(IpcMemHandleRangeTest, givenImplicitScalingCapableDeviceWhenOpeningDeviceRangeHandleThenRootDeviceIsUsedAndSuccessIsReturned) {
-    auto nullAllocMemoryManager = new NullRangeAllocMemoryManager(*neoDevice->executionEnvironment);
-    driverHandle->setMemoryManager(nullAllocMemoryManager);
+    auto recordingMemoryManager = new RecordingRangeMemoryManager(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(recordingMemoryManager);
     delete currMemoryManager;
-    currMemoryManager = nullAllocMemoryManager;
+    currMemoryManager = recordingMemoryManager;
 
     auto importContext = createImportContext();
 
@@ -1635,7 +1600,9 @@ TEST_F(IpcMemHandleRangeTest, givenImplicitScalingCapableDeviceWhenOpeningDevice
     auto result = importContext->openIpcMemHandle(implicitScalingDevice.toHandle(), ipcHandle, 0u, &ptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(nullAllocMemoryManager->importFdHandlesCalled);
+    EXPECT_FALSE(recordingMemoryManager->recordedHandles.empty());
+
+    importContext->closeIpcMemHandle(ptr);
 }
 
 TEST_F(IpcMemHandleRangeTest, givenPtrInGapBetweenTwoReservationsWhenGettingRangeHandleThenPreviousReservationIsInspectedAndInvalidArgumentIsReturned) {

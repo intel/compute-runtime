@@ -3404,28 +3404,29 @@ TEST(MemoryManagerTest, givenFirstCpuReservationFailsAndRequiredStartAddressIsZe
     EXPECT_EQ(1, failFirstMemoryManager->cpuReservationCallCount);
 }
 
-TEST(MemoryManagerImportFdHandleTest, givenPhysicalOffsetAndNoBasePointerAndUncachedBiasWhenImportingFdHandleThenPhysicalOffsetForwardedAndSvmAllocInsertedWithUncachedFlag) {
+TEST(MemoryManagerImportFdHandleTest, givenPhysicalOffsetAndNoBasePointerAndUncachedBiasWhenImportingFdHandleThenPhysicalOffsetForwardedAndImportedAllocDataIsPopulatedWithUncachedFlagAndNotInsertedIntoManager) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     auto svmManager = std::make_unique<SVMAllocsManager>(memoryManager);
 
     NEO::GraphicsAllocation *importedAlloc = nullptr;
-    SvmAllocationData mappedPeerAllocData(device->getRootDeviceIndex());
+    SvmAllocationData importedAllocData(device->getRootDeviceIndex());
     const uint64_t physicalOffset = 0x9000u;
 
-    void *ptr = memoryManager->importFdHandle(device.get(), svmManager.get(), 1u, AllocationType::buffer, false, nullptr, &importedAlloc, mappedPeerAllocData, false, true, physicalOffset);
+    void *ptr = memoryManager->importFdHandle(device.get(), svmManager.get(), 1u, AllocationType::buffer, false, nullptr, &importedAlloc, importedAllocData, false, true, physicalOffset);
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(physicalOffset, memoryManager->capturedPhysicalOffset);
     ASSERT_NE(nullptr, importedAlloc);
     EXPECT_TRUE(importedAlloc->getIsImported());
 
-    auto allocData = svmManager->getSVMAlloc(ptr);
-    ASSERT_NE(nullptr, allocData);
-    EXPECT_FALSE(allocData->mappedAllocData);
-    EXPECT_EQ(1u, allocData->allocationFlagsProperty.flags.locallyUncachedResource);
-    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, allocData->memoryType);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(importedAlloc, importedAllocData.gpuAllocations.getDefaultGraphicsAllocation());
+    EXPECT_FALSE(importedAllocData.mappedAllocData);
+    EXPECT_TRUE(importedAllocData.isImportedAllocation);
+    EXPECT_EQ(1u, importedAllocData.allocationFlagsProperty.flags.locallyUncachedResource);
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, importedAllocData.memoryType);
 
-    svmManager->freeSVMAlloc(ptr);
+    memoryManager->freeGraphicsMemory(importedAlloc);
 }
 
 TEST(MemoryManagerImportFdHandleTest, givenBasePointerWhenImportingFdHandleThenMappedPeerAllocDataIsPopulatedAndNotInsertedIntoManager) {
@@ -3433,17 +3434,17 @@ TEST(MemoryManagerImportFdHandleTest, givenBasePointerWhenImportingFdHandleThenM
     auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     auto svmManager = std::make_unique<SVMAllocsManager>(memoryManager);
 
-    SvmAllocationData mappedPeerAllocData(device->getRootDeviceIndex());
+    SvmAllocationData importedAllocData(device->getRootDeviceIndex());
     uint64_t basePointer = 0x1234u;
 
-    void *ptr = memoryManager->importFdHandle(device.get(), svmManager.get(), 1u, AllocationType::bufferHostMemory, true, reinterpret_cast<void *>(basePointer), nullptr, mappedPeerAllocData, false, false, 0u);
+    void *ptr = memoryManager->importFdHandle(device.get(), svmManager.get(), 1u, AllocationType::bufferHostMemory, true, reinterpret_cast<void *>(basePointer), nullptr, importedAllocData, false, false, 0u);
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(0u, memoryManager->capturedPhysicalOffset);
-    EXPECT_TRUE(mappedPeerAllocData.mappedAllocData);
-    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, mappedPeerAllocData.memoryType);
+    EXPECT_TRUE(importedAllocData.mappedAllocData);
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, importedAllocData.memoryType);
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
 
-    memoryManager->freeGraphicsMemory(mappedPeerAllocData.gpuAllocations.getDefaultGraphicsAllocation());
+    memoryManager->freeGraphicsMemory(importedAllocData.gpuAllocations.getDefaultGraphicsAllocation());
 }
 
 TEST(MemoryManagerImportFdHandleTest, givenInvalidSharedHandleWhenImportingFdHandleThenNullptrReturned) {
@@ -3451,9 +3452,9 @@ TEST(MemoryManagerImportFdHandleTest, givenInvalidSharedHandleWhenImportingFdHan
     auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
     auto svmManager = std::make_unique<SVMAllocsManager>(memoryManager);
 
-    SvmAllocationData mappedPeerAllocData(device->getRootDeviceIndex());
+    SvmAllocationData importedAllocData(device->getRootDeviceIndex());
 
-    void *ptr = memoryManager->importFdHandle(device.get(), svmManager.get(), static_cast<uint64_t>(MockMemoryManager::invalidSharedHandle), AllocationType::buffer, false, nullptr, nullptr, mappedPeerAllocData, false, false, 0x1000u);
+    void *ptr = memoryManager->importFdHandle(device.get(), svmManager.get(), static_cast<uint64_t>(MockMemoryManager::invalidSharedHandle), AllocationType::buffer, false, nullptr, nullptr, importedAllocData, false, false, 0x1000u);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0x1000u, memoryManager->capturedPhysicalOffset);
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
@@ -3480,28 +3481,29 @@ class MockMemoryManagerMultipleImport : public MockMemoryManager {
     std::vector<uint64_t> capturedPhysicalOffsets;
 };
 
-TEST(MemoryManagerImportFdHandlesTest, givenPhysicalOffsetsAndNoBasePointerWhenImportingFdHandlesThenOffsetsForwardedAndSvmAllocInserted) {
+TEST(MemoryManagerImportFdHandlesTest, givenPhysicalOffsetsAndNoBasePointerWhenImportingFdHandlesThenOffsetsForwardedAndImportedAllocDataIsPopulatedAndNotInsertedIntoManager) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto memoryManager = std::make_unique<MockMemoryManagerMultipleImport>(*device->getExecutionEnvironment());
     auto svmManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
 
     NEO::GraphicsAllocation *importedAlloc = nullptr;
-    SvmAllocationData mappedPeerAllocData(device->getRootDeviceIndex());
+    SvmAllocationData importedAllocData(device->getRootDeviceIndex());
     std::vector<osHandle> handles = {10u, 11u};
     std::vector<uint64_t> physicalOffsets = {0x1000u, 0x2000u};
 
-    void *ptr = memoryManager->importFdHandles(device.get(), svmManager.get(), handles, nullptr, &importedAlloc, mappedPeerAllocData, false, false, physicalOffsets);
+    void *ptr = memoryManager->importFdHandles(device.get(), svmManager.get(), handles, nullptr, &importedAlloc, importedAllocData, false, false, physicalOffsets);
     EXPECT_NE(nullptr, ptr);
     ASSERT_NE(nullptr, importedAlloc);
     EXPECT_TRUE(importedAlloc->getIsImported());
     EXPECT_EQ(physicalOffsets, memoryManager->capturedPhysicalOffsets);
 
-    auto allocData = svmManager->getSVMAlloc(ptr);
-    ASSERT_NE(nullptr, allocData);
-    EXPECT_FALSE(allocData->mappedAllocData);
-    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, allocData->memoryType);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(importedAlloc, importedAllocData.gpuAllocations.getDefaultGraphicsAllocation());
+    EXPECT_FALSE(importedAllocData.mappedAllocData);
+    EXPECT_TRUE(importedAllocData.isImportedAllocation);
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, importedAllocData.memoryType);
 
-    svmManager->freeSVMAlloc(ptr);
+    memoryManager->freeGraphicsMemory(importedAlloc);
 }
 
 TEST(MemoryManagerImportFdHandlesTest, givenBasePointerWhenImportingFdHandlesThenMappedPeerAllocDataIsPopulatedAndNotInsertedIntoManager) {
@@ -3509,19 +3511,19 @@ TEST(MemoryManagerImportFdHandlesTest, givenBasePointerWhenImportingFdHandlesThe
     auto memoryManager = std::make_unique<MockMemoryManagerMultipleImport>(*device->getExecutionEnvironment());
     auto svmManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
 
-    SvmAllocationData mappedPeerAllocData(device->getRootDeviceIndex());
+    SvmAllocationData importedAllocData(device->getRootDeviceIndex());
     std::vector<osHandle> handles = {10u};
     std::vector<uint64_t> physicalOffsets = {};
     uint64_t basePointer = 0x4000u;
 
-    void *ptr = memoryManager->importFdHandles(device.get(), svmManager.get(), handles, reinterpret_cast<void *>(basePointer), nullptr, mappedPeerAllocData, false, false, physicalOffsets);
+    void *ptr = memoryManager->importFdHandles(device.get(), svmManager.get(), handles, reinterpret_cast<void *>(basePointer), nullptr, importedAllocData, false, false, physicalOffsets);
     EXPECT_NE(nullptr, ptr);
-    EXPECT_TRUE(mappedPeerAllocData.mappedAllocData);
-    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, mappedPeerAllocData.memoryType);
+    EXPECT_TRUE(importedAllocData.mappedAllocData);
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, importedAllocData.memoryType);
     EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
     EXPECT_TRUE(memoryManager->capturedPhysicalOffsets.empty());
 
-    memoryManager->freeGraphicsMemory(mappedPeerAllocData.gpuAllocations.getDefaultGraphicsAllocation());
+    memoryManager->freeGraphicsMemory(importedAllocData.gpuAllocations.getDefaultGraphicsAllocation());
 }
 
 TEST(MemoryManagerImportFdHandlesTest, givenFailingMergeWhenImportingFdHandlesThenNullptrReturned) {
@@ -3531,11 +3533,11 @@ TEST(MemoryManagerImportFdHandlesTest, givenFailingMergeWhenImportingFdHandlesTh
     memoryManager->returnNullFromMultipleSharedHandles = true;
 
     NEO::GraphicsAllocation *importedAlloc = nullptr;
-    SvmAllocationData mappedPeerAllocData(device->getRootDeviceIndex());
+    SvmAllocationData importedAllocData(device->getRootDeviceIndex());
     std::vector<osHandle> handles = {10u};
     std::vector<uint64_t> physicalOffsets = {0u};
 
-    void *ptr = memoryManager->importFdHandles(device.get(), svmManager.get(), handles, nullptr, &importedAlloc, mappedPeerAllocData, false, false, physicalOffsets);
+    void *ptr = memoryManager->importFdHandles(device.get(), svmManager.get(), handles, nullptr, &importedAlloc, importedAllocData, false, false, physicalOffsets);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(nullptr, importedAlloc);
     EXPECT_EQ(1u, memoryManager->createFromMultipleSharedHandlesCalled);
@@ -3547,19 +3549,17 @@ TEST(MemoryManagerImportFdHandlesTest, givenUncachedBiasWhenImportingFdHandlesTh
     auto svmManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
 
     NEO::GraphicsAllocation *importedAlloc = nullptr;
-    SvmAllocationData mappedPeerAllocData(device->getRootDeviceIndex());
+    SvmAllocationData importedAllocData(device->getRootDeviceIndex());
     std::vector<osHandle> handles = {10u};
     std::vector<uint64_t> physicalOffsets = {};
 
-    void *ptr = memoryManager->importFdHandles(device.get(), svmManager.get(), handles, nullptr, &importedAlloc, mappedPeerAllocData, false, true, physicalOffsets);
+    void *ptr = memoryManager->importFdHandles(device.get(), svmManager.get(), handles, nullptr, &importedAlloc, importedAllocData, false, true, physicalOffsets);
     EXPECT_NE(nullptr, ptr);
     ASSERT_NE(nullptr, importedAlloc);
 
-    auto allocData = svmManager->getSVMAlloc(ptr);
-    ASSERT_NE(nullptr, allocData);
-    EXPECT_EQ(1u, allocData->allocationFlagsProperty.flags.locallyUncachedResource);
+    EXPECT_EQ(1u, importedAllocData.allocationFlagsProperty.flags.locallyUncachedResource);
 
-    svmManager->freeSVMAlloc(ptr);
+    memoryManager->freeGraphicsMemory(importedAlloc);
 }
 
 TEST(MemoryManagerImportFdHandlesTest, givenNonDrmMemoryManagerWhenCreateHostAllocationFromMultipleSharedHandlesThenNullptrReturned) {

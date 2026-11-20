@@ -171,16 +171,18 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
             closeExternalHandle(lookupTable.sharedHandleType.fd);
         } else {
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
-            *ptr = this->driverHandle->importNTHandle(this->devices.begin()->second,
-                                                      lookupTable.sharedHandleType.ntHandle,
-                                                      lookupTable.sharedHandleType.ntHandleName,
-                                                      lookupTable.sharedHandleType.externalMemoryType,
-                                                      size,
-                                                      NEO::AllocationType::bufferHostMemory, true, 0, false, 0u)
-                       .second;
+            NEO::SvmAllocationData importedAllocData(Device::fromHandle(this->devices.begin()->second)->getRootDeviceIndex());
+            auto imported = this->driverHandle->importNTHandle(this->devices.begin()->second,
+                                                               lookupTable.sharedHandleType.ntHandle,
+                                                               lookupTable.sharedHandleType.ntHandleName,
+                                                               lookupTable.sharedHandleType.externalMemoryType,
+                                                               size,
+                                                               NEO::AllocationType::bufferHostMemory, true, 0, false, 0u, importedAllocData);
+            *ptr = imported.second;
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
+            this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(importedAllocData);
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -346,17 +348,19 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
             closeExternalHandle(lookupTable.sharedHandleType.fd);
         } else {
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
-            *ptr = this->driverHandle->importNTHandle(hDevice,
-                                                      lookupTable.sharedHandleType.ntHandle,
-                                                      lookupTable.sharedHandleType.ntHandleName,
-                                                      lookupTable.sharedHandleType.externalMemoryType,
-                                                      size,
-                                                      NEO::AllocationType::buffer,
-                                                      false, 0, false, 0u)
-                       .second;
+            NEO::SvmAllocationData importedAllocData(rootDeviceIndex);
+            auto imported = this->driverHandle->importNTHandle(hDevice,
+                                                               lookupTable.sharedHandleType.ntHandle,
+                                                               lookupTable.sharedHandleType.ntHandleName,
+                                                               lookupTable.sharedHandleType.externalMemoryType,
+                                                               size,
+                                                               NEO::AllocationType::buffer,
+                                                               false, 0, false, 0u, importedAllocData);
+            *ptr = imported.second;
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
+            this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(importedAllocData);
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -919,6 +923,15 @@ ze_result_t Context::getMemAddressRange(const void *ptr,
     return ZE_RESULT_ERROR_ADDRESS_NOT_FOUND;
 }
 
+std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) {
+    NEO::SvmAllocationData importedAllocData(Device::fromHandle(hDevice)->getRootDeviceIndex());
+    auto imported = importMemHandle(hDevice, handle, allocationType, isHostIpcAllocation, processId, flags, reservedHandleData, compressedMemory, isOpaqueHandle, physicalOffset, importedAllocData);
+    if (imported.first != nullptr) {
+        this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(importedAllocData);
+    }
+    return imported;
+}
+
 ze_result_t Context::closeIpcMemHandle(const void *ptr) {
     return this->freeMem(ptr);
 }
@@ -1329,6 +1342,7 @@ ze_result_t Context::openIpcMemHandles(ze_device_handle_t hDevice,
     if (nullptr == *pptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+    this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocDataInternal);
 
     *pptr = ptrOffset(*pptr, poolOffset);
 
@@ -1707,7 +1721,9 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
     void *transportReservedHandleData = nullptr;
     getDataFromIpcHandle(hDevice, ipcHandle, transportHandle, transportType, transportProcessId, transportPoolOffset, transportReservedHandleData, transportCompressed, transportIsOpaque);
 
-    auto transportImport = getMemHandlePtr(hDevice,
+    auto memoryManager = this->driverHandle->getMemoryManager();
+    NEO::SvmAllocationData transportAllocData(Device::fromHandle(hDevice)->getRootDeviceIndex());
+    auto transportImport = importMemHandle(hDevice,
                                            transportHandle,
                                            NEO::AllocationType::bufferHostMemory,
                                            true,
@@ -1716,8 +1732,9 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
                                            transportReservedHandleData,
                                            transportCompressed,
                                            transportIsOpaque,
-                                           0u);
-    NEO::GraphicsAllocation *transportAllocation = transportImport.first;
+                                           0u,
+                                           transportAllocData);
+    auto transportAllocation = NEO::makeUniqueGraphicsAllocation(memoryManager, transportImport.first);
     void *transportPtr = transportImport.second;
     if (transportPtr == nullptr || transportAllocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1726,14 +1743,12 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
     IpcRangeTransportHeader header{};
     std::memcpy(&header, transportPtr, sizeof(header));
     if (header.magic != ipcRangeHandleMagic || header.version != ipcRangeTransportVersion || header.numHandles == 0) {
-        this->freeMem(transportPtr);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     // numHandles is peer-controlled; reject a header claiming more handles than the imported transport holds.
     const uint64_t requiredTransportSize = sizeof(IpcRangeTransportHeader) + static_cast<uint64_t>(header.numHandles) * sizeof(ze_ipc_mem_handle_t);
     if (requiredTransportSize > transportAllocation->getUnderlyingBufferSize()) {
-        this->freeMem(transportPtr);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     const bool rangeIsHost = (header.rangeIsHost != 0);
@@ -1741,7 +1756,7 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
     std::vector<ze_ipc_mem_handle_t> ipcHandles(header.numHandles);
     std::memcpy(ipcHandles.data(), reinterpret_cast<uint8_t *>(transportPtr) + sizeof(header), header.numHandles * sizeof(ze_ipc_mem_handle_t));
 
-    this->freeMem(transportPtr);
+    transportAllocation.reset();
 
     auto device = Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
@@ -1799,7 +1814,6 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
         physicalOffsets.push_back(chunkPoolOffset);
     }
 
-    auto memoryManager = this->driverHandle->getMemoryManager();
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
     NEO::GraphicsAllocation *rangeAllocation = nullptr;
     if (rangeIsHost) {
@@ -1829,6 +1843,7 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
             releaseImportedRangeChunkHandles(importedChunks);
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
+        this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocDataInternal);
     }
 
     // PRIME_FD_TO_HANDLE transfers ownership to the merged BOs; the temporary fds are no longer needed.

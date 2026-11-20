@@ -93,15 +93,12 @@ class CommonRangeMemoryManager : public MemoryManagerOpenIpcMock {
   public:
     CommonRangeMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerOpenIpcMock(executionEnvironment) {}
 
-    void *importFdHandles(NEO::Device *neoDevice, NEO::SVMAllocsManager *svmAllocsManager, const std::vector<NEO::osHandle> &handles, void *basePointer, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, bool uncachedBias, const std::vector<uint64_t> &physicalOffsets) override {
-        lastUncachedBias = uncachedBias;
-        if (pAlloc != nullptr) {
-            *pAlloc = nullptr;
-        }
+    NEO::GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<NEO::osHandle> &handles, NEO::AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
+        lastUncachedBias = properties.flags.uncacheable;
         if (failImportFdHandles) {
             return nullptr;
         }
-        return &mergedBaseStorage;
+        return new NEO::MockGraphicsAllocation(properties.rootDeviceIndex, &mergedBaseStorage, sizeof(mergedBaseStorage));
     }
 
     NEO::GraphicsAllocation *createHostAllocationFromMultipleSharedHandles(const std::vector<NEO::osHandle> &handles, NEO::AllocationProperties &properties, const std::vector<uint64_t> &physicalOffsets, bool reuseSharedAllocation) override {
@@ -155,9 +152,8 @@ struct CommonRangeContext : public L0::Context {
         return Context::freeMem(ptr);
     }
 
-    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
-        transportAllocation = std::make_unique<NEO::MockGraphicsAllocation>(0u, gCommonTransportStorage, sizeof(gCommonTransportStorage));
-        return {transportAllocation.get(), gCommonTransportStorage};
+    std::pair<NEO::GraphicsAllocation *, void *> importMemHandle(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset, NEO::SvmAllocationData &importedAllocData) override {
+        return {new NEO::MockGraphicsAllocation(0u, gCommonTransportStorage, sizeof(gCommonTransportStorage)), gCommonTransportStorage};
     }
 
     void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) override {
@@ -183,7 +179,6 @@ struct CommonRangeContext : public L0::Context {
         }
     }
 
-    std::unique_ptr<NEO::MockGraphicsAllocation> transportAllocation;
     uint32_t maxIpcRangeHandleCount = 1024u;
     uint32_t freeMemCalls = 0u;
     uint32_t releaseImportedCalls = 0u;
@@ -496,6 +491,8 @@ TEST_F(IpcMemHandleRangeCommonTest, givenLeadingOffsetWhenOpeningRangeHandleThen
     EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->callOpenIpcRangeHandle(device->toHandle(), ipcHandle, ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED, &ptr));
     EXPECT_EQ(ptrOffset(&rangeMemoryManager->mergedBaseStorage, leadingOffset), ptr);
     EXPECT_TRUE(rangeMemoryManager->lastUncachedBias);
+
+    rangeContext->freeMem(&rangeMemoryManager->mergedBaseStorage);
 }
 
 TEST_F(IpcMemHandleRangeCommonTest, givenNoLeadingOffsetWhenOpeningRangeHandleThenMergedBaseIsReturned) {
@@ -506,6 +503,8 @@ TEST_F(IpcMemHandleRangeCommonTest, givenNoLeadingOffsetWhenOpeningRangeHandleTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->callOpenIpcRangeHandle(device->toHandle(), ipcHandle, 0u, &ptr));
     EXPECT_EQ(&rangeMemoryManager->mergedBaseStorage, ptr);
     EXPECT_FALSE(rangeMemoryManager->lastUncachedBias);
+
+    rangeContext->freeMem(ptr);
 }
 
 TEST_F(IpcMemHandleRangeCommonTest, givenChunkTypeNotMatchingRangeClassWhenOpeningRangeHandleThenInvalidArgumentIsReturned) {

@@ -7181,10 +7181,10 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenRegisteredImportedH
     const auto trackedBefore = memoryManager->getSysMemAllocs().size();
 
     for (bool importedParameter : {false, true}) {
-        SvmAllocationData mappedPeerAllocData(rootDeviceIndex);
+        SvmAllocationData importedAllocData(rootDeviceIndex);
         GraphicsAllocation *allocation = nullptr;
         auto ptr = memoryManager->importFdHandle(device, &svmAllocsManager, 123, AllocationType::bufferHostMemory,
-                                                 true, nullptr, &allocation, mappedPeerAllocData, false, false, 0u);
+                                                 true, nullptr, &allocation, importedAllocData, false, false, 0u);
         ASSERT_NE(nullptr, ptr);
         ASSERT_NE(nullptr, allocation);
         EXPECT_TRUE(allocation->getIsImported());
@@ -7193,11 +7193,9 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerHostIpcTrackingTest, givenRegisteredImportedH
         EXPECT_EQ(trackedBefore + 1, trackedAllocations.size());
         EXPECT_EQ(usedMemoryBefore + allocation->getUnderlyingBufferSize(), memoryManager->getUsedSystemMemorySize());
 
-        auto svmAllocation = svmAllocsManager.getSVMAlloc(ptr);
-        ASSERT_NE(nullptr, svmAllocation);
-        EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, svmAllocation->memoryType);
-        EXPECT_TRUE(svmAllocation->isImportedAllocation);
-        svmAllocsManager.removeSVMAlloc(*svmAllocation);
+        EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(ptr));
+        EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, importedAllocData.memoryType);
+        EXPECT_TRUE(importedAllocData.isImportedAllocation);
         memoryManager->freeGraphicsMemory(allocation, importedParameter);
 
         EXPECT_EQ(trackedBefore, memoryManager->getSysMemAllocs().size());

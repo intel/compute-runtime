@@ -726,7 +726,7 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
                                    bool isHostIpcAllocation,
                                    void *basePointer,
                                    NEO::GraphicsAllocation **pAlloc,
-                                   NEO::SvmAllocationData &mappedPeerAllocData,
+                                   NEO::SvmAllocationData &importedAllocData,
                                    bool compressedMemory,
                                    uint64_t physicalOffset) {
     const bool uncachedBias = ((flags & ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) != 0) ||
@@ -738,13 +738,13 @@ void *DriverHandle::importFdHandle(NEO::Device *neoDevice,
                                                     isHostIpcAllocation,
                                                     basePointer,
                                                     pAlloc,
-                                                    mappedPeerAllocData,
+                                                    importedAllocData,
                                                     compressedMemory,
                                                     uncachedBias,
                                                     physicalOffset);
 }
 
-void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory, const std::vector<uint64_t> &physicalOffsets) {
+void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_t flags, const std::vector<NEO::osHandle> &handles, void *basePtr, NEO::GraphicsAllocation **pAlloc, NEO::SvmAllocationData &importedAllocData, bool compressedMemory, const std::vector<uint64_t> &physicalOffsets) {
     const bool uncachedBias = (flags & (static_cast<ze_ipc_memory_flags_t>(ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) |
                                         static_cast<ze_ipc_memory_flags_t>(ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED))) != 0;
     return this->getMemoryManager()->importFdHandles(neoDevice,
@@ -752,7 +752,7 @@ void *DriverHandle::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_flags_
                                                      handles,
                                                      basePtr,
                                                      pAlloc,
-                                                     mappedPeerAllocData,
+                                                     importedAllocData,
                                                      compressedMemory,
                                                      uncachedBias,
                                                      physicalOffsets);
@@ -843,17 +843,17 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
 
     deps.importFd = [this](NEO::Device *peerDevice, uint64_t handle, NEO::AllocationType allocationType,
                            void *basePointer, NEO::GraphicsAllocation **pAlloc,
-                           NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
+                           NEO::SvmAllocationData &importedAllocData, bool compressedMemory) {
         ze_ipc_memory_flags_t flags = {};
         return this->importFdHandle(peerDevice, flags, handle, allocationType, false,
-                                    basePointer, pAlloc, mappedPeerAllocData, compressedMemory, 0u);
+                                    basePointer, pAlloc, importedAllocData, compressedMemory, 0u);
     };
     deps.importFds = [this](NEO::Device *peerDevice, const std::vector<NEO::osHandle> &handles,
                             void *basePointer, NEO::GraphicsAllocation **pAlloc,
-                            NEO::SvmAllocationData &mappedPeerAllocData, bool compressedMemory) {
+                            NEO::SvmAllocationData &importedAllocData, bool compressedMemory) {
         ze_ipc_memory_flags_t flags = {};
         return this->importFdHandles(peerDevice, flags, handles, basePointer, pAlloc,
-                                     mappedPeerAllocData, compressedMemory, {});
+                                     importedAllocData, compressedMemory, {});
     };
     deps.decompressP2P = [device, this](NEO::GraphicsAllocation *alloc) {
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
@@ -898,7 +898,7 @@ NEO::GraphicsAllocation *DriverHandle::resolveMemoryAllocation(Device *device, v
     return this->getPeerAllocation(device, allocData, basePtr, nullptr, nullptr, false);
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, size_t size, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, size_t size, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset, NEO::SvmAllocationData &importedAllocData) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     NEO::MemoryManager::OsHandleData osHandleData{handle};
@@ -921,19 +921,16 @@ std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_dev
         return {nullptr, nullptr};
     }
 
-    NEO::SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
-    allocData.gpuAllocations.addAllocation(alloc);
-    allocData.cpuAllocation = nullptr;
-    allocData.size = alloc->getUnderlyingBufferSize();
-    allocData.memoryType =
+    importedAllocData.gpuAllocations.addAllocation(alloc);
+    importedAllocData.cpuAllocation = nullptr;
+    importedAllocData.size = alloc->getUnderlyingBufferSize();
+    importedAllocData.memoryType =
         isHostIpcAllocation ? InternalMemoryType::hostUnifiedMemory : InternalMemoryType::deviceUnifiedMemory;
-    allocData.device = neoDevice;
-    allocData.isImportedAllocation = true;
+    importedAllocData.device = neoDevice;
+    importedAllocData.isImportedAllocation = true;
     alloc->setIsImported();
 
-    allocData.setAllocId(++this->getSvmAllocsManager()->allocationsCounter);
-
-    this->getSvmAllocsManager()->insertSVMAlloc(allocData);
+    importedAllocData.setAllocId(++this->getSvmAllocsManager()->allocationsCounter);
 
     return {alloc, reinterpret_cast<void *>(alloc->getGpuAddress())};
 }

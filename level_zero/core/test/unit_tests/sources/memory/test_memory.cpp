@@ -6961,13 +6961,13 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
+    NEO::GraphicsAllocation *alloc = nullptr;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, &alloc, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+    EXPECT_EQ(allocDataInternal.allocationFlagsProperty.flags.locallyUncachedResource, 1u);
 
-    context->freeMem(ptr);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
 TEST_F(ImportFdUncachedTests,
@@ -6975,13 +6975,13 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
+    NEO::GraphicsAllocation *alloc = nullptr;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, &alloc, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+    EXPECT_EQ(allocDataInternal.allocationFlagsProperty.flags.locallyUncachedResource, 1u);
 
-    context->freeMem(ptr);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
 TEST_F(ImportFdUncachedTests,
@@ -6990,13 +6990,13 @@ TEST_F(ImportFdUncachedTests,
                                   static_cast<ze_ipc_memory_flags_t>(ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED);
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
+    NEO::GraphicsAllocation *alloc = nullptr;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, &alloc, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+    EXPECT_EQ(allocDataInternal.allocationFlagsProperty.flags.locallyUncachedResource, 1u);
 
-    context->freeMem(ptr);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
 TEST_F(ImportFdUncachedTests,
@@ -7004,13 +7004,13 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
+    NEO::GraphicsAllocation *alloc = nullptr;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, &alloc, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 0u);
+    EXPECT_EQ(allocDataInternal.allocationFlagsProperty.flags.locallyUncachedResource, 0u);
 
-    context->freeMem(ptr);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
 TEST_F(ImportFdUncachedTests,
@@ -7018,14 +7018,14 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::bufferHostMemory, true, nullptr, nullptr, allocDataInternal, false, 0u);
+    NEO::GraphicsAllocation *alloc = nullptr;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::bufferHostMemory, true, nullptr, &alloc, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->memoryType, InternalMemoryType::hostUnifiedMemory);
+    EXPECT_EQ(nullptr, driverHandle->svmAllocsManager->getSVMAlloc(ptr));
+    EXPECT_EQ(allocDataInternal.memoryType, InternalMemoryType::hostUnifiedMemory);
 
-    context->freeMem(ptr);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
 TEST_F(ImportFdUncachedTests,
@@ -7033,14 +7033,14 @@ TEST_F(ImportFdUncachedTests,
     ze_ipc_memory_flags_t flags = {};
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, 0u);
+    NEO::GraphicsAllocation *alloc = nullptr;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, &alloc, allocDataInternal, false, 0u);
     EXPECT_NE(nullptr, ptr);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->memoryType, InternalMemoryType::deviceUnifiedMemory);
+    EXPECT_EQ(nullptr, driverHandle->svmAllocsManager->getSVMAlloc(ptr));
+    EXPECT_EQ(allocDataInternal.memoryType, InternalMemoryType::deviceUnifiedMemory);
 
-    context->freeMem(ptr);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
 TEST_F(ImportFdUncachedTests,
@@ -7049,16 +7049,16 @@ TEST_F(ImportFdUncachedTests,
     uint64_t handle = 1;
     const uint64_t physicalOffset = 0x5000u;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
-    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, nullptr, allocDataInternal, false, physicalOffset);
+    NEO::GraphicsAllocation *alloc = nullptr;
+    void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, false, nullptr, &alloc, allocDataInternal, false, physicalOffset);
     EXPECT_NE(nullptr, ptr);
 
     EXPECT_EQ(physicalOffset, static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager)->receivedPhysicalOffset);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->allocationFlagsProperty.flags.locallyUncachedResource, 1u);
+    EXPECT_EQ(nullptr, driverHandle->svmAllocsManager->getSVMAlloc(ptr));
+    EXPECT_EQ(allocDataInternal.allocationFlagsProperty.flags.locallyUncachedResource, 1u);
 
-    context->freeMem(ptr);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
 struct SVMAllocsManagerSharedAllocFailMock : public NEO::SVMAllocsManager {

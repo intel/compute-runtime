@@ -584,40 +584,44 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
 
 using ImportNTHandleWithMockMemoryManager = Test<DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>>;
 
-HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithHostBufferMemoryAllocationTypeThenHostUnifiedMemoryIsSet) {
+HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithHostBufferMemoryAllocationTypeThenHostUnifiedMemoryIsSetInImportedAllocDataAndAllocationIsNotRegisteredInSvmManager) {
     delete driverHandle->svmAllocsManager;
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());
 
     uint64_t imageHandle = 0x1;
     NEO::AllocationType allocationType = NEO::AllocationType::bufferHostMemory;
-    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, 0u, allocationType, true, 0u, false, 0u).second;
-    EXPECT_NE(ptr, nullptr);
+    NEO::SvmAllocationData importedAllocData(device->getRootDeviceIndex());
+    auto imported = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, 0u, allocationType, true, 0u, false, 0u, importedAllocData);
+    ASSERT_NE(nullptr, imported.first);
+    EXPECT_NE(nullptr, imported.second);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->memoryType, InternalMemoryType::hostUnifiedMemory);
+    EXPECT_EQ(nullptr, driverHandle->svmAllocsManager->getSVMAlloc(imported.second));
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, importedAllocData.memoryType);
+    EXPECT_TRUE(importedAllocData.isImportedAllocation);
+    EXPECT_EQ(imported.first, importedAllocData.gpuAllocations.getDefaultGraphicsAllocation());
 
-    ze_result_t result = context->freeMem(ptr);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(imported.first);
 }
 
-HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithBufferMemoryAllocationTypeThenDeviceUnifiedMemoryIsSet) {
+HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithBufferMemoryAllocationTypeThenDeviceUnifiedMemoryIsSetInImportedAllocDataAndAllocationIsNotRegisteredInSvmManager) {
     delete driverHandle->svmAllocsManager;
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());
 
     uint64_t imageHandle = 0x1;
     NEO::AllocationType allocationType = NEO::AllocationType::buffer;
-    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, 0u, allocationType, false, 0u, false, 0u).second;
-    EXPECT_NE(ptr, nullptr);
+    NEO::SvmAllocationData importedAllocData(device->getRootDeviceIndex());
+    auto imported = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, 0u, allocationType, false, 0u, false, 0u, importedAllocData);
+    ASSERT_NE(nullptr, imported.first);
+    EXPECT_NE(nullptr, imported.second);
 
-    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    EXPECT_NE(allocData, nullptr);
-    EXPECT_EQ(allocData->memoryType, InternalMemoryType::deviceUnifiedMemory);
+    EXPECT_EQ(nullptr, driverHandle->svmAllocsManager->getSVMAlloc(imported.second));
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, importedAllocData.memoryType);
+    EXPECT_TRUE(importedAllocData.isImportedAllocation);
+    EXPECT_EQ(imported.first, importedAllocData.gpuAllocations.getDefaultGraphicsAllocation());
 
-    ze_result_t result = context->freeMem(ptr);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(imported.first);
 }
 
 HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsReturned) {

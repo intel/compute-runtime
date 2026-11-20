@@ -1641,7 +1641,7 @@ void *MemoryManager::importFdHandle(Device *neoDevice,
                                     bool isHostIpcAllocation,
                                     void *basePointer,
                                     GraphicsAllocation **pAlloc,
-                                    SvmAllocationData &mappedPeerAllocData,
+                                    SvmAllocationData &importedAllocData,
                                     bool compressedMemory,
                                     bool uncachedBias,
                                     uint64_t physicalOffset) {
@@ -1664,31 +1664,20 @@ void *MemoryManager::importFdHandle(Device *neoDevice,
         return nullptr;
     }
 
-    SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
-    SvmAllocationData *allocDataTmp = nullptr;
-    if (basePointer) {
-        allocDataTmp = &mappedPeerAllocData;
-        allocDataTmp->mappedAllocData = true;
-    } else {
-        allocDataTmp = &allocData;
-        allocDataTmp->mappedAllocData = false;
-    }
-    allocDataTmp->gpuAllocations.addAllocation(alloc);
-    allocDataTmp->cpuAllocation = nullptr;
-    allocDataTmp->size = alloc->getUnderlyingBufferSize();
-    allocDataTmp->memoryType =
+    importedAllocData.mappedAllocData = (basePointer != nullptr);
+    importedAllocData.gpuAllocations.addAllocation(alloc);
+    importedAllocData.cpuAllocation = nullptr;
+    importedAllocData.size = alloc->getUnderlyingBufferSize();
+    importedAllocData.memoryType =
         isHostIpcAllocation ? InternalMemoryType::hostUnifiedMemory : InternalMemoryType::deviceUnifiedMemory;
-    allocDataTmp->device = neoDevice;
-    allocDataTmp->isImportedAllocation = true;
+    importedAllocData.device = neoDevice;
+    importedAllocData.isImportedAllocation = true;
     alloc->setIsImported();
-    allocDataTmp->setAllocId(++svmAllocsManager->allocationsCounter);
+    importedAllocData.setAllocId(++svmAllocsManager->allocationsCounter);
     if (uncachedBias) {
-        allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
+        importedAllocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
 
-    if (!basePointer) {
-        svmAllocsManager->insertSVMAlloc(allocData);
-    }
     if (pAlloc) {
         *pAlloc = alloc;
     }
@@ -1701,7 +1690,7 @@ void *MemoryManager::importFdHandles(Device *neoDevice,
                                      const std::vector<osHandle> &handles,
                                      void *basePtr,
                                      GraphicsAllocation **pAlloc,
-                                     SvmAllocationData &mappedPeerAllocData,
+                                     SvmAllocationData &importedAllocData,
                                      bool compressedMemory,
                                      bool uncachedBias,
                                      const std::vector<uint64_t> &physicalOffsets) {
@@ -1723,33 +1712,19 @@ void *MemoryManager::importFdHandles(Device *neoDevice,
         return nullptr;
     }
 
-    SvmAllocationData *allocDataTmp = nullptr;
-    SvmAllocationData allocData(neoDevice->getRootDeviceIndex());
-
-    if (basePtr) {
-        allocDataTmp = &mappedPeerAllocData;
-        allocDataTmp->mappedAllocData = true;
-    } else {
-        allocDataTmp = &allocData;
-        allocDataTmp->mappedAllocData = false;
-    }
-
-    allocDataTmp->gpuAllocations.addAllocation(alloc);
-    allocDataTmp->cpuAllocation = nullptr;
-    allocDataTmp->size = alloc->getUnderlyingBufferSize();
-    allocDataTmp->memoryType = InternalMemoryType::deviceUnifiedMemory;
-    allocDataTmp->device = neoDevice;
-    allocDataTmp->isImportedAllocation = true;
+    importedAllocData.mappedAllocData = (basePtr != nullptr);
+    importedAllocData.gpuAllocations.addAllocation(alloc);
+    importedAllocData.cpuAllocation = nullptr;
+    importedAllocData.size = alloc->getUnderlyingBufferSize();
+    importedAllocData.memoryType = InternalMemoryType::deviceUnifiedMemory;
+    importedAllocData.device = neoDevice;
+    importedAllocData.isImportedAllocation = true;
     alloc->setIsImported();
 
-    allocDataTmp->setAllocId(++svmAllocsManager->allocationsCounter);
+    importedAllocData.setAllocId(++svmAllocsManager->allocationsCounter);
 
     if (uncachedBias) {
-        allocDataTmp->allocationFlagsProperty.flags.locallyUncachedResource = 1;
-    }
-
-    if (!basePtr) {
-        svmAllocsManager->insertSVMAlloc(allocData);
+        importedAllocData.allocationFlagsProperty.flags.locallyUncachedResource = 1;
     }
 
     if (pAlloc) {
@@ -1885,6 +1860,7 @@ GraphicsAllocation *MemoryManager::getOrImportPeerAllocation(Device *device,
 
         peerAllocDataInternal = &allocDataInternal;
         if (peerMapAddress == nullptr) {
+            svmAllocsManager->insertSVMAlloc(allocDataInternal);
             peerAllocDataInternal = svmAllocsManager->getSVMAlloc(peerPtr);
         }
         storage.allocations.emplace(basePtr, *peerAllocDataInternal);

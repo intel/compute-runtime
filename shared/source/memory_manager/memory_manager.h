@@ -116,11 +116,11 @@ constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
 struct PeerAllocationDeps {
     std::function<void *(Device *peerDevice, uint64_t handle, AllocationType allocationType,
                          void *basePointer, GraphicsAllocation **pAlloc,
-                         SvmAllocationData &mappedPeerAllocData, bool compressedMemory)>
+                         SvmAllocationData &importedAllocData, bool compressedMemory)>
         importFd;
     std::function<void *(Device *peerDevice, const std::vector<osHandle> &handles,
                          void *basePointer, GraphicsAllocation **pAlloc,
-                         SvmAllocationData &mappedPeerAllocData, bool compressedMemory)>
+                         SvmAllocationData &importedAllocData, bool compressedMemory)>
         importFds;
     std::function<void(GraphicsAllocation *sourceAllocation)> decompressP2P;
     bool reservedHandleDataAvailable = false;
@@ -202,7 +202,7 @@ class MemoryManager {
                                           bool isHostIpcAllocation,
                                           void *basePointer,
                                           GraphicsAllocation **pAlloc,
-                                          SvmAllocationData &mappedPeerAllocData,
+                                          SvmAllocationData &importedAllocData,
                                           bool compressedMemory,
                                           bool uncachedBias,
                                           uint64_t physicalOffset);
@@ -212,7 +212,7 @@ class MemoryManager {
                                            const std::vector<osHandle> &handles,
                                            void *basePointer,
                                            GraphicsAllocation **pAlloc,
-                                           SvmAllocationData &mappedPeerAllocData,
+                                           SvmAllocationData &importedAllocData,
                                            bool compressedMemory,
                                            bool uncachedBias,
                                            const std::vector<uint64_t> &physicalOffsets);

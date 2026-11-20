@@ -42,14 +42,8 @@ namespace L0 {
 namespace {
 NEO::GraphicsAllocation *importCbAllocationForIpc(Context &context, Device &device, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation,
                                                   unsigned int processId, void *reservedHandleData, bool isOpaqueHandle) {
-    auto allocation = context.getMemHandlePtr(device.toHandle(), handle, allocationType, isHostIpcAllocation, processId, 0, reservedHandleData, false, isOpaqueHandle, 0u).first;
-    if (allocation) {
-        auto svmAllocsManager = device.getDriverHandle()->getSvmAllocsManager();
-        if (auto allocData = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()))) {
-            svmAllocsManager->removeSVMAlloc(*allocData);
-        }
-    }
-    return allocation;
+    NEO::SvmAllocationData importedAllocData(device.getRootDeviceIndex());
+    return context.importMemHandle(device.toHandle(), handle, allocationType, isHostIpcAllocation, processId, 0, reservedHandleData, false, isOpaqueHandle, 0u, importedAllocData).first;
 }
 } // namespace
 
@@ -594,7 +588,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     ImportedCbAllocationsForIpc imported;
 
     if (useOpaqueHandle) {
-        // Non-empty reservedHandleData: exporter captured a fallback handle for getMemHandlePtr to
+        // Non-empty reservedHandleData: exporter captured a fallback handle for importMemHandle to
         // retry with if the primary import fails. Only the 2-way path populates it on export.
         static const uint8_t emptyReservedHandleData[sizeof(ipcData.reservedHandleData)] = {0};
         void *reservedHandleData = nullptr;
@@ -915,7 +909,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
                                                                                              false,
                                                                                              nullptr);
 
-    // Primary import failed - retry via the reserved fallback handle (mirrors getMemHandlePtr).
+    // Primary import failed - retry via the reserved fallback handle (mirrors importMemHandle).
     if (alloc == nullptr && reservedHandleData != nullptr) {
         int fallbackFd = memoryManager->getImportHandleFromReservedHandleData(reservedHandleData, rootDeviceIndex);
         if (fallbackFd != -1) {

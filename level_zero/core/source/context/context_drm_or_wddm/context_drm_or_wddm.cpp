@@ -67,7 +67,7 @@ void Context::closeExternalHandle(uint64_t handle) {
     }
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice,
+std::pair<NEO::GraphicsAllocation *, void *> Context::importMemHandle(ze_device_handle_t hDevice,
                                                                       uint64_t handle,
                                                                       NEO::AllocationType allocationType,
                                                                       bool isHostIpcAllocation,
@@ -76,7 +76,8 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                                                                       void *reservedHandleData,
                                                                       bool compressedMemory,
                                                                       bool isOpaqueHandle,
-                                                                      uint64_t physicalOffset) {
+                                                                      uint64_t physicalOffset,
+                                                                      NEO::SvmAllocationData &importedAllocData) {
     L0::Device *device = L0::Device::fromHandle(hDevice);
     auto neoDevice = device->getNEODevice();
     NEO::DriverModelType driverType = NEO::DriverModelType::unknown;
@@ -94,17 +95,17 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                                                   isHostIpcAllocation,
                                                   processId,
                                                   compressedMemory,
-                                                  physicalOffset);
+                                                  physicalOffset,
+                                                  importedAllocData);
     } else if (driverType == NEO::DriverModelType::wddm) {
         return {nullptr, nullptr};
     } else {
-        NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
         if (isOpaqueHandle && settings.useOpaqueHandle) {
             // Use helper to import opaque handle with fallback
-            return importOpaqueFdHandle(neoDevice, handle, allocationType, isHostIpcAllocation, processId, flags, reservedHandleData, compressedMemory, physicalOffset);
+            return importOpaqueFdHandle(neoDevice, handle, allocationType, isHostIpcAllocation, processId, flags, reservedHandleData, compressedMemory, physicalOffset, importedAllocData);
         }
         NEO::GraphicsAllocation *alloc = nullptr;
-        auto result = driverHandle->importFdHandle(neoDevice, flags, handle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory, physicalOffset);
+        auto result = driverHandle->importFdHandle(neoDevice, flags, handle, allocationType, isHostIpcAllocation, nullptr, &alloc, importedAllocData, compressedMemory, physicalOffset);
         return {alloc, result};
     }
 }

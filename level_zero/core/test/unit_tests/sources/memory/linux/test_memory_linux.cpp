@@ -1017,8 +1017,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 
-    result = context->closeIpcMemHandle(ipcPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(ipcAlloc);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1068,8 +1067,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     EXPECT_NE(ipcPtr, nullptr);
     EXPECT_NE(ipcAlloc, nullptr);
 
-    result = context->closeIpcMemHandle(ipcPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    driverHandle->getMemoryManager()->freeGraphicsMemory(ipcAlloc);
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

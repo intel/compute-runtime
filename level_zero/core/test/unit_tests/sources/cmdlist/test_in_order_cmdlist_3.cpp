@@ -84,7 +84,7 @@ struct CounterBasedIpcImportTrackingContext : public Context {
         bool hadReservedHandleData = false;
     };
 
-    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
+    std::pair<NEO::GraphicsAllocation *, void *> importMemHandle(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset, NEO::SvmAllocationData &importedAllocData) override {
         importCalls.push_back({handle, allocationType, isHostIpcAllocation, processId, isOpaqueHandle, reservedHandleData != nullptr});
 
         auto allocationIt = allocations.find(handle);

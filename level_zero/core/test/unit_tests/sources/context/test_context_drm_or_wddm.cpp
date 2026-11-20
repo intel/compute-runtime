@@ -113,7 +113,8 @@ struct IpcImportFdLifetimeFixture : GetMemHandlePtrTestFixture {
         NEO::SysCalls::sysCallsClose = [](int fd) { closeSink->push_back(fd); return 0; };
     }
     auto open(bool opaque = true, void *reserved = nullptr, bool host = false) {
-        return context->getMemHandlePtr(device, 42, NEO::AllocationType::buffer, host, 1234, 0, reserved, false, opaque, 0);
+        NEO::SvmAllocationData importedAllocData(device->getRootDeviceIndex());
+        return context->importMemHandle(device, 42, NEO::AllocationType::buffer, host, 1234, 0, reserved, false, opaque, 0, importedAllocData);
     }
     DebugManagerStateRestore restore;
     VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdOpen)> openBackup{&NEO::SysCalls::sysCallsPidfdOpen};
@@ -1969,7 +1970,8 @@ TEST_F(GetMemHandlePtrTest, givenSuccessfulOpaqueImportWhenReservedHandleDataIsP
     ipcData.reservedHandleData[0] = 0xAA; // Make it non-empty
     void *reservedHandleData = static_cast<void *>(ipcData.reservedHandleData);
 
-    auto result = context->getMemHandlePtr(device, handle, NEO::AllocationType::buffer, false, processId, 0, reservedHandleData, false, true, 0u);
+    NEO::SvmAllocationData importedAllocData(device->getRootDeviceIndex());
+    auto result = context->importMemHandle(device, handle, NEO::AllocationType::buffer, false, processId, 0, reservedHandleData, false, true, 0u, importedAllocData);
 
     EXPECT_NE(nullptr, result.second);
     EXPECT_EQ(nullptr, reservedMock->lastReservedHandleData);

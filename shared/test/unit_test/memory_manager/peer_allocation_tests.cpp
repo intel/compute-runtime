@@ -214,6 +214,50 @@ TEST_F(PeerAllocationTest, givenSingleHandleAllocationWhenGettingPeerAllocationT
     EXPECT_EQ(1u, storage.allocations.count(basePtr));
 }
 
+TEST_F(PeerAllocationTest, givenReservedDeviceMemoryWhenGettingPeerAllocationThenPeerIsImportedWithoutMapAddressAndRegisteredInSvmManager) {
+    SVMAllocsManager::MapBasedAllocationTracker storage;
+    MockMultiHandleGraphicsAllocation source;
+    source.numHandles = 0u;
+    source.internalHandle = 77u;
+
+    SvmAllocationData sourceData(numRootDevices);
+    sourceData.gpuAllocations.addAllocation(&source);
+    sourceData.memoryType = InternalMemoryType::reservedDeviceMemory;
+
+    MockGraphicsAllocation peerAllocation(1u, reinterpret_cast<void *>(0x30000), MemoryConstants::pageSize);
+    void *importBasePointer = reinterpret_cast<void *>(0x1);
+    PeerAllocationDeps deps{};
+    deps.importFd = [&](Device *, uint64_t, AllocationType, void *basePointer, GraphicsAllocation **pAlloc,
+                        SvmAllocationData &importedAllocData, bool) -> void * {
+        importBasePointer = basePointer;
+        importedAllocData.gpuAllocations.addAllocation(&peerAllocation);
+        importedAllocData.size = peerAllocation.getUnderlyingBufferSize();
+        importedAllocData.memoryType = InternalMemoryType::deviceUnifiedMemory;
+        *pAlloc = &peerAllocation;
+        return reinterpret_cast<void *>(peerAllocation.getGpuAddress());
+    };
+    deps.importFds = [](Device *, const std::vector<osHandle> &, void *, GraphicsAllocation **,
+                        SvmAllocationData &, bool) -> void * { return nullptr; };
+
+    void *basePtr = reinterpret_cast<void *>(0x2000);
+    uintptr_t peerGpuAddress = 0;
+    SvmAllocationData *peerData = nullptr;
+
+    auto result = memoryManager->getOrImportPeerAllocation(device1.get(), svmAllocsManager.get(),
+                                                           storage, &sourceData, basePtr,
+                                                           &peerGpuAddress, &peerData, false, deps);
+
+    EXPECT_EQ(&peerAllocation, result);
+    EXPECT_EQ(nullptr, importBasePointer);
+    EXPECT_EQ(peerAllocation.getGpuAddress(), peerGpuAddress);
+    auto peerSvmData = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(peerGpuAddress));
+    ASSERT_NE(nullptr, peerSvmData);
+    EXPECT_EQ(peerSvmData, peerData);
+    EXPECT_TRUE(storage.allocations.contains(basePtr));
+
+    svmAllocsManager->removeSVMAlloc(*peerSvmData);
+}
+
 TEST_F(PeerAllocationTest, givenMultiHandleAllocationWhenGettingPeerAllocationThenImportFdsInvokedWithAllHandles) {
     SVMAllocsManager::MapBasedAllocationTracker storage;
     MockMultiHandleGraphicsAllocation source;
