@@ -31,7 +31,6 @@
 #include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
-#include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
@@ -2181,7 +2180,6 @@ void DrmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllo
     osHandle->bo = drmMemory->getBO();
 
     fragment.osInternalStorage = osHandle;
-    fragment.residency = new ResidencyData(maxOsContextCount);
     hostPtrManager->storeFragment(gfxAllocation->getRootDeviceIndex(), fragment);
 }
 
@@ -2190,10 +2188,8 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
     auto fragment = hostPtrManager->getFragment({buffer, gfxAllocation->getRootDeviceIndex()});
     if (fragment && fragment->driverAllocation) {
         OsHandle *osStorageToRelease = fragment->osInternalStorage;
-        ResidencyData *residencyDataToRelease = fragment->residency;
         if (hostPtrManager->releaseHostPtr(gfxAllocation->getRootDeviceIndex(), buffer)) {
             delete osStorageToRelease;
-            delete residencyDataToRelease;
         }
     }
 }
@@ -2546,7 +2542,6 @@ AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStor
             auto osHandle = new OsHandleLinux();
 
             handleStorage.fragmentStorageData[i].osHandleStorage = osHandle;
-            handleStorage.fragmentStorageData[i].residency = new ResidencyData(maxOsContextCount);
 
             osHandle->bo = allocUserptr((uintptr_t)handleStorage.fragmentStorageData[i].cpuPtr,
                                         handleStorage.fragmentStorageData[i].fragmentSize, AllocationType::externalHostPtr, rootDeviceIndex);
@@ -2605,8 +2600,6 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t r
             }
             delete handleStorage.fragmentStorageData[i].osHandleStorage;
             handleStorage.fragmentStorageData[i].osHandleStorage = nullptr;
-            delete handleStorage.fragmentStorageData[i].residency;
-            handleStorage.fragmentStorageData[i].residency = nullptr;
         }
     }
 }

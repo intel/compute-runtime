@@ -269,7 +269,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemove
     EXPECT_EQ(fragment->fragmentSize, size);
     EXPECT_NE(fragment->osInternalStorage, nullptr);
     EXPECT_EQ(static_cast<OsHandleLinux *>(fragment->osInternalStorage)->bo, gfxAllocation.getBO());
-    EXPECT_NE(fragment->residency, nullptr);
+    EXPECT_EQ(nullptr, fragment->residency);
 
     FragmentStorage fragmentStorage = {};
     fragmentStorage.fragmentCpuPointer = cpuPtr;
@@ -5586,19 +5586,15 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
     memoryManager->cleanOsHandles(handleStorage, rootDeviceIndex);
 }
 
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCleanOsHandlesDeletesHandleDataThenOsHandleStorageAndResidencyIsSetToNullptr) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCleanOsHandlesDeletesHandleDataThenOsHandleStorageIsSetToNullptr) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
     ASSERT_NE(nullptr, memoryManager->pinBBs[device->getRootDeviceIndex()]);
-    auto maxOsContextCount = 1u;
-
     OsHandleStorage handleStorage;
     handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandleLinux();
-    handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[0].fragmentSize = 4096;
 
     handleStorage.fragmentStorageData[1].osHandleStorage = new OsHandleLinux();
-    handleStorage.fragmentStorageData[1].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[1].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[1].fragmentSize = 4096;
 
@@ -5609,7 +5605,6 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCl
 
     for (uint32_t i = 0; i < 2; i++) {
         EXPECT_EQ(nullptr, handleStorage.fragmentStorageData[i].osHandleStorage);
-        EXPECT_EQ(nullptr, handleStorage.fragmentStorageData[i].residency);
     }
 }
 

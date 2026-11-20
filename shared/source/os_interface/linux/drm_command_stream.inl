@@ -16,7 +16,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
@@ -293,9 +292,6 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
     if (gfxAllocation.isResident(this->osContext->getContextId())) {
         if (this->residency.size() != 0) {
             this->residency.clear();
-        }
-        for (auto fragmentId = 0u; fragmentId < gfxAllocation.getFragmentCount(); fragmentId++) {
-            gfxAllocation.fragmentsStorage->fragmentStorageData[fragmentId].residency->resident[osContext->getContextId()] = false;
         }
     }
 

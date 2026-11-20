@@ -13,7 +13,6 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -325,24 +324,19 @@ StackVec<BufferObject *, maxFragmentsCount> DrmAllocation::getFragmentBOsForResi
 
 int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) {
     if (this->getFragmentCount()) {
-        const bool usmHostPtrFragmentsEnabled = debugManager.flags.EnableUsmHostPtrFragments.get() == 1;
-        const bool fragmentsBoundInEveryVm = bufferObjects == nullptr && usmHostPtrFragmentsEnabled;
-        const bool fragmentsCollectedPerSubmission = bufferObjects != nullptr && usmHostPtrFragmentsEnabled;
+        const bool fragmentsBoundInEveryVm = bufferObjects == nullptr && debugManager.flags.EnableUsmHostPtrFragments.get() == 1;
+        if (fragmentsBoundInEveryVm && !bind) {
+            return 0;
+        }
         for (unsigned int f = 0; f < this->getFragmentCount(); f++) {
-            if (fragmentsBoundInEveryVm && !bind) {
+            auto bo = static_cast<OsHandleLinux *>(this->fragmentsStorage->fragmentStorageData[f].osHandleStorage)->bo;
+            const bool fragmentAlreadyCollected = bufferObjects != nullptr && std::find(bufferObjects->begin(), bufferObjects->end(), bo) != bufferObjects->end();
+            if (fragmentAlreadyCollected) {
                 continue;
             }
-            auto bo = static_cast<OsHandleLinux *>(this->fragmentsStorage->fragmentStorageData[f].osHandleStorage)->bo;
-            bool fragmentNeedsBinding = fragmentsBoundInEveryVm || !this->fragmentsStorage->fragmentStorageData[f].residency->resident[osContext->getContextId()];
-            if (fragmentsCollectedPerSubmission) {
-                fragmentNeedsBinding = std::find(bufferObjects->begin(), bufferObjects->end(), bo) == bufferObjects->end();
-            }
-            if (fragmentNeedsBinding) {
-                int retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
-                if (retVal) {
-                    return retVal;
-                }
-                this->fragmentsStorage->fragmentStorageData[f].residency->resident[osContext->getContextId()] = true;
+            int retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
+            if (retVal) {
+                return retVal;
             }
         }
     } else {
