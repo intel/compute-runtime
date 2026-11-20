@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 template <typename TagType = TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>>
@@ -16,7 +18,6 @@ class MockTagAllocator : public TagAllocator<TagType> {
   public:
     using BaseClass = TagAllocator<TagType>;
     using BaseClass::freeTags;
-    using BaseClass::usedTags;
     using NodeType = typename BaseClass::NodeType;
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t tagCount,
@@ -39,6 +40,10 @@ class MockTagAllocator : public TagAllocator<TagType> {
     void returnTagToFreePool(TagNodeBase *node) override {
         returnedToFreePoolNodes.push_back(static_cast<NodeType *>(node));
         BaseClass::returnTagToFreePool(node);
+    }
+
+    bool isFreeTag(const TagNodeBase *node) const {
+        return std::find(this->freeTags.begin(), this->freeTags.end(), node) != this->freeTags.end();
     }
 
     std::vector<NodeType *> releaseReferenceNodes;

@@ -9,14 +9,15 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
-#include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
+#include "shared/source/utilities/spinlock.h"
 
 #include "metrics_library_api_1_0.h"
 
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <type_traits>
 #include <utility>
@@ -106,7 +107,7 @@ class TagNodeBase : public NonCopyableAndNonMovableClass {
 };
 
 template <typename TagType>
-class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
+class TagNode : public TagNodeBase {
     static_assert(!std::is_polymorphic<TagType>::value,
                   "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
@@ -225,10 +226,13 @@ class TagAllocator : public TagAllocatorBase {
     void releaseDeferredTags() override;
 
     bool populateFreeTags();
+    NodeType *createTagPool();
+    void pushToFreeTagsInReverseOrder(NodeType *nodes, uint32_t nodesCount);
+    NodeType *popFreeTag();
 
-    IDList<NodeType> freeTags;
-    IDList<NodeType> usedTags;
-    IDList<NodeType> deferredTags;
+    std::vector<NodeType *> freeTags;
+    std::vector<NodeType *> deferredTags;
+    SpinLock tagListsLock;
 
     std::vector<std::unique_ptr<NodeType[]>> tagPoolMemory;
 

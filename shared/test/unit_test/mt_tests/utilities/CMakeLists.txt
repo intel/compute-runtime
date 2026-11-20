@@ -8,5 +8,6 @@ set(NEO_SHARED_SRCS_mt_tests_utilities
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object_tests_mt.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/spinlock_tests_mt.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator_tests_mt.cpp
 )
 target_sources(neo_shared_mt_tests PRIVATE ${NEO_SHARED_SRCS_mt_tests_utilities})

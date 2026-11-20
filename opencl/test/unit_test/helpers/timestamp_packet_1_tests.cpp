@@ -2150,7 +2150,7 @@ HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenGettingNewTagThenSetupPageTables
 
     constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
 
-    auto allocation = mockTagAllocator->freeTags.peekHead()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+    auto allocation = mockTagAllocator->freeTags.back()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
     EXPECT_TRUE(allocation->isTbxWritable(allBanks));
     EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
 
@@ -2172,7 +2172,7 @@ HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenSettingTagAllocatorForSimulation
     csr.timestampPacketWriteEnabled = true;
     csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
 
-    auto allocation = mockTagAllocator->freeTags.peekHead()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+    auto allocation = mockTagAllocator->freeTags.back()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
     EXPECT_FALSE(allocation->isSimulationInitialUploadDone());
 
     csr.setupTagAllocatorForSimulation(*mockTagAllocator);
@@ -2194,7 +2194,7 @@ HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenCreatingNewTagPoolThenInitialUpl
     csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
     csr.setupTagAllocatorForSimulation(*mockTagAllocator);
 
-    auto firstPoolAllocation = mockTagAllocator->freeTags.peekHead()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+    auto firstPoolAllocation = mockTagAllocator->freeTags.back()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
     EXPECT_TRUE(firstPoolAllocation->isSimulationInitialUploadDone());
 
     mockTagAllocator->setTagNodeUpdateCallback({});

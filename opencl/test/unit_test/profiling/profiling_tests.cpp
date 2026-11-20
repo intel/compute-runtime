@@ -878,7 +878,6 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
 
 template <typename TagType>
 struct FixedGpuAddressTagAllocator : MockTagAllocator<TagType> {
-    using TagAllocator<TagType>::usedTags;
     using TagAllocator<TagType>::deferredTags;
 
     struct MockTagNode : TagNode<TagType> {
@@ -888,7 +887,7 @@ struct FixedGpuAddressTagAllocator : MockTagAllocator<TagType> {
     FixedGpuAddressTagAllocator(CommandStreamReceiver &csr, uint64_t gpuAddress)
         : MockTagAllocator<TagType>(csr.getRootDeviceIndex(), csr.getMemoryManager(), csr.getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
                                     sizeof(TagType), false, csr.getOsContext().getDeviceBitfield()) {
-        auto tag = reinterpret_cast<MockTagNode *>(this->freeTags.peekHead());
+        auto tag = reinterpret_cast<MockTagNode *>(this->freeTags.back());
         tag->setGpuAddress(gpuAddress);
     }
 };
@@ -909,8 +908,8 @@ HWTEST_F(ProfilingWithPerfCountersTests, givenTimestampPacketsEnabledWhenEnqueue
 
     myCmdQ->enqueueKernel(kernel->mockKernel, 1, globalOffsets, workItems, nullptr, 0, nullptr, &event);
 
-    EXPECT_EQ(!!myCmdQ->getTimestampPacketContainer(), mockAllocator->usedTags.peekIsEmpty());
-    EXPECT_TRUE(mockAllocator->deferredTags.peekIsEmpty());
+    EXPECT_EQ(!!myCmdQ->getTimestampPacketContainer(), csr.getPreferredTagPoolSize() == mockAllocator->freeTags.size());
+    EXPECT_TRUE(mockAllocator->deferredTags.empty());
 
     clReleaseEvent(event);
 }

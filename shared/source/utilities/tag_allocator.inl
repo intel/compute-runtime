@@ -11,6 +11,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
+#include <algorithm>
+
 namespace NEO {
 template <typename TagType>
 void TagNode<TagType>::initialize() {
@@ -41,18 +43,19 @@ TagAllocator<TagType>::TagAllocator(const RootDeviceIndicesContainer &rootDevice
 
 template <typename TagType>
 TagNodeBase *TagAllocator<TagType>::getTag() {
-    if (freeTags.peekIsEmpty()) {
-        releaseDeferredTags();
+    auto node = this->popFreeTag();
+    if (node == nullptr) {
+        this->releaseDeferredTags();
+        node = this->popFreeTag();
     }
-    auto node = freeTags.removeFrontOne().release();
-    if (!node) {
-        std::unique_lock<std::mutex> lock(allocatorMutex);
-        if (!populateFreeTags()) {
+    if (node == nullptr) {
+        std::unique_lock<std::mutex> lock(this->allocatorMutex);
+        node = this->createTagPool();
+        if (node == nullptr) {
             return nullptr;
         }
-        node = freeTags.removeFrontOne().release();
+        this->pushToFreeTagsInReverseOrder(node + 1, this->tagCount - 1);
     }
-    usedTags.pushFrontOne(*node);
     node->incRefCount();
 
     if (initializeTags) {
@@ -66,53 +69,80 @@ TagNodeBase *TagAllocator<TagType>::getTag() {
 }
 
 template <typename TagType>
+typename TagAllocator<TagType>::NodeType *TagAllocator<TagType>::popFreeTag() {
+    std::lock_guard<SpinLock> lock(this->tagListsLock);
+    if (this->freeTags.empty()) {
+        return nullptr;
+    }
+    auto node = this->freeTags.back();
+    this->freeTags.pop_back();
+    return node;
+}
+
+template <typename TagType>
 void TagAllocator<TagType>::returnTagToFreePool(TagNodeBase *node) {
     auto nodeT = static_cast<NodeType *>(node);
-    [[maybe_unused]] auto usedNode = usedTags.removeOne(*nodeT).release();
-    DEBUG_BREAK_IF(usedNode == nullptr);
 
     PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
                  "\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), nodeT->getGpuAddress());
 
-    freeTags.pushFrontOne(*nodeT);
+    std::lock_guard<SpinLock> lock(this->tagListsLock);
+    this->freeTags.push_back(nodeT);
 }
 
 template <typename TagType>
 void TagAllocator<TagType>::returnTagToDeferredPool(TagNodeBase *node) {
     auto nodeT = static_cast<NodeType *>(node);
-    auto usedNode = usedTags.removeOne(*nodeT).release();
-    DEBUG_BREAK_IF(!usedNode);
-    deferredTags.pushFrontOne(*usedNode);
+    std::lock_guard<SpinLock> lock(this->tagListsLock);
+    this->deferredTags.push_back(nodeT);
 }
 
 template <typename TagType>
 void TagAllocator<TagType>::releaseDeferredTags() {
-    IDList<NodeType, false> pendingFreeTags;
-    IDList<NodeType, false> pendingDeferredTags;
-    auto currentNode = deferredTags.detachNodes();
-
-    while (currentNode != nullptr) {
-        auto nextNode = currentNode->next;
-        if (currentNode->canBeReleased()) {
-            PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
-                         "\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), currentNode->getGpuAddress());
-            pendingFreeTags.pushFrontOne(*currentNode);
-        } else {
-            pendingDeferredTags.pushFrontOne(*currentNode);
+    std::vector<NodeType *> pendingTags;
+    {
+        std::lock_guard<SpinLock> lock(this->tagListsLock);
+        if (this->deferredTags.empty()) {
+            return;
         }
-        currentNode = nextNode;
+        pendingTags.swap(this->deferredTags);
     }
 
-    if (!pendingFreeTags.peekIsEmpty()) {
-        freeTags.splice(*pendingFreeTags.detachNodes());
-    }
-    if (!pendingDeferredTags.peekIsEmpty()) {
-        deferredTags.splice(*pendingDeferredTags.detachNodes());
-    }
+    const auto firstNotReleasedTag = std::partition(pendingTags.begin(), pendingTags.end(), [](const NodeType *node) {
+        if (!node->canBeReleased()) {
+            return false;
+        }
+        PRINT_STRING(debugManager.flags.PrintTimestampPacketUsage.get() == 1, stdout,
+                     "\nPID: %u, TSP returned to pool: 0x%" PRIX64, SysCalls::getProcessId(), node->getGpuAddress());
+        return true;
+    });
+
+    std::lock_guard<SpinLock> lock(this->tagListsLock);
+    this->freeTags.insert(this->freeTags.end(), pendingTags.begin(), firstNotReleasedTag);
+    this->deferredTags.insert(this->deferredTags.end(), firstNotReleasedTag, pendingTags.end());
 }
 
 template <typename TagType>
 bool TagAllocator<TagType>::populateFreeTags() {
+    auto nodes = this->createTagPool();
+    if (nodes == nullptr) {
+        return false;
+    }
+    this->pushToFreeTagsInReverseOrder(nodes, this->tagCount);
+    return true;
+}
+
+template <typename TagType>
+void TagAllocator<TagType>::pushToFreeTagsInReverseOrder(NodeType *nodes, uint32_t nodesCount) {
+    std::lock_guard<SpinLock> lock(this->tagListsLock);
+    this->freeTags.reserve(this->freeTags.size() + nodesCount);
+    for (auto nodeIndex = nodesCount; nodeIndex > 0; --nodeIndex) {
+        this->freeTags.push_back(&nodes[nodeIndex - 1]);
+    }
+}
+
+template <typename TagType>
+typename TagAllocator<TagType>::NodeType *TagAllocator<TagType>::createTagPool() {
     size_t allocationSizeRequired = tagCount * tagSize;
 
     void *baseCpuAddress = nullptr;
@@ -125,7 +155,7 @@ bool TagAllocator<TagType>::populateFreeTags() {
         GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
         if (graphicsAllocation == nullptr) {
             delete multiGraphicsAllocation;
-            return false;
+            return nullptr;
         }
 
         baseCpuAddress = graphicsAllocation->getUnderlyingBuffer();
@@ -138,7 +168,7 @@ bool TagAllocator<TagType>::populateFreeTags() {
         baseCpuAddress = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, *multiGraphicsAllocation);
         if (baseCpuAddress == nullptr) {
             delete multiGraphicsAllocation;
-            return false;
+            return nullptr;
         }
         baseGpuAddress = castToUint64(baseCpuAddress);
     }
@@ -157,12 +187,11 @@ bool TagAllocator<TagType>::populateFreeTags() {
         nodesMemory[i].tagForCpuAccess = reinterpret_cast<TagType *>(ptrOffset(baseCpuAddress, tagOffset));
         nodesMemory[i].gpuAddress = baseGpuAddress + tagOffset;
         nodesMemory[i].setDoNotReleaseNodes(doNotReleaseNodes);
-
-        freeTags.pushTailOne(nodesMemory[i]);
     }
 
+    auto nodes = nodesMemory.get();
     tagPoolMemory.push_back(std::move(nodesMemory));
-    return true;
+    return nodes;
 }
 
 template <typename TagType>
