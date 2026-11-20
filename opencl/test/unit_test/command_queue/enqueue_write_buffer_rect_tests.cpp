@@ -135,6 +135,10 @@ HWTEST_F(EnqueueWriteBufferRectTest, GivenNonBlockingEnqueueWhenWritingBufferThe
 
 HWTEST2_F(EnqueueWriteBufferRectTest, Given2dRegionWhenWritingBufferThenCommandsAreProgrammedCorrectly, IsGen12LP) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+
     enqueueWriteBufferRect2D<FamilyType>();
 
     ASSERT_NE(cmdList.end(), itorWalker);
@@ -146,7 +150,8 @@ HWTEST2_F(EnqueueWriteBufferRectTest, Given2dRegionWhenWritingBufferThenCommands
     EXPECT_EQ(1u, cmd->getThreadGroupIdZDimension());
     EXPECT_NE(0u, cmd->getRightExecutionMask());
     EXPECT_NE(0u, cmd->getBottomExecutionMask());
-    EXPECT_EQ(GPGPU_WALKER::SIMD_SIZE_SIMD32, cmd->getSimdSize());
+    auto kernel = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel();
+    EXPECT_EQ(getSimdConfig<GPGPU_WALKER>(kernel->getKernelInfo().getMaxSimdSize()), cmd->getSimdSize());
     EXPECT_NE(0u, cmd->getIndirectDataLength());
     EXPECT_FALSE(cmd->getIndirectParameterEnable());
 
@@ -304,7 +309,7 @@ HWTEST2_F(EnqueueWriteBufferRectTest, WhenWritingBufferThenOnePipelineSelectIsPr
 
 HWTEST2_F(EnqueueWriteBufferRectTest, WhenWritingBufferThenMediaVfeStateIsCorrect, IsGen12LP) {
     enqueueWriteBufferRect2D<FamilyType>();
-    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState, pDevice->getUltCommandStreamReceiver<FamilyType>().requiredScratchSlot0Size);
 }
 HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     cl_int retVal = CL_SUCCESS;
@@ -610,7 +615,8 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
     auto &kernelInfo = kernel->getKernelInfo();
 
     if (hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
-        const auto surfaceState = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), 0);
+        const auto bindingTableIndex = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().bindful / sizeof(typename FamilyType::RENDER_SURFACE_STATE));
+        const auto surfaceState = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), bindingTableIndex);
 
         if (kernelInfo.getArgDescriptorAt(0).as<ArgDescPointer>().pointerSize == sizeof(uint64_t)) {
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() +
@@ -626,14 +632,11 @@ HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtr
         }
     }
 
-    if (kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size == 2 * sizeof(uint32_t)) { // size of  uint2 SrcOrigin
-        auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() +
-                                      kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements[0].offset);
-        EXPECT_EQ(hostOffset.x + ptrDiff(misalignedHostPtr, alignDown(misalignedHostPtr, 4)), *dstOffset);
-    } else {
-        // SrcOrigin arg should be 8 bytes in size, if that changes, above if path should be modified
-        EXPECT_TRUE(false);
-    }
+    const auto &srcOriginElements = kernelInfo.getArgDescriptorAt(2).as<ArgDescValue>().elements;
+    auto srcOriginXElement = std::find_if(srcOriginElements.begin(), srcOriginElements.end(), [](const auto &element) { return element.sourceOffset == 0; });
+    ASSERT_NE(srcOriginElements.end(), srcOriginXElement);
+    auto srcOriginX = reinterpret_cast<const uint32_t *>(ptrOffset(kernel->getCrossThreadData(), srcOriginXElement->offset));
+    EXPECT_EQ(hostOffset.x + ptrDiff(misalignedHostPtr, alignDown(misalignedHostPtr, 4)), *srcOriginX);
 }
 
 using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;

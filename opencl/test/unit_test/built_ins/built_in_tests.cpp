@@ -1098,6 +1098,7 @@ HWTEST2_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatele
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
+    EXPECT_EQ(defaultStatelessMode.wideMode ? sizeof(uint64_t) : sizeof(uint32_t), kernel->getKernelArgInfo(2).size);
 }
 
 HWTEST2_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedThenParamsAreCorrect, HeaplessSupport) {
@@ -1246,6 +1247,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferSt
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
+    EXPECT_EQ(defaultStatelessMode.wideMode ? sizeof(uint64_t) : sizeof(uint32_t), kernel->getKernelArgInfo(3).size);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
@@ -1284,6 +1286,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
+    EXPECT_EQ(defaultStatelessMode.wideMode ? sizeof(uint64_t) : sizeof(uint32_t), kernel->getKernelArgInfo(3).size);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         EXPECT_FALSE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
@@ -2787,8 +2790,8 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToBufferWhenWidenessEnabledAndStat
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
-    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
-    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelArgInfo(2).size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelArgInfo(3).size);
 }
 
 HWTEST_F(BuiltInTests, givenAdjustedCopyBufferRect2dWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
@@ -2826,10 +2829,10 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferRect2dWhenWidenessEnabledAndStatel
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
-    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
-    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
-    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size);
-    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(5).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelArgInfo(2).size);
+    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelArgInfo(3).size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelArgInfo(4).size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelArgInfo(5).size);
 }
 
 HWTEST_F(BuiltInTests, givenAdjustedFillBufferWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
@@ -2864,7 +2867,7 @@ HWTEST_F(BuiltInTests, givenAdjustedFillBufferWhenWidenessEnabledAndStatelessReq
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
-    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelArgInfo(1).size);
 }
 
 HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToImage3dWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
@@ -2897,8 +2900,8 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToImage3dWhenWidenessEnabledAndSta
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
-    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
-    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelArgInfo(2).size);
+    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelArgInfo(4).size);
 }
 
 HWTEST_F(BuiltInTests, givenAdjustedCopyImage3dToBufferWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
@@ -2931,6 +2934,6 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyImage3dToBufferWhenWidenessEnabledAndSta
     ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
-    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
-    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size);
+    EXPECT_EQ(sizeof(uint64_t), kernel->getKernelArgInfo(3).size);
+    EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelArgInfo(4).size);
 }

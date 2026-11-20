@@ -219,7 +219,7 @@ HWTEST2_F(EnqueueCopyImageTest, WhenCopyingImageThenNumberOfPipelineSelectsIsOne
 
 HWTEST2_F(EnqueueCopyImageTest, WhenCopyingImageThenMediaVfeStateIsSetCorrectly, IsGen12LP) {
     enqueueCopyImage<FamilyType>();
-    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState, pDevice->getUltCommandStreamReceiver<FamilyType>().requiredScratchSlot0Size);
 }
 
 using MipMapCopyImageTest = EnqueueCopyImageMipMapTest;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,7 +90,7 @@ void validateL3Programming(GenCmdList &cmdList, GenCmdList::iterator &itorWalker
 }
 
 template <typename FamilyType>
-void validateMediaVFEState(const HardwareInfo *hwInfo, void *cmdMediaVfeState, GenCmdList &cmdList, GenCmdList::iterator itorMediaVfeState) {
+void validateMediaVFEState(const HardwareInfo *hwInfo, void *cmdMediaVfeState, GenCmdList &cmdList, GenCmdList::iterator itorMediaVfeState, uint32_t requiredScratchSize) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
 
     auto *cmd = (MEDIA_VFE_STATE *)cmdMediaVfeState;
@@ -102,9 +102,12 @@ void validateMediaVFEState(const HardwareInfo *hwInfo, void *cmdMediaVfeState, G
     EXPECT_EQ(expected, cmd->getMaximumNumberOfThreads());
     EXPECT_NE(0u, cmd->getNumberOfUrbEntries());
     EXPECT_NE(0u, cmd->getUrbEntryAllocationSize());
-    EXPECT_EQ(0u, cmd->getScratchSpaceBasePointer());
-    EXPECT_EQ(0u, cmd->getPerThreadScratchSpace());
-    EXPECT_EQ(0u, cmd->getStackSize());
+    if (requiredScratchSize == 0u) {
+        EXPECT_EQ(0u, cmd->getScratchSpaceBasePointer());
+    }
+    auto expectedScratchSizeValue = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(requiredScratchSize);
+    EXPECT_EQ(expectedScratchSizeValue, cmd->getPerThreadScratchSpace());
+    EXPECT_EQ(expectedScratchSizeValue, cmd->getStackSize());
 
     // Generically validate this command
     FamilyType::Parse::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);

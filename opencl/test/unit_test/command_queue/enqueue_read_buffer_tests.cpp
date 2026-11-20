@@ -64,6 +64,9 @@ HWTEST_F(EnqueueReadBufferTypeTest, GivenNullUserPointerWhenReadingBufferThenInv
 
 HWTEST2_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenGpgpuWalkerIsProgrammedCorrectly, IsGen12LP) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
 
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
@@ -77,7 +80,8 @@ HWTEST2_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenGpgpuWalkerIsProgramme
     EXPECT_NE(0u, cmd->getThreadGroupIdZDimension());
     EXPECT_NE(0u, cmd->getRightExecutionMask());
     EXPECT_NE(0u, cmd->getBottomExecutionMask());
-    EXPECT_EQ(GPGPU_WALKER::SIMD_SIZE_SIMD32, cmd->getSimdSize());
+    auto kernel = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel();
+    EXPECT_EQ(getSimdConfig<GPGPU_WALKER>(kernel->getKernelInfo().getMaxSimdSize()), cmd->getSimdSize());
     EXPECT_NE(0u, cmd->getIndirectDataLength());
     EXPECT_FALSE(cmd->getIndirectParameterEnable());
 
@@ -289,7 +293,7 @@ HWTEST2_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenPipelineSelectIsProgra
 HWTEST2_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenMediaVfeStateIsCorrect, IsGen12LP) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
-    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState, pDevice->getUltCommandStreamReceiver<FamilyType>().requiredScratchSlot0Size);
 }
 
 HWTEST2_F(EnqueueReadBufferTypeTest, GivenBlockingWhenReadingBufferThenPipeControlAfterWalkerWithDcFlushSetIsAdded, IsGen12LP) {

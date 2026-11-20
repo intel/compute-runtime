@@ -39,6 +39,10 @@ using namespace NEO;
 
 HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenCommandsAreProgrammedCorrectly, IsGen12LP) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+
     enqueueWriteImage<FamilyType>();
 
     auto *cmd = reinterpret_cast<GPGPU_WALKER *>(cmdWalker);
@@ -50,7 +54,8 @@ HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenCommandsAreProgrammedCorrec
     EXPECT_NE(0u, cmd->getThreadGroupIdZDimension());
     EXPECT_NE(0u, cmd->getRightExecutionMask());
     EXPECT_NE(0u, cmd->getBottomExecutionMask());
-    EXPECT_EQ(GPGPU_WALKER::SIMD_SIZE_SIMD32, cmd->getSimdSize());
+    auto kernel = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel();
+    EXPECT_EQ(getSimdConfig<GPGPU_WALKER>(kernel->getKernelInfo().getMaxSimdSize()), cmd->getSimdSize());
     EXPECT_NE(0u, cmd->getIndirectDataLength());
     EXPECT_FALSE(cmd->getIndirectParameterEnable());
 
@@ -205,11 +210,9 @@ HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenInterfaceDescriptorDataIsCo
     auto kernelStartPointer = interfaceDescriptorData.getKernelStartPointer();
     EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
-    // EnqueueWriteImage uses a byte copy.  Need to convert to bytes.
-    auto localWorkSize = 2 * 2 * sizeof(float);
-    auto simd = 32;
-    auto numThreadsPerThreadGroup = Math::divideAndRoundUp(localWorkSize, simd);
-    EXPECT_EQ(numThreadsPerThreadGroup, interfaceDescriptorData.getNumberOfThreadsInGpgpuThreadGroup());
+    auto walker = reinterpret_cast<typename FamilyType::GPGPU_WALKER *>(cmdWalker);
+    ASSERT_NE(nullptr, walker);
+    EXPECT_EQ(walker->getThreadWidthCounterMaximum(), interfaceDescriptorData.getNumberOfThreadsInGpgpuThreadGroup());
     EXPECT_NE(0u, interfaceDescriptorData.getCrossThreadConstantDataReadLength());
     EXPECT_NE(0u, interfaceDescriptorData.getConstantIndirectUrbEntryReadLength());
 
@@ -248,7 +251,7 @@ HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenOnePipelineSelectIsProgramm
 
 HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenMediaVfeStateIsCorrect, IsGen12LP) {
     enqueueWriteImage<FamilyType>();
-    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState, pDevice->getUltCommandStreamReceiver<FamilyType>().requiredScratchSlot0Size);
 }
 
 HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenHostPtrSizeIsCalculatedProperly) {

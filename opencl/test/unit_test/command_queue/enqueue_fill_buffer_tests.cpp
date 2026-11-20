@@ -64,6 +64,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenCommandsAreAdded) {
 
 HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenGpgpuWalkerIsCorrect, IsGen12LP) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
 
     enqueueFillBuffer<FamilyType>();
 
@@ -76,7 +79,8 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenGpgpuWalkerIsCorrect, 
     EXPECT_NE(0u, cmd->getThreadGroupIdZDimension());
     EXPECT_NE(0u, cmd->getRightExecutionMask());
     EXPECT_NE(0u, cmd->getBottomExecutionMask());
-    EXPECT_EQ(GPGPU_WALKER::SIMD_SIZE_SIMD32, cmd->getSimdSize());
+    auto kernel = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel();
+    EXPECT_EQ(getSimdConfig<GPGPU_WALKER>(kernel->getKernelInfo().getMaxSimdSize()), cmd->getSimdSize());
     EXPECT_NE(0u, cmd->getIndirectDataLength());
     EXPECT_FALSE(cmd->getIndirectParameterEnable());
 
@@ -291,7 +295,7 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenNumberOfPipelineSelect
 
 HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenMediaVfeStateIsSetCorrectly, IsGen12LP) {
     enqueueFillBuffer<FamilyType>();
-    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState, pDevice->getUltCommandStreamReceiver<FamilyType>().requiredScratchSlot0Size);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatchDestAddress) {

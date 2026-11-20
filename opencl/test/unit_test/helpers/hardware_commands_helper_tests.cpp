@@ -138,38 +138,15 @@ HWTEST2_F(HardwareCommandsTest, WhenMediaStateFlushIsCreatedThenOnlyRequiredSpac
 }
 
 HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
-    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
-    std::unique_ptr<Image> srcImage(Image2dHelperUlt<>::create(pContext));
-    ASSERT_NE(nullptr, srcImage.get());
-    std::unique_ptr<Image> dstImage(Image2dHelperUlt<>::create(pContext));
-    ASSERT_NE(nullptr, dstImage.get());
-
-    bool bindlessEnabled = ApiSpecificConfig::getBindlessMode(pClDevice->getDevice());
-    auto useStateless = getHelper<CompilerProductHelper>().isForceToStatelessRequired();
-    auto builtInMode = BuiltIn::AddressingMode::getDefaultMode(bindlessEnabled, useStateless);
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImageToImage3d, builtInMode, *pClDevice);
-    ASSERT_NE(nullptr, &builder);
-
-    BuiltIn::OpParams dc;
-    dc.srcMemObj = srcImage.get();
-    dc.dstMemObj = dstImage.get();
-    dc.srcOffset = {0, 0, 0};
-    dc.dstOffset = {0, 0, 0};
-    dc.size = {1, 1, 1};
-
-    MultiDispatchInfo multiDispatchInfo(dc);
-    builder.buildDispatchInfos(multiDispatchInfo);
-    EXPECT_NE(0u, multiDispatchInfo.size());
-
-    auto kernel = multiDispatchInfo.begin()->getKernel();
-    ASSERT_NE(nullptr, kernel);
+    auto kernel = mockKernelWithInternal->mockKernel;
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::dynamicState, 8192);
     auto usedBefore = indirectHeap.getUsed();
     auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
+    ASSERT_NE(0u, sizeCrossThreadData);
     HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
         *kernel,
@@ -643,11 +620,11 @@ HWTEST2_F(HardwareCommandsTest, WhenSendingIndirectStateThenBindingTableStatesPo
 
     // Obtain where the pointers will be stored
     const auto &kernelInfo = kernel->getKernelInfo();
-    auto numSurfaceStates = kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries;
-    EXPECT_EQ(2u, numSurfaceStates);
-    size_t bindingTableStateSize = numSurfaceStates * sizeof(RENDER_SURFACE_STATE);
+    const auto &bindingTable = kernelInfo.kernelDescriptor.payloadMappings.bindingTable;
+    auto numSurfaceStates = bindingTable.numEntries;
+    ASSERT_NE(0u, numSurfaceStates);
     uint32_t *bindingTableStatesPointers = reinterpret_cast<uint32_t *>(
-        reinterpret_cast<uint8_t *>(ssh.getCpuBase()) + ssh.getUsed() + bindingTableStateSize);
+        reinterpret_cast<uint8_t *>(ssh.getCpuBase()) + ssh.getUsed() + bindingTable.tableOffset);
     for (auto i = 0u; i < numSurfaceStates; i++) {
         *(&bindingTableStatesPointers[i]) = 0xDEADBEEF;
     }
@@ -676,8 +653,9 @@ HWTEST2_F(HardwareCommandsTest, WhenSendingIndirectStateThenBindingTableStatesPo
         0,
         *pDevice);
 
-    EXPECT_EQ(sshUsed + 0x00000000u, *(&bindingTableStatesPointers[0]));
-    EXPECT_EQ(sshUsed + 0x00000040u, *(&bindingTableStatesPointers[1]));
+    for (auto i = 0u; i < numSurfaceStates; i++) {
+        EXPECT_EQ(sshUsed + i * sizeof(RENDER_SURFACE_STATE), bindingTableStatesPointers[i]);
+    }
 }
 
 HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePointersAreCorrect, IsGen12LP) {

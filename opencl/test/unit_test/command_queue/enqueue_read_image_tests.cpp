@@ -39,6 +39,10 @@ using namespace NEO;
 
 HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenGpgpuWalkerIsProgrammedCorrectly, IsGen12LP) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+
     enqueueReadImage<FamilyType>();
 
     auto *cmd = reinterpret_cast<GPGPU_WALKER *>(cmdWalker);
@@ -50,7 +54,8 @@ HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenGpgpuWalkerIsProgrammedCorre
     EXPECT_NE(0u, cmd->getThreadGroupIdZDimension());
     EXPECT_NE(0u, cmd->getRightExecutionMask());
     EXPECT_NE(0u, cmd->getBottomExecutionMask());
-    EXPECT_EQ(GPGPU_WALKER::SIMD_SIZE_SIMD32, cmd->getSimdSize());
+    auto kernel = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel();
+    EXPECT_EQ(getSimdConfig<GPGPU_WALKER>(kernel->getKernelInfo().getMaxSimdSize()), cmd->getSimdSize());
     EXPECT_NE(0u, cmd->getIndirectDataLength());
     EXPECT_FALSE(cmd->getIndirectParameterEnable());
 
@@ -642,10 +647,9 @@ HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenInterfaceDescriptorData, IsG
     auto kernelStartPointer = interfaceDescriptorData.getKernelStartPointer();
     EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
-    auto localWorkSize = 4u;
-    auto simd = 32u;
-    auto numThreadsPerThreadGroup = Math::divideAndRoundUp(localWorkSize, simd);
-    EXPECT_EQ(numThreadsPerThreadGroup, interfaceDescriptorData.getNumberOfThreadsInGpgpuThreadGroup());
+    auto walker = reinterpret_cast<typename FamilyType::GPGPU_WALKER *>(cmdWalker);
+    ASSERT_NE(nullptr, walker);
+    EXPECT_EQ(walker->getThreadWidthCounterMaximum(), interfaceDescriptorData.getNumberOfThreadsInGpgpuThreadGroup());
     EXPECT_NE(0u, interfaceDescriptorData.getCrossThreadConstantDataReadLength());
     EXPECT_NE(0u, interfaceDescriptorData.getConstantIndirectUrbEntryReadLength());
 
@@ -686,7 +690,7 @@ HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenPipelineSelectIsProgrammed, 
 
 HWTEST2_F(EnqueueReadImageTest, WhenReadingImageThenMediaVfeStateIsCorrect, IsGen12LP) {
     enqueueReadImage<FamilyType>();
-    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState, pDevice->getUltCommandStreamReceiver<FamilyType>().requiredScratchSlot0Size);
 }
 
 HWTEST2_F(EnqueueReadImageTest, GivenBlockingEnqueueWhenReadingImageThenPipeControlWithDcFlushIsSetAfterWalker, IsGen12LP) {

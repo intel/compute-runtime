@@ -311,7 +311,7 @@ HWTEST2_P(EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenOnePipe
 
 HWTEST2_P(EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenMediaVfeStateIsCorrect, IsGen12LP) {
     enqueueKernel<FamilyType>();
-    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState, pDevice->getUltCommandStreamReceiver<FamilyType>().requiredScratchSlot0Size);
 }
 
 INSTANTIATE_TEST_SUITE_P(EnqueueKernel,

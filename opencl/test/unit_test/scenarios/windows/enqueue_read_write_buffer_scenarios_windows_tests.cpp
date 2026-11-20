@@ -113,9 +113,10 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     auto &kernelInfo = kernel->getKernelInfo();
 
     if (hwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
-        const auto &surfaceStateDst = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), 1);
-
         const auto &arg1AsPtr = kernelInfo.getArgDescriptorAt(1).as<ArgDescPointer>();
+        const auto bindingTableIndex = static_cast<uint32_t>(arg1AsPtr.bindful / sizeof(typename FamilyType::RENDER_SURFACE_STATE));
+        const auto &surfaceStateDst = getSurfaceState<FamilyType>(&cmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), bindingTableIndex);
+
         if (arg1AsPtr.pointerSize == sizeof(uint64_t)) {
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() + arg1AsPtr.stateless);
             EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
@@ -128,8 +129,9 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
         }
     }
 
-    auto arg3AsVal = kernelInfo.getArgDescriptorAt(3).as<ArgDescValue>();
-    EXPECT_EQ(sizeof(uint32_t), arg3AsVal.elements[0].size);
-    auto dstOffset = (uint32_t *)(kernel->getCrossThreadData() + arg3AsVal.elements[0].offset);
+    const auto &dstOffsetElements = kernelInfo.getArgDescriptorAt(3).as<ArgDescValue>().elements;
+    auto dstOffsetElement = std::find_if(dstOffsetElements.begin(), dstOffsetElements.end(), [](const auto &element) { return element.sourceOffset == 0; });
+    ASSERT_NE(dstOffsetElements.end(), dstOffsetElement);
+    auto dstOffset = reinterpret_cast<const uint32_t *>(ptrOffset(kernel->getCrossThreadData(), dstOffsetElement->offset));
     EXPECT_EQ(ptrDiff(misalignedPtr, alignDown(misalignedPtr, 4)), *dstOffset);
 }
