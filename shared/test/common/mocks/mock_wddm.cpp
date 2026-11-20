@@ -188,6 +188,9 @@ bool WddmMock::createAllocation(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
 
 bool WddmMock::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     destroyAllocationResult.called++;
+    if (failDestroyAllocations) {
+        return destroyAllocationResult.success = false;
+    }
     if (callBaseDestroyAllocations) {
         return destroyAllocationResult.success = Wddm::destroyAllocations(handles, allocationCount, resourceHandle);
     } else {

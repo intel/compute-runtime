@@ -77,9 +77,6 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     void setDeferredDeleter(DeferredDeleter *deleter) {
         this->deferredDeleter.reset(deleter);
     }
-    bool validateAllocationMock(WddmAllocation *graphicsAllocation) {
-        return this->validateAllocation(graphicsAllocation);
-    }
     GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, AllocationType allocationType) {
         bool allocateMemory = ptr == nullptr;
         AllocationData allocationData;
@@ -91,6 +88,11 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {
         freeGraphicsMemoryImplCalled++;
         BaseClass::freeGraphicsMemoryImpl(gfxAllocation);
+    }
+
+    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override {
+        closeInternalHandleCalled++;
+        BaseClass::closeInternalHandle(handle, handleId, graphicsAllocation);
     }
 
     bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) override {
@@ -122,6 +124,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
     uint32_t memsetAllocationBanksCalled = 0u;
     uint32_t freeGraphicsMemoryImplCalled = 0u;
+    uint32_t closeInternalHandleCalled = 0u;
     uint32_t registerAllocationInOsCalled = 0;
     bool allocationGraphicsMemory64kbCreated = false;
     bool allocateGraphicsMemoryInNonDevicePool = false;

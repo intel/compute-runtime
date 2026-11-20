@@ -121,7 +121,7 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateHugeGraphicsMemory(const AllocationData &allocationData, bool sharedVirtualAddress);
 
     GraphicsAllocation *createAllocationFromHandle(const OsHandleData &osHandleData, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex, void *mapPointer);
-    static bool validateAllocation(WddmAllocation *alloc);
+    void destroyAllocationHandles(WddmAllocation &allocation);
     MOCKABLE_VIRTUAL bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr);
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr, const MemoryFlags *flags, size_t offset);
     MOCKABLE_VIRTUAL bool createPhysicalAllocation(WddmAllocation *allocation);

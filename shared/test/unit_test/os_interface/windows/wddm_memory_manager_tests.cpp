@@ -1271,13 +1271,86 @@ TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFail
     wddm->callBaseMapGpuVa = false;
 
     VariableBackup<D3DDDI_OPENALLOCATIONINFO *> openResourceBackup(&gdi->getOpenResourceArgOut().pOpenAllocationInfo, &allocationInfo);
-    EXPECT_EQ(0u, memoryManager->freeGraphicsMemoryImplCalled);
-
     AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
+    VariableBackup<bool> failDestroyAllocationsBackup(&wddm->failDestroyAllocations);
 
-    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryImplCalled);
+    for (const auto failDestroyAllocations : {false, true}) {
+        wddm->failDestroyAllocations = failDestroyAllocations;
+        const auto freeCalledBefore = memoryManager->freeGraphicsMemoryImplCalled;
+        const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
+        const auto expectedDestroyCalls = failDestroyAllocations ? 2u : 1u;
+
+        EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr));
+        EXPECT_EQ(freeCalledBefore + 1u, memoryManager->freeGraphicsMemoryImplCalled);
+        EXPECT_EQ(destroyCalledBefore + expectedDestroyCalls, wddm->destroyAllocationResult.called);
+    }
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMappingFailsWhenAllocatingGraphicsMemory64kbThenNullptrIsReturnedAndLockedResourceIsReleased) {
+    wddm->callBaseMapGpuVa = false;
+    wddm->mapGpuVaStatus = false;
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+    const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
+    const auto usedSystemMemoryBefore = memoryManager->getUsedSystemMemorySize();
+
+    EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory64kb(allocationData));
+    EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
+    EXPECT_EQ(usedSystemMemoryBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_TRUE(mockTemporaryResources->resourceHandles.empty());
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMappingFailsWhenAllocatingShareableGraphicsMemory64kbThenNtHandleIsClosed) {
+    wddm->callBaseMapGpuVa = false;
+    wddm->mapGpuVaStatus = false;
+    VariableBackup<bool> failDestroyAllocationsBackup(&wddm->failDestroyAllocations);
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.shareable = true;
+
+    for (const auto failDestroyAllocations : {false, true}) {
+        wddm->failDestroyAllocations = failDestroyAllocations;
+        const auto closeInternalHandleCalledBefore = memoryManager->closeInternalHandleCalled;
+
+        EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory64kb(allocationData));
+        EXPECT_EQ(closeInternalHandleCalledBefore + 1u, memoryManager->closeInternalHandleCalled);
+    }
+}
+
+namespace {
+NTSTATUS APIENTRY failingLock2(D3DKMT_LOCK2 *lock2) {
+    return STATUS_INVALID_PARAMETER;
+}
+} // namespace
+
+TEST_F(WddmMemoryManagerSimpleTest, givenReservingCpuRangeOrMappingFailsWhenAllocatingShareableGraphicsMemory64kbOn32BitThenAllocationIsReleased) {
+    if constexpr (is64bit) {
+        GTEST_SKIP();
+    }
+    VariableBackup<uint64_t> gpuAddressSpaceBackup(&rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace, maxNBitValue(48));
+    VariableBackup<bool> failReserveBackup(&wddm->failReserveValidAddressRange);
+    gdi->lock2 = failingLock2;
+    wddm->callBaseMapGpuVa = false;
+    wddm->mapGpuVaStatus = false;
+    AllocationData allocationData;
+    allocationData.type = AllocationType::buffer;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.flags.shareable = true;
+    const auto usedSystemMemoryBefore = memoryManager->getUsedSystemMemorySize();
+
+    for (const auto failReserve : {false, true}) {
+        wddm->failReserveValidAddressRange = failReserve;
+        const auto reserveCalledBefore = wddm->reserveValidAddressRangeResult.called;
+        const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
+        const auto closeInternalHandleCalledBefore = memoryManager->closeInternalHandleCalled;
+
+        EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory64kb(allocationData));
+        EXPECT_EQ(reserveCalledBefore + 1u, wddm->reserveValidAddressRangeResult.called);
+        EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
+        EXPECT_EQ(closeInternalHandleCalledBefore + 1u, memoryManager->closeInternalHandleCalled);
+        EXPECT_TRUE(wddm->reservedAddresses.empty());
+        EXPECT_EQ(usedSystemMemoryBefore, memoryManager->getUsedSystemMemorySize());
+    }
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenOpenedAllocationWithoutGpuVirtualAddressWhenFreeingItThenGpuVirtualAddressIsNotFreed) {
@@ -5018,38 +5091,6 @@ class MockWddmMemoryManagerTest : public ::testing::Test {
     MockExecutionEnvironment executionEnvironment{nullptr, true, 2u};
     const uint32_t rootDeviceIndex = 1u;
 };
-
-TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithTripleAllocationThenSuccessIsReturned) {
-    wddm->init();
-    MockWddmMemoryManager memoryManager(executionEnvironment);
-
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, MemoryConstants::pageSize}, reinterpret_cast<void *>(0x1000)));
-
-    EXPECT_TRUE(memoryManager.validateAllocationMock(wddmAlloc));
-
-    memoryManager.freeGraphicsMemory(wddmAlloc);
-}
-
-TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithZeroSizedAllocationThenSuccessIsReturned) {
-    wddm->init();
-    MockWddmMemoryManager memoryManager(executionEnvironment);
-
-    auto ptr = reinterpret_cast<void *>(0x1234);
-    WddmAllocation allocation{0, 1u /*num gmms*/, AllocationType::commandBuffer, ptr, castToUint64(ptr), 0, nullptr, MemoryPool::system64KBPages, 0u, 1u};
-    allocation.getHandleToModify(0u) = 1;
-
-    EXPECT_TRUE(memoryManager.validateAllocationMock(&allocation));
-}
-
-TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithOpenedAllocationWithoutGpuVirtualAddressThenSuccessIsReturned) {
-    wddm->init();
-    MockWddmMemoryManager memoryManager(executionEnvironment);
-
-    WddmAllocation allocation{0, 1u /*num gmms*/, AllocationType::sharedBuffer, nullptr, 0u, 0, nullptr, MemoryPool::systemCpuInaccessible, 0u, 1u};
-    allocation.getHandleToModify(0u) = 1;
-
-    EXPECT_TRUE(memoryManager.validateAllocationMock(&allocation));
-}
 
 TEST_F(MockWddmMemoryManagerTest, givenCreateOrReleaseDeviceSpecificMemResourcesWhenCreatingMemoryManagerObjectThenTheseMethodsAreEmpty) {
     wddm->init();

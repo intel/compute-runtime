@@ -274,5 +274,6 @@ class WddmMock : public Wddm {
     bool failReserveGpuVirtualAddress = false;
     bool failReserveValidAddressRange = false;
     bool failCreateAllocation = false;
+    bool failDestroyAllocations = false;
 };
 } // namespace NEO
