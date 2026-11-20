@@ -453,22 +453,4 @@ class IDList : NEO::NonCopyableAndNonMovableClass {
     std::atomic<std::thread::id> lockOwner;
     void (*spinLockedListener)(ThisType &list);
 };
-
-template <typename NodeObjectType>
-struct IDNodeRef : IDNode<IDNodeRef<NodeObjectType>> {
-    IDNodeRef(NodeObjectType *ref)
-        : ref(ref) {
-    }
-    NodeObjectType *ref;
-};
-
-template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = true>
-class IDRefList : public IDList<IDNodeRef<NodeObjectType>, threadSafe, ownsNodes> {
-  public:
-    void pushRefFrontOne(NodeObjectType &node) {
-        auto refNode = std::make_unique<IDNodeRef<NodeObjectType>>(&node);
-        this->pushFrontOne(*refNode);
-        refNode.release();
-    }
-};
 } // namespace NEO

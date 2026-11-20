@@ -973,45 +973,7 @@ TEST(IDList, GivenInsideLockWhenExceptionIsThrownThenUnlocksBeforeRethrowingExce
     testIDListUnlockOnException<DummyDNode, true, false, false>();
 }
 
-template <bool threadSafe>
-void iDRefListTestPushFrontOne() {
-    auto list = std::unique_ptr<IDRefList<DummyDNode, threadSafe, true>>(new IDRefList<DummyDNode, threadSafe, true>());
-    ASSERT_TRUE(list->peekIsEmpty());
-
-    DummyDNode node1;
-    node1.prev = nullptr; // garbage
-    node1.next = nullptr; // garbage
-    list->pushRefFrontOne(node1);
-    ASSERT_FALSE(list->peekIsEmpty());
-    ASSERT_EQ(&node1, list->peekHead()->ref);
-    ASSERT_EQ(nullptr, node1.next);
-    ASSERT_EQ(nullptr, node1.prev);
-
-    DummyDNode node2;
-    node2.prev = nullptr; // garbage
-    node2.next = nullptr; // garbage
-    list->pushRefFrontOne(node2);
-    ASSERT_FALSE(list->peekIsEmpty());
-    ASSERT_EQ(&node2, list->peekHead()->ref);
-    ASSERT_EQ(nullptr, node2.prev);
-    ASSERT_EQ(nullptr, node2.next);
-
-    ASSERT_EQ(&node2, list->peekHead()->ref);
-    ASSERT_EQ(&node1, list->peekHead()->next->ref);
-    ASSERT_EQ(&node2, list->peekTail()->prev->ref);
-
-    list.reset();
-}
-
-TEST(IDRefList, GivenThreadSafeWhenPushingFrontOneThenResultIsCorrect) {
-    iDRefListTestPushFrontOne<true>();
-}
-
-TEST(IDRefList, GivenNonThreadSafeWhenPushingFrontOneThenResultIsCorrect) {
-    iDRefListTestPushFrontOne<false>();
-}
-
-TEST(IDRefList, GivenRecursiveLockWhenExecutingThenListIsNotEmpty) {
+TEST(IDList, GivenRecursiveLockWhenExecutingThenListIsNotEmpty) {
     class RecursiveLockList : public IDList<DummyDNode, true, true, true> {
       public:
         void execute() {

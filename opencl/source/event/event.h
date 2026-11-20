@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/profiling_info.h"
-#include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
@@ -37,7 +36,7 @@ struct OpenCLObjectMapper<_cl_event> {
     typedef class Event DerivedType;
 };
 
-class Event : public BaseObject<_cl_event>, public IDNode<Event> {
+class Event : public BaseObject<_cl_event> {
   public:
     enum class ECallbackTarget : uint32_t {
         queued = 0,
