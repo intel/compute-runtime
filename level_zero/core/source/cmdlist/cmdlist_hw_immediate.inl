@@ -1918,7 +1918,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                     }
                 }
 
-                this->storeFillPatternResourcesForReuse();
+                this->storeAppendResourcesForReuse();
                 if (this->getDevice()->getDriverHandle()->getStagingBufferManager()) {
                     this->getDevice()->getDriverHandle()->getStagingBufferManager()->resetDetectedPtrs();
                 }

@@ -3362,6 +3362,27 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAppendMemoryFillWhenResetThenStoreFil
     context->freeMem(data);
 }
 
+HWTEST2_F(InOrderRegularCmdListTests, givenAppendQueryKernelTimestampsWhenHostSynchronizeThenStoreEventDataAllocationInReusableContainer, IsAtLeastXeCore) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
+    ze_event_handle_t eventHandle = events[0]->toHandle();
+    auto data = allocDeviceMem(sizeof(ze_kernel_timestamp_result_t));
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    immCmdList->appendQueryKernelTimestamps(1, &eventHandle, data, nullptr, nullptr, 0, nullptr, waitEventsParameters);
+    EXPECT_EQ(1u, immCmdList->queryKernelTimestampsDataAllocations.size());
+    EXPECT_TRUE(static_cast<Device *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
+
+    immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    EXPECT_TRUE(immCmdList->queryKernelTimestampsDataAllocations.empty());
+    EXPECT_FALSE(static_cast<Device *>(immCmdList->device)->allocationsForReuse->peekIsEmpty());
+
+    context->freeMem(data);
+}
+
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenUpdateCounterAllocation, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 

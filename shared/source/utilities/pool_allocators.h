@@ -20,5 +20,6 @@ using CommandBufferPoolAllocator = GenericViewPoolAllocator<CommandBufferPoolTra
 using LinearStreamPoolAllocator = GenericViewPoolAllocator<LinearStreamPoolTraits>;
 using InternalHeapPoolAllocator = GenericViewPoolAllocator<InternalHeapPoolTraits>;
 using SemaphorePoolAllocator = GenericViewPoolAllocator<SemaphorePoolTraits>;
+using TimestampViewPoolAllocator = GenericViewPoolAllocator<TimestampPoolTraits>;
 
 } // namespace NEO

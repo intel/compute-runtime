@@ -97,7 +97,7 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
         device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(alloc.second);
     }
     this->ownedPrivateAllocations.clear();
-    this->storeFillPatternResourcesForReuse();
+    this->storeAppendResourcesForReuse();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -128,7 +128,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     }
 
     this->resetFlatCapture();
-    this->storeFillPatternResourcesForReuse();
+    this->storeAppendResourcesForReuse();
     removeDeallocationContainerData();
     removeHostPtrAllocations();
     this->memAdviseOperations.clear();
@@ -4648,7 +4648,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     }
     commandContainer.addToResidencyContainer(dstPtrAllocationStruct.alloc);
 
-    std::unique_ptr<EventData[]> timestampsData = std::make_unique_for_overwrite<EventData[]>(numEvents);
+    if (this->queryKernelTimestampsHostData.size() < numEvents) {
+        this->queryKernelTimestampsHostData.resize(numEvents);
+    }
+    EventData *timestampsData = this->queryKernelTimestampsHostData.data();
 
     for (uint32_t i = 0u; i < numEvents; ++i) {
         auto event = Event::fromHandle(phEvents[i]);
@@ -4658,32 +4661,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         timestampsData[i].timestampSizeInDw = event->getTimestampSizeInDw();
     }
 
-    size_t alignedSize = alignUp<size_t>(sizeof(EventData) * numEvents, MemoryConstants::pageSize64k);
-    NEO::AllocationType allocationType = NEO::AllocationType::gpuTimestampDeviceBuffer;
-    auto devices = device->getNEODevice()->getDeviceBitfield();
-    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(),
-                                                   true,
-                                                   alignedSize,
-                                                   allocationType,
-                                                   devices.count() > 1,
-                                                   false,
-                                                   devices};
-
-    NEO::GraphicsAllocation *timestampsGPUData = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
-
-    UNRECOVERABLE_IF(timestampsGPUData == nullptr);
+    const size_t timestampsDataSize = sizeof(EventData) * numEvents;
+    size_t timestampsDataOffset = 0;
+    NEO::GraphicsAllocation *timestampsGPUData = reserveQueryKernelTimestampsData(timestampsDataSize, timestampsDataOffset);
 
     commandContainer.addToResidencyContainer(timestampsGPUData);
-    if (isImmediateType()) {
-        auto csr = this->getCsr(false);
-        csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(timestampsGPUData), NEO::AllocationUsage::TEMPORARY_ALLOCATION, csr->peekTaskCount() + 1);
-    } else {
-        commandContainer.getDeallocationContainer().push_back(timestampsGPUData);
-    }
 
-    bool result = device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(timestampsGPUData, 0, timestampsData.get(), sizeof(EventData) * numEvents);
+    bool result = device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(timestampsGPUData, timestampsDataOffset, timestampsData, timestampsDataSize);
 
     UNRECOVERABLE_IF(!result);
+
+    auto *uploadCsr = isImmediateType() ? getCsr(false) : device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    uploadCsr->writeAllocationChunkToSimulation(*timestampsGPUData, timestampsDataOffset, timestampsDataSize);
 
     Kernel *builtinKernel = nullptr;
     auto useOnlyGlobalTimestampsValue = this->useOnlyGlobalTimestamps ? 1u : 0u;
@@ -4735,7 +4724,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
     auto dstValPtr = static_cast<uintptr_t>(dstPtrAllocationStruct.alignedAllocationPtr + dstPtrAllocationStruct.offset);
 
-    builtinKernel->setArgBufferWithAlloc(0u, static_cast<uintptr_t>(timestampsGPUData->getGpuAddress()), timestampsGPUData, nullptr);
+    builtinKernel->setArgBufferWithAlloc(0u, static_cast<uintptr_t>(timestampsGPUData->getGpuAddress() + timestampsDataOffset), timestampsGPUData, nullptr);
     builtinKernel->setArgBufferWithAlloc(1, dstValPtr, dstPtrAllocationStruct.alloc, nullptr);
 
     auto dstAllocationType = dstPtrAllocationStruct.alloc->getAllocationType();

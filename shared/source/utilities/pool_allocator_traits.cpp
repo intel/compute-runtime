@@ -80,6 +80,14 @@ AllocationProperties SemaphorePoolTraits::createAllocationProperties(Device *dev
                                 device->getDeviceBitfield()};
 }
 
+bool TimestampPoolTraits::isEnabled(const ProductHelper &productHelper) {
+    auto forceEnable = debugManager.flags.EnableTimestampPoolAllocator.get();
+    if (forceEnable != -1) {
+        return forceEnable == 1;
+    }
+    return DeviceFactory::isHwModeSelected() && productHelper.is2MBLocalMemAlignmentEnabled();
+}
+
 bool CommandBufferPoolTraits::isEnabled(const ProductHelper &productHelper) {
     auto forceEnable = debugManager.flags.EnableCommandBufferPoolAllocator.get();
     if (forceEnable != -1) {

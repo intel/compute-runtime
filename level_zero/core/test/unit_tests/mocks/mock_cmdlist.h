@@ -150,6 +150,9 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::pendingSubmissionPauses;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::programPauseOnEnqueueCommands;
+    using BaseClass::queryKernelTimestampsDataAllocations;
+    using BaseClass::queryKernelTimestampsDataUsedSize;
+    using BaseClass::queryKernelTimestampsHostData;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::resetBcsSplitEvents;
@@ -313,6 +316,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::previousCsrsAwaitingCompletion;
     using BaseClass::programPauseOnEnqueueCommands;
+    using BaseClass::queryKernelTimestampsDataAllocations;
     using BaseClass::queueThrottle;
     using BaseClass::relaxedOrderingCounter;
     using BaseClass::releasePreviousCsrCompletionTarget;

@@ -18,6 +18,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -25,6 +26,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
@@ -203,7 +205,7 @@ void CommandList::removeMemoryPrefetchAllocations() {
     }
 }
 
-void CommandList::storeFillPatternResourcesForReuse() {
+void CommandList::storeAppendResourcesForReuse() {
     for (auto &patternAlloc : this->patternAllocations) {
         device->storeReusableAllocation(*patternAlloc);
     }
@@ -212,6 +214,76 @@ void CommandList::storeFillPatternResourcesForReuse() {
         patternTag->returnTag();
     }
     this->patternTags.clear();
+    for (auto &timestampsDataAllocation : this->queryKernelTimestampsDataAllocations) {
+        if (timestampsDataAllocation->isView()) {
+            device->getNEODevice()->getDeviceTimestampViewPoolAllocator().free(timestampsDataAllocation);
+        } else {
+            device->storeReusableAllocation(*timestampsDataAllocation);
+        }
+    }
+    this->queryKernelTimestampsDataAllocations.clear();
+    this->queryKernelTimestampsDataUsedSize = 0;
+}
+
+NEO::GraphicsAllocation *CommandList::reserveQueryKernelTimestampsData(size_t size, size_t &offsetInAllocation) {
+    auto &allocations = this->queryKernelTimestampsDataAllocations;
+    if (allocations.empty() || this->queryKernelTimestampsDataUsedSize + size > allocations.back()->getUnderlyingBufferSize()) {
+        auto neoDevice = device->getNEODevice();
+        auto &timestampViewPoolAllocator = neoDevice->getDeviceTimestampViewPoolAllocator();
+        auto immediateCsr = isImmediateType() ? getCsr(false) : nullptr;
+        constexpr auto allocationType = NEO::AllocationType::gpuTimestampDeviceBuffer;
+
+        if (immediateCsr != nullptr && !allocations.empty()) {
+            auto retiredAllocation = allocations.back();
+            allocations.pop_back();
+            const auto taskCount = immediateCsr->peekTaskCount() + 1;
+            if (retiredAllocation->isView()) {
+                timestampViewPoolAllocator.free(retiredAllocation, taskCount, immediateCsr->getOsContext().getContextId());
+            } else {
+                immediateCsr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(retiredAllocation), NEO::AllocationUsage::REUSABLE_ALLOCATION, taskCount);
+            }
+        }
+
+        const size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
+        NEO::GraphicsAllocation *allocation = nullptr;
+        if (NEO::TimestampViewPoolAllocator::isEnabled(neoDevice->getProductHelper())) {
+            if (immediateCsr != nullptr) {
+                const auto deferredFreeContext = immediateCsr->createDeferredFreeContext();
+                allocation = timestampViewPoolAllocator.allocate(alignedSize, &deferredFreeContext);
+            } else {
+                allocation = timestampViewPoolAllocator.allocate(alignedSize);
+            }
+        }
+        if (allocation == nullptr && immediateCsr != nullptr) {
+            allocation = immediateCsr->getInternalAllocationStorage()->obtainReusableAllocation(alignedSize, allocationType).release();
+        }
+        if (allocation == nullptr) {
+            allocation = device->obtainReusableAllocation(alignedSize, allocationType);
+        }
+        if (allocation == nullptr) {
+            const auto devices = neoDevice->getDeviceBitfield();
+            NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(),
+                                                           true,
+                                                           alignedSize,
+                                                           allocationType,
+                                                           devices.count() > 1,
+                                                           false,
+                                                           devices};
+            allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+            UNRECOVERABLE_IF(allocation == nullptr);
+        }
+        allocations.push_back(allocation);
+        this->queryKernelTimestampsDataUsedSize = 0;
+    }
+
+    auto allocation = allocations.back();
+    offsetInAllocation = this->queryKernelTimestampsDataUsedSize;
+    this->queryKernelTimestampsDataUsedSize += size;
+    if (allocation->isView()) {
+        offsetInAllocation += allocation->getOffsetInParent();
+        return allocation->getParentAllocation();
+    }
+    return allocation;
 }
 
 NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload, bool *nonUsmHostPtrPartialOverlapFound) {

@@ -238,6 +238,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     TimestampPoolAllocator &getDeviceTimestampPoolAllocator() {
         return deviceTimestampPoolAllocator;
     }
+    TimestampViewPoolAllocator &getDeviceTimestampViewPoolAllocator() {
+        return deviceTimestampViewPoolAllocator;
+    }
     GlobalSurfacePoolAllocator &getGlobalSurfacePoolAllocator() {
         return globalSurfacePoolAllocator;
     }
@@ -427,6 +430,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     ConstantSurfacePoolAllocator constantSurfacePoolAllocator;
     CommandBufferPoolAllocator commandBufferPoolAllocator;
     SemaphorePoolAllocator semaphorePoolAllocator;
+    TimestampViewPoolAllocator deviceTimestampViewPoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsFacade> deviceUsmMemAllocPoolFacade;
     std::unique_ptr<UsmMemAllocPool> usmConstantSurfaceAllocPool;
     std::unique_ptr<UsmMemAllocPool> usmGlobalSurfaceAllocPool;

@@ -5,8 +5,11 @@
  *
  */
 
+#include "shared/source/helpers/options.h"
+#include "shared/source/utilities/pool_allocator_traits.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -133,4 +136,33 @@ TEST_F(TimestampPoolAllocatorTest, givenFailingMemoryManagerWhenRequestingAlloca
     if (allocation) {
         timestampAllocator.free(allocation);
     }
+}
+
+TEST(TimestampPoolTraitsTest, givenEnableTimestampPoolAllocatorFlagSetWhenCheckingIfPoolIsEnabledThenFlagValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    MockProductHelper productHelper;
+    productHelper.is2MBLocalMemAlignmentEnabledResult = true;
+
+    debugManager.flags.EnableTimestampPoolAllocator.set(0);
+    EXPECT_FALSE(TimestampPoolTraits::isEnabled(productHelper));
+
+    productHelper.is2MBLocalMemAlignmentEnabledResult = false;
+    debugManager.flags.EnableTimestampPoolAllocator.set(1);
+    EXPECT_TRUE(TimestampPoolTraits::isEnabled(productHelper));
+}
+
+TEST(TimestampPoolTraitsTest, givenDefaultFlagWhenCheckingIfPoolIsEnabledThenItIsEnabledOnlyInHwModeWith2MBLocalMemAlignment) {
+    DebugManagerStateRestore restorer;
+    MockProductHelper productHelper;
+
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::hardware));
+    productHelper.is2MBLocalMemAlignmentEnabledResult = true;
+    EXPECT_TRUE(TimestampPoolTraits::isEnabled(productHelper));
+
+    productHelper.is2MBLocalMemAlignmentEnabledResult = false;
+    EXPECT_FALSE(TimestampPoolTraits::isEnabled(productHelper));
+
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    productHelper.is2MBLocalMemAlignmentEnabledResult = true;
+    EXPECT_FALSE(TimestampPoolTraits::isEnabled(productHelper));
 }

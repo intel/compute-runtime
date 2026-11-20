@@ -11,8 +11,11 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/source/utilities/pool_allocators.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -421,6 +424,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
             neoDevice = device->getNEODevice();
             neoDevice->incRefInternal();
             driverHandle = device->getDriverHandle();
+            allocationsForReuse = std::make_unique<NEO::AllocationsList>();
             tmpMockBultinLib = new MockBuiltInKernelLibForQueryKernelTimestamps{this, device->getNEODevice()->getBuiltIns()};
         }
         MockBuiltInKernelLibForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
@@ -516,6 +520,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
             neoDevice = device->getNEODevice();
             neoDevice->incRefInternal();
             driverHandle = device->getDriverHandle();
+            allocationsForReuse = std::make_unique<NEO::AllocationsList>();
             tmpMockBultinLib = new MockBuiltInKernelLibForQueryKernelTimestamps{this, device->getNEODevice()->getBuiltIns()};
         }
         MockBuiltInKernelLibForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
@@ -626,6 +631,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
             neoDevice = device->getNEODevice();
             neoDevice->incRefInternal();
             driverHandle = device->getDriverHandle();
+            allocationsForReuse = std::make_unique<NEO::AllocationsList>();
             tmpMockBultinLib = std::make_unique<MockBuiltInKernelLibForQueryKernelTimestamps>(this, device->getNEODevice()->getBuiltIns());
         }
         MockBuiltInKernelLibForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
@@ -749,6 +755,240 @@ inline std::unique_ptr<MockDeviceForSpv> createDeviceWithTimestampBuiltins(L0::D
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestamps, mode);
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::BufferBuiltIn::queryKernelTimestampsWithOffsets, mode);
     return testDevice;
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenTimestampPoolDisabledWhenAppendQueryKernelTimestampsTwiceThenEventDataOfBothCallsIsPlacedInOneAllocation) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    MockEvent event;
+    ze_event_handle_t eventHandle = event.toHandle();
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 2 * sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList.appendQueryKernelTimestamps(1u, &eventHandle, ptrOffset(dstPtr, sizeof(ze_kernel_timestamp_result_t)), nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, commandList.queryKernelTimestampsDataAllocations[0]->getAllocationType());
+    EXPECT_EQ(2 * sizeof(EventData), commandList.queryKernelTimestampsDataUsedSize);
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenEventDataNotFittingInRemainingSpaceWhenAppendQueryKernelTimestampsThenNewAllocationIsTaken) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    MockEvent event;
+    constexpr uint32_t eventsFillingWholeAllocation = static_cast<uint32_t>(MemoryConstants::pageSize64k / sizeof(EventData));
+    std::vector<ze_event_handle_t> events(eventsFillingWholeAllocation, event.toHandle());
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, eventsFillingWholeAllocation * sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(1u, events.data(), dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList.appendQueryKernelTimestamps(eventsFillingWholeAllocation, events.data(), dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(2u, commandList.queryKernelTimestampsDataAllocations.size());
+    EXPECT_NE(commandList.queryKernelTimestampsDataAllocations[0], commandList.queryKernelTimestampsDataAllocations[1]);
+    EXPECT_EQ(eventsFillingWholeAllocation * sizeof(EventData), commandList.queryKernelTimestampsDataUsedSize);
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenTimestampPoolDisabledWhenCommandListIsResetThenEventDataAllocationIsStoredForReuseAndTakenByNextAppend) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    MockEvent event;
+    ze_event_handle_t eventHandle = event.toHandle();
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    auto eventDataAllocation = commandList.queryKernelTimestampsDataAllocations[0];
+
+    commandList.reset();
+    EXPECT_TRUE(commandList.queryKernelTimestampsDataAllocations.empty());
+    EXPECT_EQ(0u, commandList.queryKernelTimestampsDataUsedSize);
+    EXPECT_FALSE(testDevice->allocationsForReuse->peekIsEmpty());
+
+    result = commandList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    EXPECT_EQ(eventDataAllocation, commandList.queryKernelTimestampsDataAllocations[0]);
+    EXPECT_TRUE(testDevice->allocationsForReuse->peekIsEmpty());
+
+    context->freeMem(dstPtr);
+}
+
+struct WhiteBoxTimestampViewPool : NEO::GenericViewPool<NEO::TimestampPoolTraits> {
+    using NEO::GenericViewPool<NEO::TimestampPoolTraits>::chunkAllocator;
+};
+
+struct WhiteBoxTimestampViewPoolAllocator : NEO::TimestampViewPoolAllocator {
+    using NEO::TimestampViewPoolAllocator::bufferPools;
+    using NEO::TimestampViewPoolAllocator::deferredChunks;
+    using NEO::TimestampViewPoolAllocator::drain;
+
+    uint64_t getUsedSize() {
+        uint64_t usedSize = 0;
+        for (auto &pool : this->bufferPools) {
+            usedSize += static_cast<WhiteBoxTimestampViewPool &>(pool).chunkAllocator->getUsedSize();
+        }
+        return usedSize;
+    }
+};
+
+HWTEST_F(AppendQueryKernelTimestamps, givenTimestampPoolEnabledWhenAppendQueryKernelTimestampsThenEventDataIsWrittenToTimestampViewPoolChunkReturnedToPoolOnReset) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(1);
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    MockEvent event;
+    ze_event_handle_t eventHandle = event.toHandle();
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    auto eventDataChunk = commandList.queryKernelTimestampsDataAllocations[0];
+    ASSERT_TRUE(eventDataChunk->isView());
+    auto poolBuffer = eventDataChunk->getParentAllocation();
+    auto &timestampViewPoolAllocator = static_cast<WhiteBoxTimestampViewPoolAllocator &>(device->getNEODevice()->getDeviceTimestampViewPoolAllocator());
+    EXPECT_TRUE(timestampViewPoolAllocator.isPoolBuffer(poolBuffer));
+    EXPECT_EQ(MemoryConstants::pageSize64k, eventDataChunk->getUnderlyingBufferSize());
+    EXPECT_EQ(MemoryConstants::pageSize64k, timestampViewPoolAllocator.getUsedSize());
+    auto eventData = reinterpret_cast<EventData *>(ptrOffset(poolBuffer->getUnderlyingBuffer(), eventDataChunk->getOffsetInParent()));
+    EXPECT_EQ(event.getGpuAddress(device), eventData->address);
+    EXPECT_NE(commandList.commandContainer.getResidencyContainer().end(),
+              std::find(commandList.commandContainer.getResidencyContainer().begin(), commandList.commandContainer.getResidencyContainer().end(), poolBuffer));
+
+    commandList.reset();
+    EXPECT_TRUE(commandList.queryKernelTimestampsDataAllocations.empty());
+    EXPECT_TRUE(testDevice->allocationsForReuse->peekIsEmpty());
+    timestampViewPoolAllocator.drain();
+    EXPECT_EQ(0u, timestampViewPoolAllocator.getUsedSize());
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenHostEventDataBufferWhenAppendQueryKernelTimestampsThenBufferGrowsOnlyForMoreEvents) {
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    MockEvent event;
+    ze_event_handle_t events[3] = {event.toHandle(), event.toHandle(), event.toHandle()};
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, 3 * sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, commandList.queryKernelTimestampsHostData.size());
+    auto hostData = commandList.queryKernelTimestampsHostData.data();
+
+    result = commandList.appendQueryKernelTimestamps(1u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, commandList.queryKernelTimestampsHostData.size());
+    EXPECT_EQ(hostData, commandList.queryKernelTimestampsHostData.data());
+
+    result = commandList.appendQueryKernelTimestamps(3u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(3u, commandList.queryKernelTimestampsHostData.size());
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestamps, givenTbxCsrWhenAppendQueryKernelTimestampsTwiceThenEachWrittenEventDataChunkIsUploadedToSimulation) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    ultCsr.chunkCopySupported = true;
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    MockCommandListForAppendLaunchKernel<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    MockEvent event;
+    ze_event_handle_t eventHandle = event.toHandle();
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ultCsr.writeMemoryParams.chunkWrites.clear();
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    auto eventDataAllocation = commandList.queryKernelTimestampsDataAllocations[0];
+    ASSERT_EQ(2u, ultCsr.writeMemoryParams.chunkWrites.size());
+    EXPECT_EQ((NEO::WrittenMemoryChunk{eventDataAllocation, 0u, sizeof(EventData)}), ultCsr.writeMemoryParams.chunkWrites[0]);
+    EXPECT_EQ((NEO::WrittenMemoryChunk{eventDataAllocation, sizeof(EventData), sizeof(EventData)}), ultCsr.writeMemoryParams.chunkWrites[1]);
+
+    context->freeMem(dstPtr);
 }
 
 HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenBuiltinDispatchedWithSingleFlush) {
@@ -1056,7 +1296,9 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWithoutR
     context->freeMem(dstPtr);
 }
 
-HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsThenTimestampAllocationStoredAsTemporaryInsteadOfDeallocationContainer) {
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsThenEventDataAllocationIsHeldByCommandListInsteadOfTemporaryStorage) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
     auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
     device = testDevice.get();
 
@@ -1093,6 +1335,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(commandList.commandContainer.getDeallocationContainer().empty());
+    EXPECT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
 
     bool timestampTempAllocFound = false;
     auto currentAlloc = csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead();
@@ -1102,13 +1345,173 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
         }
         currentAlloc = currentAlloc->next;
     }
-    EXPECT_TRUE(timestampTempAllocFound);
+    EXPECT_FALSE(timestampTempAllocFound);
 
-    csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
     context->freeMem(dstPtr);
 }
 
-HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsFailsAfterTimestampAllocationThenTimestampAllocationRemainsReclaimable) {
+inline void setCsrTagValue(NEO::CommandStreamReceiver &csr, TaskCountType tagValue) {
+    *csr.getTagAddress() = tagValue;
+    if (csr.getUcTagAddress() != nullptr) {
+        *csr.getUcTagAddress() = tagValue;
+    }
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenEventDataDoesNotFitInCurrentAllocationThenCurrentAllocationIsStoredInCsrReusableStorageWithNextTaskCount) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, csr, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(csr);
+
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    constexpr uint32_t eventsFillingWholeAllocation = static_cast<uint32_t>(MemoryConstants::pageSize64k / sizeof(EventData));
+    std::vector<ze_event_handle_t> events(eventsFillingWholeAllocation, event.toHandle());
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, eventsFillingWholeAllocation * sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    constexpr TaskCountType initialTaskCount = 10;
+    csr->taskCount = initialTaskCount;
+    setCsrTagValue(*csr, initialTaskCount);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(1u, events.data(), dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    auto firstEventDataAllocation = commandList.queryKernelTimestampsDataAllocations[0];
+
+    csr->taskCount = initialTaskCount;
+    result = commandList.appendQueryKernelTimestamps(eventsFillingWholeAllocation, events.data(), dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    EXPECT_NE(firstEventDataAllocation, commandList.queryKernelTimestampsDataAllocations[0]);
+    auto &reusableAllocations = csr->getInternalAllocationStorage()->getAllocationsForReuse();
+    EXPECT_TRUE(reusableAllocations.peekContains(*firstEventDataAllocation));
+    EXPECT_EQ(initialTaskCount + 1, firstEventDataAllocation->getTaskCount(csr->getOsContext().getContextId()));
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenCompletedEventDataAllocationInCsrReusableStorageWhenImmediateCommandListAppendsQueryKernelTimestampsThenThisAllocationIsTaken) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, csr, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(csr);
+
+    NEO::AllocationProperties allocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::gpuTimestampDeviceBuffer, device->getNEODevice()->getDeviceBitfield()};
+    auto reusedAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+    ASSERT_NE(nullptr, reusedAllocation);
+    csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(reusedAllocation), NEO::AllocationUsage::REUSABLE_ALLOCATION);
+    setCsrTagValue(*csr, csr->peekTaskCount());
+
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t eventHandle = event.toHandle();
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(1u, &eventHandle, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    EXPECT_EQ(reusedAllocation, commandList.queryKernelTimestampsDataAllocations[0]);
+    EXPECT_FALSE(csr->getInternalAllocationStorage()->getAllocationsForReuse().peekContains(*reusedAllocation));
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenTimestampPoolEnabledWhenImmediateCommandListRetiresEventDataChunkThenChunkIsDeferredUntilItsTaskCountIsReached) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(1);
+    auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
+    device = testDevice.get();
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, csr, &queueDesc);
+
+    MockCommandListImmediateForAppendQueryKernelTimestamps<FamilyType::gfxCoreFamily> commandList;
+    commandList.cmdQImmediate = queue.get();
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.commandContainer.setImmediateCmdListCsr(csr);
+
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    constexpr uint32_t eventsFillingWholeAllocation = static_cast<uint32_t>(MemoryConstants::pageSize64k / sizeof(EventData));
+    std::vector<ze_event_handle_t> events(eventsFillingWholeAllocation, event.toHandle());
+
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+    auto result = context->allocDeviceMem(device, &deviceDesc, eventsFillingWholeAllocation * sizeof(ze_kernel_timestamp_result_t), 1, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    constexpr TaskCountType initialTaskCount = 10;
+    csr->taskCount = initialTaskCount;
+    setCsrTagValue(*csr, initialTaskCount);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    result = commandList.appendQueryKernelTimestamps(1u, events.data(), dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    ASSERT_TRUE(commandList.queryKernelTimestampsDataAllocations[0]->isView());
+    auto &timestampViewPoolAllocator = static_cast<WhiteBoxTimestampViewPoolAllocator &>(device->getNEODevice()->getDeviceTimestampViewPoolAllocator());
+
+    csr->taskCount = initialTaskCount;
+    result = commandList.appendQueryKernelTimestamps(eventsFillingWholeAllocation, events.data(), dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    ASSERT_EQ(1u, timestampViewPoolAllocator.deferredChunks.size());
+    EXPECT_EQ(initialTaskCount + 1, timestampViewPoolAllocator.deferredChunks[0].taskCount);
+    EXPECT_EQ(csr->getOsContext().getContextId(), timestampViewPoolAllocator.deferredChunks[0].contextId);
+    EXPECT_EQ(2 * MemoryConstants::pageSize64k, timestampViewPoolAllocator.getUsedSize());
+
+    setCsrTagValue(*csr, initialTaskCount + 1);
+    csr->taskCount = initialTaskCount + 1;
+    result = commandList.appendQueryKernelTimestamps(eventsFillingWholeAllocation, events.data(), dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
+    ASSERT_EQ(1u, timestampViewPoolAllocator.deferredChunks.size());
+    EXPECT_EQ(initialTaskCount + 2, timestampViewPoolAllocator.deferredChunks[0].taskCount);
+    EXPECT_EQ(2 * MemoryConstants::pageSize64k, timestampViewPoolAllocator.getUsedSize());
+
+    context->freeMem(dstPtr);
+}
+
+HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppendQueryKernelTimestampsFailsAfterTimestampAllocationThenEventDataAllocationIsStillHeldByCommandList) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTimestampPoolAllocator.set(0);
     auto testDevice = createDeviceWithTimestampBuiltins(device, driverHandle.get());
     device = testDevice.get();
 
@@ -1120,8 +1523,6 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     commandList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     commandList.appendLaunchKernelWithParamsReturnValue = ZE_RESULT_ERROR_UNKNOWN;
-
-    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     MockEvent event;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
@@ -1145,19 +1546,8 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
     result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
     EXPECT_EQ(0u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
+    EXPECT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
 
-    bool timestampTempAllocFound = false;
-    auto currentAlloc = csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead();
-    while (currentAlloc != nullptr) {
-        if (currentAlloc->getAllocationType() == NEO::AllocationType::gpuTimestampDeviceBuffer) {
-            timestampTempAllocFound = true;
-            EXPECT_EQ(0u, currentAlloc->getHostPtrTaskCountAssignment());
-        }
-        currentAlloc = currentAlloc->next;
-    }
-    EXPECT_TRUE(timestampTempAllocFound);
-
-    csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
     context->freeMem(dstPtr);
 }
 

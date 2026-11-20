@@ -21,7 +21,6 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/pool_allocators.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -127,15 +126,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
     if (this->isDeviceEventPoolAllocation) {
         this->isHostVisibleEventPoolAllocation = !(isEventPoolDeviceAllocationFlagSet());
 
-        const auto isTimestampPoolingEnabled = [neoDevice]() -> bool {
-            if (NEO::debugManager.flags.EnableTimestampPoolAllocator.get() != -1) {
-                return NEO::debugManager.flags.EnableTimestampPoolAllocator.get();
-            }
-            return NEO::DeviceFactory::isHwModeSelected() &&
-                   neoDevice->getProductHelper().is2MBLocalMemAlignmentEnabled();
-        }();
-
-        if (isTimestampPoolingEnabled &&
+        if (NEO::TimestampPoolTraits::isEnabled(neoDevice->getProductHelper()) &&
             !isIpcPoolFlagSet()) {
             auto sharedTsAlloc = neoDevice->getDeviceTimestampPoolAllocator().allocate(this->eventPoolSize);
             if (sharedTsAlloc) {

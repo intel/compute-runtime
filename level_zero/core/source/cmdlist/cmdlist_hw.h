@@ -574,6 +574,7 @@ struct CommandListCoreFamily : public CommandList {
     };
 
     NEO::PauseOnGpuProperties::PendingSubmissionPauses pendingSubmissionPauses{};
+    std::vector<EventData> queryKernelTimestampsHostData;
     bool latestOperationHasCbEventWithProfiling = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool latestOperationIsComputeWalker = false;

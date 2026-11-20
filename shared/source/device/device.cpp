@@ -61,6 +61,7 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
       constantSurfacePoolAllocator(this),
       commandBufferPoolAllocator(this),
       semaphorePoolAllocator(this),
+      deviceTimestampViewPoolAllocator(this),
       deviceUsmMemAllocPoolFacade(std::make_unique<UsmMemAllocPoolsFacade>()) {
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
@@ -116,6 +117,7 @@ Device::~Device() {
     internalHeapPoolAllocator.releasePools();
     commandBufferPoolAllocator.releasePools();
     semaphorePoolAllocator.releasePools();
+    deviceTimestampViewPoolAllocator.releasePools();
     executionEnvironment->memoryManager->waitForDeletions();
 
     executionEnvironment->decRefInternal();

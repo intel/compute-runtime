@@ -416,7 +416,8 @@ struct CommandList : _ze_command_list_handle_t {
     void removeDeallocationContainerData();
     void removeHostPtrAllocations();
     void removeMemoryPrefetchAllocations();
-    void storeFillPatternResourcesForReuse();
+    void storeAppendResourcesForReuse();
+    NEO::GraphicsAllocation *reserveQueryKernelTimestampsData(size_t size, size_t &offsetInAllocation);
     void eraseDeallocationContainerEntry(NEO::GraphicsAllocation *allocation);
     void eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocation);
     bool isCopyOnly(bool copyOffloadOperation) const {
@@ -868,6 +869,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::PrivateAllocsToReuseContainer ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
     std::vector<NEO::TagNodeBase *> patternTags;
+    std::vector<NEO::GraphicsAllocation *> queryKernelTimestampsDataAllocations;
     std::vector<std::weak_ptr<Kernel>> printfKernelContainer;
     std::vector<CleanupCallbackT> cleanupCallbacks;
     std::vector<Event *> mappedTsEventList;
@@ -928,6 +930,7 @@ struct CommandList : _ze_command_list_handle_t {
     size_t activeScratchPatchElemsPatchSize = 0;
     size_t frontEndPatchSize = 0;
     size_t totalNoopSpacePatchSize = 0;
+    size_t queryKernelTimestampsDataUsedSize = 0;
 
     static constexpr bool cmdListDefaultDisableOverdispatch = true;
     static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
