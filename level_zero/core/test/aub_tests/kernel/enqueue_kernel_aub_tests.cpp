@@ -273,67 +273,67 @@ HWTEST_F(AUBSimpleAtomicTestL0, givenKernelWithAtomicWhenExecutedThenExpectAtomi
 
 using AUBSimpleArgNonUniformTestL0 = Test<AUBSimpleArgNonUniformFixtureL0>;
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork1DimNonUniformGroupThenExpectTwoWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork1DimNonUniformGroupWhenLaunchingThenExpectTwoWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {39, 1, 1};
     const uint32_t localWorkSize[3] = {32, 1, 1};
     this->launchNonUniformAndExpect<FamilyType>(1, globalWorkSize, localWorkSize, 2u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork2DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork2DimNonUniformGroupInXDimensionWhenLaunchingThenExpectTwoWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {39, 32, 1};
     const uint32_t localWorkSize[3] = {16, 16, 1};
     this->launchNonUniformAndExpect<FamilyType>(2, globalWorkSize, localWorkSize, 2u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork2DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork2DimNonUniformGroupInYDimensionWhenLaunchingThenExpectTwoWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {32, 39, 1};
     const uint32_t localWorkSize[3] = {16, 16, 1};
     this->launchNonUniformAndExpect<FamilyType>(2, globalWorkSize, localWorkSize, 2u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork2DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork2DimNonUniformGroupInXandYDimensionWhenLaunchingThenExpectFourWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {39, 39, 1};
     const uint32_t localWorkSize[3] = {16, 16, 1};
     this->launchNonUniformAndExpect<FamilyType>(2, globalWorkSize, localWorkSize, 4u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork3DimNonUniformGroupInXDimensionThenExpectTwoWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork3DimNonUniformGroupInXDimensionWhenLaunchingThenExpectTwoWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {39, 32, 32};
     const uint32_t localWorkSize[3] = {8, 8, 2};
     this->launchNonUniformAndExpect<FamilyType>(3, globalWorkSize, localWorkSize, 2u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork3DimNonUniformGroupInYDimensionThenExpectTwoWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork3DimNonUniformGroupInYDimensionWhenLaunchingThenExpectTwoWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {32, 39, 32};
     const uint32_t localWorkSize[3] = {8, 8, 2};
     this->launchNonUniformAndExpect<FamilyType>(3, globalWorkSize, localWorkSize, 2u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork3DimNonUniformGroupInZDimensionThenExpectTwoWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork3DimNonUniformGroupInZDimensionWhenLaunchingThenExpectTwoWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {32, 32, 39};
     const uint32_t localWorkSize[3] = {8, 2, 8};
     this->launchNonUniformAndExpect<FamilyType>(3, globalWorkSize, localWorkSize, 2u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork3DimNonUniformGroupInXandYDimensionThenExpectFourWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork3DimNonUniformGroupInXandYDimensionWhenLaunchingThenExpectFourWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {39, 39, 32};
     const uint32_t localWorkSize[3] = {8, 8, 2};
     this->launchNonUniformAndExpect<FamilyType>(3, globalWorkSize, localWorkSize, 4u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork3DimNonUniformGroupInXandZDimensionThenExpectFourWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork3DimNonUniformGroupInXandZDimensionWhenLaunchingThenExpectFourWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {39, 32, 39};
     const uint32_t localWorkSize[3] = {8, 2, 8};
     this->launchNonUniformAndExpect<FamilyType>(3, globalWorkSize, localWorkSize, 4u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork3DimNonUniformGroupInYandZDimensionThenExpectFourWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork3DimNonUniformGroupInYandZDimensionWhenLaunchingThenExpectFourWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {32, 39, 39};
     const uint32_t localWorkSize[3] = {2, 8, 8};
     this->launchNonUniformAndExpect<FamilyType>(3, globalWorkSize, localWorkSize, 4u);
 }
 
-HWTEST_F(AUBSimpleArgNonUniformTestL0, givenNonUniformLaunchWhenProvidingWork3DimNonUniformGroupInXandYandZDimensionThenExpectEightWalkers) {
+HWTEST2_F(AUBSimpleArgNonUniformTestL0, givenWork3DimNonUniformGroupInXandYandZDimensionWhenLaunchingThenExpectEightWalkers, IsAtLeastXeCore) {
     const uint32_t globalWorkSize[3] = {39, 39, 39};
     const uint32_t localWorkSize[3] = {8, 8, 2};
     this->launchNonUniformAndExpect<FamilyType>(3, globalWorkSize, localWorkSize, 8u);
