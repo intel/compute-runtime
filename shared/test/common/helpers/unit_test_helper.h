@@ -92,6 +92,7 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
 
     static uint64_t getSemaphoreWaitAddress(const void *semWaitCmd);
     static uint64_t getSemaphoreWaitData(const void *semWaitCmd);
+    static typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION getSemaphoreWaitCompareOperation(const void *semWaitCmd);
     static bool isSemaphoreWaitPollingMode(const void *semWaitCmd);
 
     static bool getPipeControlHdcPipelineFlush(const typename GfxFamily::PIPE_CONTROL &pipeControl);

@@ -314,6 +314,9 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
 
     debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
     EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired));
+
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::semaphore);
+    EXPECT_EQ(EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired));
 }
 
 HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorrectCommands) {
@@ -323,6 +326,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         EXPECT_EQ(isFlushBetweenBlitsRequired, this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
         using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
         using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
         DebugManagerStateRestore restore{};
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
@@ -387,6 +391,23 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
 
         EXPECT_EQ(0u, linearStream.getUsed());
+
+        memset(streamBuffer, 0, sizeof(streamBuffer));
+        linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
+        commands.clear();
+        constexpr uint64_t streamGpuBase = 0x10000;
+        linearStream.setGpuBase(streamGpuBase);
+        debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::semaphore);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
+
+        EXPECT_EQ(EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), linearStream.getUsed());
+        EXPECT_EQ(BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired), linearStream.getUsed());
+        CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
+        auto semaphore = find<MI_SEMAPHORE_WAIT *>(commands.begin(), commands.end());
+        ASSERT_NE(commands.end(), semaphore);
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, UnitTestHelper<FamilyType>::getSemaphoreWaitCompareOperation(*semaphore));
+        EXPECT_EQ(0u, UnitTestHelper<FamilyType>::getSemaphoreWaitData(*semaphore));
+        EXPECT_EQ(streamGpuBase, UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(*semaphore));
     }
 }
 

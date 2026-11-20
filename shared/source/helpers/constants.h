@@ -81,7 +81,8 @@ enum PostBlitMode : int32_t {
     defaultMode = -1,
     miArbCheck = 0,
     miFlush = 1,
-    none = 2
+    none = 2,
+    semaphore = 3
 };
 } // namespace BlitterConstants
 

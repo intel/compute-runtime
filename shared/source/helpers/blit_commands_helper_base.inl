@@ -102,6 +102,12 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         case BlitterConstants::PostBlitMode::miFlush:
             EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
             return;
+        case BlitterConstants::PostBlitMode::semaphore: {
+            using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+            const bool useSemaphore64bCmd = rootDeviceEnvironment.getHelper<CompilerProductHelper>().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(linearStream, linearStream.getCurrentGpuAddressPosition(), 0u, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
+            return;
+        }
         default:
             return;
         }
@@ -127,6 +133,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(bool withFlush
             return EncodeMiArbCheck<GfxFamily>::getCommandSize();
         case BlitterConstants::PostBlitMode::miFlush:
             return EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+        case BlitterConstants::PostBlitMode::semaphore:
+            return EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
         default:
             return 0;
         }

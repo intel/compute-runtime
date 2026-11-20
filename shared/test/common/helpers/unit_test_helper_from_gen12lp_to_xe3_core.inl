@@ -22,6 +22,12 @@ uint64_t UnitTestHelper<GfxFamily>::getSemaphoreWaitData(const void *semWaitCmd)
 }
 
 template <typename GfxFamily>
+typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION UnitTestHelper<GfxFamily>::getSemaphoreWaitCompareOperation(const void *semWaitCmd) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    return reinterpret_cast<const MI_SEMAPHORE_WAIT *>(semWaitCmd)->getCompareOperation();
+}
+
+template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isSemaphoreWaitPollingMode(const void *semWaitCmd) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     return reinterpret_cast<const MI_SEMAPHORE_WAIT *>(semWaitCmd)->getWaitMode() == MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE;

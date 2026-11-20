@@ -53,6 +53,19 @@ uint64_t UnitTestHelper<GfxFamily>::getSemaphoreWaitData(const void *semWaitCmd)
 }
 
 template <typename GfxFamily>
+typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION UnitTestHelper<GfxFamily>::getSemaphoreWaitCompareOperation(const void *semWaitCmd) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    if (auto legacyCmd = matchLegacySemaphoreWaitCmd<GfxFamily>(semWaitCmd)) {
+        return static_cast<COMPARE_OPERATION>(legacyCmd->getCompareOperation());
+    }
+    if (auto cmd64 = matchSemaphoreWait64Cmd<GfxFamily>(semWaitCmd)) {
+        return cmd64->getCompareOperation();
+    }
+    DEBUG_BREAK_IF(true);
+    return {};
+}
+
+template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isSemaphoreWaitPollingMode(const void *semWaitCmd) {
     if (auto legacyCmd = matchLegacySemaphoreWaitCmd<GfxFamily>(semWaitCmd)) {
         return legacyCmd->getWaitMode() == GfxFamily::MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE_POLLING_MODE;
