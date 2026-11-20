@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,9 +56,11 @@ bool MockDeferredDeleter::shouldStop() {
 
     shouldStopCalled++;
     if (stopAfter3loopsInRun && shouldStopCalled < 3) {
-        auto deletion = new MockDeferrableDeletion();
         elementsToRelease++;
-        queue.pushTailOne(*deletion);
+        {
+            std::lock_guard<std::mutex> deletionsLock(deletionsMutex);
+            queue.push_back(std::make_unique<MockDeferrableDeletion>());
+        }
         condition.notify_one();
 
         return false;
@@ -85,11 +87,6 @@ bool MockDeferredDeleter::isWorking() {
 
 bool MockDeferredDeleter::isThreadRunning() {
     return worker != nullptr;
-}
-
-bool MockDeferredDeleter::isQueueEmpty() {
-    std::lock_guard<std::mutex> lock(queueMutex);
-    return queue.peekIsEmpty();
 }
 
 void MockDeferredDeleter::setElementsToRelease(int elementsNum) {

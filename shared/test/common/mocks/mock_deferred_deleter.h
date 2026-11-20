@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 namespace NEO {
 class MockDeferredDeleter : public DeferredDeleter {
   public:
+    using DeferredDeleter::isQueueEmpty;
     using DeferredDeleter::run;
     MockDeferredDeleter();
 
@@ -37,8 +38,6 @@ class MockDeferredDeleter : public DeferredDeleter {
     bool isWorking();
 
     bool isThreadRunning();
-
-    bool isQueueEmpty();
 
     void setElementsToRelease(int elementsNum);
 

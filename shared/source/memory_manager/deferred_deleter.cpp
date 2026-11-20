@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,9 @@
 
 #include "shared/source/memory_manager/deferrable_deletion.h"
 #include "shared/source/os_interface/os_thread.h"
+
+#include <algorithm>
+#include <iterator>
 
 namespace NEO {
 DeferredDeleter::DeferredDeleter() = default;
@@ -55,7 +58,10 @@ void DeferredDeleter::deferDeletion(DeferrableDeletion *deletion) {
         this->hostptrsToRelease++;
     }
 
-    queue.pushTailOne(*deletion);
+    {
+        std::lock_guard<std::mutex> deletionsLock(this->deletionsMutex);
+        this->queue.emplace_back(deletion);
+    }
 
     lock.unlock();
     condition.notify_one();
@@ -91,13 +97,18 @@ bool DeferredDeleter::shouldStop() {
     return !doWorkInBackground;
 }
 
+bool DeferredDeleter::isQueueEmpty() {
+    std::lock_guard<std::mutex> deletionsLock(this->deletionsMutex);
+    return this->queue.empty();
+}
+
 void *DeferredDeleter::run(void *arg) {
     auto self = reinterpret_cast<DeferredDeleter *>(arg);
     std::unique_lock<std::mutex> lock(self->queueMutex);
     // Mark that working thread really started
     self->doWorkInBackground = true;
     do {
-        if (self->queue.peekIsEmpty()) {
+        if (self->isQueueEmpty()) {
             // Wait for signal that some items are ready to be deleted
             self->condition.wait(lock);
         }
@@ -123,18 +134,36 @@ void DeferredDeleter::drain(bool blocking, bool hostptrsOnly) {
 
 void DeferredDeleter::clearQueue(bool hostptrsOnly) {
     do {
-        auto deletion = queue.removeFrontOne();
-        if (deletion) {
-            bool isDeletionHostptr = deletion->isExternalHostptr();
-            if ((!hostptrsOnly || isDeletionHostptr) && deletion->apply()) {
+        std::vector<std::unique_ptr<DeferrableDeletion>> deletions;
+        {
+            std::lock_guard<std::mutex> deletionsLock(this->deletionsMutex);
+            if (hostptrsOnly) {
+                const auto firstHostptrDeletion = std::stable_partition(this->queue.begin(), this->queue.end(), [](const auto &deletion) { return !deletion->isExternalHostptr(); });
+                deletions.assign(std::make_move_iterator(firstHostptrDeletion), std::make_move_iterator(this->queue.end()));
+                this->queue.erase(firstHostptrDeletion, this->queue.end());
+            } else {
+                deletions.swap(this->queue);
+            }
+        }
+        std::vector<std::unique_ptr<DeferrableDeletion>> notReleasedDeletions;
+        for (auto &deletion : deletions) {
+            const bool isDeletionHostptr = deletion->isExternalHostptr();
+            if (deletion->apply()) {
                 this->elementsToRelease--;
                 if (isDeletionHostptr) {
                     this->hostptrsToRelease--;
                 }
+                deletion.reset();
             } else {
-                queue.pushTailOne(*deletion.release());
+                notReleasedDeletions.push_back(std::move(deletion));
             }
         }
-    } while (hostptrsOnly ? !areElementsReleased(hostptrsOnly) : !queue.peekIsEmpty());
+        if (!notReleasedDeletions.empty()) {
+            std::lock_guard<std::mutex> deletionsLock(this->deletionsMutex);
+            for (auto &deletion : notReleasedDeletions) {
+                this->queue.push_back(std::move(deletion));
+            }
+        }
+    } while (hostptrsOnly ? !areElementsReleased(hostptrsOnly) : !isQueueEmpty());
 }
 } // namespace NEO

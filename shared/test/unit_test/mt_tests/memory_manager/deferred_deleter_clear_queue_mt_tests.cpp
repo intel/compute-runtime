@@ -75,10 +75,7 @@ INSTANTIATE_TEST_SUITE_P(DeferredDeleterMtTests,
 
 class MyDeferredDeleter : public DeferredDeleter {
   public:
-    bool isQueueEmpty() {
-        std::lock_guard<std::mutex> lock(queueMutex);
-        return queue.peekIsEmpty();
-    }
+    using DeferredDeleter::isQueueEmpty;
     int getElementsToRelease() {
         return elementsToRelease;
     }

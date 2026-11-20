@@ -19,13 +19,13 @@ using namespace NEO;
 struct DeferredDeleterPublic : DeferredDeleter {
   public:
     using DeferredDeleter::doWorkInBackground;
-    using DeferredDeleter::queue;
+    using DeferredDeleter::isQueueEmpty;
     using DeferredDeleter::queueMutex;
     std::atomic_bool shouldStopReached = false;
     std::atomic_bool allowExit = false;
     bool shouldStop() override {
         if (allowExit) {
-            EXPECT_TRUE(queue.peekIsEmpty());
+            EXPECT_TRUE(isQueueEmpty());
         }
         shouldStopReached = allowExit.load();
         return allowExit || DeferredDeleter::shouldStop();
@@ -63,7 +63,7 @@ TEST_F(DeferrableAllocationDeletionMtTest, givenDeferrableAllocationWhenApplyThe
     allocation->updateTaskCount(1u, defaultOsContextId);
     *hwTag = 0u;
     asyncDeleter->deferDeletion(new DeferrableAllocationDeletion(*memoryManager, *allocation));
-    while (!asyncDeleter->queue.peekIsEmpty()) { // wait for async thread to get allocation from queue
+    while (!asyncDeleter->isQueueEmpty()) { // wait for async thread to get allocation from queue
         std::this_thread::yield();
     }
 

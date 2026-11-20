@@ -1,17 +1,16 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/utilities/idlist.h"
 
 namespace NEO {
-class DeferrableDeletion : public IDNode<DeferrableDeletion> {
+class DeferrableDeletion {
   public:
+    virtual ~DeferrableDeletion() = default;
     template <typename... Args>
     static DeferrableDeletion *create(Args... args);
     virtual bool apply() = 0;
@@ -19,6 +18,4 @@ class DeferrableDeletion : public IDNode<DeferrableDeletion> {
     bool isExternalHostptr() const { return externalHostptr; }
     bool externalHostptr = false;
 };
-
-static_assert(NEO::NonCopyableAndNonMovable<IDList<DeferrableDeletion>>);
 } // namespace NEO
