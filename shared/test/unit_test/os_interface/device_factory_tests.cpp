@@ -487,7 +487,7 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeAndDeviceCapsReaderSupportDisabl
         debugManager.flags.ProductFamilyOverride.set("unk");
         debugManager.flags.HardwareInfoOverride.set("default");
         capture.captureStderr();
-        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper));
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper, false));
         auto capturedStderr = capture.getCapturedStderr();
 
         EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
@@ -497,7 +497,7 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeAndDeviceCapsReaderSupportDisabl
         debugManager.flags.ProductFamilyOverride.set(defaultProductFamily);
         debugManager.flags.HardwareInfoOverride.set("default");
         capture.captureStderr();
-        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper));
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper, false));
         auto capturedStderr = capture.getCapturedStderr();
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
         EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
@@ -507,7 +507,7 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeAndDeviceCapsReaderSupportDisabl
         debugManager.flags.ProductFamilyOverride.set("unk");
         debugManager.flags.HardwareInfoOverride.set("1x1x1");
         capture.captureStderr();
-        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper));
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper, false));
         auto capturedStderr = capture.getCapturedStderr();
         EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
@@ -518,7 +518,7 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeAndDeviceCapsReaderSupportDisabl
         debugManager.flags.ProductFamilyOverride.set(defaultProductFamily);
         debugManager.flags.HardwareInfoOverride.set("1x1x1");
         capture.captureStderr();
-        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(*productHelper));
+        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(*productHelper, false));
         auto capturedStderr = capture.getCapturedStderr();
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
@@ -526,9 +526,38 @@ HWTEST_F(DeviceFactoryOverrideTest, GivenAubModeAndDeviceCapsReaderSupportDisabl
     {
         debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::hardware));
         capture.captureStderr();
-        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(*productHelper));
+        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(*productHelper, false));
         auto capturedStderr = capture.getCapturedStderr();
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
         EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
+    }
+}
+
+TEST(DeviceFactoryGmdIdValidation, givenProductDetectedFromGmdIdWhenValidatingDeviceFlagsThenMissingProductFamilyOverrideIsNotReported) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.ProductFamilyOverride.set("unk");
+
+    auto productHelper = std::make_unique<MockProductHelper>();
+    std::string expectedMissingProductFamilyStderrSubstr("Missing override for product family, required to set flag ProductFamilyOverride in non hw mode\n");
+    std::string expectedMissingHardwareInfoStderrSubstr("Missing override for hardware info, required to set flag HardwareInfoOverride in non hw mode\n");
+    StreamCapture capture;
+
+    {
+        debugManager.flags.HardwareInfoOverride.set("1x1x1");
+        capture.captureStderr();
+        EXPECT_TRUE(DeviceFactory::validateDeviceFlags(*productHelper, true));
+        auto capturedStderr = capture.getCapturedStderr();
+
+        EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
+    }
+    {
+        debugManager.flags.HardwareInfoOverride.set("default");
+        capture.captureStderr();
+        EXPECT_FALSE(DeviceFactory::validateDeviceFlags(*productHelper, true));
+        auto capturedStderr = capture.getCapturedStderr();
+
+        EXPECT_FALSE(hasSubstr(capturedStderr, expectedMissingProductFamilyStderrSubstr));
+        EXPECT_TRUE(hasSubstr(capturedStderr, expectedMissingHardwareInfoStderrSubstr));
     }
 }

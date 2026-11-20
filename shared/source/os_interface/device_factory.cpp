@@ -211,11 +211,11 @@ bool DeviceFactory::isTbxModeSelected() {
     }
 }
 
-bool DeviceFactory::validateDeviceFlags(const ProductHelper &productHelper) {
+bool DeviceFactory::validateDeviceFlags(const ProductHelper &productHelper, bool productDetectedFromGmdId) {
     bool ret = true;
     if (!DeviceFactory::isHwModeSelected()) {
 
-        if (debugManager.flags.ProductFamilyOverride.get() == "unk") {
+        if (debugManager.flags.ProductFamilyOverride.get() == "unk" && !productDetectedFromGmdId) {
             PRINT_STRING(true, stderr, "Missing override for product family, required to set flag ProductFamilyOverride in non hw mode\n");
             ret = false;
         }

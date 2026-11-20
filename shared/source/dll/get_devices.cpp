@@ -30,7 +30,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
     }
 
     if (returnValue) {
-        if (!DeviceFactory::validateDeviceFlags(executionEnvironment.rootDeviceEnvironments[0]->getProductHelper())) {
+        if (!DeviceFactory::validateDeviceFlags(executionEnvironment.rootDeviceEnvironments[0]->getProductHelper(), false)) {
             return false;
         }
         auto i = 0u;

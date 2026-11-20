@@ -29,7 +29,7 @@ class DeviceFactory {
     static bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment);
     static bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex);
     static bool prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionEnvironment &executionEnvironment);
-    static bool validateDeviceFlags(const ProductHelper &productHelper);
+    static bool validateDeviceFlags(const ProductHelper &productHelper, bool productDetectedFromGmdId);
     static std::vector<std::unique_ptr<Device>> createDevices(ExecutionEnvironment &executionEnvironment);
     static std::unique_ptr<Device> createDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex);
     static bool isHwModeSelected();
