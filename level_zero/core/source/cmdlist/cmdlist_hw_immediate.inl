@@ -204,12 +204,21 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateCommandSizeForImageCopyBlit(ze_image_handle_t hImage, const ze_image_region_t *pRegion) const {
     auto estimatedSize = commonImmediateCommandSize;
     if (isCopyOnly(true)) {
-        auto image = L0::Image::fromHandle(hImage);
-        auto depth = pRegion ? std::max(pRegion->depth, 1u) : std::max(image->getImageDesc().depth, 1u);
-        auto nBlits = static_cast<size_t>(std::max(depth, 1u));
+        const auto image = L0::Image::fromHandle(hImage);
+        const auto region = pRegion ? *pRegion : getRegionFromImageDesc(image->getImageDesc());
+        auto nBlits = static_cast<size_t>(std::max(region.depth, 1u));
+        if (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray) {
+            nBlits *= std::max(region.height, 1u);
+        }
         estimatedSize += estimateCopyBlitCommandsSize(nBlits, sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT), false);
     }
     return estimatedSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateCommandSizeForImageToImageCopyBlit(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage,
+                                                                                                 const ze_image_region_t *pDstRegion, const ze_image_region_t *pSrcRegion) const {
+    return std::max(estimateCommandSizeForImageCopyBlit(hSrcImage, pSrcRegion), estimateCommandSizeForImageCopyBlit(hDstImage, pDstRegion));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1443,7 +1452,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyRegion
                                                                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
     memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hSrcImage, pSrcRegion), false);
+    auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageToImageCopyBlit(hDstImage, hSrcImage, pDstRegion, pSrcRegion), false);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
     }

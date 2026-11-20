@@ -1576,8 +1576,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     if (pSrcRegion != nullptr) {
         srcRegion = *pSrcRegion;
     } else {
-        ze_image_desc_t srcDesc = srcImage->getImageDesc();
-        srcRegion = {0, 0, 0, static_cast<uint32_t>(srcDesc.width), srcDesc.height, srcDesc.depth};
+        srcRegion = getRegionFromImageDesc(srcImage->getImageDesc());
     }
 
     srcOffset.x = static_cast<cl_int>(srcRegion.originX);
@@ -1588,8 +1587,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     if (pDstRegion != nullptr) {
         dstRegion = *pDstRegion;
     } else {
-        ze_image_desc_t dstDesc = dstImage->getImageDesc();
-        dstRegion = {0, 0, 0, static_cast<uint32_t>(dstDesc.width), dstDesc.height, dstDesc.depth};
+        dstRegion = getRegionFromImageDesc(dstImage->getImageDesc());
     }
 
     dstOffset.x = static_cast<cl_int>(dstRegion.originX);

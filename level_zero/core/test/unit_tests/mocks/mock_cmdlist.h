@@ -269,6 +269,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::duplicatedInOrderCounterStorageEnabled;
     using BaseClass::engineGroupType;
     using BaseClass::estimateCommandSizeForImageCopyBlit;
+    using BaseClass::estimateCommandSizeForImageToImageCopyBlit;
     using BaseClass::eventSignalPipeControl;
     using BaseClass::externalSemaphoreHostFunctionData;
     using BaseClass::finalStreamState;

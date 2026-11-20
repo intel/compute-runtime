@@ -1563,6 +1563,36 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhen2DArrayImageCopyRegionThenAp
     EXPECT_EQ(cmdList.appendCopyImageDstSize, expectedCopyImageDstSize);
 }
 
+HWTEST_F(CommandListAppend, givenCopyCommandListWhenArrayImageCopyRegionWithoutRegionsThenEveryArraySliceIsCopied) {
+    for (const auto imageType : {ZE_IMAGE_TYPE_1DARRAY, ZE_IMAGE_TYPE_2DARRAY}) {
+        MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+        cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+        const bool is1dArray = imageType == ZE_IMAGE_TYPE_1DARRAY;
+        ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  nullptr,
+                                  0,
+                                  imageType,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  20,
+                                  is1dArray ? 1u : 30u,
+                                  1,
+                                  is1dArray ? 4u : 2u,
+                                  0};
+        auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        imageHWSrc->initialize(device, &zeDesc);
+        imageHWDst->initialize(device, &zeDesc);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), nullptr, nullptr, nullptr, 0, nullptr, copyParams));
+
+        const Vec3<size_t> expectedRegionCopySize = is1dArray ? Vec3<size_t>{zeDesc.width, zeDesc.arraylevels, 1u}
+                                                              : Vec3<size_t>{zeDesc.width, zeDesc.height, zeDesc.arraylevels};
+        EXPECT_EQ(expectedRegionCopySize, cmdList.appendImageRegionCopySize);
+    }
+}
+
 HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromImageToMemoryThenBlitImageCopyCalled, ImageSupport) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -3549,6 +3579,131 @@ HWTEST2_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingIma
     auto estimatedSizeSmall = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), &smallRegion);
     EXPECT_GE(estimatedSizeSmall, commonImmediateCommandSize + 1 * sizePerBlit);
     EXPECT_LT(estimatedSizeSmall, estimatedSize);
+}
+
+HWTEST2_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingImageCopyBlitSizeFor2dArrayWithoutRegionThenEveryArraySliceIsAccountedFor, IsAtLeastXeCore) {
+    const ze_command_queue_desc_t queueDesc = {};
+
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
+                                                                              &queueDesc,
+                                                                              false,
+                                                                              NEO::EngineGroupType::copy,
+                                                                              returnValue));
+    ASSERT_NE(nullptr, commandList);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto whiteBoxCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList.get());
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2DARRAY;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 64;
+    desc.height = 64;
+    desc.depth = 0;
+    desc.arraylevels = 16;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    auto &productHelper = neoDevice->getRootDeviceEnvironment().getProductHelper();
+    auto sizePerBlit = sizeof(typename FamilyType::XY_BLOCK_COPY_BLT) + NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(productHelper.isFlushBetweenBlitsRequired());
+
+    ze_image_region_t allSlices = {0, 0, 0, static_cast<uint32_t>(desc.width), desc.height, desc.arraylevels};
+    auto estimatedSizeAllSlices = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), &allSlices);
+    auto estimatedSizeNoRegion = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), nullptr);
+    EXPECT_GE(estimatedSizeNoRegion, commonImmediateCommandSize + desc.arraylevels * sizePerBlit);
+    EXPECT_EQ(estimatedSizeAllSlices, estimatedSizeNoRegion);
+}
+
+HWTEST2_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingImageCopyBlitSizeFor1dArrayThenEveryArrayLayerIsAccountedFor, IsAtLeastXeCore) {
+    const ze_command_queue_desc_t queueDesc = {};
+
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
+                                                                              &queueDesc,
+                                                                              false,
+                                                                              NEO::EngineGroupType::copy,
+                                                                              returnValue));
+    ASSERT_NE(nullptr, commandList);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto whiteBoxCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList.get());
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_1DARRAY;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 64;
+    desc.height = 1;
+    desc.depth = 1;
+    desc.arraylevels = 16;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    const auto minimalEstimate = commonImmediateCommandSize + desc.arraylevels * sizeof(typename FamilyType::XY_BLOCK_COPY_BLT);
+
+    ze_image_region_t allLayers = {0, 0, 0, static_cast<uint32_t>(desc.width), desc.arraylevels, 1};
+    auto estimatedSizeAllLayers = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), &allLayers);
+    auto estimatedSizeNoRegion = whiteBoxCmdList->estimateCommandSizeForImageCopyBlit(imageHW->toHandle(), nullptr);
+    EXPECT_GE(estimatedSizeAllLayers, minimalEstimate);
+    EXPECT_EQ(estimatedSizeAllLayers, estimatedSizeNoRegion);
+}
+
+HWTEST2_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingCopyFrom2dImageTo1dArrayWithoutRegionThenEveryDestinationArrayLayerIsAccountedFor, IsAtLeastXeCore) {
+    const ze_command_queue_desc_t queueDesc = {};
+
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device,
+                                                                              &queueDesc,
+                                                                              false,
+                                                                              NEO::EngineGroupType::copy,
+                                                                              returnValue));
+    ASSERT_NE(nullptr, commandList);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto whiteBoxCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList.get());
+
+    constexpr uint32_t width = 64;
+    constexpr uint32_t layers = 16;
+    ze_image_desc_t srcDesc = {};
+    srcDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    srcDesc.type = ZE_IMAGE_TYPE_2D;
+    srcDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                      ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G, ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A};
+    srcDesc.width = width;
+    srcDesc.height = layers;
+    srcDesc.depth = 1;
+
+    ze_image_desc_t dstDesc = srcDesc;
+    dstDesc.type = ZE_IMAGE_TYPE_1DARRAY;
+    dstDesc.height = 1;
+    dstDesc.arraylevels = layers;
+
+    auto srcImage = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, srcImage->initialize(device, &srcDesc));
+    auto dstImage = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, dstImage->initialize(device, &dstDesc));
+
+    const auto minimalEstimate = commonImmediateCommandSize + layers * sizeof(typename FamilyType::XY_BLOCK_COPY_BLT);
+
+    EXPECT_GE(whiteBoxCmdList->estimateCommandSizeForImageToImageCopyBlit(dstImage->toHandle(), srcImage->toHandle(), nullptr, nullptr), minimalEstimate);
+    EXPECT_GE(whiteBoxCmdList->estimateCommandSizeForImageToImageCopyBlit(srcImage->toHandle(), dstImage->toHandle(), nullptr, nullptr), minimalEstimate);
 }
 
 HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromMemoryToImage1dBufferThenImageBlitCalledWithLinearCopy, ImageSupport) {

@@ -332,6 +332,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t reserveScratchSpaceForKernel(ze_kernel_handle_t kernelHandle, uint32_t externalPerThreadScratchSizeSlot0, uint32_t externalPerThreadScratchSizeSlot1);
     void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload, const std::optional<NEO::SvmAllocationData *> &dstSvmAlloc);
     size_t estimateCommandSizeForImageCopyBlit(ze_image_handle_t hImage, const ze_image_region_t *pRegion) const;
+    size_t estimateCommandSizeForImageToImageCopyBlit(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage, const ze_image_region_t *pDstRegion, const ze_image_region_t *pSrcRegion) const;
     size_t estimateCopyBlitCommandsSize(size_t nBlits, size_t sizePerBlit, bool isDstSystemOrRemoteMemory) const;
 
     MOCKABLE_VIRTUAL void checkAssert();
