@@ -924,7 +924,6 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenContextGroupAndHpQueueWhenSelec
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     debugManager.flags.ContextGroupSize.set(8);
-    debugManager.flags.SkipHpBcsInitialization.set(0);
 
     HardwareInfo hwInfo = *::defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -974,56 +973,6 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenContextGroupAndHpQueueWhenSelec
         ASSERT_NE(nullptr, hpCsr2.getOsContext().getPrimaryContext());
         EXPECT_EQ(&hpCsr1.getOsContext(), hpCsr2.getOsContext().getPrimaryContext());
     }
-}
-
-HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenContextGroupAndNoDedicatedHpCopyEngineWhenSelectingCsrForHpQueueThenHpSecondaryContextOfRegularBcsIsReturned, IsAtLeastXe2HpgCore) {
-    context.reset(nullptr);
-    clDevice.reset(nullptr);
-
-    DebugManagerStateRestore restore{};
-    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    debugManager.flags.ContextGroupSize.set(8);
-    debugManager.flags.SkipHpBcsInitialization.set(1);
-
-    HardwareInfo hwInfo = *::defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(3);
-
-    device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
-    clDevice = std::make_unique<MockClDevice>(device);
-    context = std::make_unique<MockContext>(clDevice.get());
-
-    if (!device->getGfxCoreHelper().areSecondaryContextsSupported()) {
-        GTEST_SKIP();
-    }
-    EXPECT_EQ(nullptr, device->getHpCopyEngine());
-
-    MockGraphicsAllocation srcGraphicsAllocation{};
-    MockGraphicsAllocation dstGraphicsAllocation{};
-    MockBuffer srcMemObj{srcGraphicsAllocation};
-    MockBuffer dstMemObj{dstGraphicsAllocation};
-    srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
-    dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
-    CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
-
-    auto regularQueue = createQueue(nullptr);
-    regularQueue->bcsInitialized = false;
-    regularQueue->priority = QueuePriority::medium;
-    EXPECT_FALSE(regularQueue->selectCsrForBuiltinOperation(args).getOsContext().isHighPriority());
-
-    auto hpQueue = createQueue(nullptr);
-    hpQueue->bcsInitialized = false;
-    hpQueue->priority = QueuePriority::high;
-    auto &hpOsContext = hpQueue->selectCsrForBuiltinOperation(args).getOsContext();
-
-    EXPECT_TRUE(EngineHelpers::isBcs(hpOsContext.getEngineType()));
-    EXPECT_FALSE(hpOsContext.getIsPrimaryEngine());
-    EXPECT_TRUE(hpOsContext.isHighPriority());
-
-    auto primaryContext = hpOsContext.getPrimaryContext();
-    ASSERT_NE(nullptr, primaryContext);
-    EXPECT_EQ(EngineUsage::regular, primaryContext->getEngineUsage());
-    EXPECT_EQ(hpOsContext.getEngineType(), primaryContext->getEngineType());
 }
 
 HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDRangeThenProgramBarrierBeforeGlobalAllocation, IsPVC) {

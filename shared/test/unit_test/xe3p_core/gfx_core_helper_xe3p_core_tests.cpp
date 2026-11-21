@@ -22,7 +22,6 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "metrics_library_api_1_0.h"
@@ -128,7 +127,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGetGpgpuEnginesThenReturnTwoCccs
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWhenGetEnginesCalledThenCreateOnlyOneCcs) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.SkipHpBcsInitialization.set(0);
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -191,7 +189,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEnginesWhenSettingEngineTableThenDontAddUnsupported) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.SkipHpBcsInitialization.set(0);
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -401,7 +398,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingEngines
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingInternalCopyEngineThenCorrectEngineIsReturned) {
     DebugManagerStateRestore restore;
-    debugManager.flags.SkipHpBcsInitialization.set(0);
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ContextGroupSize.set(4);
 
@@ -434,35 +430,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingInterna
 
         EXPECT_EQ(aub_stream::ENGINE_BCS1, internalBcs);
         EXPECT_NE(nullptr, device->tryGetEngine(internalBcs, EngineUsage::internal));
-    }
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenSparseCopyEngineMaskWhenQueryingInternalCopyEngineIndexThenEnabledEngineOtherThanDedicatedHpCopyEngineIsReturned) {
-    struct InternalCopyEngineConfig {
-        uint64_t bcsMask;
-        int32_t skipHpBcsInitialization;
-        uint32_t expectedInternalCopyEngineIndex;
-    };
-    const InternalCopyEngineConfig configs[] = {
-        {0b10110, 1, 2u},
-        {0b1110000, 1, 6u},
-        {0b1110, 0, 2u},
-        {0b1110000, 0, 5u},
-    };
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-
-    for (const auto &config : configs) {
-        DebugManagerStateRestore restore;
-        debugManager.flags.ContextGroupSize.set(4);
-        debugManager.flags.SkipHpBcsInitialization.set(config.skipHpBcsInitialization);
-        hwInfo.featureTable.ftrBcsInfo = config.bcsMask;
-
-        MockExecutionEnvironment executionEnvironment(&hwInfo);
-        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-
-        EXPECT_EQ(config.expectedInternalCopyEngineIndex, gfxCoreHelper.getInternalCopyEngineIndex(hwInfo)) << config.bcsMask;
     }
 }
 

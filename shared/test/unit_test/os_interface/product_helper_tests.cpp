@@ -1161,18 +1161,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForCopyOffloadWriteEngin
     EXPECT_TRUE(productHelper->isCopyOffloadWriteEngineSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingForDedicatedHighPriorityCopyEngineSupportThenReturnTrueByDefaultAndRespectDebugFlag, IsNotCRI) {
-    DebugManagerStateRestore restorer;
-
-    EXPECT_TRUE(productHelper->isDedicatedHighPriorityCopyEngineSupported());
-
-    debugManager.flags.SkipHpBcsInitialization.set(0);
-    EXPECT_TRUE(productHelper->isDedicatedHighPriorityCopyEngineSupported());
-
-    debugManager.flags.SkipHpBcsInitialization.set(1);
-    EXPECT_FALSE(productHelper->isDedicatedHighPriorityCopyEngineSupported());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenFalseReturned) {
     for (auto preemptionMode : {PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread}) {
         for (bool hostWaitablePostSync : {true, false}) {

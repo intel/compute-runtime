@@ -180,7 +180,6 @@ XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndCCSEngineEnabl
 
 XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndBcsEngineEnabledWhenGettingCsrForOrdinalAndIndexThenSecondaryEnginesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.SkipHpBcsInitialization.set(0);
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.EnableBlitterOperationsSupport.set(1);
     debugManager.flags.ContextGroupSize.set(8);

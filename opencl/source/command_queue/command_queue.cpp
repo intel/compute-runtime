@@ -411,8 +411,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
                 bcsQueueEngineType = bcsEngineType;
 
                 if (gfxCoreHelper.areSecondaryContextsSupported() && !internalUsage) {
-                    const auto secondaryEngineUsage = (priority == QueuePriority::high) ? EngineUsage::highPriority : engineUsage;
-                    tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, secondaryEngineUsage}, bcsQueueOwnershipTaken[bcsIndex]);
+                    tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, engineUsage}, bcsQueueOwnershipTaken[bcsIndex]);
                 }
 
                 bcsEngines[bcsIndex]->osContext->ensureContextInitialized();

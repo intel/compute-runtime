@@ -62,7 +62,7 @@ uint32_t GfxCoreHelperHw<Family>::getContextGroupHpContextsCount(EngineGroupType
 
 template <>
 void GfxCoreHelperHw<Family>::adjustCopyEngineRegularContextCount(const size_t enginesCount, uint32_t &contextCount) const {
-    if (enginesCount == 2 && dedicatedHpCopyEngineSupported) {
+    if (enginesCount == 2) {
         contextCount = contextCount / 2;
     }
 }
@@ -70,7 +70,7 @@ void GfxCoreHelperHw<Family>::adjustCopyEngineRegularContextCount(const size_t e
 template <>
 void GfxCoreHelperHw<Family>::initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) {
     uint32_t hpIndex = 0;
-    if (!dedicatedHpCopyEngineSupported) {
+    if (debugManager.flags.SkipHpBcsInitialization.get()) {
         return;
     }
     if (areSecondaryContextsSupported()) {
@@ -102,14 +102,12 @@ uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo 
 
     constexpr uint32_t defaultInternalCopyEngineIndex = 3u;
     uint64_t supportedBcsBits = hwInfo.featureTable.ftrBcsInfo.to_ullong();
+    auto highestAvailableIndex = getMostSignificantSetBitIndex(supportedBcsBits);
 
-    const auto hpCopyEngine = getDefaultHpCopyEngine(hwInfo);
-    if (hpCopyEngine != aub_stream::EngineType::NUM_ENGINES) {
-        supportedBcsBits &= ~(1ull << EngineHelpers::getBcsIndex(hpCopyEngine));
+    if (areSecondaryContextsSupported() && (getDefaultHpCopyEngine(hwInfo) == EngineHelpers::getBcsEngineAtIdx(highestAvailableIndex))) {
+        highestAvailableIndex = getMostSignificantSetBitIndex(supportedBcsBits & ~(1 << highestAvailableIndex));
     }
-
-    const uint64_t internalCopyEngineCandidates = supportedBcsBits & maxNBitValue(defaultInternalCopyEngineIndex + 1);
-    return getMostSignificantSetBitIndex(internalCopyEngineCandidates != 0 ? internalCopyEngineCandidates : supportedBcsBits);
+    return std::min(defaultInternalCopyEngineIndex, highestAvailableIndex);
 }
 
 template <>
