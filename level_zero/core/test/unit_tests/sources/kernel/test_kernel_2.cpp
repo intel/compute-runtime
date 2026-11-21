@@ -782,9 +782,14 @@ HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenBarriersWhenCalcul
 }
 
 HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize, IsAtLeastXe2HpgCore) {
-    usedSlm = 128 * MemoryConstants::kiloByte;
-    auto expected = dssCount * (availableSlmPerDss / usedSlm);
-    EXPECT_EQ(expected, getMaxWorkGroupCount());
+    constexpr uint32_t usedSlmPortionsPerDss = 4;
+    usedSlm = availableSlmPerDss / usedSlmPortionsPerDss;
+
+    const auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
+    const auto alignedUsedSlm = neoDevice->getGfxCoreHelper().alignSlmSizePerThreadGroup(usedSlm, rootDeviceEnvironment.getReleaseHelper());
+    const auto groupsPerDss = availableSlmPerDss / alignedUsedSlm;
+    EXPECT_LE(2u, groupsPerDss);
+    EXPECT_EQ(dssCount * groupsPerDss, getMaxWorkGroupCount());
 }
 
 HWTEST2_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeNotDividingPerDssCapacityWhenCalculatingMaxCooperativeGroupCountThenLeftoverSlmIsNotPooledAcrossDss, IsAtLeastXe2HpgCore) {

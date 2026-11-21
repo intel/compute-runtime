@@ -51,6 +51,9 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmSizePerSubsliceAboveAva
     uint32_t previousProgrammedValue = 0;
 
     for (uint32_t availableSlmSizeKb : {16u, 32u, 64u, 96u}) {
+        if (availableSlmSizeKb >= hwInfo.capabilityTable.maxProgrammableSlmSize) {
+            break;
+        }
         hwInfo.gtSystemInfo.SLMSizeInKb = availableSlmSizeKb;
 
         const uint32_t availableSlmSizePerSubslice = rootDeviceEnvironment.getProductHelper().getAvailableSlmSizePerSubslice(rootDeviceEnvironment) * MemoryConstants::kiloByte;
