@@ -7,6 +7,7 @@
 
 #include "level_zero/api/opencl/source/api/leo_additional_extensions.h"
 #include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/command_buffer/leo_command_buffer.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
@@ -197,6 +198,12 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
         RETURN_FUNC_PTR_IF_EXIST(clCommandSVMMemcpyKHR);
         RETURN_FUNC_PTR_IF_EXIST(clCommandSVMMemFillKHR);
         RETURN_FUNC_PTR_IF_EXIST(clCommandNDRangeKernelKHR);
+    }
+
+    // Resolved only while cl_intel_peer_access is advertised, so a client probing for a
+    // function pointer cannot mistake it for support.
+    if (NEO::LEO::ClDevice::isPeerAccessExtensionSupported()) {
+        RETURN_FUNC_PTR_IF_EXIST(clGetDevicePeerInfoINTEL);
     }
 
     void *ret = NEO::LEO::sharingFactory.getExtensionFunctionAddress(funcName);

@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/driver/driver.h"
@@ -69,6 +70,20 @@ TEST(GetExtensionFunctionAddressTests, givenKnownExtensionNameThenReturnsNonNull
 TEST(GetExtensionFunctionAddressTests, givenUnknownExtensionNameThenReturnsNull) {
     auto ptr = clGetExtensionFunctionAddress("clNonExistentExtension");
     EXPECT_EQ(nullptr, ptr);
+}
+
+TEST(GetExtensionFunctionAddressTests, givenPeerAccessFlagDefaultWhenGettingPeerInfoAddressThenNullIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableClIntelPeerAccess.set(-1);
+    EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clGetDevicePeerInfoINTEL"));
+    EXPECT_EQ(nullptr, clGetExtensionFunctionAddressForPlatform(nullptr, "clGetDevicePeerInfoINTEL"));
+}
+
+TEST(GetExtensionFunctionAddressTests, givenPeerAccessFlagEnabledWhenGettingPeerInfoAddressThenEntryPointIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableClIntelPeerAccess.set(1);
+    EXPECT_EQ(reinterpret_cast<void *>(clGetDevicePeerInfoINTEL), clGetExtensionFunctionAddress("clGetDevicePeerInfoINTEL"));
+    EXPECT_EQ(reinterpret_cast<void *>(clGetDevicePeerInfoINTEL), clGetExtensionFunctionAddressForPlatform(nullptr, "clGetDevicePeerInfoINTEL"));
 }
 
 struct GetPlatformIDsWithDeviceTests : public Test<OclFixture> {

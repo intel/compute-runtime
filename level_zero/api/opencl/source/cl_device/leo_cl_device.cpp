@@ -8,6 +8,7 @@
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 
 #include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -35,6 +36,10 @@ NEO::DriverInfo *ClDevice::getDriverInfo() {
 
 Platform *ClDevice::getPlatform() const {
     return castToObject<Platform>(this->platform);
+}
+
+bool ClDevice::isPeerAccessExtensionSupported() {
+    return debugManager.flags.EnableClIntelPeerAccess.get() == 1;
 }
 
 cl_int ClDevice::getPeerInfo(const ClDevice &peer,

@@ -186,6 +186,10 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_command_buffer ";
     }
 
+    if (isPeerAccessExtensionSupported()) {
+        deviceExtensions += "cl_intel_peer_access ";
+    }
+
     deviceExtensions += "cl_intel_level_zero_interop ";
 
     // LEO does not implement cl_intel_driver_diagnostics performance hints

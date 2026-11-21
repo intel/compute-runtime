@@ -112,4 +112,5 @@ Querying `CL_DEVICE_VERSION` (for example via `clinfo`) and observing `OpenCL 3.
 - `cl_khr_external_memory` buffers are imported once, as an owned USM allocation, on the first device of `CL_MEM_DEVICE_HANDLE_LIST_KHR` or on the context's default device; other devices in the context reach it through Level Zero peer access.
   - Importing a file descriptor transfers its ownership to the driver, which closes it; the value returned for `CL_MEM_PROPERTIES` names a descriptor that is no longer open.
 - Images and USM allocations cannot be created from `cl_khr_external_memory` handles yet; those calls reject them.
+- `cl_intel_peer_access` (`clGetDevicePeerInfoINTEL`, whether a device can access, and use atomics on, the memory of a peer device) is incomplete and off by default; `EnableClIntelPeerAccess=1` advertises it and makes it resolvable through `clGetExtensionFunctionAddressForPlatform`.
 - Performance characterization is ongoing.

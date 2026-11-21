@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
@@ -20,8 +21,10 @@
 #include "spirv/unified1/spirv.hpp"
 
 #include <algorithm>
+#include <cstring>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -278,6 +281,74 @@ TEST_F(ClDeviceTests, GivenExtensionReportedByBothStaticDerivationAndIgcWhenQuer
     EXPECT_EQ(1, occurrences("SPV_INTEL_subgroups"));
     EXPECT_GE(1, occurrences("SPV_KHR_shader_clock"));
     EXPECT_GE(1, occurrences("SPV_KHR_bit_instructions"));
+}
+
+// The extension string is built when the device is constructed, so the flag is set before SetUp.
+template <int32_t enableClIntelPeerAccess>
+struct LeoPeerAccessFixtureBase : public Test<OclFixture> {
+    void SetUp() override {
+        debugManager.flags.EnableClIntelPeerAccess.set(enableClIntelPeerAccess);
+        Test<OclFixture>::SetUp();
+    }
+
+    bool deviceExtensionsContainPeerAccess() {
+        auto clDevice = platform->getDevices()[0].get();
+        size_t size = 0;
+        EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS, 0, nullptr, &size));
+        std::vector<char> extensions(size);
+        EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS, size, extensions.data(), nullptr));
+        return std::string(extensions.data()).find(CL_INTEL_PEER_ACCESS_EXTENSION_NAME) != std::string::npos;
+    }
+
+    bool deviceExtensionsWithVersionContainPeerAccess() {
+        auto clDevice = platform->getDevices()[0].get();
+        size_t size = 0;
+        EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS_WITH_VERSION, 0, nullptr, &size));
+        std::vector<cl_name_version> extensions(size / sizeof(cl_name_version));
+        EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS_WITH_VERSION, size, extensions.data(), nullptr));
+        return containsPeerAccess(extensions);
+    }
+
+    bool platformExtensionsContainPeerAccess() {
+        size_t size = 0;
+        EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS, 0, nullptr, &size));
+        std::vector<char> extensions(size);
+        EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS, size, extensions.data(), nullptr));
+        return std::string(extensions.data()).find(CL_INTEL_PEER_ACCESS_EXTENSION_NAME) != std::string::npos;
+    }
+
+    bool platformExtensionsWithVersionContainPeerAccess() {
+        size_t size = 0;
+        EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS_WITH_VERSION, 0, nullptr, &size));
+        std::vector<cl_name_version> extensions(size / sizeof(cl_name_version));
+        EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS_WITH_VERSION, size, extensions.data(), nullptr));
+        return containsPeerAccess(extensions);
+    }
+
+    static bool containsPeerAccess(const std::vector<cl_name_version> &extensions) {
+        return std::any_of(extensions.begin(), extensions.end(), [](const cl_name_version &extension) {
+            return strcmp(extension.name, CL_INTEL_PEER_ACCESS_EXTENSION_NAME) == 0;
+        });
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using LeoPeerAccessDefaultTest = LeoPeerAccessFixtureBase<-1>;
+using LeoPeerAccessEnabledTest = LeoPeerAccessFixtureBase<1>;
+
+TEST_F(LeoPeerAccessDefaultTest, givenDefaultFlagWhenQueryingExtensionsThenPeerAccessIsNotAdvertised) {
+    EXPECT_FALSE(deviceExtensionsContainPeerAccess());
+    EXPECT_FALSE(deviceExtensionsWithVersionContainPeerAccess());
+    EXPECT_FALSE(platformExtensionsContainPeerAccess());
+    EXPECT_FALSE(platformExtensionsWithVersionContainPeerAccess());
+}
+
+TEST_F(LeoPeerAccessEnabledTest, givenFlagEnabledWhenQueryingExtensionsThenPeerAccessIsAdvertised) {
+    EXPECT_TRUE(deviceExtensionsContainPeerAccess());
+    EXPECT_TRUE(deviceExtensionsWithVersionContainPeerAccess());
+    EXPECT_TRUE(platformExtensionsContainPeerAccess());
+    EXPECT_TRUE(platformExtensionsWithVersionContainPeerAccess());
 }
 
 } // namespace ult

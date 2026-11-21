@@ -47,6 +47,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
                        size_t paramValueSize,
                        void *paramValue,
                        size_t *paramValueSizeRet) const;
+    static bool isPeerAccessExtensionSupported();
 
     bool getDeviceInfoForImage(cl_device_info paramName,
                                const void *&src,
