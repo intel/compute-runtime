@@ -33,5 +33,5 @@ TEST(UnifiedMemoryTests, givenUnifiedMemoryControlsWhenDedicatedFieldsAreSetThen
 
     controls.indirectHostAllocationsAllowed = false;
     controls.indirectSharedAllocationsAllowed = true;
-    EXPECT_EQ(static_cast<uint32_t>(InternalMemoryType::sharedUnifiedMemory), controls.generateMask());
+    EXPECT_EQ(static_cast<uint32_t>(InternalMemoryType::sharedUnifiedMemory) | static_cast<uint32_t>(InternalMemoryType::svm), controls.generateMask());
 }

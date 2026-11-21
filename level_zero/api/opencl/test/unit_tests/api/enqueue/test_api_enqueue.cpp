@@ -9,10 +9,8 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_execution_type.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -27,7 +25,6 @@
 #include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/context/context.h"
-#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 #include "CL/cl.h"
@@ -324,27 +321,6 @@ TEST_F(EnqueueNonUniformKernelEnabledFixture, givenKernelWithRequiredWorkGroupSi
     for (uint32_t dim = 0u; dim < 3u; dim++) {
         EXPECT_EQ(enqueuedGroupSize[dim], captured.launchArgs.enqueuedGroupSize[dim]);
     }
-}
-
-TEST_F(EnqueueNonUniformKernelEnabledFixture, givenSvmPtrsSetOnKernelWhenEnqueueNDRangeKernelWithNonUniformRangeThenListedAllocationIsInCommandListResidency) {
-    constexpr uint64_t gpuAddress = 0x1000u;
-    void *svmPtr = reinterpret_cast<void *>(gpuAddress);
-    NEO::MockGraphicsAllocation svmAllocation(svmPtr, gpuAddress, 0x1000u);
-    NEO::SvmAllocationData allocData(0u);
-    allocData.size = 0x1000u;
-    allocData.gpuAllocations.addAllocation(&svmAllocation);
-    auto svmAllocsManager = context->getL0Object()->getDriverHandle()->getSvmAllocsManager();
-    svmAllocsManager->insertSVMAlloc(allocData);
-    ASSERT_EQ(CL_SUCCESS, clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_SVM_PTRS, sizeof(void *), &svmPtr));
-
-    capturingCmdList.getCmdContainer().clearResidencyContainer();
-    EXPECT_EQ(CL_SUCCESS, enqueue(nonUniformGlobalWorkSize));
-
-    EXPECT_EQ(1u, capturingCmdList.appendLaunchKernelNonUniformArgs.count());
-    const NEO::ResidencyContainer expectedResidency{&svmAllocation};
-    EXPECT_EQ(expectedResidency, capturingCmdList.getCmdContainer().getResidencyContainer());
-
-    svmAllocsManager->removeSVMAlloc(allocData);
 }
 
 TEST_F(EnqueueNonUniformKernelEnabledFixture, givenGlobalWorkSizeAboveUint32WhenEnqueueNDRangeKernelWithNonUniformRangeThenInvalidGlobalWorkSizeIsReturned) {

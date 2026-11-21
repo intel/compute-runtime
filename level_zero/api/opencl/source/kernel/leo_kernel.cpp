@@ -7,7 +7,6 @@
 
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 
-#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -15,21 +14,16 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
-#include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel_info_cl.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
-#include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle.h"
 
 namespace NEO {
 namespace LEO {
@@ -41,7 +35,7 @@ Kernel::Kernel(std::map<uint32_t, ze_kernel_handle_t> kernelHandles, Program *pr
     program->retainForKernel();
 }
 
-Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), imageArgs(sourceKernel->imageArgs), sharedObjArgs(sourceKernel->sharedObjArgs), svmExecInfoAllocations(sourceKernel->svmExecInfoAllocations), usmExecInfoAllocations(sourceKernel->usmExecInfoAllocations), program(sourceKernel->program), executionType(sourceKernel->executionType) {
+Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), imageArgs(sourceKernel->imageArgs), sharedObjArgs(sourceKernel->sharedObjArgs), program(sourceKernel->program), executionType(sourceKernel->executionType) {
     for (const auto &[rootDeviceIndex, kernelHandle] : sourceKernel->kernelHandles) {
         this->kernelHandles[rootDeviceIndex] = static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle))->makeDependentClone().release();
     }
@@ -545,42 +539,20 @@ cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
     return result;
 }
 
-void Kernel::setExecInfoAllocations(cl_kernel_exec_info paramName, void *const *pointers, size_t numPointers) {
+cl_int Kernel::setIndirectAccessForExecInfoPointers() {
     auto lock = this->takeOwnership();
-    auto &execInfoAllocations = (paramName == CL_KERNEL_EXEC_INFO_SVM_PTRS) ? this->svmExecInfoAllocations : this->usmExecInfoAllocations;
-    execInfoAllocations.clear();
-    auto svmAllocsManager = this->getContext()->getL0Object()->getDriverHandle()->getSvmAllocsManager();
+    constexpr ze_kernel_indirect_access_flags_t allIndirectAccessFlags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE |
+                                                                         ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST |
+                                                                         ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
+    cl_int result = CL_SUCCESS;
     for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
-        std::vector<GraphicsAllocation *> rootDeviceAllocations;
-        for (size_t i = 0; i < numPointers; i++) {
-            auto allocationData = svmAllocsManager ? svmAllocsManager->getSVMAlloc(pointers[i]) : nullptr;
-            if (allocationData == nullptr) {
-                continue;
-            }
-            if (auto graphicsAllocation = allocationData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)) {
-                rootDeviceAllocations.push_back(graphicsAllocation);
-            }
+        auto ret = L0ToClResultMapper(zeKernelSetIndirectAccess(kernelHandle, allIndirectAccessFlags));
+        if (ret != CL_SUCCESS) {
+            result = ret;
         }
-        if (!rootDeviceAllocations.empty()) {
-            execInfoAllocations.emplace(rootDeviceIndex, std::move(rootDeviceAllocations));
-        }
+        this->getL0Object(rootDeviceIndex)->getPrivateState().kernelHasIndirectAccess = true;
     }
-}
-
-void Kernel::addExecInfoAllocationsToResidency(ze_command_list_handle_t commandList, uint32_t rootDeviceIndex) const {
-    if (this->svmExecInfoAllocations.empty() && this->usmExecInfoAllocations.empty()) [[likely]] {
-        return;
-    }
-    auto &commandContainer = L0::CommandList::fromHandle(commandList)->getCmdContainer();
-    for (const auto *execInfoAllocations : {&this->svmExecInfoAllocations, &this->usmExecInfoAllocations}) {
-        auto rootDeviceAllocations = execInfoAllocations->find(rootDeviceIndex);
-        if (rootDeviceAllocations == execInfoAllocations->end()) {
-            continue;
-        }
-        for (auto allocation : rootDeviceAllocations->second) {
-            commandContainer.addToResidencyContainer(allocation);
-        }
-    }
+    return result;
 }
 
 cl_int Kernel::setThreadArbitrationPolicy(uint32_t flag) {

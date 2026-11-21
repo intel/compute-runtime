@@ -17,7 +17,6 @@
 
 #include <map>
 #include <optional>
-#include <vector>
 
 namespace NEO {
 namespace LEO {
@@ -72,8 +71,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     size_t getNumArgs() const { return this->argsSet.size(); };
 
     cl_int setIndirectAccess(cl_kernel_exec_info flag, cl_bool val);
-    void setExecInfoAllocations(cl_kernel_exec_info paramName, void *const *pointers, size_t numPointers);
-    void addExecInfoAllocationsToResidency(ze_command_list_handle_t commandList, uint32_t rootDeviceIndex) const;
+    cl_int setIndirectAccessForExecInfoPointers();
     cl_int setThreadArbitrationPolicy(uint32_t flag);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel type);
     NEO::KernelExecutionType getExecutionType() const { return this->executionType; }
@@ -109,8 +107,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::map<uint32_t, ze_kernel_handle_t> kernelHandles{};
     std::map<uint32_t, Image *> imageArgs{};
     std::map<uint32_t, Buffer *> sharedObjArgs{};
-    std::map<uint32_t, std::vector<GraphicsAllocation *>> svmExecInfoAllocations{};
-    std::map<uint32_t, std::vector<GraphicsAllocation *>> usmExecInfoAllocations{};
     Program *program = nullptr;
     NEO::KernelExecutionType executionType = NEO::KernelExecutionType::defaultType;
 };

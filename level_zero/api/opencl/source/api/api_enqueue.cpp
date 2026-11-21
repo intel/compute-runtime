@@ -992,8 +992,6 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         pImage->migrateTo(cmdlistHandle, queueRootDeviceIndex, outOfOrder, static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     }
 
-    pKernel->addExecInfoAllocationsToResidency(cmdlistHandle, queueRootDeviceIndex);
-
     if (nonUniformLaunchArgs.has_value()) [[unlikely]] {
         ret = pCommandQueue->getL0Object()->appendLaunchKernelNonUniform(kernelHandle, *nonUniformLaunchArgs, hSignalEvent, static_cast<uint32_t>(waitEvents.size()), waitEvents.data(), false);
     } else {
@@ -1649,8 +1647,6 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
     for (const auto &[argIndex, pImage] : pKernel->getImageArgs()) {
         pImage->migrateTo(cmdlistHandle, queueRootDeviceIndex, outOfOrder, static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     }
-
-    pKernel->addExecInfoAllocationsToResidency(cmdlistHandle, queueRootDeviceIndex);
 
     ret = isConcurrent
               ? zeCommandListAppendLaunchCooperativeKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data())

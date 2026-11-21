@@ -8,10 +8,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -28,8 +26,6 @@
 #include "level_zero/api/opencl/test/common/fixtures/fill_image_builtin_kernel_lib.h"
 #include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
-#include "level_zero/core/source/context/context.h"
-#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -1533,34 +1529,6 @@ TEST_F(LeoCommandBufferKernelTest, givenKernelWhenRecordingNDRangeKernelThenLaun
 
     releaseCommandBuffer();
     EXPECT_EQ(refCount, kernel->getRefInternalCount());
-}
-
-TEST_F(LeoCommandBufferKernelTest, givenSvmPtrsSetOnKernelWhenEnqueuedOrRecordedThenListedAllocationIsInCommandListResidency) {
-    constexpr uint64_t gpuAddress = 0x1000u;
-    void *svmPtr = reinterpret_cast<void *>(gpuAddress);
-    NEO::MockGraphicsAllocation svmAllocation(svmPtr, gpuAddress, 0x1000u);
-    NEO::SvmAllocationData allocData(0u);
-    allocData.size = 0x1000u;
-    allocData.gpuAllocations.addAllocation(&svmAllocation);
-    auto svmAllocsManager = context->getL0Object()->getDriverHandle()->getSvmAllocsManager();
-    svmAllocsManager->insertSVMAlloc(allocData);
-    ASSERT_EQ(CL_SUCCESS, clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_SVM_PTRS, sizeof(void *), &svmPtr));
-    const NEO::ResidencyContainer expectedResidency{&svmAllocation};
-
-    capturingCmdList.getCmdContainer().clearResidencyContainer();
-    EXPECT_EQ(CL_SUCCESS, clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 2u, nullptr, globalWorkSize, localWorkSize, 0u, nullptr, nullptr));
-    EXPECT_EQ(expectedResidency, capturingCmdList.getCmdContainer().getResidencyContainer());
-
-    const size_t workgroupCount[3] = {4u, 2u, 1u};
-    capturingCmdList.getCmdContainer().clearResidencyContainer();
-    EXPECT_EQ(CL_SUCCESS, clEnqueueNDCountKernelINTEL(getCommandQueue(), kernel.get(), 2u, nullptr, workgroupCount, localWorkSize, 0u, nullptr, nullptr));
-    EXPECT_EQ(expectedResidency, capturingCmdList.getCmdContainer().getResidencyContainer());
-
-    recordedCmdList.getCmdContainer().clearResidencyContainer();
-    EXPECT_EQ(CL_SUCCESS, recordKernel(globalWorkSize, localWorkSize, nullptr));
-    EXPECT_EQ(expectedResidency, recordedCmdList.getCmdContainer().getResidencyContainer());
-
-    svmAllocsManager->removeSVMAlloc(allocData);
 }
 
 TEST_F(LeoCommandBufferKernelTest, givenLaunchAppendFailureWhenRecordingNDRangeKernelThenErrorIsReturnedAndKernelIsNotRetained) {
