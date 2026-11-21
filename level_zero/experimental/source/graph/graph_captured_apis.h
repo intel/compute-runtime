@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/utilities/stackvec.h"
@@ -743,8 +744,15 @@ inline constexpr ze_mutable_graph_node_exp_flags_t allMutableGraphNodeFlagsExcep
 
 bool isGraphNodeDescriptorPresent(const void *pNext);
 bool areGraphNodeDescriptorFlagsSupported(ze_command_list_handle_t hCommandList, const void *pNext);
-void updateClonedGraphNodeHandlePointer(void *clonedPNext, ze_graph_node_handle_t *phNodeHandle);
 void updateGraphNodeReferences(ze_graph_node_handle_t graphNodeHandle, ze_group_count_t *groupCounts, ze_group_size_t *groupSizes);
+
+struct CapturedLaunchKernelState : NEO::NonCopyableAndNonMovableClass {
+    ~CapturedLaunchKernelState();
+    void *clonedPNext = nullptr;
+    ze_graph_node_handle_t graphNodeHandle = nullptr;
+};
+
+static_assert(NEO::NonCopyableAndNonMovable<CapturedLaunchKernelState>);
 
 template <CaptureApi api, typename... TArgs>
     requires IsGraphNodeCreatingApi<api>
@@ -1570,22 +1578,9 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&other) noexcept
-            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
-              groupCounts(other.groupCounts),
-              clonedPNext(std::exchange(other.clonedPNext, nullptr)),
-              capturedKernel(std::move(other.capturedKernel)),
-              graphNodeHandle(other.graphNodeHandle) {
-            if (nullptr != this->graphNodeHandle) {
-                updateClonedGraphNodeHandlePointer(this->clonedPNext, &this->graphNodeHandle);
-            }
-        }
-        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
-        ~IndirectArgs();
         ze_group_count_t groupCounts;
-        void *clonedPNext = nullptr;
         std::unique_ptr<KernelImp> capturedKernel;
-        ze_graph_node_handle_t graphNodeHandle = nullptr;
+        std::unique_ptr<CapturedLaunchKernelState> capturedLaunchKernelState;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {
@@ -1604,8 +1599,8 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> {
     }
 
     auto linkGraphNode() -> void {
-        if (nullptr != this->indirectArgs.graphNodeHandle) {
-            updateGraphNodeReferences(this->indirectArgs.graphNodeHandle, &this->indirectArgs.groupCounts, nullptr);
+        if (const auto *state = this->indirectArgs.capturedLaunchKernelState.get(); (nullptr != state) && (nullptr != state->graphNodeHandle)) {
+            updateGraphNodeReferences(state->graphNodeHandle, &this->indirectArgs.groupCounts, nullptr);
         }
     }
 
@@ -1631,22 +1626,9 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
 
     struct IndirectArgs : IndirectArgsWithWaitEvents {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage);
-        IndirectArgs(IndirectArgs &&other) noexcept
-            : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
-              clonedPNext(std::exchange(other.clonedPNext, nullptr)),
-              argumentsId(other.argumentsId),
-              capturedKernel(std::move(other.capturedKernel)),
-              graphNodeHandle(other.graphNodeHandle) {
-            if (nullptr != this->graphNodeHandle) {
-                updateClonedGraphNodeHandlePointer(this->clonedPNext, &this->graphNodeHandle);
-            }
-        }
-        IndirectArgs &operator=(IndirectArgs &&other) noexcept;
-        ~IndirectArgs();
-        void *clonedPNext = nullptr;
         ClosureExternalStorage::KernelArgumentsId argumentsId = ClosureExternalStorage::invalidKernelArgumentsId;
         std::unique_ptr<KernelImp> capturedKernel;
-        ze_graph_node_handle_t graphNodeHandle = nullptr;
+        std::unique_ptr<CapturedLaunchKernelState> capturedLaunchKernelState;
     } indirectArgs;
 
     Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {
@@ -1665,8 +1647,8 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
     }
 
     auto linkGraphNode() -> void {
-        if (nullptr != this->indirectArgs.graphNodeHandle) {
-            updateGraphNodeReferences(this->indirectArgs.graphNodeHandle, &this->apiArgs.groupCounts, &this->apiArgs.groupSizes);
+        if (const auto *state = this->indirectArgs.capturedLaunchKernelState.get(); (nullptr != state) && (nullptr != state->graphNodeHandle)) {
+            updateGraphNodeReferences(state->graphNodeHandle, &this->apiArgs.groupCounts, &this->apiArgs.groupSizes);
         }
     }
 

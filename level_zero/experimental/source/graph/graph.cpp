@@ -927,7 +927,7 @@ inline const ze_graph_node_exp_desc_t *findGraphNodeDescriptor(const void *pNext
     return nullptr;
 }
 
-void updateClonedGraphNodeHandlePointer(void *clonedPNext, ze_graph_node_handle_t *phNodeHandle) {
+inline void updateClonedGraphNodeHandlePointer(void *clonedPNext, ze_graph_node_handle_t *phNodeHandle) {
     auto clonedGraphNodeDesc = const_cast<ze_graph_node_exp_desc_t *>(findGraphNodeDescriptor(clonedPNext));
     UNRECOVERABLE_IF(nullptr == clonedGraphNodeDesc);
     clonedGraphNodeDesc->phNodeHandle = phNodeHandle;
@@ -939,13 +939,13 @@ void updateGraphNodeReferences(ze_graph_node_handle_t graphNodeHandle, ze_group_
     graphNode->setGroupSizes(groupSizes);
 }
 
-inline ze_result_t createLaunchKernelGraphNode(const void *pNext, void *clonedPNext, ze_graph_node_handle_t &graphNodeHandle, KernelImp *kernel, ClosureExternalStorage &externalStorage) {
+inline ze_result_t createLaunchKernelGraphNode(const void *pNext, CapturedLaunchKernelState &state, KernelImp *kernel, ClosureExternalStorage &externalStorage) {
     auto graphNodeDesc = findGraphNodeDescriptor(pNext);
     if (nullptr == graphNodeDesc) {
         return ZE_RESULT_SUCCESS;
     }
     if (false == externalStorage.graphNodeCreationEnabled) {
-        updateClonedGraphNodeHandlePointer(clonedPNext, nullptr);
+        updateClonedGraphNodeHandlePointer(state.clonedPNext, nullptr);
         return ZE_RESULT_SUCCESS;
     }
     if (nullptr == graphNodeDesc->phNodeHandle) {
@@ -953,9 +953,9 @@ inline ze_result_t createLaunchKernelGraphNode(const void *pNext, void *clonedPN
     }
     auto graphNode = std::make_unique<GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, graphNodeDesc->flags);
     graphNode->setKernel(kernel);
-    graphNodeHandle = graphNode->toHandle();
-    *graphNodeDesc->phNodeHandle = graphNodeHandle;
-    updateClonedGraphNodeHandlePointer(clonedPNext, &graphNodeHandle);
+    state.graphNodeHandle = graphNode->toHandle();
+    *graphNodeDesc->phNodeHandle = state.graphNodeHandle;
+    updateClonedGraphNodeHandlePointer(state.clonedPNext, &state.graphNodeHandle);
 
     externalStorage.graphNode = std::move(graphNode);
     return ZE_RESULT_SUCCESS;
@@ -1310,49 +1310,36 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect
     return result;
 }
 
-Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
+CapturedLaunchKernelState::~CapturedLaunchKernelState() {
+    CommandList::freeClonedAppendKernelExtensions(this->clonedPNext);
+}
+
+Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage), capturedLaunchKernelState(std::make_unique<CapturedLaunchKernelState>()) {
     this->groupCounts = *apiArgs.pGroupCounts;
 
-    externalStorage.lastResult = CommandList::cloneAppendKernelExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->clonedPNext);
+    auto &state = *this->capturedLaunchKernelState;
+    externalStorage.lastResult = CommandList::cloneAppendKernelExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), state.clonedPNext);
     if (externalStorage.lastResult == ZE_RESULT_SUCCESS) {
         auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
         this->capturedKernel = kernel->makeDependentClone();
-        externalStorage.lastResult = createLaunchKernelGraphNode(apiArgs.pNext, this->clonedPNext, this->graphNodeHandle, this->capturedKernel.get(), externalStorage);
+        externalStorage.lastResult = createLaunchKernelGraphNode(apiArgs.pNext, state, this->capturedKernel.get(), externalStorage);
     }
-}
-
-auto Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs::operator=(IndirectArgs &&other) noexcept -> IndirectArgs & {
-    if (this != &other) {
-        IndirectArgsWithWaitEvents::operator=(std::move(static_cast<IndirectArgsWithWaitEvents &>(other)));
-        groupCounts = other.groupCounts;
-        CommandList::freeClonedAppendKernelExtensions(clonedPNext);
-        clonedPNext = std::exchange(other.clonedPNext, nullptr);
-        capturedKernel = std::move(other.capturedKernel);
-        graphNodeHandle = other.graphNodeHandle;
-        if (nullptr != graphNodeHandle) {
-            updateClonedGraphNodeHandlePointer(clonedPNext, &graphNodeHandle);
-        }
-    }
-    return *this;
-}
-
-Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs::~IndirectArgs() {
-    CommandList::freeClonedAppendKernelExtensions(this->clonedPNext);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ClosureInstantiateContext &instantiateContext, std::optional<EventParams> enforcedEvents) const {
     auto eventParams = getEffectiveEventParams<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(apiArgs, indirectArgs, externalStorage, enforcedEvents, instantiateContext, {false, false});
-    if (auto ret = handleGraphNodeCommandWithExternalCbWaitEvents(this->indirectArgs.graphNodeHandle, eventParams.numWaitEvents, eventParams.phWaitEvents, instantiateContext, executionTarget); ZE_RESULT_SUCCESS != ret) {
+    if (auto ret = handleGraphNodeCommandWithExternalCbWaitEvents(this->indirectArgs.capturedLaunchKernelState->graphNodeHandle, eventParams.numWaitEvents, eventParams.phWaitEvents, instantiateContext, executionTarget); ZE_RESULT_SUCCESS != ret) {
         return ret;
     }
     auto *kernelHandle = this->indirectArgs.capturedKernel.get();
-    auto result = zeCommandListAppendLaunchKernelWithParameters(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), kernelHandle, &indirectArgs.groupCounts, indirectArgs.clonedPNext, eventParams.hSignalEvent, eventParams.numWaitEvents, eventParams.phWaitEvents);
+    auto result = zeCommandListAppendLaunchKernelWithParameters(resolveExecutionTargetForInstantiate(executionTarget, this->apiArgs.hCommandList), kernelHandle, &this->indirectArgs.groupCounts, this->indirectArgs.capturedLaunchKernelState->clonedPNext, eventParams.hSignalEvent, eventParams.numWaitEvents, eventParams.phWaitEvents);
     handleExternalCbSignalEvent(L0::Event::fromHandle(eventParams.hSignalEvent), instantiateContext);
     return result;
 }
 
-Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage) {
-    externalStorage.lastResult = CommandList::cloneAppendKernelExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), this->clonedPNext);
+Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs::IndirectArgs(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : IndirectArgsWithWaitEvents(apiArgs, externalStorage), capturedLaunchKernelState(std::make_unique<CapturedLaunchKernelState>()) {
+    auto &state = *this->capturedLaunchKernelState;
+    externalStorage.lastResult = CommandList::cloneAppendKernelExtensions(reinterpret_cast<const ze_base_desc_t *>(apiArgs.pNext), state.clonedPNext);
     if (externalStorage.lastResult == ZE_RESULT_SUCCESS) {
         auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
         externalStorage.lastResult = CommandList::setKernelState(kernel, apiArgs.groupSizes, apiArgs.pArguments);
@@ -1361,9 +1348,9 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs:
             this->argumentsId = externalStorage.registerKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), apiArgs.pArguments);
 
             this->capturedKernel = kernel->makeDependentClone();
-            externalStorage.lastResult = createLaunchKernelGraphNode(apiArgs.pNext, this->clonedPNext, this->graphNodeHandle, this->capturedKernel.get(), externalStorage);
-            if (nullptr != this->graphNodeHandle) {
-                auto graphNode = GraphNode::fromHandle(this->graphNodeHandle);
+            externalStorage.lastResult = createLaunchKernelGraphNode(apiArgs.pNext, state, this->capturedKernel.get(), externalStorage);
+            if (nullptr != state.graphNodeHandle) {
+                auto graphNode = GraphNode::fromHandle(state.graphNodeHandle);
                 graphNode->setArgumentsId(this->argumentsId);
                 graphNode->setExternalStorage(&externalStorage);
             }
@@ -1371,35 +1358,16 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs:
     }
 }
 
-auto Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs::operator=(IndirectArgs &&other) noexcept -> IndirectArgs & {
-    if (this != &other) {
-        IndirectArgsWithWaitEvents::operator=(std::move(static_cast<IndirectArgsWithWaitEvents &>(other)));
-        CommandList::freeClonedAppendKernelExtensions(clonedPNext);
-        clonedPNext = std::exchange(other.clonedPNext, nullptr);
-        argumentsId = other.argumentsId;
-        capturedKernel = std::move(other.capturedKernel);
-        graphNodeHandle = other.graphNodeHandle;
-        if (nullptr != graphNodeHandle) {
-            updateClonedGraphNodeHandlePointer(clonedPNext, &graphNodeHandle);
-        }
-    }
-    return *this;
-}
-
-Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs::~IndirectArgs() {
-    CommandList::freeClonedAppendKernelExtensions(this->clonedPNext);
-}
-
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ClosureInstantiateContext &instantiateContext, std::optional<EventParams> enforcedEvents) const {
     auto eventParams = getEffectiveEventParams<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(apiArgs, indirectArgs, externalStorage, enforcedEvents, instantiateContext, {false, false});
-    if (auto ret = handleGraphNodeCommandWithExternalCbWaitEvents(this->indirectArgs.graphNodeHandle, eventParams.numWaitEvents, eventParams.phWaitEvents, instantiateContext, executionTarget); ZE_RESULT_SUCCESS != ret) {
+    if (auto ret = handleGraphNodeCommandWithExternalCbWaitEvents(this->indirectArgs.capturedLaunchKernelState->graphNodeHandle, eventParams.numWaitEvents, eventParams.phWaitEvents, instantiateContext, executionTarget); ZE_RESULT_SUCCESS != ret) {
         return ret;
     }
     auto *kernelHandle = this->indirectArgs.capturedKernel.get();
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(kernelHandle));
     auto &explicitArgs = kernel->getKernelDescriptor().payloadMappings.explicitArgs;
     auto arguments = externalStorage.getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), this->indirectArgs.argumentsId);
-    auto result = zeCommandListAppendLaunchKernelWithArguments(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), kernelHandle, apiArgs.groupCounts, apiArgs.groupSizes, arguments.data(), this->indirectArgs.clonedPNext, eventParams.hSignalEvent, eventParams.numWaitEvents, eventParams.phWaitEvents);
+    auto result = zeCommandListAppendLaunchKernelWithArguments(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), kernelHandle, apiArgs.groupCounts, apiArgs.groupSizes, arguments.data(), this->indirectArgs.capturedLaunchKernelState->clonedPNext, eventParams.hSignalEvent, eventParams.numWaitEvents, eventParams.phWaitEvents);
     handleExternalCbSignalEvent(L0::Event::fromHandle(eventParams.hSignalEvent), instantiateContext);
     return result;
 }
@@ -1681,7 +1649,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
     auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(apiArgs, indirectArgs, externalStorage);
-    return cb(apiArgs.hCommandList, indirectArgs.capturedKernel.get(), &indirectArgs.groupCounts, indirectArgs.clonedPNext,
+    return cb(this->apiArgs.hCommandList, this->indirectArgs.capturedKernel.get(), &this->indirectArgs.groupCounts, this->indirectArgs.capturedLaunchKernelState->clonedPNext,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
@@ -1692,7 +1660,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::i
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(kernelHandle));
     auto &explicitArgs = kernel->getKernelDescriptor().payloadMappings.explicitArgs;
     auto arguments = externalStorage.getKernelArguments(explicitArgs, this->indirectArgs.argumentsId);
-    return cb(apiArgs.hCommandList, kernelHandle, apiArgs.groupCounts, apiArgs.groupSizes, arguments.data(), indirectArgs.clonedPNext,
+    return cb(this->apiArgs.hCommandList, kernelHandle, this->apiArgs.groupCounts, this->apiArgs.groupSizes, arguments.data(), this->indirectArgs.capturedLaunchKernelState->clonedPNext,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 

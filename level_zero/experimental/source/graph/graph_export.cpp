@@ -1016,7 +1016,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     addKernelInformation(params, closure.apiArgs.kernelHandle);
     params.emplace_back("groupCounts", formatGroupCount(closure.indirectArgs.groupCounts));
 
-    addLaunchKernelExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.clonedPNext);
+    addLaunchKernelExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.capturedLaunchKernelState->clonedPNext);
 
     addCommonEventParameters(params, closure, storage);
 
@@ -1032,7 +1032,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     params.emplace_back("groupSizes", formatGroupSize(closure.apiArgs.groupSizes));
     params.emplace_back("pArguments", formatPointer(static_cast<const void *>(closure.apiArgs.pArguments)));
 
-    addLaunchKernelExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.clonedPNext);
+    addLaunchKernelExtensionParameters(params, closure.apiArgs.pNext, closure.indirectArgs.capturedLaunchKernelState->clonedPNext);
 
     addCommonEventParameters(params, closure, storage);
 

@@ -640,7 +640,7 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenZeCommandListAppendLaunchKernelWithAr
     EXPECT_EQ(apiArgs.groupSizes.groupSizeZ, capture.groupSizes.groupSizeZ);
 }
 
-TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithParametersClosureWithGraphNodeWhenMovedThenClonedGraphNodeDescriptorAndGraphNodeReferencesFollowMoveTarget) {
+TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithParametersClosureWithGraphNodeWhenMovedThenGraphNodeHandleAddressIsStableAndGraphNodeReferencesFollowMoveTarget) {
     GraphsCleanupGuard graphCleanup;
 
     Mock<Module> module(this->device, nullptr);
@@ -669,33 +669,32 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithParametersClosureWith
     Closure<apiValue> closure(apiArgs, storage);
     ASSERT_EQ(ZE_RESULT_SUCCESS, storage.lastResult);
     ASSERT_NE(nullptr, nodeHandle);
-    EXPECT_EQ(nodeHandle, closure.indirectArgs.graphNodeHandle);
-    auto clonedGraphNodeDesc = static_cast<ze_graph_node_exp_desc_t *>(closure.indirectArgs.clonedPNext);
-    EXPECT_EQ(&closure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    const auto *capturedLaunchKernelState = closure.indirectArgs.capturedLaunchKernelState.get();
+    EXPECT_EQ(nodeHandle, capturedLaunchKernelState->graphNodeHandle);
+    auto clonedGraphNodeDesc = static_cast<ze_graph_node_exp_desc_t *>(capturedLaunchKernelState->clonedPNext);
+    EXPECT_EQ(&capturedLaunchKernelState->graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
     auto graphNode = L0::GraphNode::fromHandle(nodeHandle);
     EXPECT_EQ(&closure.indirectArgs.groupCounts, graphNode->getGroupCounts());
     EXPECT_EQ(nullptr, graphNode->getGroupSizes());
     EXPECT_EQ(closure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
 
     auto movedClosure = std::move(closure);
-    EXPECT_EQ(nodeHandle, movedClosure.indirectArgs.graphNodeHandle);
-    EXPECT_EQ(clonedGraphNodeDesc, movedClosure.indirectArgs.clonedPNext);
-    EXPECT_EQ(&movedClosure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    EXPECT_EQ(capturedLaunchKernelState, movedClosure.indirectArgs.capturedLaunchKernelState.get());
+    EXPECT_EQ(&capturedLaunchKernelState->graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
     EXPECT_EQ(&movedClosure.indirectArgs.groupCounts, graphNode->getGroupCounts());
     EXPECT_EQ(nullptr, graphNode->getGroupSizes());
     EXPECT_EQ(movedClosure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
 
     Closure<apiValue> assignedClosure(apiArgsWithoutGraphNode, storage);
     assignedClosure = std::move(movedClosure);
-    EXPECT_EQ(nodeHandle, assignedClosure.indirectArgs.graphNodeHandle);
-    EXPECT_EQ(clonedGraphNodeDesc, assignedClosure.indirectArgs.clonedPNext);
-    EXPECT_EQ(&assignedClosure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    EXPECT_EQ(capturedLaunchKernelState, assignedClosure.indirectArgs.capturedLaunchKernelState.get());
+    EXPECT_EQ(&capturedLaunchKernelState->graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
     EXPECT_EQ(&assignedClosure.indirectArgs.groupCounts, graphNode->getGroupCounts());
     EXPECT_EQ(nullptr, graphNode->getGroupSizes());
     EXPECT_EQ(assignedClosure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
 }
 
-TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithArgumentsClosureWithGraphNodeWhenMovedThenClonedGraphNodeDescriptorAndGraphNodeReferencesFollowMoveTarget) {
+TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithArgumentsClosureWithGraphNodeWhenMovedThenGraphNodeHandleAddressIsStableAndGraphNodeReferencesFollowMoveTarget) {
     GraphsCleanupGuard graphCleanup;
 
     Mock<Module> module(this->device, nullptr);
@@ -725,30 +724,102 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithArgumentsClosureWithG
     Closure<apiValue> closure(apiArgs, storage);
     ASSERT_EQ(ZE_RESULT_SUCCESS, storage.lastResult);
     ASSERT_NE(nullptr, nodeHandle);
-    EXPECT_EQ(nodeHandle, closure.indirectArgs.graphNodeHandle);
-    auto clonedGraphNodeDesc = static_cast<ze_graph_node_exp_desc_t *>(closure.indirectArgs.clonedPNext);
-    EXPECT_EQ(&closure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    const auto *capturedLaunchKernelState = closure.indirectArgs.capturedLaunchKernelState.get();
+    EXPECT_EQ(nodeHandle, capturedLaunchKernelState->graphNodeHandle);
+    auto clonedGraphNodeDesc = static_cast<ze_graph_node_exp_desc_t *>(capturedLaunchKernelState->clonedPNext);
+    EXPECT_EQ(&capturedLaunchKernelState->graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
     auto graphNode = L0::GraphNode::fromHandle(nodeHandle);
     EXPECT_EQ(&closure.apiArgs.groupCounts, graphNode->getGroupCounts());
     EXPECT_EQ(&closure.apiArgs.groupSizes, graphNode->getGroupSizes());
     EXPECT_EQ(closure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
 
     auto movedClosure = std::move(closure);
-    EXPECT_EQ(nodeHandle, movedClosure.indirectArgs.graphNodeHandle);
-    EXPECT_EQ(clonedGraphNodeDesc, movedClosure.indirectArgs.clonedPNext);
-    EXPECT_EQ(&movedClosure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    EXPECT_EQ(capturedLaunchKernelState, movedClosure.indirectArgs.capturedLaunchKernelState.get());
+    EXPECT_EQ(&capturedLaunchKernelState->graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
     EXPECT_EQ(&movedClosure.apiArgs.groupCounts, graphNode->getGroupCounts());
     EXPECT_EQ(&movedClosure.apiArgs.groupSizes, graphNode->getGroupSizes());
     EXPECT_EQ(movedClosure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
 
     Closure<apiValue> assignedClosure(apiArgsWithoutGraphNode, storage);
     assignedClosure = std::move(movedClosure);
-    EXPECT_EQ(nodeHandle, assignedClosure.indirectArgs.graphNodeHandle);
-    EXPECT_EQ(clonedGraphNodeDesc, assignedClosure.indirectArgs.clonedPNext);
-    EXPECT_EQ(&assignedClosure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    EXPECT_EQ(capturedLaunchKernelState, assignedClosure.indirectArgs.capturedLaunchKernelState.get());
+    EXPECT_EQ(&capturedLaunchKernelState->graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
     EXPECT_EQ(&assignedClosure.apiArgs.groupCounts, graphNode->getGroupCounts());
     EXPECT_EQ(&assignedClosure.apiArgs.groupSizes, graphNode->getGroupSizes());
     EXPECT_EQ(assignedClosure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithParametersClosureWithoutCapturedLaunchKernelStateWhenMovedThenGraphNodeReferencesAreNotUpdated) {
+    GraphsCleanupGuard graphCleanup;
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    L0::ClosureExternalStorage storage;
+    storage.graphNodeCreationEnabled = true;
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    constexpr auto apiValue = CaptureApi::zeCommandListAppendLaunchKernelWithParameters;
+    auto apiArgs = Closure<apiValue>::ApiArgs{
+        .hCommandList = immCmdListHandle,
+        .kernelHandle = kernel.toHandle(),
+        .pGroupCounts = &groupCount,
+        .pNext = &graphNodeDesc,
+        .hSignalEvent = nullptr,
+        .numWaitEvents = 0,
+        .phWaitEvents = nullptr};
+
+    Closure<apiValue> closure(apiArgs, storage);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, storage.lastResult);
+    ASSERT_NE(nullptr, nodeHandle);
+    auto graphNode = L0::GraphNode::fromHandle(nodeHandle);
+    const auto *capturedGroupCounts = &closure.indirectArgs.groupCounts;
+    closure.indirectArgs.capturedLaunchKernelState.reset();
+
+    auto movedClosure = std::move(closure);
+    EXPECT_EQ(capturedGroupCounts, graphNode->getGroupCounts());
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithArgumentsClosureWithoutCapturedLaunchKernelStateWhenMovedThenGraphNodeReferencesAreNotUpdated) {
+    GraphsCleanupGuard graphCleanup;
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    L0::ClosureExternalStorage storage;
+    storage.graphNodeCreationEnabled = true;
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+
+    constexpr auto apiValue = CaptureApi::zeCommandListAppendLaunchKernelWithArguments;
+    auto apiArgs = Closure<apiValue>::ApiArgs{
+        .hCommandList = immCmdListHandle,
+        .kernelHandle = kernel.toHandle(),
+        .groupCounts = {1, 1, 1},
+        .groupSizes = {1, 1, 1},
+        .pArguments = nullptr,
+        .pNext = &graphNodeDesc,
+        .hSignalEvent = nullptr,
+        .numWaitEvents = 0,
+        .phWaitEvents = nullptr};
+
+    Closure<apiValue> closure(apiArgs, storage);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, storage.lastResult);
+    ASSERT_NE(nullptr, nodeHandle);
+    auto graphNode = L0::GraphNode::fromHandle(nodeHandle);
+    const auto *capturedGroupCounts = &closure.apiArgs.groupCounts;
+    const auto *capturedGroupSizes = &closure.apiArgs.groupSizes;
+    closure.indirectArgs.capturedLaunchKernelState.reset();
+
+    auto movedClosure = std::move(closure);
+    EXPECT_EQ(capturedGroupCounts, graphNode->getGroupCounts());
+    EXPECT_EQ(capturedGroupSizes, graphNode->getGroupSizes());
 }
 
 TEST_F(GraphTestApiInstantiate, GivenInvalidSourceGraphThenInstantiateGraphReturnsError) {
@@ -2651,8 +2722,8 @@ TEST_F(GraphInstantiationValidation, GivenFlatCaptureWhenCapturingAppendKernelsW
     ASSERT_EQ(2u, flatCapture.commands.size());
     for (const auto &command : flatCapture.commands) {
         const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendLaunchKernelWithParameters)>(command);
-        EXPECT_EQ(nullptr, closure.indirectArgs.graphNodeHandle);
-        EXPECT_EQ(nullptr, static_cast<const ze_graph_node_exp_desc_t *>(closure.indirectArgs.clonedPNext)->phNodeHandle);
+        EXPECT_EQ(nullptr, closure.indirectArgs.capturedLaunchKernelState->graphNodeHandle);
+        EXPECT_EQ(nullptr, static_cast<const ze_graph_node_exp_desc_t *>(closure.indirectArgs.capturedLaunchKernelState->clonedPNext)->phNodeHandle);
     }
 }
 
