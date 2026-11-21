@@ -1236,6 +1236,63 @@ TEST(GraphDumpHelperTest, GivenLaunchKernelExtensionWhenAddLaunchKernelExtension
     EXPECT_EQ(params[2].second, "true");
 }
 
+TEST(GraphDumpHelperTest, GivenGraphNodeDescriptorWithCreatedNodeWhenAddLaunchKernelExtensionParametersIsCalledThenDescriptorFlagsAndResolvedNodeHandleTypeAndFlagsAreFilled) {
+    constexpr ze_mutable_graph_node_exp_flags_t descriptorFlags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT;
+    constexpr ze_mutable_graph_node_exp_flags_t graphNodeFlags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE;
+    L0::GraphNode graphNode{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, graphNodeFlags};
+    ze_graph_node_handle_t graphNodeHandle = graphNode.toHandle();
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.flags = descriptorFlags;
+    graphNodeDesc.phNodeHandle = &graphNodeHandle;
+
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &graphNodeDesc, &graphNodeDesc);
+
+    ASSERT_EQ(6U, params.size());
+    EXPECT_EQ("graphNode.stype", params[1].first);
+    EXPECT_EQ(L0::GraphDumpHelper::formatStructureExtType(graphNodeDesc.stype), params[1].second);
+    EXPECT_EQ("graphNode.flags", params[2].first);
+    EXPECT_EQ(L0::GraphDumpHelper::formatFlags(descriptorFlags), params[2].second);
+    EXPECT_EQ("graphNode.phNodeHandle", params[3].first);
+    EXPECT_EQ(L0::GraphDumpHelper::formatPointer(graphNodeHandle), params[3].second);
+    EXPECT_EQ("graphNode.phNodeHandle.type", params[4].first);
+    EXPECT_EQ(std::to_string(static_cast<uint32_t>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL)), params[4].second);
+    EXPECT_EQ("graphNode.phNodeHandle.flags", params[5].first);
+    EXPECT_EQ(L0::GraphDumpHelper::formatFlags(graphNodeFlags), params[5].second);
+}
+
+TEST(GraphDumpHelperTest, GivenGraphNodeDescriptorWithoutNodeHandlePointerWhenAddLaunchKernelExtensionParametersIsCalledThenResolvedNodeHandleIsNullptrAndNodeTypeAndFlagsAreNotFilled) {
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &graphNodeDesc, &graphNodeDesc);
+
+    ASSERT_EQ(4U, params.size());
+    EXPECT_EQ("graphNode.stype", params[1].first);
+    EXPECT_EQ("graphNode.flags", params[2].first);
+    EXPECT_EQ(L0::GraphDumpHelper::formatFlags(0u), params[2].second);
+    EXPECT_EQ("graphNode.phNodeHandle", params[3].first);
+    EXPECT_EQ("nullptr", params[3].second);
+}
+
+TEST(GraphDumpHelperTest, GivenMutableKernelDataDescriptorWhenAddLaunchKernelExtensionParametersIsCalledThenNumKernelsAndKernelGroupPointerAreFilled) {
+    ze_kernel_handle_t kernelGroup[2] = {};
+    ze_mutable_kernel_data_exp_desc_t mutableKernelDataDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_DATA_EXP_DESC};
+    mutableKernelDataDesc.numKernels = 2u;
+    mutableKernelDataDesc.phKernelGroup = kernelGroup;
+
+    std::vector<std::pair<std::string, std::string>> params;
+    GraphDumpHelper::addLaunchKernelExtensionParameters(params, &mutableKernelDataDesc, &mutableKernelDataDesc);
+
+    ASSERT_EQ(4U, params.size());
+    EXPECT_EQ("mutableKernelData.stype", params[1].first);
+    EXPECT_EQ(L0::GraphDumpHelper::formatStructureExtType(mutableKernelDataDesc.stype), params[1].second);
+    EXPECT_EQ("mutableKernelData.numKernels", params[2].first);
+    EXPECT_EQ("2", params[2].second);
+    EXPECT_EQ("mutableKernelData.phKernelGroup", params[3].first);
+    EXPECT_EQ(L0::GraphDumpHelper::formatPointer(kernelGroup), params[3].second);
+}
+
 TEST(GraphDumpHelperTest, GivenUnknownLaunchKernelExtensionWhenAddLaunchKernelExtensionParametersIsCalledThenParamsAreFilledProperly) {
     ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32, nullptr};
 

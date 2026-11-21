@@ -689,6 +689,22 @@ void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::
             const auto *cooperativeDesc = reinterpret_cast<const ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(baseDesc);
             params.emplace_back("cooperative.stype", stypeValue);
             params.emplace_back("cooperative.isCooperative", (cooperativeDesc->isCooperative != 0) ? "true" : "false");
+        } else if (baseDesc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC) {
+            const auto *graphNodeDesc = reinterpret_cast<const ze_graph_node_exp_desc_t *>(baseDesc);
+            const ze_graph_node_handle_t graphNodeHandle = (nullptr != graphNodeDesc->phNodeHandle) ? *graphNodeDesc->phNodeHandle : nullptr;
+            params.emplace_back("graphNode.stype", stypeValue);
+            params.emplace_back("graphNode.flags", formatFlags(graphNodeDesc->flags));
+            params.emplace_back("graphNode.phNodeHandle", formatPointer(graphNodeHandle));
+            if (nullptr != graphNodeHandle) {
+                const auto *graphNode = GraphNode::fromHandle(graphNodeHandle);
+                params.emplace_back("graphNode.phNodeHandle.type", std::to_string(static_cast<uint32_t>(graphNode->getType())));
+                params.emplace_back("graphNode.phNodeHandle.flags", formatFlags(graphNode->getFlags()));
+            }
+        } else if (baseDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_DATA_EXP_DESC) {
+            const auto *mutableKernelDataDesc = reinterpret_cast<const ze_mutable_kernel_data_exp_desc_t *>(baseDesc);
+            params.emplace_back("mutableKernelData.stype", stypeValue);
+            params.emplace_back("mutableKernelData.numKernels", std::to_string(mutableKernelDataDesc->numKernels));
+            params.emplace_back("mutableKernelData.phKernelGroup", formatPointer(mutableKernelDataDesc->phKernelGroup));
         } else {
             addLaunchKernelAdditionalExtensionParameters(params, baseDesc);
         }

@@ -257,6 +257,10 @@ struct GraphNode : _ze_graph_node_handle_t {
         return ZE_RESULT_SUCCESS;
     }
 
+    auto getType() const -> ze_graph_node_exp_type_t {
+        return this->type;
+    }
+
     auto getFlags() const -> ze_mutable_graph_node_exp_flags_t {
         return this->flags;
     }
