@@ -64,6 +64,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
                                                                            multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
 
     bool anyLocalMemorySupported = false;
+    bool sharedSystemUsmSupported = false;
     const auto rootEnvCount = executionEnvironment.rootDeviceEnvironments.size();
 
     defaultEngineIndex.resize(rootEnvCount);
@@ -87,7 +88,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         gfxPartitions.push_back(std::make_unique<GfxPartition>(reservedCpuAddressRange));
 
         anyLocalMemorySupported |= this->localMemorySupported[rootDeviceIndex];
-
+        sharedSystemUsmSupported |= Device::areSharedSystemAllocationsAllowed(*hwInfo);
         auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration(*hwInfo);
         heapAssigners.push_back(std::make_unique<HeapAssigner>(globalHeap));
         localMemAllocsSize[rootDeviceIndex].store(0u);
@@ -97,7 +98,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         initPageFaultManager();
     }
 
-    if (anyLocalMemorySupported) {
+    if (anyLocalMemorySupported || sharedSystemUsmSupported) {
         prefetchManager = PrefetchManager::create();
     }
 

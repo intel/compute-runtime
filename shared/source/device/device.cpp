@@ -885,11 +885,15 @@ Debugger *Device::getDebugger() const {
 }
 
 bool Device::areSharedSystemAllocationsAllowed() const {
+    return Device::areSharedSystemAllocationsAllowed(this->getHardwareInfo());
+}
+
+bool Device::areSharedSystemAllocationsAllowed(const HardwareInfo &hwInfo) {
     if ((debugManager.flags.EnableRecoverablePageFaults.get() == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() == 0)) {
         return false;
     }
     uint64_t mask = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
-    if (getHardwareInfo().capabilityTable.sharedSystemMemCapabilities & mask) {
+    if (hwInfo.capabilityTable.sharedSystemMemCapabilities & mask) {
         return true;
     }
     return false;

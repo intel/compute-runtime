@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/program_initialization.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
@@ -227,6 +228,42 @@ TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivat
     EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::privateSurface));
     EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::linearStream));
     EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::internalHeap));
+}
+
+TEST(MemoryManagerTest, givenDeviceWithLocalMemoryNotEnabledAndSharedSystemUsmNotEnabledThenPrefetchManagerNotCreated) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableLocalMemory.set(0);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo->capabilityTable.sharedSystemMemCapabilities = 0;
+    MockMemoryManager memoryManager(executionEnvironment);
+    auto prefetchManager = memoryManager.getPrefetchManager();
+    EXPECT_EQ(prefetchManager, nullptr);
+}
+
+TEST(MemoryManagerTest, givenDeviceWithLocalMemoryEnabledThenPrefetchManagerCreated) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo->capabilityTable.sharedSystemMemCapabilities = 0;
+    MockMemoryManager memoryManager(executionEnvironment);
+    auto prefetchManager = memoryManager.getPrefetchManager();
+    EXPECT_NE(prefetchManager, nullptr);
+}
+
+TEST(MemoryManagerTest, givenDeviceSharedSystemUsmEnabledThenPrefetchManagerCreated) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableLocalMemory.set(0);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo->capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    MockMemoryManager memoryManager(executionEnvironment);
+    auto prefetchManager = memoryManager.getPrefetchManager();
+    EXPECT_NE(prefetchManager, nullptr);
 }
 
 TEST(MemoryManagerTest, givenAllocationWithNullCpuPtrThenMemoryCopyToAllocationReturnsFalse) {

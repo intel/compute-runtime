@@ -21,6 +21,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -215,6 +216,34 @@ struct DeviceWithDisabledL0DebuggerTests : public DeviceFixture, public ::testin
 
 TEST_F(DeviceWithDisabledL0DebuggerTests, givenSetFlagDisableSupportForL0DebuggerWhenCreateDeviceThenCapabilityL0DebuggerSupportedIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.l0DebuggerSupported);
+}
+
+TEST(Device, givenDeviceWithSharedSystemUsmAccessCapabilitiesThenQueryFunctionReturnsTrue) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    EXPECT_TRUE(Device::areSharedSystemAllocationsAllowed(hwInfo));
+}
+
+TEST(Device, givenDeviceWithDebugFlagForPageFaultsDisabledThenSharedSystemAllocationsAllowedFunctionReturnsFalse) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableRecoverablePageFaults.set(0);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    EXPECT_FALSE(Device::areSharedSystemAllocationsAllowed(hwInfo));
+}
+
+TEST(Device, givenDeviceWithDebugFlagForSharedSystemUsmDisabledThenSharedSystemAllocationsAllowedFunctionReturnsFalse) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.sharedSystemMemCapabilities = (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+    EXPECT_FALSE(Device::areSharedSystemAllocationsAllowed(hwInfo));
+}
+
+TEST(Device, givenDeviceWithoutSharedSystemUsmAccessCapabilitiesThenQueryFunctionReturnsFalse) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.sharedSystemMemCapabilities = 0;
+    EXPECT_FALSE(Device::areSharedSystemAllocationsAllowed(hwInfo));
 }
 
 TEST(Device, givenDeviceWithBrandingStringNameWhenGettingDeviceNameThenBrandingStringIsReturned) {

@@ -175,6 +175,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     bool isBcsSplitSupported();
     bool isInitDeviceWithFirstSubmissionSupported(CommandStreamReceiverType csrType);
     bool areSharedSystemAllocationsAllowed() const;
+    static bool areSharedSystemAllocationsAllowed(const HardwareInfo &hwInfo);
     template <typename SpecializedDeviceT>
     void setSpecializedDevice(SpecializedDeviceT *specializedDevice) {
         this->specializedDevice = reinterpret_cast<uintptr_t>(specializedDevice);
