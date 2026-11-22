@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,15 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
+#include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gmm_memory.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "per_product_test_definitions.h"
 
 using namespace NEO;
 

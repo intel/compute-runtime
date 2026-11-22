@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,14 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
+#include "shared/source/xe_hpc_core/hw_info_xe_hpc_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
-#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
+
+#include "per_product_test_definitions.h"
 
 using DirectSubmissionTestXeHpcCore = Test<DirectSubmissionFixture>;
 

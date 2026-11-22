@@ -5,13 +5,17 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/xe3_core/hw_cmds_base.h"
+#include "shared/source/xe3_core/hw_info_xe3_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include "per_product_test_definitions.h"
 
 namespace NEO {
 class Device;

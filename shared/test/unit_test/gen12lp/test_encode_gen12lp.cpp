@@ -9,9 +9,12 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "per_product_test_definitions.h"
 using namespace NEO;
 
 using CommandEncodeGen12LpTest = ::testing::Test;

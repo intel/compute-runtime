@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,14 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/xe3p_core/hw_cmds_base.h"
+#include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
+
+#include "per_product_test_definitions.h"
 
 using namespace NEO;
 

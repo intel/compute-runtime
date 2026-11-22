@@ -6,13 +6,16 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "per_product_test_definitions.h"
 
 using namespace NEO;
 

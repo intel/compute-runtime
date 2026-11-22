@@ -15,6 +15,8 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/xe3p_core/hw_cmds_base.h"
+#include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -22,9 +24,9 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
 #include "metrics_library_api_1_0.h"
+#include "per_product_test_definitions.h"
 
 using GfxCoreHelperTestsXe3pCore = GfxCoreHelperTest;
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGettingMetricsLibraryGenIdThenXe3pIsReturned) {

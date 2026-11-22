@@ -8,6 +8,8 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/xe3p_core/hw_cmds_base.h"
+#include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -15,7 +17,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 #include "per_product_test_definitions.h"

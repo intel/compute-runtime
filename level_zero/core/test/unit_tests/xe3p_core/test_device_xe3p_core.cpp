@@ -7,13 +7,17 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/xe3p_core/hw_cmds_base.h"
+#include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+
+#include "per_product_test_definitions.h"
 
 namespace L0 {
 namespace ult {

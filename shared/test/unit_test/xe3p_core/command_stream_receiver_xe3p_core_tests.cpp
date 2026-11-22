@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/utilities/software_tags_manager.h"
+#include "shared/source/xe3p_core/hw_cmds_base.h"
+#include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -14,7 +16,8 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "per_product_test_definitions.h"
 
 using namespace NEO;
 

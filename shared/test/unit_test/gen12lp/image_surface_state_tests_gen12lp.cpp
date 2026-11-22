@@ -6,12 +6,15 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
+
+#include "per_product_test_definitions.h"
 
 using namespace NEO;
 

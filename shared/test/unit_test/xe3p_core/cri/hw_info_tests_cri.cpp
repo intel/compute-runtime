@@ -9,12 +9,12 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/xe3p_core/hw_cmds_base.h"
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
 #include "per_product_test_definitions.h"
 

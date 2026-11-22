@@ -7,13 +7,16 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "per_product_test_definitions.h"
 
 using namespace NEO;
 

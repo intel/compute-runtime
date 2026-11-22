@@ -7,12 +7,15 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "per_product_test_definitions.h"
 
 using namespace NEO;
 
