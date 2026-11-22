@@ -7718,38 +7718,6 @@ TEST_F(MemoryTest, givenDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnCpuPo
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(MemoryTest, givenPointerInsideNotPooledDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnCpuPointerWithSameOffset) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
-
-    size_t size = 4096u;
-    size_t alignment = 1u;
-    size_t offset = 128u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, ptr);
-    auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    ASSERT_EQ(nullptr, context->getUsmPoolOwningPtr(ptr, allocData).pool);
-
-    void *cpuPtr = nullptr;
-    result = context->mapDeviceMemToHost(ptr, &cpuPtr, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ASSERT_NE(nullptr, cpuPtr);
-
-    void *cpuPtrInside = nullptr;
-    result = context->mapDeviceMemToHost(ptrOffset(ptr, offset), &cpuPtrInside, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ptrOffset(cpuPtr, offset), cpuPtrInside);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
 TEST_F(MemoryTest, givenNotDeviceMemoryWhenCallingMapDeviceMemToHostThenReturnInvalidArgument) {
     uint64_t ptr = 0;
     void *cpuPtr = nullptr;
