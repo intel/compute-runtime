@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/driver_info.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/api/leo_dispatch.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.inl"

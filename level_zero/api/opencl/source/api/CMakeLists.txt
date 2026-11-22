@@ -25,6 +25,7 @@ set(LEO_API_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_cl_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_dispatch.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_dispatch.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_dispatch_handles.h
 )
 target_sources(${L0_STATIC_LIB_NAME} PRIVATE ${LEO_API_SRCS})
 set_property(GLOBAL PROPERTY LEO_API_SRCS ${LEO_API_SRCS})

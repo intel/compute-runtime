@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/api/opencl/source/api/leo_dispatch.h"
+#include "level_zero/api/opencl/source/api/leo_dispatch_handles.h"
 
 struct ClDispatch {
     SEntryPointsTable dispatch;

@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/api/opencl/source/api/leo_dispatch.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_cl_gl_api_intel.h"
 #include "level_zero/api/opencl/source/sharings/gl/linux/leo_gl_sharing_linux.h"

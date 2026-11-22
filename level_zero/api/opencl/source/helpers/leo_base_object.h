@@ -11,7 +11,9 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
-#include "level_zero/api/opencl/source/api/leo_dispatch.h"
+#include "level_zero/api/opencl/source/api/leo_dispatch_handles.h"
+
+#include "CL/cl.h"
 
 #include <mutex>
 

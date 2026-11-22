@@ -10,6 +10,10 @@
 #include "level_zero/api/opencl/source/sharings/leo_sharing.h"
 #include "level_zero/core/source/image/image_imp.h"
 
+#ifdef LIBVA
+#include "CL/cl_va_api_media_sharing_intel.h"
+#endif
+
 void NEO::LEO::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
     switch (paramName) {
 #ifdef LIBVA

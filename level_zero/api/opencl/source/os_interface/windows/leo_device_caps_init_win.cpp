@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 
+#include "level_zero/api/opencl/source/api/leo_dispatch.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 
 namespace NEO {

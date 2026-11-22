@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
+#include "level_zero/api/opencl/source/api/leo_dispatch.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/os_interface/windows/leo_d3d_sharing_functions.h"
 #include "level_zero/api/opencl/source/sharings/d3d/leo_cl_d3d_api.h"

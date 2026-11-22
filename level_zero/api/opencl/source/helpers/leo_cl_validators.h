@@ -9,6 +9,8 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_error_mappers.h"
 
+#include "CL/cl_ext.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <limits>
