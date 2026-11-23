@@ -6687,6 +6687,35 @@ TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenWindowRelocationAndChunkW
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPatIndexProgrammingSupportedWhenCreateHostAllocationFromMultipleSharedHandlesThenPatIndexIsQueriedWithGmmOfEachBufferObject) {
+    drm->vmBindPatIndexProgrammingSupported = true;
+    installSystemMemoryInfo();
+    constexpr size_t chunkSize = 2 * MemoryConstants::pageSize;
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(chunkSize));
+    setAnonymousMmapFunctions(*memoryManager);
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+    mockClientContext->getPatIndexQueryCalled = 0u;
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    ASSERT_EQ(handles.size(), gfxAllocation->getNumGmms());
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        auto gmm = gfxAllocation->getGmm(handleId);
+        ASSERT_NE(nullptr, gmm);
+        EXPECT_FALSE(gmm->isCompressionEnabled());
+        EXPECT_EQ(chunkSize, gmm->gmmResourceInfo->getSizeAllocation());
+    }
+    EXPECT_EQ(handles.size(), mockClientContext->getPatIndexQueryCalled);
+    EXPECT_EQ(gfxAllocation->getGmm(1)->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
 TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenWholeObjectMmapFailingWhenCreateHostAllocationFromMultipleSharedHandlesWithOffsetThenNullptrIsReturned) {
     static uint8_t hostRangeBuffer[4 * MemoryConstants::pageSize] = {};
     drm->bindAvailable = true;

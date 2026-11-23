@@ -1869,6 +1869,7 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
     }
     auto ioctlHelper = drm.getIoctlHelper();
     const auto memoryPool = MemoryPool::system4KBPages;
+    const bool isSystemMemory = MemoryPoolHelper::isSystemMemoryPool(memoryPool);
     // Folding is safe here: the importer reserves the whole object extent itself, but only for one object.
     const bool relocateWindows = ioctlHelper->isMmapWindowRelocationSupported();
     const bool foldOffset = !relocateWindows;
@@ -1920,6 +1921,8 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
     const uint64_t reportedGpuAddress = foldOffset ? (reinterpret_cast<uint64_t>(cpuBase) + chunks[0].offset) : reinterpret_cast<uint64_t>(cpuBase);
 
     BufferObjects bos;
+    std::vector<std::unique_ptr<Gmm>> gmms;
+    gmms.reserve(chunks.size());
     uint64_t runningAddress = reinterpret_cast<uint64_t>(cpuBase);
     bool failed = false;
     // Owns its GEM handle but was never pushed, so it is released with the pushed ones after unlocking.
@@ -1937,7 +1940,9 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
         }
         const int boHandle = static_cast<int>(openFd.handle);
 
-        auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
+        auto gmm = drm.createBufferGmm(properties.allocationType, CachePolicy::writeBack, isSystemMemory, chunk.size);
+        auto patIndex = drm.getPatIndex(gmm.get(), properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemory, false);
+        gmms.push_back(std::move(gmm));
         auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
         auto bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), chunk.size, maxOsContextCount);
         if (bo == nullptr) {
@@ -1978,6 +1983,9 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
     }
 
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, bos.size(), AllocationType::bufferHostMemory, bos, addrToPtr(reportedGpuAddress), reportedGpuAddress, reportedSize, memoryPool);
+    for (auto handleId = 0u; handleId < gmms.size(); handleId++) {
+        drmAllocation->setGmm(std::move(gmms[handleId]), handleId);
+    }
     drmAllocation->setCpuPtrAndGpuAddress(addrToPtr(reportedGpuAddress), reportedGpuAddress);
     drmAllocation->setMmapPtr(cpuBase);
     drmAllocation->setMmapSize(reserveSize);
