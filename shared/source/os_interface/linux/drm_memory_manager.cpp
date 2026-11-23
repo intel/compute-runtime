@@ -4267,7 +4267,12 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     auto memoryPool = MemoryPool::systemCpuInaccessible;
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
-    auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
+    auto createGmm = [&](MemoryPool pool, size_t size) {
+        return drm.createBufferGmm(properties.allocationType, CachePolicy::writeBack, MemoryPoolHelper::isSystemMemoryPool(pool), size);
+    };
+    auto queryPatIndex = [&](Gmm *gmm, MemoryPool pool) {
+        return drm.getPatIndex(gmm, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(pool), false);
+    };
     auto ioctlHelper = drm.getIoctlHelper();
 
     auto ret = ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd);
@@ -4290,7 +4295,8 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         if (consumeFd) {
             SysCalls::close(handle);
         }
-        auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, openFd.handle, properties.size, maxOsContextCount);
+        auto gmm = createGmm(memoryPool, properties.size);
+        auto bo = new BufferObject(properties.rootDeviceIndex, &drm, queryPatIndex(gmm.get(), memoryPool), openFd.handle, properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
         auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
@@ -4305,6 +4311,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
                 return nullptr;
             }
         }
+        allocation->setDefaultGmm(std::move(gmm));
         return allocation;
     }
 
@@ -4316,7 +4323,8 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         if (consumeFd) {
             SysCalls::close(handle);
         }
-        auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), properties.size, maxOsContextCount);
+        auto gmm = createGmm(memoryPool, properties.size);
+        auto bo = new BufferObject(properties.rootDeviceIndex, &drm, queryPatIndex(gmm.get(), memoryPool), std::move(boHandleWrapper), properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
         auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
@@ -4330,6 +4338,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
                                                              consumeFd ? Sharing::nonSharedResource : handle,
                                                              memoryPool,
                                                              canonizedGpuAddress);
+        drmAllocation->setDefaultGmm(std::move(gmm));
         if (!reuseSharedAllocation) {
             registerSharedBoHandleAllocation(drmAllocation.get());
         }
@@ -4355,8 +4364,8 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
         memoryPool = MemoryPool::system4KBPages;
-        patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
-        bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
+        auto gmm = createGmm(memoryPool, size);
+        bo = new BufferObject(properties.rootDeviceIndex, &drm, queryPatIndex(gmm.get(), memoryPool), std::move(boHandleWrapper), size, maxOsContextCount);
 
         if (properties.allocationType == AllocationType::gpuTimestampDeviceBuffer) {
             cpuPointer = this->mmapFunction(0, size + MemoryConstants::pageSize64k, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -4407,6 +4416,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
             delete bo;
             return nullptr;
         }
+        drmAllocation->setDefaultGmm(std::move(gmm));
 
         pushSharedBufferObject(bo);
 
@@ -4435,6 +4445,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
     auto allocation = std::make_unique<DrmAllocation>(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
                                                       consumeFd ? Sharing::nonSharedResource : handle, memoryPool, canonizedGpuAddress);
+    allocation->setDefaultGmm(createGmm(memoryPool, bo->peekSize()));
     if (!registerSysMemAllocIfConsumed(allocation, consumeFd)) {
         return nullptr;
     }

@@ -872,6 +872,65 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenIsHostIpcAllocationWhenCreateGr
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+class DrmMemoryManagerUsmHostImportGmmTest : public DrmMemoryManagerUsmSharedHandleTest {
+  public:
+    void SetUp() override {
+        DrmMemoryManagerUsmSharedHandleTest::SetUp();
+        mock->vmBindPatIndexProgrammingSupported = true;
+        setUpSingleDeviceMemoryRegion(*mock);
+        mockClientContext = static_cast<MockGmmClientContextBase *>(mock->getRootDeviceEnvironment().getGmmClientContext());
+    }
+
+    void expectNotCompressedBufferGmm(const Gmm &gmm, size_t size) {
+        EXPECT_FALSE(gmm.isCompressionEnabled());
+        EXPECT_EQ(size, gmm.gmmResourceInfo->getSizeAllocation());
+    }
+
+    VariableBackup<off_t> lseekBackup{&SysCalls::lseekReturn, 2 * MemoryConstants::pageSize};
+    MockGmmClientContextBase *mockClientContext = nullptr;
+};
+
+TEST_F(DrmMemoryManagerUsmHostImportGmmTest, givenPatIndexProgrammingSupportedWhenCreateUSMHostAllocationFromSharedHandleCreatesBoThenPatIndexIsQueriedWithGmmOfAllocation) {
+    const std::pair<void *, bool> importCases[] = {{reinterpret_cast<void *>(0x12345000), true}, {nullptr, false}, {nullptr, true}};
+
+    for (const auto &[mappedPtr, useMmapObject] : importCases) {
+        mockClientContext->getPatIndexQueryCalled = 0u;
+        AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+        properties.useMmapObject = useMmapObject;
+        properties.gpuAddress = 0x1000;
+
+        auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(123, properties, mappedPtr, false, false);
+        auto allocationGuard = makeUniqueGraphicsAllocation(memoryManager, allocation);
+        ASSERT_NE(nullptr, allocation);
+        auto gmm = allocation->getDefaultGmm();
+        ASSERT_NE(nullptr, gmm);
+        expectNotCompressedBufferGmm(*gmm, allocation->getBO()->peekSize());
+        EXPECT_EQ(1u, mockClientContext->getPatIndexQueryCalled);
+        EXPECT_EQ(gmm->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    }
+}
+
+TEST_F(DrmMemoryManagerUsmHostImportGmmTest, givenReusedBoWhenCreateUSMHostAllocationFromSharedHandleThenGmmIsAttachedAndPatIndexIsNotQueried) {
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, 1);
+
+    auto allocation = memoryManager->createUSMHostAllocationFromSharedHandle(123, properties, nullptr, false, false);
+    auto allocationGuard = makeUniqueGraphicsAllocation(memoryManager, allocation);
+    ASSERT_NE(nullptr, allocation);
+    allocation->getBO()->setPatIndex(0x1234u);
+    mockClientContext->getPatIndexQueryCalled = 0u;
+    auto reusedAllocation = memoryManager->createUSMHostAllocationFromSharedHandle(456, properties, nullptr, true, false);
+    auto reusedAllocationGuard = makeUniqueGraphicsAllocation(memoryManager, reusedAllocation);
+    ASSERT_NE(nullptr, reusedAllocation);
+    ASSERT_EQ(allocation->getBO(), reusedAllocation->getBO());
+
+    auto gmm = reusedAllocation->getDefaultGmm();
+    ASSERT_NE(nullptr, gmm);
+    EXPECT_NE(allocation->getDefaultGmm(), gmm);
+    expectNotCompressedBufferGmm(*gmm, reusedAllocation->getBO()->peekSize());
+    EXPECT_EQ(0u, mockClientContext->getPatIndexQueryCalled);
+    EXPECT_EQ(0x1234u, reusedAllocation->getBO()->peekPatIndex());
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentWhenCreateMultiGraphicsAllocationThenPrimeFdIsClosedAfterImport) {
     uint32_t rootDevicesNumber = 2u;
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
