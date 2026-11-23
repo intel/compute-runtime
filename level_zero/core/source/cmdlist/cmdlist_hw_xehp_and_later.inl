@@ -221,11 +221,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (!launchParams.isBuiltInKernel) {
         if (!launchParams.makeKernelCommandView) {
+            const auto &kernelState = kernelImp->getPrivateState();
             if (systemAllocationScanRequired) {
-                isKernelUsingSystemAllocation = CommandList::isKernelUsingSystemMemory(*kernelImp, this->sharedSystemAllocationsAllowed);
+                isKernelUsingSystemAllocation = kernelState.execInfoUsesSystemMemory || CommandList::isKernelUsingSystemMemory(*kernelImp, this->sharedSystemAllocationsAllowed);
             }
             if (externalAllocationScanRequired) {
-                isKernelUsingExternalAllocation = this->containsExternalAllocation(kernel->getArgumentsResidencyContainer());
+                isKernelUsingExternalAllocation = kernelState.execInfoUsesImportedAllocation || this->containsExternalAllocation(kernel->getArgumentsResidencyContainer());
             }
         }
     } else {

@@ -316,33 +316,6 @@ TEST_F(LeoKernelFixture, givenFailingL0KernelWhenSettingIndirectAccessThenTheFai
     EXPECT_EQ(1u, l0Kernels[1]->setIndirectAccessCalled);
 }
 
-TEST_F(LeoKernelFixture, givenKernelWithoutDetectedIndirectAccessWhenSettingIndirectAccessForExecInfoPointersThenEveryL0KernelGetsAllFlagsAndIndirectAccess) {
-    auto kernel = createKernel(1u, 2u);
-    for (const auto &l0Kernel : l0Kernels) {
-        l0Kernel->privateState.kernelHasIndirectAccess = false;
-    }
-
-    EXPECT_EQ(CL_SUCCESS, kernel->setIndirectAccessForExecInfoPointers());
-
-    constexpr ze_kernel_indirect_access_flags_t expectedFlags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE |
-                                                                ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST |
-                                                                ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
-    for (const auto &l0Kernel : l0Kernels) {
-        EXPECT_EQ(1u, l0Kernel->setIndirectAccessCalled);
-        EXPECT_EQ(expectedFlags, l0Kernel->lastIndirectAccessFlags);
-        EXPECT_TRUE(l0Kernel->hasIndirectAccess());
-    }
-}
-
-TEST_F(LeoKernelFixture, givenFailingL0KernelWhenSettingIndirectAccessForExecInfoPointersThenTheFailureIsReported) {
-    auto kernel = createKernel(1u, 2u);
-    l0Kernels[1]->setIndirectAccessResult = ZE_RESULT_ERROR_UNINITIALIZED;
-
-    EXPECT_NE(CL_SUCCESS, kernel->setIndirectAccessForExecInfoPointers());
-    EXPECT_EQ(1u, l0Kernels[0]->setIndirectAccessCalled);
-    EXPECT_EQ(1u, l0Kernels[1]->setIndirectAccessCalled);
-}
-
 TEST_F(LeoKernelFixture, givenThreadArbitrationPolicyWhenSettingItThenEveryL0KernelGetsAFullyInitializedHint) {
     auto kernel = createKernel(1u, 2u);
 

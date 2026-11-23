@@ -85,6 +85,8 @@ struct KernelMutableStateDefaultCopyableParams {
 
     bool kernelHasIndirectAccess = false;
     bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
+    bool execInfoUsesSystemMemory = false;
+    bool execInfoUsesImportedAllocation = false;
 };
 
 struct KernelMutableState : public KernelMutableStateDefaultCopyableParams {

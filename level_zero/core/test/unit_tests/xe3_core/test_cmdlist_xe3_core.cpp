@@ -9,6 +9,7 @@
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -404,6 +405,49 @@ HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelXe3Core,
+          givenDiscreteDeviceWhenKernelExecInfoUsesSystemMemoryAndEventHostSignalScopeThenExpectsSystemFenceUsed, IsXe3Core) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    VariableBackup<bool> isIntegratedDevice{&device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice, false};
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+    kernel.privateState.execInfoUsesSystemMemory = true;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ze_event_desc_t eventDesc = {};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
+
+    kernel.setGroupSize(1, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, event.get(), launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList commands;
+    ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(
+        commands,
+        commandList->getCmdContainer().getCommandStream()->getCpuBase(),
+        commandList->getCmdContainer().getCommandStream()->getUsed()));
+
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_TRUE(walkerCmd->getPostSync().getSystemMemoryFenceRequest());
 }
 
 } // namespace ult
