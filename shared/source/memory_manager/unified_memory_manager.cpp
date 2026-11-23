@@ -1032,8 +1032,8 @@ void SVMAllocsManager::applyIndirectAccessTaskCountFloor(SvmAllocationData *allo
 }
 
 void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) {
-    auto allowNonBlockingFree = policy == FreePolicyType::none;
-    this->prepareIndirectAllocationForDestruction(svmData, allowNonBlockingFree);
+    auto isOwnTaskCountFinal = policy == FreePolicyType::none || svmData->isSavedForReuse;
+    this->prepareIndirectAllocationForDestruction(svmData, isOwnTaskCountFinal);
 
     if (policy == FreePolicyType::blocking) {
         this->waitForEnginesCompletion(svmData);
@@ -1429,7 +1429,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
     }
 }
 
-void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData, bool isNonBlockingFree) {
+void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData, bool isOwnTaskCountFinal) {
     ContainerReadWriteLockType lock(mtx);
     if (this->indirectAllocationsResidency.size() > 0u) {
         for (auto &internalAllocationsHandling : this->indirectAllocationsResidency) {
@@ -1439,10 +1439,9 @@ void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData
                 continue;
             }
 
-            // If this is non blocking free, we will wait for latest known usage of this allocation.
-            // However, if this is blocking free, we must select "safest" task count to wait for.
+            // Own task count bounds every legal use after a non-blocking free (application guarantee) or a cache insert (task count floor).
             TaskCountType desiredTaskCount = std::max(internalAllocationsHandling.second.latestSentTaskCount, gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId()));
-            if (isNonBlockingFree) {
+            if (isOwnTaskCountFinal) {
                 desiredTaskCount = gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId());
             }
             if (gpuAllocation->isAlwaysResident(commandStreamReceiver->getOsContext().getContextId())) {

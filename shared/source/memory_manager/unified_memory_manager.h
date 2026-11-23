@@ -253,7 +253,7 @@ class SVMAllocsManager {
     std::atomic<uint32_t> maxLatestResidentObjectId = 0;
     bool isAllocIdScannedForIndirectAccess(uint32_t allocId) const { return allocId <= maxLatestResidentObjectId.load(); }
     MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount);
-    void prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData, bool isNonBlockingFree);
+    void prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData, bool isOwnTaskCountFinal);
     bool sharedSystemMemAdvise(Device &callingDevice, Device &targetDevice, MemAdvise memAdviseOp, const void *ptr, const size_t size);
     MOCKABLE_VIRTUAL void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, const void *ptr, const size_t size);
     void prefetchSVMAllocs(Device &device, CommandStreamReceiver &commandStreamReceiver);

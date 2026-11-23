@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
@@ -1983,6 +1984,7 @@ struct SvmDeviceAllocationCacheIndirectAccessTest : public SvmDeviceAllocationCa
     static constexpr size_t allocationSize = 10u;
     static constexpr TaskCountType packedTaskCount = 1u;
     static constexpr TaskCountType latestIndirectTaskCount = 5u;
+    static constexpr TaskCountType laterIndirectTaskCount = 9u;
     DebugManagerStateRestore restore;
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     Device *device = nullptr;
@@ -2036,6 +2038,46 @@ TEST_F(SvmDeviceAllocationCacheIndirectAccessTest, givenAllocationNoLongerReside
     EXPECT_TRUE(gpuAllocation->isAlwaysResident(contextId));
 
     svmManager->freeSVMAlloc(reusedAllocation);
+}
+
+TEST_F(SvmDeviceAllocationCacheIndirectAccessTest, givenCachedAllocationWithIndirectSubmissionsAfterInsertWhenTrimmedAfterInsertTimeWorkCompletedThenItIsFreed) {
+    svmManager->freeSVMAllocDefer(ptr);
+    EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    svmManager->indirectAllocationsResidency.at(csr).latestSentTaskCount = laterIndirectTaskCount;
+    *csr->getTagAddress() = latestIndirectTaskCount;
+
+    svmManager->usmDeviceAllocationsCache->trimOldAllocs(std::chrono::high_resolution_clock::now(), true);
+
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(0u, svmManager->getNumClaimableDeferFreeAllocs());
+}
+
+TEST_F(SvmDeviceAllocationCacheIndirectAccessTest, givenCachedAllocationWithInsertTimeWorkPendingWhenTrimmedThenItIsDeferredUntilThatWorkCompletes) {
+    svmManager->freeSVMAllocDefer(ptr);
+    svmManager->indirectAllocationsResidency.at(csr).latestSentTaskCount = laterIndirectTaskCount;
+    *csr->getTagAddress() = latestIndirectTaskCount - 1;
+
+    svmManager->usmDeviceAllocationsCache->trimOldAllocs(std::chrono::high_resolution_clock::now(), true);
+
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(1u, svmManager->getNumClaimableDeferFreeAllocs());
+
+    *csr->getTagAddress() = latestIndirectTaskCount;
+    svmManager->freeSVMAllocDeferImpl();
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+}
+
+HWTEST_F(SvmDeviceAllocationCacheIndirectAccessTest, givenCachedAllocationWithIndirectSubmissionsAfterInsertWhenTrimmedBlockingThenItWaitsOnlyForInsertTimeWork) {
+    auto &ultCsr = deviceFactory->rootDevices[0]->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.callBaseWaitForCompletionWithTimeout = false;
+    svmManager->freeSVMAllocDefer(ptr);
+    svmManager->indirectAllocationsResidency.at(csr).latestSentTaskCount = laterIndirectTaskCount;
+    *csr->getTagAddress() = latestIndirectTaskCount - 1;
+
+    svmManager->usmDeviceAllocationsCache->trim();
+
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(latestIndirectTaskCount, ultCsr.latestWaitForCompletionWithTimeoutTaskCount.load());
 }
 
 TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCalledThenOldAllocationsAreRemovedIfDeferredDeleterHasNoWork) {
