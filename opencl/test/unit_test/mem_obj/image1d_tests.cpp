@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ typedef CreateImage1DTest CreateImage1DType;
 HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCorrect) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    std::unique_ptr<Image> image(Image::create(
         context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, pDevice),
         flags,
@@ -87,7 +87,7 @@ HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCor
         surfaceFormat,
         &imageDesc,
         nullptr,
-        retVal);
+        retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
 
@@ -100,7 +100,7 @@ HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCor
     EXPECT_GE(imgDesc.image_slice_pitch, imgDesc.image_row_pitch);
 
     size_t imageInfoHeight = 0;
-    retVal = clGetImageInfo(image, CL_IMAGE_HEIGHT, sizeof(size_t), &imageInfoHeight, NULL);
+    retVal = clGetImageInfo(image.get(), CL_IMAGE_HEIGHT, sizeof(size_t), &imageInfoHeight, NULL);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(0u, imageInfoHeight);
 
@@ -132,9 +132,8 @@ HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCor
     }
 
     typedef typename FamilyType::RENDER_SURFACE_STATE SURFACE_STATE;
-    auto imageHw = static_cast<ImageHw<FamilyType> *>(image);
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     EXPECT_EQ(SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, imageHw->surfaceType);
-    delete image;
 }
 
 static cl_mem_object_type image1DTypes[] = {

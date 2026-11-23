@@ -2347,9 +2347,9 @@ HWTEST_F(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteIm
         imageDesc.num_mip_levels = 0;
         imageDesc.num_samples = 0;
         imageDesc.mem_object = nullptr;
-        auto image = clCreateImage(&ctx, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, nullptr);
+        auto image = clUniquePtr(castToObject<Image>(clCreateImage(&ctx, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, nullptr)));
 
-        clEnqueueWriteImage(&cmdQ, image, false, origin, region, 0, 0, hostPtr, 0, nullptr, nullptr);
+        clEnqueueWriteImage(&cmdQ, image.get(), false, origin, region, 0, 0, hostPtr, 0, nullptr, nullptr);
 
         ASSERT_NE(0u, cmdQ.lastEnqueuedKernels.size());
         Kernel *kernel = cmdQ.lastEnqueuedKernels[0];
@@ -2366,8 +2366,6 @@ HWTEST_F(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteIm
 
         EXPECT_NE(0u, surfaceState.getMemoryObjectControlState());
         EXPECT_TRUE(expect == surfaceState.getMemoryObjectControlState() || expect2 == surfaceState.getMemoryObjectControlState());
-
-        clReleaseMemObject(image);
     }
 }
 
@@ -2658,7 +2656,6 @@ TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCr
 
     MockContext context(device, false);
     auto retValue = CL_SUCCESS;
-    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue)));
     ASSERT_EQ(retValue, CL_SUCCESS);
-    clReleaseMemObject(clBuffer);
 }

@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
@@ -67,7 +68,7 @@ HWTEST_F(CreateImageArraySize, GivenArrayTypeWhenCreatingImageThenImageCreatedWi
 
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        auto image = Image::create(
+        std::unique_ptr<Image> image(Image::create(
             context,
             ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
             flags,
@@ -75,7 +76,7 @@ HWTEST_F(CreateImageArraySize, GivenArrayTypeWhenCreatingImageThenImageCreatedWi
             surfaceFormat,
             &imageDesc,
             nullptr,
-            retVal);
+            retVal));
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, image);
@@ -89,8 +90,6 @@ HWTEST_F(CreateImageArraySize, GivenArrayTypeWhenCreatingImageThenImageCreatedWi
             EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
         }
         ASSERT_EQ(10u, image->getImageDesc().image_array_size);
-
-        delete image;
     }
 }
 
@@ -101,13 +100,15 @@ HWTEST_F(CreateImageNonArraySize, GivenNonArrayTypeWhenCreatingImageThenImageCre
     for (auto type : nonArrayTypes) {
         imageDesc.image_type = type;
         imageDesc.mem_object = nullptr;
+        ReleaseableObjectPtr<Buffer> buffer;
         if (type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-            imageDesc.mem_object = clCreateBuffer(context, CL_MEM_ALLOC_HOST_PTR, testImageDimensions, nullptr, nullptr);
+            buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(context, CL_MEM_ALLOC_HOST_PTR, testImageDimensions, nullptr, nullptr)));
+            imageDesc.mem_object = buffer.get();
         }
 
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        auto image = Image::create(
+        std::unique_ptr<Image> image(Image::create(
             context,
             ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
             flags,
@@ -115,7 +116,7 @@ HWTEST_F(CreateImageNonArraySize, GivenNonArrayTypeWhenCreatingImageThenImageCre
             surfaceFormat,
             &imageDesc,
             nullptr,
-            retVal);
+            retVal));
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, image);
@@ -127,11 +128,6 @@ HWTEST_F(CreateImageNonArraySize, GivenNonArrayTypeWhenCreatingImageThenImageCre
             EXPECT_NE(nullptr, address);
         }
         ASSERT_EQ(0u, image->getImageDesc().image_array_size);
-
-        delete image;
-        if (type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-            clReleaseMemObject(imageDesc.mem_object);
-        }
     }
 }
 

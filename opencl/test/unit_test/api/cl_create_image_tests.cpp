@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
@@ -299,36 +300,31 @@ TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageThenInvalidValueE
 TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageFromAnotherImageThenInvalidValueErrorIsReturned) {
     REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageFormat.image_channel_order = CL_NV12_INTEL;
-    auto image = clCreateImage(
+    auto image = clUniquePtr(castToObject<Image>(clCreateImage(
         pContext,
         CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS,
         &imageFormat,
         &imageDesc,
         nullptr,
-        &retVal);
+        &retVal)));
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
 
     imageFormat.image_channel_order = CL_RG;
-    imageDesc.mem_object = image;
+    imageDesc.mem_object = image.get();
     cl_mem_flags flags = (1 << 30);
 
-    auto imageFromImageObject = clCreateImage(
+    auto imageFromImageObject = clUniquePtr(castToObject<Image>(clCreateImage(
         pContext,
         flags,
         &imageFormat,
         &imageDesc,
         nullptr,
-        &retVal);
+        &retVal)));
 
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
     EXPECT_EQ(nullptr, imageFromImageObject);
-
-    retVal = clReleaseMemObject(image);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clReleaseMemObject(imageFromImageObject);
-    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
 TEST_F(clCreateImageTest, GivenInvalidRowPitchWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
@@ -421,29 +417,24 @@ TEST_F(clCreateImageTest, GivenDeviceNotSupportingImagesWhenCreatingImageFromBuf
 TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageIsCreatedAndSuccessReturned) {
     REQUIRE_IMAGES_OR_SKIP(pContext);
 
-    auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr);
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(pContext, CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr)));
     auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 
-    imageDesc.mem_object = buffer;
+    imageDesc.mem_object = buffer.get();
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 17;
     imageDesc.image_height = 17;
     imageDesc.image_row_pitch = gfxCoreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()) * 17;
 
-    auto image = clCreateImage(
+    auto image = clUniquePtr(castToObject<Image>(clCreateImage(
         pContext,
         CL_MEM_READ_WRITE,
         &imageFormat,
         &imageDesc,
         nullptr,
-        &retVal);
+        &retVal)));
     ASSERT_NE(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
     EXPECT_NE(nullptr, image);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseMemObject(image);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -756,35 +747,30 @@ TEST_F(clCreateImageFlagsUnrestrictedIntel, GivenFlagsIncludingUnrestrictedIntel
         cl_mem_flags parentFlags = imageFlags.parentFlags;
         cl_mem_flags flags = imageFlags.flags;
 
-        auto image = clCreateImage(
+        auto image = clUniquePtr(castToObject<Image>(clCreateImage(
             pContext,
             parentFlags | CL_MEM_HOST_NO_ACCESS,
             &imageFormat,
             &imageDesc,
             nullptr,
-            &retVal);
+            &retVal)));
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, image);
 
-        imageDesc.mem_object = image;
+        imageDesc.mem_object = image.get();
         imageFormat.image_channel_order = CL_RG;
 
-        auto imageFromImageObject = clCreateImage(
+        auto imageFromImageObject = clUniquePtr(castToObject<Image>(clCreateImage(
             pContext,
             flags,
             &imageFormat,
             &imageDesc,
             nullptr,
-            &retVal);
+            &retVal)));
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, imageFromImageObject);
-
-        retVal = clReleaseMemObject(image);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        retVal = clReleaseMemObject(imageFromImageObject);
-        EXPECT_EQ(CL_SUCCESS, retVal);
     }
 }
 
@@ -804,35 +790,30 @@ TEST_F(clCreateImageValidFlagsAndParentFlagsCombinations, GivenValidFlagsAndPare
         cl_mem_flags parentFlags = imageFlags.parentFlags;
         cl_mem_flags flags = imageFlags.flags;
 
-        auto image = clCreateImage(
+        auto image = clUniquePtr(castToObject<Image>(clCreateImage(
             pContext,
             parentFlags | CL_MEM_HOST_NO_ACCESS,
             &imageFormat,
             &imageDesc,
             nullptr,
-            &retVal);
+            &retVal)));
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, image);
 
-        imageDesc.mem_object = image;
+        imageDesc.mem_object = image.get();
         imageFormat.image_channel_order = CL_RG;
 
-        auto imageFromImageObject = clCreateImage(
+        auto imageFromImageObject = clUniquePtr(castToObject<Image>(clCreateImage(
             pContext,
             flags,
             &imageFormat,
             &imageDesc,
             nullptr,
-            &retVal);
+            &retVal)));
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, imageFromImageObject);
-
-        retVal = clReleaseMemObject(image);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        retVal = clReleaseMemObject(imageFromImageObject);
-        EXPECT_EQ(CL_SUCCESS, retVal);
     }
 }
 
@@ -857,35 +838,30 @@ TEST_F(clCreateImageInvalidFlagsAndParentFlagsCombinations, GivenInvalidFlagsAnd
         cl_mem_flags parentFlags = imageFlags.parentFlags;
         cl_mem_flags flags = imageFlags.flags;
 
-        auto image = clCreateImage(
+        auto image = clUniquePtr(castToObject<Image>(clCreateImage(
             pContext,
             parentFlags | CL_MEM_HOST_NO_ACCESS,
             &imageFormat,
             &imageDesc,
             nullptr,
-            &retVal);
+            &retVal)));
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, image);
 
         imageFormat.image_channel_order = CL_RG;
-        imageDesc.mem_object = image;
+        imageDesc.mem_object = image.get();
 
-        auto imageFromImageObject = clCreateImage(
+        auto imageFromImageObject = clUniquePtr(castToObject<Image>(clCreateImage(
             pContext,
             flags,
             &imageFormat,
             &imageDesc,
             nullptr,
-            &retVal);
+            &retVal)));
 
         ASSERT_EQ(CL_INVALID_VALUE, retVal);
         EXPECT_EQ(nullptr, imageFromImageObject);
-
-        retVal = clReleaseMemObject(image);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        retVal = clReleaseMemObject(imageFromImageObject);
-        EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
     }
 }
 

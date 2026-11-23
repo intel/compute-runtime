@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
@@ -524,21 +525,16 @@ TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagWhenGettingMemSizeVi
 
     cl_int retVal = CL_SUCCESS;
     cl_context clCtx = pContext;
-    cl_mem memObj = clCreateBuffer(clCtx, CL_MEM_READ_WRITE, requestedSize, nullptr, &retVal);
+    auto bufferObj = clUniquePtr(NEO::castToObject<Buffer>(clCreateBuffer(clCtx, CL_MEM_READ_WRITE, requestedSize, nullptr, &retVal)));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, memObj);
-
-    auto bufferObj = NEO::castToObject<Buffer>(memObj);
     ASSERT_NE(nullptr, bufferObj);
     auto expectedExtendedSize = requestedSize + MemoryConstants::pageSize * pageSizeNumber;
     EXPECT_EQ(expectedExtendedSize, bufferObj->getSize());
 
     size_t queriedSize = 0;
-    retVal = clGetMemObjectInfo(memObj, CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
+    retVal = clGetMemObjectInfo(bufferObj.get(), CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(requestedSize, queriedSize);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(memObj));
 }
 
 TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagWhenBufferIsNotLargerThanTailThenFullSizeIsReturned) {
@@ -549,40 +545,30 @@ TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagWhenBufferIsNotLarge
 
     cl_int retVal = CL_SUCCESS;
     cl_context clCtx = pContext;
-    cl_mem memObj = clCreateBuffer(clCtx, CL_MEM_READ_WRITE, requestedSize, nullptr, &retVal);
+    auto bufferObj = clUniquePtr(NEO::castToObject<Buffer>(clCreateBuffer(clCtx, CL_MEM_READ_WRITE, requestedSize, nullptr, &retVal)));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, memObj);
-
-    auto bufferObj = NEO::castToObject<Buffer>(memObj);
     ASSERT_NE(nullptr, bufferObj);
 
     const auto tailPageCount = static_cast<int32_t>((bufferObj->getSize() / MemoryConstants::pageSize) + 1);
     debugManager.flags.ForceExtendedBufferSize.set(tailPageCount);
 
     size_t queriedSize = 0;
-    retVal = clGetMemObjectInfo(memObj, CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
+    retVal = clGetMemObjectInfo(bufferObj.get(), CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(bufferObj->getSize(), queriedSize);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(memObj));
 }
 
 TEST_F(ClCreateBufferTests, GivenForceExtendedBufferSizeFlagNotSetWhenGettingMemSizeViaApiThenBufferSizeIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_context clCtx = pContext;
-    cl_mem memObj = clCreateBuffer(clCtx, CL_MEM_READ_WRITE, BufferDefaults::sizeInBytes, nullptr, &retVal);
+    auto bufferObj = clUniquePtr(NEO::castToObject<Buffer>(clCreateBuffer(clCtx, CL_MEM_READ_WRITE, BufferDefaults::sizeInBytes, nullptr, &retVal)));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, memObj);
-
-    auto bufferObj = NEO::castToObject<Buffer>(memObj);
     ASSERT_NE(nullptr, bufferObj);
 
     size_t queriedSize = 0;
-    retVal = clGetMemObjectInfo(memObj, CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
+    retVal = clGetMemObjectInfo(bufferObj.get(), CL_MEM_SIZE, sizeof(queriedSize), &queriedSize, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(bufferObj->getSize(), queriedSize);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(memObj));
 }
 
 TEST_F(GetMemObjectInfo, GivenForceExtendedBufferSizeFlagWhenGettingImageSizeThenActualSizeIsReturned) {
