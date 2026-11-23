@@ -24,10 +24,10 @@ struct ImageWindowsTestsMockMemoryManager : MockMemoryManager {
                                                          4096u, osHandleData.handle, MemoryPool::systemCpuInaccessible,
                                                          properties.rootDeviceIndex, false, false, false);
 
-        auto gmm = new MockGmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper());
+        auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper());
         auto mockGmmResourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
         mockGmmResourceInfo->mockResourceCreateParams.Type = RESOURCE_BUFFER;
-        graphicsAllocation->setDefaultGmm(gmm);
+        graphicsAllocation->setDefaultGmm(std::move(gmm));
 
         return graphicsAllocation;
     }

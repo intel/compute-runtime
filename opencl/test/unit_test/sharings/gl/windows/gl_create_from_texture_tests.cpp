@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,15 +37,15 @@ class CreateFromGlTexture : public ::testing::Test {
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
             if (osHandleData.handle == CreateFromGlTexture::mcsHandle) {
-                alloc->setDefaultGmm(forceMcsGmm);
+                alloc->setDefaultGmm(std::move(forceMcsGmm));
             } else {
-                alloc->setDefaultGmm(forceGmm);
+                alloc->setDefaultGmm(std::move(forceGmm));
             }
             return alloc;
         }
         size_t forceAllocationSize;
-        Gmm *forceGmm = nullptr;
-        Gmm *forceMcsGmm = nullptr;
+        std::unique_ptr<Gmm> forceGmm;
+        std::unique_ptr<Gmm> forceMcsGmm;
         std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
     };
 
@@ -56,17 +56,12 @@ class CreateFromGlTexture : public ::testing::Test {
         clContext.memoryManager = &tempMM;
     }
 
-    void TearDown() override {
-        gmm.release();
-        mcsGmm.release();
-    }
-
     void updateImgInfoAndForceGmm() {
         imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        gmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmHelper(), imgInfo, false);
+        tempMM.forceGmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmHelper(), imgInfo, false);
+        gmm = tempMM.forceGmm.get();
 
         tempMM.forceAllocationSize = imgInfo.size;
-        tempMM.forceGmm = gmm.get();
 
         if (glSharing->textureInfoOutput.globalShareHandleMCS != 0) {
             ImageDescriptor mcsImgDesc = {};
@@ -75,15 +70,15 @@ class CreateFromGlTexture : public ::testing::Test {
             mcsImgDesc.imageWidth = 128;
             mcsImgDesc.imageType = ImageType::image2D;
             auto mcsImgInfo = MockGmm::initImgInfo(mcsImgDesc, 0, nullptr);
-            mcsGmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmHelper(), mcsImgInfo, false);
-            tempMM.forceMcsGmm = mcsGmm.get();
+            tempMM.forceMcsGmm = MockGmm::queryImgParams(clContext.getDevice(0)->getGmmHelper(), mcsImgInfo, false);
+            mcsGmm = tempMM.forceMcsGmm.get();
         }
     }
 
     ImageDescriptor imgDesc;
     ImageInfo imgInfo = {};
-    std::unique_ptr<Gmm> gmm;
-    std::unique_ptr<Gmm> mcsGmm;
+    Gmm *gmm = nullptr;
+    Gmm *mcsGmm = nullptr;
     TempMM tempMM;
     MockContext clContext;
     std::unique_ptr<MockGlSharing> glSharing = std::make_unique<MockGlSharing>();

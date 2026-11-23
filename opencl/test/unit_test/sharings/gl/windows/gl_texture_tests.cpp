@@ -33,15 +33,9 @@ class GlSharingTextureTests : public ::testing::Test {
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
             if (useForcedGmm) {
-                alloc->setDefaultGmm(forceGmm.get());
+                alloc->setDefaultGmm(std::move(forceGmm));
             }
             return alloc;
-        }
-        void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {
-            if (useForcedGmm) {
-                forceGmm.release();
-            }
-            OsAgnosticMemoryManager::freeGraphicsMemoryImpl(gfxAllocation);
         }
         bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) override {
             mapAuxGpuVACalled++;
@@ -224,8 +218,8 @@ TEST_F(GlSharingTextureTests, givenSharedHandleAllocationWithGmmAndGmmResourceAs
     glSharing->uploadDataToTextureInfo();
 
     constexpr cl_GLint mipLevel = 0;
+    auto sharedHandleAllocationGmm = this->tempMM->forceGmm.get();
     auto glTexture = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_WRITE, GL_TEXTURE_1D, mipLevel, textureId, &retVal));
-    auto sharedHandleAllocationGmm = this->tempMM->forceGmm.release();
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, glTexture);
     auto graphicsAllocation = glTexture->getGraphicsAllocation(device->getRootDeviceIndex());

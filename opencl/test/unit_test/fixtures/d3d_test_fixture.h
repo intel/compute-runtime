@@ -63,8 +63,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
                 return nullptr;
             }
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
-            alloc->setDefaultGmm(forceGmm);
-            gmmOwnershipPassed = true;
+            alloc->setDefaultGmm(std::move(forceGmm));
             return alloc;
         }
 
@@ -75,8 +74,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
             mapAuxGpuVACalled++;
             return mapAuxGpuVaRetValue;
         }
-        Gmm *forceGmm = nullptr;
-        bool gmmOwnershipPassed = false;
+        std::unique_ptr<Gmm> forceGmm;
         uint32_t mapAuxGpuVACalled = 0u;
         bool mapAuxGpuVaRetValue = true;
     };
@@ -88,10 +86,9 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         imgDesc.imageDepth = 1;
         imgDesc.imageType = ImageType::image2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        gmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper(), imgInfo, false).release();
+        mockMM->forceGmm = MockGmm::queryImgParams(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper(), imgInfo, false);
+        gmm = mockMM->forceGmm.get();
         mockGmmResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
-
-        mockMM->forceGmm = gmm;
     }
 
     void SetUp() override {
@@ -131,9 +128,6 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     void TearDown() override {
         delete cmdQ;
         delete context;
-        if (!mockMM->gmmOwnershipPassed) {
-            delete gmm;
-        }
         PlatformFixture::tearDown();
     }
 

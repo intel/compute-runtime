@@ -19,7 +19,7 @@ class MockWddmAllocation : public WddmAllocation {
                                                                                 nullptr, 0, 0, nullptr, MemoryPool::memoryNull, 0u, 3u),
                                                                  gpuPtr(gpuAddress), handle(handles[0]) {
         for (uint32_t i = 0; i < numGmms; i++) {
-            setGmm(new MockGmm(gmmHelper), i);
+            setGmm(std::make_unique<MockGmm>(gmmHelper), i);
             setHandle(ALLOCATION_HANDLE, i);
         }
     }

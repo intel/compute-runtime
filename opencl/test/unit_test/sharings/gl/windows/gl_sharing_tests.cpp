@@ -942,7 +942,7 @@ TEST_F(GlSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
     auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     auto pClDevice = context.getDevice(0);
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
+        gfxAllocation->setGmm(std::make_unique<MockGmm>(pClDevice->getGmmHelper()), handleId);
     }
     auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
     auto heapless = compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo);
@@ -988,7 +988,7 @@ TEST_F(GlSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledTwiceThenReus
     auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     auto pClDevice = context.getDevice(0);
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
+        gfxAllocation->setGmm(std::make_unique<MockGmm>(pClDevice->getGmmHelper()), handleId);
     }
 
     auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);

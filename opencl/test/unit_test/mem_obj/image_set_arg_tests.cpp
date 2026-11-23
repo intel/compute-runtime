@@ -201,8 +201,7 @@ HWTEST_F(ImageSetArgTest, givenMippedImageWhenSettingMipTailStartLodThenProgramV
     EXPECT_EQ(mipTailStartLod, surfaceState.getMipTailStartLOD());
 
     // default value
-    delete gmm;
-    srcAllocation->setDefaultGmm(nullptr);
+    srcAllocation->setDefaultGmm(std::unique_ptr<Gmm>{});
 
     srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
     EXPECT_EQ(0u, surfaceState.getMipTailStartLOD());

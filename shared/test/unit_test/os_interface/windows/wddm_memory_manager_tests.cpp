@@ -6586,15 +6586,14 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenD
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto myGmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto myGmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     myGmm->setCompressionEnabled(false);
     static_cast<MockGmmResourceInfo *>(myGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));
-    delete wddmAlloc->getDefaultGmm();
-    wddmAlloc->setDefaultGmm(myGmm);
+    wddmAlloc->setDefaultGmm(std::move(myGmm));
 
-    auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
+    auto result = wddm->mapGpuVirtualAddress(wddmAlloc->getDefaultGmm(), ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
     EXPECT_EQ(0u, mockMngr->updateAuxTableCalled);
@@ -6626,17 +6625,16 @@ HWTEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenU
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto myGmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto myGmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     myGmm->setCompressionEnabled(true);
     static_cast<MockGmmResourceInfo *>(myGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));
-    delete wddmAlloc->getDefaultGmm();
-    wddmAlloc->setDefaultGmm(myGmm);
+    wddmAlloc->setDefaultGmm(std::move(myGmm));
 
     auto expectedCallCount = memoryManager.getRegisteredEngines(rootDeviceIndex).size();
 
-    auto result = wddm->mapGpuVirtualAddress(myGmm, ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
+    auto result = wddm->mapGpuVirtualAddress(wddmAlloc->getDefaultGmm(), ALLOCATION_HANDLE, wddm->getGfxPartition().Standard.Base, wddm->getGfxPartition().Standard.Limit, 0u, gpuVa, AllocationType::unknown, nullptr, 0u);
     EXPECT_TRUE(result);
 
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr.get());
