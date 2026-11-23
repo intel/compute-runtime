@@ -1554,6 +1554,31 @@ TEST_F(KernelAllocationPropertiesExpTest, givenSimpleKernelAndArgsSetThenCorrect
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, devicePtr));
 }
 
+TEST_F(KernelAllocationPropertiesExpTest, givenExternalMemmapHostAllocationSetAsArgWhenGettingAllocationPropertiesThenHostImportedTypeIsReturned) {
+    createSimpleKernel();
+
+    size_t size = MemoryConstants::pageSize;
+    auto systemMemory = alignedMalloc(size, MemoryConstants::pageSize);
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC, nullptr, systemMemory, size};
+    ze_host_mem_alloc_desc_t importDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC, &sysMemDesc, 0};
+    void *hostPtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeMemAllocHost(hContext, &importDesc, size, 0, &hostPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(hKernel, 0, sizeof(hostPtr), &hostPtr));
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, nullptr));
+    ASSERT_EQ(1u, count);
+
+    ze_kernel_allocation_exp_properties_t kernelAllocationProps = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(hKernel, &count, &kernelAllocationProps));
+    EXPECT_EQ(reinterpret_cast<uint64_t>(systemMemory), kernelAllocationProps.base);
+    EXPECT_EQ(ZE_MEMORY_TYPE_HOST_IMPORTED, kernelAllocationProps.type);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(hContext, hostPtr));
+    alignedFree(systemMemory);
+}
+
 TEST_F(KernelAllocationPropertiesExpTest, givenKernelWithInternalAllocationAndNoArgsSetThenCorrectAllocationPropertiesReturned) {
     createKernelWithPrintf();
 

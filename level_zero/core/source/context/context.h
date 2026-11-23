@@ -187,6 +187,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
 
         return ZE_MEMORY_TYPE_UNKNOWN;
     }
+    static ze_memory_type_t parseUSMType(const NEO::SvmAllocationData &allocData);
 
     MOCKABLE_VIRTUAL ze_result_t destroy();
     MOCKABLE_VIRTUAL ze_result_t getStatus();

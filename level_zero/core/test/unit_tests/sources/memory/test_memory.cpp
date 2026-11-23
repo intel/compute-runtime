@@ -814,7 +814,7 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThe
 
     result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
+    EXPECT_EQ(ZE_MEMORY_TYPE_HOST_IMPORTED, memoryProperties.type);
 
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
@@ -4200,6 +4200,16 @@ TEST_F(MemoryExportImportFailTest,
     memoryType = InternalMemoryType::hostUnifiedMemory;
     usmType = L0::Context::parseUSMType(memoryType);
     EXPECT_EQ(usmType, ZE_MEMORY_TYPE_HOST);
+}
+
+TEST_F(MemoryExportImportFailTest,
+       givenSvmAllocationDataWhenParsingMemoryTypeThenHostImportedIsReturnedOnlyForExternalMemmapAllocation) {
+    NEO::SvmAllocationData allocData(0u);
+    allocData.memoryType = InternalMemoryType::hostUnifiedMemory;
+    EXPECT_EQ(ZE_MEMORY_TYPE_HOST, L0::Context::parseUSMType(allocData));
+
+    allocData.isExternalMemmapAllocation = true;
+    EXPECT_EQ(ZE_MEMORY_TYPE_HOST_IMPORTED, L0::Context::parseUSMType(allocData));
 }
 
 TEST_F(MemoryExportImportFailTest,

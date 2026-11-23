@@ -372,7 +372,7 @@ ze_result_t KernelImp::getAllocationProperties(uint32_t *pCount, ze_kernel_alloc
             pAllocationProperties[allocIndex].base = residencyContainer[i]->getGpuAddress();
             if (auto svmAlloc = svmAllocsManager->getSVMAlloc(reinterpret_cast<const void *>(residencyContainer[i]->getGpuAddress()))) {
                 pAllocationProperties[allocIndex].size = svmAlloc->size;
-                pAllocationProperties[allocIndex].type = Context::parseUSMType(svmAlloc->memoryType);
+                pAllocationProperties[allocIndex].type = Context::parseUSMType(*svmAlloc);
             } else {
                 pAllocationProperties[allocIndex].size = residencyContainer[i]->getUnderlyingBufferSize();
                 pAllocationProperties[allocIndex].type = ZE_MEMORY_TYPE_UNKNOWN;

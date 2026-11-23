@@ -2002,6 +2002,13 @@ ze_result_t Context::handleAllocationExtensions(NEO::GraphicsAllocation *alloc, 
     return ZE_RESULT_SUCCESS;
 }
 
+ze_memory_type_t Context::parseUSMType(const NEO::SvmAllocationData &allocData) {
+    if (allocData.isExternalMemmapAllocation && allocData.memoryType == InternalMemoryType::hostUnifiedMemory) {
+        return ZE_MEMORY_TYPE_HOST_IMPORTED;
+    }
+    return parseUSMType(allocData.memoryType);
+}
+
 ze_result_t Context::getMemAllocProperties(const void *ptr,
                                            ze_memory_allocation_properties_t *pMemAllocProperties,
                                            ze_device_handle_t *phDevice) {
@@ -2012,7 +2019,7 @@ ze_result_t Context::getMemAllocProperties(const void *ptr,
         return ZE_RESULT_SUCCESS;
     }
 
-    pMemAllocProperties->type = Context::parseUSMType(alloc->memoryType);
+    pMemAllocProperties->type = Context::parseUSMType(*alloc);
     pMemAllocProperties->pageSize = alloc->pageSizeForAlignment;
     pMemAllocProperties->id = allocId;
 
