@@ -371,6 +371,7 @@ class GraphInternalEvents {
     }
 
     ze_event_handle_t getInternal(ze_event_handle_t hOriginalEvent) const {
+        std::lock_guard lock(entriesMutex);
         auto it = entries.find(hOriginalEvent);
         if ((it == entries.end()) || (nullptr == it->second.internalEvent)) {
             return hOriginalEvent;
@@ -380,7 +381,7 @@ class GraphInternalEvents {
     }
 
   protected:
-    std::mutex entriesMutex;
+    mutable std::mutex entriesMutex;
     std::unordered_map<ze_event_handle_t, GraphInternalEventEntry> entries;
 };
 
