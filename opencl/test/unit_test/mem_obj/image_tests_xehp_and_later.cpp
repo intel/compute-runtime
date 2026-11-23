@@ -348,8 +348,7 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenClearColorParamet
     surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
 
     EXPECT_EQ(false, surfaceState.getClearValueAddressEnable());
-    EXPECT_EQ(0u, surfaceState.getClearColorAddress());
-    EXPECT_EQ(0u, surfaceState.getClearColorAddressHigh());
+    EXPECT_EQ(0u, surfaceState.getClearAddress());
 
     std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
@@ -357,8 +356,7 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenClearColorParamet
     EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm);
 
     EXPECT_EQ(true, surfaceState.getClearValueAddressEnable());
-    EXPECT_NE(0u, surfaceState.getClearColorAddress());
-    EXPECT_NE(0u, surfaceState.getClearColorAddressHigh());
+    EXPECT_NE(0u, surfaceState.getClearAddress());
 }
 
 HWTEST2_F(ImageClearColorFixture, givenSurfaceStateWhenAuxParamsForMCSCCSAreSetThenAuxParamsInSurfaceStateIsSet, CompressionParamsSupportedMatcher) {
@@ -389,19 +387,20 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenCanonicalAddresFo
 
     uint64_t canonicalAddress = 0xffffABCDABCDE000;
 
-    EXPECT_THROW(surfaceState.setClearColorAddressHigh(static_cast<uint32_t>(canonicalAddress >> 32)), std::exception);
     surfaceState.setSurfaceBaseAddress(canonicalAddress);
 
     std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
 
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
     static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu.IndirectClearColor = 1;
+    auto gmmHelper = gmm->getGmmHelper();
+    const auto defaultAddressWidth = gmmHelper->getAddressWidth();
+    gmmHelper->setAddressWidth(defaultAddressWidth - 1);
     EXPECT_NO_THROW(EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm));
+    const uint64_t expectedClearAddress = gmmHelper->decanonize(canonicalAddress);
+    gmmHelper->setAddressWidth(defaultAddressWidth);
 
-    uint64_t nonCanonicalAddress = ((static_cast<uint64_t>(surfaceState.getClearColorAddressHigh()) << 32) | surfaceState.getClearColorAddress());
-    auto gmmHelper = context.getDevice(0)->getGmmHelper();
-
-    EXPECT_EQ(gmmHelper->decanonize(canonicalAddress), nonCanonicalAddress);
+    EXPECT_EQ(expectedClearAddress, surfaceState.getClearAddress());
 }
 
 HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocationThenNotZeroIsSetAsCompressionType, CompressionParamsSupportedMatcher) {

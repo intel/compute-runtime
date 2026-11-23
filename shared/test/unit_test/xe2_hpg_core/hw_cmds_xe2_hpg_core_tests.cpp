@@ -26,7 +26,7 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreHwCmdTest, givenRenderSurfaceStateWhenProgrammingMo
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     renderSurfaceState.setMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, renderSurfaceState.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, renderSurfaceState.TheStructure.Common.IndexToMocsTables);
 }
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreHwCmdTest, givenStateBaseAddressWhenProgrammingMocsThenMocsIndexIsSetProperly) {

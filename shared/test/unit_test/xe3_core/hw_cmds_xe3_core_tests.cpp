@@ -25,7 +25,7 @@ XE3_CORETEST_F(Xe3CoreHwCmdTest, givenRenderSurfaceStateWhenProgrammingMocsThenM
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     renderSurfaceState.setMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, renderSurfaceState.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, renderSurfaceState.TheStructure.Common.IndexToMocsTables);
 }
 
 XE3_CORETEST_F(Xe3CoreHwCmdTest, givenStateBaseAddressWhenProgrammingMocsThenMocsIndexIsSetProperly) {

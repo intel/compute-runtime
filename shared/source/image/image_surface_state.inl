@@ -74,7 +74,7 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(RENDER_SURFACE_STA
 
     surfaceState->setMemoryObjectControlState(gmmHelper.getMOCS(gmm, CacheSettingsHelper::getGmmUsageTypeForImage()));
 
-    EncodeSurfaceState<GfxFamily>::setCoherencyType(surfaceState, RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+    EncodeSurfaceState<GfxFamily>::setCoherencyType(surfaceState, false);
 
     surfaceState->setMultisampledSurfaceStorageFormat(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
 
@@ -85,11 +85,11 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(RENDER_SURFACE_STA
     if (isNV12Format) {
         surfaceState->setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
         surfaceState->setYOffsetForUOrUvPlane(surfaceOffsets.yOffsetForUVplane);
-        surfaceState->setXOffsetForUOrUvPlane(surfaceOffsets.xOffset);
+        setXOffsetForUOrUvPlane(surfaceState, surfaceOffsets.xOffset);
     } else {
         surfaceState->setShaderChannelSelectAlpha(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
         surfaceState->setYOffsetForUOrUvPlane(0);
-        surfaceState->setXOffsetForUOrUvPlane(0);
+        setXOffsetForUOrUvPlane(surfaceState, 0);
     }
 
     surfaceState->setSurfaceFormat(static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->genxSurfaceFormat));
@@ -150,6 +150,11 @@ void ImageSurfaceStateHelper<GfxFamily>::setUnifiedAuxBaseAddress(RENDER_SURFACE
     uint64_t baseAddress = surfaceState->getSurfaceBaseAddress() +
                            gmm->getAuxSurfaceOffset();
     surfaceState->setAuxiliarySurfaceBaseAddress(baseAddress);
+}
+
+template <typename GfxFamily>
+void ImageSurfaceStateHelper<GfxFamily>::setXOffsetForUOrUvPlane(RENDER_SURFACE_STATE *surfaceState, uint32_t xOffset) {
+    surfaceState->setXOffsetForUOrUvPlane(xOffset);
 }
 
 template <typename GfxFamily>

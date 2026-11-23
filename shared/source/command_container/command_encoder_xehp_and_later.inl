@@ -1213,7 +1213,7 @@ void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfa
         debugManager.flags.ForceAllResourcesUncached.get() == false) {
         cachePolicy = static_cast<L1_CACHE_CONTROL>(debugManager.flags.OverrideL1CacheControlInSurfaceState.get());
     }
-    surfaceState->setL1CacheControlCachePolicy(cachePolicy);
+    surfaceState->setL1CacheControl(cachePolicy);
 }
 
 template <typename Family>

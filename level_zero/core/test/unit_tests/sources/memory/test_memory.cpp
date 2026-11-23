@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
@@ -7345,7 +7346,9 @@ class MockSharedHandleMemoryManager : public MockMemoryManager {
 
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
         if (failPeekInternalHandle && properties.allocationType == AllocationType::image) {
-            return new ExportImportMockGraphicsAllocation();
+            auto allocation = new ExportImportMockGraphicsAllocation();
+            allocation->setDefaultGmm(MockGmm::queryImgParams(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo, false).release());
+            return allocation;
         }
         return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);
     }

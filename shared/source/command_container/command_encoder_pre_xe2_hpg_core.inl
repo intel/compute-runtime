@@ -61,8 +61,7 @@ void EncodeSurfaceState<Family>::setClearColorParams(R_SURFACE_STATE *surfaceSta
         uint64_t clearColorAddress = gmmHelper->decanonize(surfaceState->getSurfaceBaseAddress() +
                                                            gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CC));
 
-        surfaceState->setClearColorAddress(static_cast<uint32_t>(clearColorAddress & 0xFFFFFFFFULL));
-        surfaceState->setClearColorAddressHigh(static_cast<uint32_t>(clearColorAddress >> 32));
+        surfaceState->setClearAddress(clearColorAddress);
     }
 }
 

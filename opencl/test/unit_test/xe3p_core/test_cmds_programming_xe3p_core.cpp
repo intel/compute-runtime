@@ -85,7 +85,7 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, whenAppendingRssThenProgramWtL1Cac
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(pDevice->getProductHelper().getL1CachePolicy(false), rssCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(pDevice->getProductHelper().getL1CachePolicy(false), rssCmd.getL1CacheControl());
 }
 
 XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy) {
@@ -110,7 +110,7 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenAlignedCacheableReadOnlyBuffe
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
-    auto actualL1CachePolicy = static_cast<uint8_t>(surfaceState.getL1CacheControlCachePolicy());
+    auto actualL1CachePolicy = static_cast<uint8_t>(surfaceState.getL1CacheControl());
 
     EXPECT_EQ(pDevice->getProductHelper().getL1CachePolicy(false), actualL1CachePolicy);
 

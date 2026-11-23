@@ -40,7 +40,6 @@ struct EncodeSurfaceState {
     using R_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename R_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename R_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-    using COHERENCY_TYPE = typename R_SURFACE_STATE::COHERENCY_TYPE;
 
     static void encodeBuffer(EncodeSurfaceStateArgs &args);
     static void encodeExtraBufferParams(EncodeSurfaceStateArgs &args);
@@ -63,7 +62,7 @@ struct EncodeSurfaceState {
 
     static void appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
                                              bool imageFromBuffer, ImagePlane plane);
-    static void setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType);
+    static void setCoherencyType(R_SURFACE_STATE *surfaceState, bool cpuCoherent);
     static void setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState);
     static void setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static bool isAuxModeEnabled(R_SURFACE_STATE *surfaceState, Gmm *gmm);

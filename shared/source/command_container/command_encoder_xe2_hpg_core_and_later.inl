@@ -193,7 +193,7 @@ void appendMidthreadPreemptionDelayTimer(StateComputeModeType &stateComputeMode,
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
+void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, bool cpuCoherent) {
 }
 
 template <typename Family>

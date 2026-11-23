@@ -524,9 +524,9 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenRenderSurfaceStateWhenInitCalledThenF
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, cmd.TheStructure.Common.SurfaceVerticalAlignment);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceFormat);
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, cmd.TheStructure.Common.SurfaceType);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceQpitch); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceQPitch); // patched
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.BaseMipLevel);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.IndexToMocsTables); // patched
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Width);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Height);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DepthStencilResource);
@@ -538,15 +538,15 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenRenderSurfaceStateWhenInitCalledThenF
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.RenderTargetViewExtent);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MinimumArrayElement);
     EXPECT_EQ(RENDER_SURFACE_STATE::RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION_0DEG, cmd.TheStructure.Common.RenderTargetAndSampleUnormRotation);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MipCountLod);     // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceMinLod);   // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MipTailStartLod); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MipcountLod);     // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceMinLOD);   // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MipTailStartLOD); // patched
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ExtendScratchSurfaceSize);
-    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, cmd.TheStructure.Common.L1CacheControlCachePolicy); // patched
+    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, cmd.TheStructure.Common.L1CacheControl); // patched
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.YOffset);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.XOffset);
     EXPECT_EQ(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE_AUX_NONE, cmd.TheStructure.Common.AuxiliarySurfaceMode);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.ResourceMinLod); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.ResourceMinLOD); // patched
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ShaderChannelSelectAlpha);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ShaderChannelSelectBlue);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ShaderChannelSelectGreen);
@@ -555,18 +555,18 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenRenderSurfaceStateWhenInitCalledThenF
     EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_CMF_R8, cmd.TheStructure.Common.CompressionFormat);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MipRegionDepthInLog2);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DisableSamplerBackingByLsc);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DisallowLowQualityFiltering); // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfacePitch);
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch);                                                                        // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsPlanar.YOffsetForUOrUvPlane);                                                                             // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsPlanar.XOffsetForUOrUvPlane);                                                                             // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsPlanar.YOffsetForVPlane);                                                                                 // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsPlanar.XOffsetForVPlane);                                                                                 // patched
-    EXPECT_EQ(0x0ull, cmd.TheStructure._PropertyauxiliarySurfaceModeIsnotAux_NoneAnd_PropertyauxiliarySurfaceModeIsnotAux_Append.AuxiliarySurfaceBaseAddress); // patched
-    EXPECT_EQ(0x0ull, cmd.TheStructure.PropertyauxiliarySurfaceModeIsAux_Append.AppendCounterAddress);                                                         // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.AuxiliarySurfaceModeIsnotAux_Append.MipRegionWidthInLog2);
-    EXPECT_EQ(0x0u, cmd.TheStructure.AuxiliarySurfaceModeIsnotAux_Append.MipRegionHeightInLog2);
-    EXPECT_EQ(0x0u, cmd.TheStructure.AuxiliarySurfaceModeIsnotAux_Append.ProceduralTexture);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.Disallowlowqualityfiltering); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsnotPLANAR.AuxiliarySurfacePitch);
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsnotPLANAR.AuxiliarySurfaceQPitch);                                                                     // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsPLANAR.YOffsetforUorUVPlane);                                                                          // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsPLANAR.XOffsetforUorUVPlane);                                                                          // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsPLANAR.YOffsetforVPlane);                                                                              // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsPLANAR.XOffsetforVPlane);                                                                              // patched
+    EXPECT_EQ(0x0ull, cmd.TheStructure.PropertyAuxiliarySurfaceModeIsnotAUXNONEAndPropertyAuxiliarySurfaceModeIsnotAUXAPPEND.AuxiliarySurfaceBaseAddress); // patched
+    EXPECT_EQ(0x0ull, cmd.TheStructure.PropertyAuxiliarySurfaceModeIsAUXAPPEND.AppendCounterAddress);
+    EXPECT_EQ(0x0u, cmd.TheStructure.AuxiliarySurfaceModeIsnotAUXAPPEND.MipRegionWidthInLog2);
+    EXPECT_EQ(0x0u, cmd.TheStructure.AuxiliarySurfaceModeIsnotAUXAPPEND.MipRegionHeightInLog2);
+    EXPECT_EQ(0x0u, cmd.TheStructure.AuxiliarySurfaceModeIsnotAUXAPPEND.ProceduralTexture);
 }
 
 XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenRenderSurfaceStateWhenSetterUsedThenGetterReturnsValidValue) {
@@ -1672,11 +1672,6 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenRenderSurfaceStateWhenSetterUsedThenG
     cmd.setDisableSamplerBackingByLsc(0x1u);
     EXPECT_EQ(0x1u, cmd.getDisableSamplerBackingByLsc());
 
-    cmd.setDisallowLowQualityFiltering(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getDisallowLowQualityFiltering()); // patched
-    cmd.setDisallowLowQualityFiltering(0x1u);              // patched
-    EXPECT_EQ(0x1u, cmd.getDisallowLowQualityFiltering()); // patched
-
     cmd.setAuxiliarySurfacePitch(0x1u);
     EXPECT_EQ(0x1u, cmd.getAuxiliarySurfacePitch());
     cmd.setAuxiliarySurfacePitch(0x3ffu);
@@ -1731,6 +1726,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenRenderSurfaceStateWhenSetterUsedThenG
     EXPECT_EQ(0x0u, cmd.getProceduralTexture());
     cmd.setProceduralTexture(0x1u);
     EXPECT_EQ(0x1u, cmd.getProceduralTexture());
+
+    cmd.setDisallowlowqualityfiltering(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDisallowlowqualityfiltering());
+    cmd.setDisallowlowqualityfiltering(0x1u);
+    EXPECT_EQ(0x1u, cmd.getDisallowlowqualityfiltering());
 }
 
 XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenSamplerStateWhenInitCalledThenFieldsSetToDefault) {

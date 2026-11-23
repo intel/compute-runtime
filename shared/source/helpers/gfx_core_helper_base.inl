@@ -158,10 +158,10 @@ void GfxCoreHelperHw<Family>::programScratchSurfaceState(const RootDeviceEnviron
     bool isCompressionEnabled = gfxAlloc ? gfxAlloc->isCompressionEnabled() : false;
     if (isCompressionEnabled && !forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-        EncodeSurfaceState<Family>::setCoherencyType(&state, RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+        EncodeSurfaceState<Family>::setCoherencyType(&state, false);
         EncodeSurfaceState<Family>::setBufferAuxParamsForCCS(&state);
     } else {
-        EncodeSurfaceState<Family>::setCoherencyType(&state, RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
+        EncodeSurfaceState<Family>::setCoherencyType(&state, true);
         state.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
     setL1CachePolicy(useL1Cache, &state, rootDeviceEnvironment.getHardwareInfo());

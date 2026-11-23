@@ -89,8 +89,12 @@ bool UnitTestHelper<GfxFamily>::evaluateGshAddressForScratchSpace(uint64_t usedS
 }
 
 template <typename GfxFamily>
-auto UnitTestHelper<GfxFamily>::getCoherencyTypeSupported(COHERENCY_TYPE coherencyType) -> decltype(coherencyType) {
-    return GfxFamily::RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT;
+uint32_t UnitTestHelper<GfxFamily>::getCoherencyTypeSupported(bool cpuCoherent) {
+    if constexpr (requires { GfxFamily::RENDER_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT; }) {
+        return GfxFamily::RENDER_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT;
+    } else {
+        return 0u;
+    }
 }
 
 template <typename GfxFamily>

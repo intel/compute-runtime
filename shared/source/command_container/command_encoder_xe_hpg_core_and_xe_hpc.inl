@@ -38,8 +38,8 @@ void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *s
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
-    surfaceState->setCoherencyType(R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, bool cpuCoherent) {
+    surfaceState->setCoherencyType(R_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT);
 }
 
 template <typename Family>

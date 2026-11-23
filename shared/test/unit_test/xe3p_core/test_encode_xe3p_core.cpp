@@ -16,6 +16,7 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -42,6 +43,48 @@
 using namespace NEO;
 
 using CommandEncodeXe3pCoreTest = ::testing::Test;
+
+XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenImageInfoWhenConvertingSurfaceStateToPackedThenWidthFormatTileBppAndChannelsArePacked) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using OVERRIDE_TILE_BPP = typename RENDER_SURFACE_STATE::OVERRIDE_TILE_BPP;
+    const std::tuple<size_t, uint32_t, OVERRIDE_TILE_BPP> testInputs[] = {
+        {1u, 5u, OVERRIDE_TILE_BPP::OVERRIDE_TILE_BPP_TILE64_8BPP},
+        {2u, 9u, OVERRIDE_TILE_BPP::OVERRIDE_TILE_BPP_TILE64_16BPP},
+        {4u, 17u, OVERRIDE_TILE_BPP::OVERRIDE_TILE_BPP_TILE64_32BPP},
+        {8u, 33u, OVERRIDE_TILE_BPP::OVERRIDE_TILE_BPP_TILE64_64BPP},
+        {16u, 65u, OVERRIDE_TILE_BPP::OVERRIDE_TILE_BPP_TILE64_LEGACY}};
+
+    for (const auto &[elementSize, packedWidth, tileBpp] : testInputs) {
+        SurfaceFormatInfo surfaceFormat = {};
+        surfaceFormat.imageElementSizeInBytes = elementSize;
+        ImageInfo imgInfo = {};
+        imgInfo.surfaceFormat = &surfaceFormat;
+        imgInfo.imgDesc.imageWidth = 65;
+        auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+
+        EncodeSurfaceState<FamilyType>::convertSurfaceStateToPacked(&surfaceState, imgInfo);
+
+        EXPECT_EQ(packedWidth, surfaceState.getWidth());
+        EXPECT_EQ(tileBpp, surfaceState.getOverrideTileBPP());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_UINT, surfaceState.getSurfaceFormat());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState.getShaderChannelSelectRed());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN, surfaceState.getShaderChannelSelectGreen());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE, surfaceState.getShaderChannelSelectBlue());
+        EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, surfaceState.getShaderChannelSelectAlpha());
+    }
+}
+
+XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenForceL1P5CacheForRenderSurfaceFlagWhenSetL1P5CacheIsCalledThenApplyL1P5Appropriately) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    DebugManagerStateRestore restore;
+
+    RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    for (auto forceL1P5CacheForRenderSurface : {false, true}) {
+        debugManager.flags.ForceL1P5CacheForRenderSurface.set(forceL1P5CacheForRenderSurface);
+        EncodeSurfaceState<FamilyType>::setAdditionalCacheSettings(&surfaceState);
+        EXPECT_EQ(!forceL1P5CacheForRenderSurface, surfaceState.getDisableL1P5());
+    }
+}
 
 XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, whenMiFlushDwIsProgrammedThenSetAndFlushLlcWithoutCcs) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;

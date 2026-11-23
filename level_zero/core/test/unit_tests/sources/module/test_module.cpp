@@ -34,6 +34,7 @@
 #include "shared/test/common/helpers/instruction_cache_flush_test_engines.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
@@ -421,7 +422,7 @@ HWTEST2_PRODUCT_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrec
     auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
     EXPECT_EQ(devicePtr, reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()));
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceStateAddress->getCoherencyType());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(false), static_cast<uint32_t>(surfaceStateAddress->getCoherencyType()));
     }
 
     Kernel::fromHandle(kernelHandle)->destroy();

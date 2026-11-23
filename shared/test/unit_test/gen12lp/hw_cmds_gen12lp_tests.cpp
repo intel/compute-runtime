@@ -17,7 +17,7 @@ GEN12LPTEST_F(Gen12lpHwCmdTest, givenRenderSurfaceStateWhenProgrammingMocsThenMo
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     renderSurfaceState.setMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, renderSurfaceState.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, renderSurfaceState.TheStructure.Common.IndexToMocsTables);
 }
 
 GEN12LPTEST_F(Gen12lpHwCmdTest, givenStateBaseAddressWhenProgrammingMocsThenMocsIndexIsSetProperly) {

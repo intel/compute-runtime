@@ -128,12 +128,12 @@ HWTEST2_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePo
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, false,
                                                           false);
 
-    EXPECT_NE(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState->getL1CacheControlCachePolicy());
+    EXPECT_NE(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState->getL1CacheControl());
 
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, false,
                                                           true);
 
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState->getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState->getL1CacheControl());
 
     alignedFree(stateBuffer);
 }
@@ -578,7 +578,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocatio
     EXPECT_EQ(gpuAddr, state->getSurfaceBaseAddress());
 
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(true), static_cast<uint32_t>(state->getCoherencyType()));
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
@@ -614,7 +614,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAll
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(false), static_cast<uint32_t>(state->getCoherencyType()));
     }
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(state, allocation.getDefaultGmm()));
 
@@ -650,7 +650,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompre
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(true), static_cast<uint32_t>(state->getCoherencyType()));
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
@@ -724,7 +724,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAll
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true, false);
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(true), static_cast<uint32_t>(state->getCoherencyType()));
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
@@ -1047,7 +1047,7 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStateBaseAddressCalledThenCorre
     using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
     RENDER_SURFACE_STATE renderSurfaceState;
-    uint64_t expectedBaseAddress = 0x1122334455667788;
+    uint64_t expectedBaseAddress = 0x334455667788;
     renderSurfaceState.setSurfaceBaseAddress(expectedBaseAddress);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(expectedBaseAddress, gfxCoreHelper.getRenderSurfaceStateBaseAddress(&renderSurfaceState, pDevice->getRootDeviceEnvironment()));

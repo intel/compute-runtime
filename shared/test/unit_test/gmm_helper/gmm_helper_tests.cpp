@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -185,6 +186,21 @@ TEST_F(GmmHelperTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIs
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
     EXPECT_THROW(MockGmm::queryImgParams(getGmmHelper(), imgInfo, false), std::exception);
+}
+
+TEST_F(GmmHelperTests, givenZeroRenderPitchWhenQueryingImageParamsThenRowPitchIsComputedFromBaseWidth) {
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::image2D;
+    imgDesc.imageWidth = 17;
+    imgDesc.imageHeight = 17;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    auto gmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
+    auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    resourceInfo->overrideReturnedRenderPitch(0u);
+
+    gmm->queryImageParams(imgInfo);
+
+    EXPECT_EQ(alignUp(resourceInfo->getBaseWidth(), resourceInfo->getHAlign()) * (resourceInfo->getBitsPerPixel() >> 3), imgInfo.rowPitch);
 }
 
 TEST_F(GmmHelperTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {

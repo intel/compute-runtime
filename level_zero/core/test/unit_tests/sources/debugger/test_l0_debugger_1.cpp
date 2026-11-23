@@ -15,6 +15,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -275,7 +276,7 @@ HWTEST_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommand
 
         EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
         if constexpr (FamilyType::gfxCoreFamily <= IGFX_XE_HPC_CORE) {
-            EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, debugSurfaceState->getCoherencyType());
+            EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(false), static_cast<uint32_t>(debugSurfaceState->getCoherencyType()));
         }
     }
 }
@@ -555,7 +556,7 @@ HWTEST2_PRODUCT_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppe
     ASSERT_NE(debugSurface, nullptr);
     ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
     if constexpr (supportsLegacyRenderSurfaceState<FamilyType>()) {
-        EXPECT_EQ(debugSurfaceState->getL1CacheControlCachePolicy(), RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
+        EXPECT_EQ(debugSurfaceState->getL1CacheControl(), RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
     }
 }
 

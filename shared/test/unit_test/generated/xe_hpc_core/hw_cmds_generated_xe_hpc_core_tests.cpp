@@ -379,9 +379,9 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenInitCalledTh
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceFormat);
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, cmd.TheStructure.Common.SurfaceType);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceQpitch);
-    EXPECT_EQ(RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE, cmd.TheStructure.Common.SampleTapDiscardDisable);
+    EXPECT_FALSE(cmd.TheStructure.Common.SampleTapDiscardDisable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.BaseMipLevel);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.IndexToMocsTables);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Width);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Height);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DepthStencilResource);
@@ -397,8 +397,8 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenInitCalledTh
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MipCountLod);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceMinLod);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MipTailStartLod);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, cmd.TheStructure.Common.CoherencyType);      // patched
-    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, cmd.TheStructure.Common.L1CacheControlCachePolicy); // patched
+    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT, cmd.TheStructure.Common.CoherencyType); // patched
+    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, cmd.TheStructure.Common.L1CacheControl);              // patched
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.YOffset);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.XOffset);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ResourceMinLod);
@@ -406,23 +406,21 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenInitCalledTh
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ShaderChannelSelectBlue);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ShaderChannelSelectGreen);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ShaderChannelSelectRed);
-    EXPECT_EQ(RENDER_SURFACE_STATE::MEMORY_COMPRESSION_MODE_HORIZONTAL, cmd.TheStructure.Common.MemoryCompressionMode);
+    EXPECT_FALSE(cmd.TheStructure.Common.MemoryCompressionType);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.SurfaceBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.QuiltWidth);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.QuiltHeight);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ProceduralTexture);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.CompressionFormat);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.ClearAddressLow);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.ClearAddressHigh);
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsPlanar.YOffsetForUOrUvPlane);
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsPlanar.XOffsetForUOrUvPlane);
-    EXPECT_EQ(RENDER_SURFACE_STATE::HALF_PITCH_FOR_CHROMA_DISABLE, cmd.TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma);
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsPlanar.YOffsetForVPlane);
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsPlanar.XOffsetForVPlane);
-    EXPECT_EQ(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE_AUX_NONE, cmd.TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceMode);
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfacePitch);
-    EXPECT_EQ(0x0u, cmd.TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch);
-    EXPECT_EQ(0x0ull, cmd.TheStructure._SurfaceFormatIsnotPlanarAndMemoryCompressionEnableIs0.AuxiliarySurfaceBaseAddress);
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsPLANAR.YOffsetForUOrUvPlane);
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsPLANAR.XOffsetForUOrUvPlane);
+    EXPECT_FALSE(cmd.TheStructure.SurfaceFormatIsPLANAR.HalfPitchForChroma);
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsPLANAR.YOffsetForVPlane);
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsPLANAR.XOffsetForVPlane);
+    EXPECT_EQ(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE_AUX_NONE, cmd.TheStructure.SurfaceFormatIsnotPLANAR.AuxiliarySurfaceMode);
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsnotPLANAR.AuxiliarySurfacePitch);
+    EXPECT_EQ(0x0u, cmd.TheStructure.SurfaceFormatIsnotPLANAR.AuxiliarySurfaceQpitch);
+    EXPECT_EQ(0x0ull, cmd.TheStructure.SurfaceFormatIsnotPLANARAndMemoryCompressionEnableIs0.AuxiliarySurfaceBaseAddress);
 }
 
 XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenSetterUsedThenGetterReturnsValidValue) { // patched
@@ -1264,11 +1262,11 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenSetterUsedTh
     cmd.setSurfaceQPitch(0x1fffcu);              // patched
     EXPECT_EQ(0x1fffcu, cmd.getSurfaceQPitch()); // patched
 
-    cmd.setSampleTapDiscardDisable(RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE);
-    EXPECT_EQ(RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE, cmd.getSampleTapDiscardDisable());
+    cmd.setSampleTapDiscardDisable(false);
+    EXPECT_FALSE(cmd.getSampleTapDiscardDisable());
 
-    cmd.setSampleTapDiscardDisable(RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_ENABLE);
-    EXPECT_EQ(RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_ENABLE, cmd.getSampleTapDiscardDisable());
+    cmd.setSampleTapDiscardDisable(true);
+    EXPECT_TRUE(cmd.getSampleTapDiscardDisable());
 
     cmd.setBaseMipLevel(0x0u);
     EXPECT_EQ(0x0u, cmd.getBaseMipLevel());
@@ -1371,11 +1369,11 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenSetterUsedTh
     cmd.setMipTailStartLOD(0xfu);              // patched
     EXPECT_EQ(0xfu, cmd.getMipTailStartLOD()); // patched
 
-    cmd.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);              // patched
-    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, cmd.getCoherencyType()); // patched
+    cmd.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT);              // patched
+    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT, cmd.getCoherencyType()); // patched
 
-    cmd.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);              // patched
-    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, cmd.getCoherencyType()); // patched
+    cmd.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_SYSTEM_COHERENT);              // patched
+    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_SYSTEM_COHERENT, cmd.getCoherencyType()); // patched
 
     cmd.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_MULTI_GPU_COHERENT);
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_MULTI_GPU_COHERENT, cmd.getCoherencyType());
@@ -1467,13 +1465,10 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenSetterUsedTh
     cmd.setShaderChannelSelectRed(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
     EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA, cmd.getShaderChannelSelectRed());
 
-    cmd.setMemoryCompressionMode(RENDER_SURFACE_STATE::MEMORY_COMPRESSION_MODE_HORIZONTAL);
-    EXPECT_EQ(RENDER_SURFACE_STATE::MEMORY_COMPRESSION_MODE_HORIZONTAL, cmd.getMemoryCompressionMode());
-
     cmd.setSurfaceBaseAddress(0x0ull);
     EXPECT_EQ(0x0ull, cmd.getSurfaceBaseAddress());
-    cmd.setSurfaceBaseAddress(0xffffffffffffffffull);
-    EXPECT_EQ(0xffffffffffffffffull, cmd.getSurfaceBaseAddress());
+    cmd.setSurfaceBaseAddress(0x1ffffffffffffffull);
+    EXPECT_EQ(0x1ffffffffffffffull, cmd.getSurfaceBaseAddress());
 
     cmd.setQuiltWidth(0x0u);
     EXPECT_EQ(0x0u, cmd.getQuiltWidth());
@@ -1490,60 +1485,10 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenSetterUsedTh
     cmd.setProceduralTexture(0x1u);
     EXPECT_EQ(0x1u, cmd.getProceduralTexture());
 
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_RGBA16_FLOAT);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_RGBA16_FLOAT, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_Y210);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_Y210, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_YUY2);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_YUY2, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_Y410_1010102);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_Y410_1010102, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_Y216);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_Y216, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_Y416);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_Y416, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_P010);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_P010, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_P016);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_P016, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_AYUV);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_AYUV, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_ARGB_8B);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_ARGB_8B, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_YCRCB_SWAPY);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_YCRCB_SWAPY, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_YCRCB_SWAPUV);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_YCRCB_SWAPUV, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_YCRCB_SWAPUVY);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_YCRCB_SWAPUVY, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_RGB_10B);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_RGB_10B, cmd.getCompressionFormat());
-
-    cmd.setCompressionFormat(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_NV21NV12);
-    EXPECT_EQ(RENDER_SURFACE_STATE::COMPRESSION_FORMAT_NV21NV12, cmd.getCompressionFormat());
-
-    cmd.setClearColorAddress(0x0u);                     // patched
-    EXPECT_EQ(0x0u, cmd.getClearColorAddress());        // patched
-    cmd.setClearColorAddress(0xffffffc0u);              // patched
-    EXPECT_EQ(0xffffffc0u, cmd.getClearColorAddress()); // patched
-
-    cmd.setClearColorAddressHigh(0x0u);                 // patched
-    EXPECT_EQ(0x0u, cmd.getClearColorAddressHigh());    // patched
-    cmd.setClearColorAddressHigh(0xffffu);              // patched
-    EXPECT_EQ(0xffffu, cmd.getClearColorAddressHigh()); // patched
+    cmd.setCompressionFormat(0x0u);
+    EXPECT_EQ(0x0u, cmd.getCompressionFormat());
+    cmd.setCompressionFormat(0x1fu);
+    EXPECT_EQ(0x1fu, cmd.getCompressionFormat());
 
     cmd.setYOffsetForUOrUvPlane(0x0u);
     EXPECT_EQ(0x0u, cmd.getYOffsetForUOrUvPlane());
@@ -1555,11 +1500,11 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenRenderSurfaceStateWhenSetterUsedTh
     cmd.setXOffsetForUOrUvPlane(0x3fffu);
     EXPECT_EQ(0x3fffu, cmd.getXOffsetForUOrUvPlane());
 
-    cmd.setHalfPitchForChroma(RENDER_SURFACE_STATE::HALF_PITCH_FOR_CHROMA_DISABLE);
-    EXPECT_EQ(RENDER_SURFACE_STATE::HALF_PITCH_FOR_CHROMA_DISABLE, cmd.getHalfPitchForChroma());
+    cmd.setHalfPitchForChroma(false);
+    EXPECT_FALSE(cmd.getHalfPitchForChroma());
 
-    cmd.setHalfPitchForChroma(RENDER_SURFACE_STATE::HALF_PITCH_FOR_CHROMA_ENABLE);
-    EXPECT_EQ(RENDER_SURFACE_STATE::HALF_PITCH_FOR_CHROMA_ENABLE, cmd.getHalfPitchForChroma());
+    cmd.setHalfPitchForChroma(true);
+    EXPECT_TRUE(cmd.getHalfPitchForChroma());
 
     cmd.setYOffsetForVPlane(0x0u);
     EXPECT_EQ(0x0u, cmd.getYOffsetForVPlane());

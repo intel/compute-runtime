@@ -656,18 +656,6 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenIndirectDataWhenEncodeComput
     EXPECT_EQ(expectedAddress, indirectDataPointerProgrammed);
 }
 
-HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenForceL1P5CacheForRenderSurfaceFlagWhenSetL1P5CacheIsCalledThenApplyL1P5Appropriately, IsAtLeastXe3pCore) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    DebugManagerStateRestore restore;
-
-    RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    for (auto forceL1P5CacheForRenderSurface : {false, true}) {
-        debugManager.flags.ForceL1P5CacheForRenderSurface.set(forceL1P5CacheForRenderSurface);
-        EncodeSurfaceState<FamilyType>::setAdditionalCacheSettings(&surfaceState);
-        EXPECT_EQ(!forceL1P5CacheForRenderSurface, surfaceState.getDisableL1P5());
-    }
-}
-
 using CommandEncoderTestXe3pAndLater = ::testing::Test;
 
 HWTEST2_F(CommandEncoderTestXe3pAndLater, givenUseSemaphore64bCmdArgWhenProgrammingSemaphoreThenProperSemaphoreIsProgrammed, IsAtLeastXe3pCore) {

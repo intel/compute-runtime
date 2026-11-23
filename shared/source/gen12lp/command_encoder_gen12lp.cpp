@@ -552,8 +552,8 @@ inline void EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(uint32_t 
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
-    surfaceState->setCoherencyType(coherencyType);
+void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, bool cpuCoherent) {
+    surfaceState->setCoherencyType(cpuCoherent ? R_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
 }
 
 template <typename Family>

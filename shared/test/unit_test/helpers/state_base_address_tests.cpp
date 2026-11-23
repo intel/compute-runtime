@@ -403,7 +403,7 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePol
         DebugManagerStateRestore restore;
         debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(input.option);
         EncodeSurfaceState<FamilyType>::encodeBuffer(args);
-        EXPECT_EQ(input.cachePolicy, rssCmd.getL1CacheControlCachePolicy());
+        EXPECT_EQ(input.cachePolicy, rssCmd.getL1CacheControl());
     }
     memoryManager->freeGraphicsMemory(allocation);
 }

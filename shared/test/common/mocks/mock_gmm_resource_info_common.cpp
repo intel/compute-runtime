@@ -52,6 +52,10 @@ void MockGmmResourceInfo::setupDefaultActions() {
     size *= mockResourceCreateParams.Depth ? static_cast<size_t>(mockResourceCreateParams.Depth) : 1;
     size *= mockResourceCreateParams.ArraySize ? static_cast<size_t>(mockResourceCreateParams.ArraySize) : 1;
     size = alignUp(size, MemoryConstants::pageSize);
+
+    if (rowPitch == 0) {
+        rowPitch = alignUp(surfaceFormatInfo->imageElementSizeInBytes, 64);
+    }
 }
 
 ImageTilingMode MockGmmResourceInfo::getTilingMode() {

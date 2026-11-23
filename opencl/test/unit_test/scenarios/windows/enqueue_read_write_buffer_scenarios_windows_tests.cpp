@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
@@ -120,7 +121,7 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
         if (arg1AsPtr.pointerSize == sizeof(uint64_t)) {
             auto pKernelArg = (uint64_t *)(kernel->getCrossThreadData() + arg1AsPtr.stateless);
             EXPECT_EQ(alignDown(gpuVa, 4), static_cast<uint64_t>(*pKernelArg));
-            EXPECT_EQ(*pKernelArg, surfaceStateDst->getSurfaceBaseAddress());
+            EXPECT_EQ(device->getGmmHelper()->decanonize(*pKernelArg), surfaceStateDst->getSurfaceBaseAddress());
 
         } else if (arg1AsPtr.pointerSize == sizeof(uint32_t)) {
             auto pKernelArg = (uint32_t *)(kernel->getCrossThreadData() + arg1AsPtr.stateless);

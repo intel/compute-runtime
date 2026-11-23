@@ -518,12 +518,12 @@ void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
 
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 
-    setCoherencyType(surfaceState, args.cpuCoherent ? R_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+    setCoherencyType(surfaceState, args.cpuCoherent);
 
     auto compressionEnabled = args.allocation ? args.allocation->isCompressionEnabled() : false;
     if (compressionEnabled && !args.forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-        setCoherencyType(surfaceState, R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+        setCoherencyType(surfaceState, false);
         setBufferAuxParamsForCCS(surfaceState);
     }
 

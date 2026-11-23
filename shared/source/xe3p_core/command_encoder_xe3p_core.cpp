@@ -11,6 +11,7 @@
 #include "shared/source/command_container/command_encoder_from_xe3_and_later.inl"
 #include "shared/source/command_container/command_encoder_from_xe3p_and_later.inl"
 #include "shared/source/command_container/command_encoder_heapless_addressing.inl"
+#include "shared/source/command_container/command_encoder_surface_state_xe3p_and_later.inl"
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe2_hpg_core_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"

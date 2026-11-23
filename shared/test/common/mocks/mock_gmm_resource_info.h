@@ -23,7 +23,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     size_t getSizeAllocation() override { return size; }
 
-    size_t getBaseWidth() override { return static_cast<size_t>(mockResourceCreateParams.BaseWidth); }
+    size_t getBaseWidth() override { return std::max(static_cast<size_t>(mockResourceCreateParams.BaseWidth), size_t{1}); }
 
     size_t getBaseHeight() override { return static_cast<size_t>(mockResourceCreateParams.BaseHeight); }
 

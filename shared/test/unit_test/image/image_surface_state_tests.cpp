@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -22,6 +23,14 @@
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
 
 using namespace NEO;
+
+HWTEST2_F(ImageSurfaceStateTests, givenXOffsetWhenSetXOffsetForUOrUvPlaneThenFieldIsProgrammed, IsAtMostXe3pCore) {
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+
+    ImageSurfaceStateHelper<FamilyType>::setXOffsetForUOrUvPlane(&surfaceState, 11u);
+
+    EXPECT_EQ(11u, surfaceState.getXOffsetForUOrUvPlane());
+}
 
 HWTEST2_PRODUCT_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProperFieldsAreSet, MatchAny) {
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
@@ -66,7 +75,7 @@ HWTEST2_PRODUCT_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceState
     EXPECT_EQ(castSurfaceState->getTileMode(), mockGmm->gmmResourceInfo->getTileModeSurfaceState());
     EXPECT_EQ(castSurfaceState->getMemoryObjectControlState(), gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(castSurfaceState->getCoherencyType(), RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+        EXPECT_EQ(static_cast<uint32_t>(castSurfaceState->getCoherencyType()), UnitTestHelper<FamilyType>::getCoherencyTypeSupported(false));
     }
     EXPECT_EQ(castSurfaceState->getMultisampledSurfaceStorageFormat(), RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
 
@@ -80,7 +89,6 @@ HWTEST2_PRODUCT_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceState
 
     EXPECT_EQ(castSurfaceState->getShaderChannelSelectAlpha(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
     EXPECT_EQ(castSurfaceState->getYOffsetForUOrUvPlane(), surfaceOffsets.yOffsetForUVplane);
-    EXPECT_EQ(castSurfaceState->getXOffsetForUOrUvPlane(), surfaceOffsets.xOffset);
 
     EXPECT_EQ(castSurfaceState->getSurfaceFormat(), static_cast<SURFACE_FORMAT>(imageInfo.surfaceFormat->genxSurfaceFormat));
 
@@ -94,7 +102,6 @@ HWTEST2_PRODUCT_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceState
 
     EXPECT_EQ(castSurfaceState->getShaderChannelSelectAlpha(), RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
     EXPECT_EQ(castSurfaceState->getYOffsetForUOrUvPlane(), 0u);
-    EXPECT_EQ(castSurfaceState->getXOffsetForUOrUvPlane(), 0u);
 
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfacePitch(), 1u);

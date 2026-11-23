@@ -90,6 +90,7 @@ class ImageSurfaceStateHelper {
     static void setWidthForMediaBlockSurfaceState(RENDER_SURFACE_STATE *surfaceState, const ImageInfo &imageInfo);
     static void setUnifiedAuxBaseAddress(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
     static void setMipTailStartLOD(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
+    static void setXOffsetForUOrUvPlane(RENDER_SURFACE_STATE *surfaceState, uint32_t xOffset);
     static bool imageAsArrayWithArraySizeOf1NotPreferred();
 };
 } // namespace NEO

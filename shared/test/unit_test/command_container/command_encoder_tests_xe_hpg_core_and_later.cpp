@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,18 +43,18 @@ HWTEST2_F(CommandEncoderXeHpgCorePlusTests, givenSpecifiedL1CacheControlWhenAppe
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CacheControl());
 
     l1CacheControl = FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
     debugManager.flags.OverrideL1CacheControlInSurfaceState.set(l1CacheControl);
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CacheControl());
 
     debugManager.flags.ForceAllResourcesUncached.set(true);
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(static_cast<uint32_t>(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_UC), rssCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(static_cast<uint32_t>(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_UC), rssCmd.getL1CacheControl());
 
     memoryManager->freeGraphicsMemory(allocation);
 }

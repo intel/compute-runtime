@@ -95,6 +95,7 @@ if(SUPPORT_XE3P_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_heapless_addressing.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_from_xe3p_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_surface_state_xe3p_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/walker_partition_from_xe3p_and_later.inl
   )
 endif()

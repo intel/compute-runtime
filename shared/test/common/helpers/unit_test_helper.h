@@ -43,7 +43,6 @@ using UnitTestHelperBase = std::conditional_t<GfxFamily::isHeaplessRequired(), U
 
 template <typename GfxFamily>
 struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
-    using COHERENCY_TYPE = typename GfxFamily::RENDER_SURFACE_STATE::COHERENCY_TYPE;
 
     static bool isL3ConfigProgrammable();
 
@@ -59,7 +58,7 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
 
     static uint32_t getAppropriateThreadArbitrationPolicy(int32_t policy);
 
-    static auto getCoherencyTypeSupported(COHERENCY_TYPE coherencyType) -> decltype(coherencyType);
+    static uint32_t getCoherencyTypeSupported(bool cpuCoherent);
 
     static bool evaluateGshAddressForScratchSpace(uint64_t usedScratchGpuAddress, uint64_t retrievedGshAddress);
 

@@ -416,7 +416,7 @@ HWTEST2_F(RenderSurfaceStateXeHPAndLaterTests, givenSpecificProductFamilyWhenApp
     args.areMultipleSubDevicesInContext = true;
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, rssCmd.getCoherencyType());
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT, rssCmd.getCoherencyType());
 }
 
 using PipelineSelectTest = ::testing::Test;

@@ -28,12 +28,11 @@ using XeHPAndLaterHardwareCommandsTest = testing::Test;
 
 HWTEST2_F(XeHPAndLaterHardwareCommandsTest, GivenXeHPAndLaterPlatformWhenSetCoherencyTypeIsCalledThenOnlyEncodingSupportedIsSingleGpuCoherent, IsXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using COHERENCY_TYPE = typename RENDER_SURFACE_STATE::COHERENCY_TYPE;
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    for (COHERENCY_TYPE coherencyType : {RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT}) {
-        EncodeSurfaceState<FamilyType>::setCoherencyType(&surfaceState, coherencyType);
-        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, surfaceState.getCoherencyType());
+    for (bool cpuCoherent : {true, false}) {
+        EncodeSurfaceState<FamilyType>::setCoherencyType(&surfaceState, cpuCoherent);
+        EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT, surfaceState.getCoherencyType());
     }
 }
 

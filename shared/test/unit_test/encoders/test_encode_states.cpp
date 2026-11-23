@@ -383,7 +383,7 @@ HWTEST2_PRODUCT_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAll
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, state->getSurfaceType());
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT), state->getCoherencyType());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(true), static_cast<uint32_t>(state->getCoherencyType()));
     }
     alignedFree(stateBuffer);
 }
@@ -412,7 +412,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherenc
     args.areMultipleSubDevicesInContext = true;
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());
+    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_SINGLE_GPU_COHERENT, state->getCoherencyType());
 
     alignedFree(stateBuffer);
 }
@@ -667,5 +667,5 @@ HWTEST2_F(CommandEncodeStatesTest, WhenEncodingRssThenProgramDefaultL1CachePolic
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(static_cast<uint32_t>(l1CacheControl), rssCmd.getL1CacheControl());
 }

@@ -2088,7 +2088,7 @@ HWTEST2_PRODUCT_F(BufferSetSurfaceTests, givenCompressedGmmResourceWhenSurfaceSt
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, graphicsAllocation->getDefaultGmm()));
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT == surfaceState.getCoherencyType());
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(false) == static_cast<uint32_t>(surfaceState.getCoherencyType()));
     }
 }
 
@@ -2113,7 +2113,7 @@ HWTEST2_PRODUCT_F(BufferSetSurfaceTests, givenNonCompressedGmmResourceWhenSurfac
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE == surfaceState.getAuxiliarySurfaceMode());
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
-        EXPECT_TRUE(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT) == surfaceState.getCoherencyType());
+        EXPECT_TRUE(UnitTestHelper<FamilyType>::getCoherencyTypeSupported(true) == static_cast<uint32_t>(surfaceState.getCoherencyType()));
     }
 }
 
