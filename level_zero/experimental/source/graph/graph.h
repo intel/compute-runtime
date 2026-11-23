@@ -509,6 +509,7 @@ struct Graph : _ze_graph_handle_t {
         ze_device_handle_t hDevice = nullptr;
         ze_command_list_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
         ze_mutable_command_list_ext_desc_t mutableExtDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC};
+        ze_command_queue_priority_t priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
     };
 
     const CaptureTargetDesc &getCaptureTargetDesc() const {

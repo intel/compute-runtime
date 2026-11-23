@@ -132,7 +132,7 @@ struct MutableCommandListImp : public MutableCommandList {
             return;
         }
         if (redirectToCopyOffload) {
-            auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList();
+            auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
             UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
             auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
             UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
@@ -147,7 +147,7 @@ struct MutableCommandListImp : public MutableCommandList {
             return;
         }
         if (redirectToCopyOffload) {
-            auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList();
+            auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
             UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
             auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
             UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);

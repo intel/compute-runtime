@@ -211,7 +211,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const override;
     MutableKernelGroup *getKernelGroupForPrefetch(uint64_t cmdId) const;
     size_t ensureCmdBufferSpaceForPrefetch(const NEO::GraphicsAllocation &iohAllocation, size_t iohOffset) override;
-    void ensureCopyOffloadSubCmdList() override;
+    void ensureCopyOffloadSubCmdList(size_t queueIndex) override;
 };
 } // namespace MCL
 } // namespace L0

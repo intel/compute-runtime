@@ -133,8 +133,10 @@ CommandList::~CommandList() {
             copyOffloadQueue->destroy();
         }
     }
-    if (copyOffloadSubCmdList) {
-        copyOffloadSubCmdList->destroy();
+    for (auto copyOffloadStreamCmdList : copyOffloadSubCmdLists) {
+        if (copyOffloadStreamCmdList) {
+            copyOffloadStreamCmdList->destroy();
+        }
     }
     removeDeallocationContainerData();
     if (!isImmediateType()) {
@@ -1028,6 +1030,12 @@ void CommandList::enableCopyOperationOffload() {
     }
 }
 
+void CommandList::enableCopyOffloadWriteStream() {
+    // Mutations of copy offload operations are redirected to single copy offload stream.
+    this->copyOffloadWriteStreamAllowed = isRegularDualStreamCopyOffloadOperation(true) && (asMutable() == nullptr) &&
+                                          isCopyOffloadWriteEngineAllowed(device->getCopyEngineOrdinal());
+}
+
 bool CommandList::isCopyOffloadCmdQImmediate(const CommandQueue *cmdQ) const {
     return (cmdQ != nullptr) && (std::find(this->cmdQImmediateCopyOffload.begin(), this->cmdQImmediateCopyOffload.end(), cmdQ) != this->cmdQImmediateCopyOffload.end());
 }
@@ -1229,13 +1237,17 @@ void CommandList::ensureSubCmdLists(size_t count) {
     }
 }
 
-void CommandList::ensureCopyOffloadSubCmdList() {
-    if (this->copyOffloadSubCmdList == nullptr) {
+bool CommandList::isCopyOffloadStreamUsed() const {
+    return std::any_of(this->copyOffloadStreamUsed.begin(), this->copyOffloadStreamUsed.end(), [](bool streamUsed) { return streamUsed; });
+}
+
+void CommandList::ensureCopyOffloadSubCmdList(size_t queueIndex) {
+    if (this->copyOffloadSubCmdLists[queueIndex] == nullptr) {
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        this->copyOffloadSubCmdList = CommandList::create(device, NEO::EngineGroupType::copy, 0, returnValue, true);
+        this->copyOffloadSubCmdLists[queueIndex] = CommandList::create(device, NEO::EngineGroupType::copy, 0, returnValue, true);
         UNRECOVERABLE_IF(returnValue != ZE_RESULT_SUCCESS);
     }
-    this->copyOffloadStreamUsed = true;
+    this->copyOffloadStreamUsed[queueIndex] = true;
 }
 
 void CommandList::storeEventsForBcsSplit(BcsSplitParams::SplitEventPackage *package) {

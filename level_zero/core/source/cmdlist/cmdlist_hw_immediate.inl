@@ -1966,17 +1966,13 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::selectCopyOffloadQueueInde
         return DualStreamCopyOffload::copyOffloadReadIndex;
     }
 
-    bool writeOutsideOfDevice = false;
-    if (explicitDstAlloc) {
-        writeOutsideOfDevice = NEO::MemoryPoolHelper::isSystemMemoryPool(explicitDstAlloc->getMemoryPool()) || (explicitDstAlloc->getRootDeviceIndex() != this->device->getRootDeviceIndex());
-    } else {
-        NEO::SvmAllocationData *dstAllocData = nullptr;
+    NEO::SvmAllocationData *dstAllocData = nullptr;
+    if (explicitDstAlloc == nullptr) {
         this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, dstSize, dstAllocData);
         dstSvmAlloc = dstAllocData;
-        writeOutsideOfDevice = (dstAllocData == nullptr) || this->isDstSystemOrRemoteAlloc(dstAllocData);
     }
 
-    return writeOutsideOfDevice ? DualStreamCopyOffload::copyOffloadWriteIndex : DualStreamCopyOffload::copyOffloadReadIndex;
+    return this->isCopyOffloadWriteOutsideOfDevice(explicitDstAlloc, dstAllocData) ? DualStreamCopyOffload::copyOffloadWriteIndex : DualStreamCopyOffload::copyOffloadReadIndex;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

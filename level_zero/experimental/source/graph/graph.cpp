@@ -374,6 +374,7 @@ void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
         this->enableInOrderGraph();
     }
     this->captureTargetDesc.desc.commandQueueGroupOrdinal = captureSrc.getOrdinal();
+    this->captureTargetDesc.priority = captureSrc.getImmediateQueuePriority();
     if (isSubGraph) {
         this->executionTarget = &captureSrc;
     }
@@ -1862,6 +1863,10 @@ L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode(uint32
     newCmdList->disableFlatCapture();
     newCmdList->setIsGraphInstantiationTarget(true);
     newCmdList->setupPatchPreambleEnabled(this->usePatchingPreamble);
+    // Graph is executed with capture source priority. Non-normal priority maps both copy offload streams to the same engine.
+    if (src->getCaptureTargetDesc().priority == ZE_COMMAND_QUEUE_PRIORITY_NORMAL) {
+        newCmdList->enableCopyOffloadWriteStream();
+    }
     this->myCommandLists.emplace_back(newCmdList);
     return newCmdList;
 }

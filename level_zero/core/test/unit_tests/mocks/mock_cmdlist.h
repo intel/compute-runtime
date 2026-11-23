@@ -39,6 +39,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     : public ::L0::CommandListCoreFamily<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
+    using BaseClass::activeCopyOffloadQueueIndex;
     using BaseClass::addHostFunctionToPatchCommands;
     using BaseClass::addPatchScratchAddress;
     using BaseClass::addPatchScratchAddressInCrossThreadData;
@@ -83,7 +84,8 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::copyOffloadMode;
     using BaseClass::copyOffloadStreamRecordingActive;
     using BaseClass::copyOffloadStreamUsed;
-    using BaseClass::copyOffloadSubCmdList;
+    using BaseClass::copyOffloadSubCmdLists;
+    using BaseClass::copyOffloadWriteStreamAllowed;
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;

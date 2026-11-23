@@ -1188,7 +1188,7 @@ void CommandQueueHw<gfxCoreFamily>::ensurePatchPreambleCounterForCopyOffload(Com
         return;
     }
     for (auto i = 0u; i < numCommandLists; i++) {
-        if (CommandList::fromHandle(phCommandLists[i])->getCopyOffloadSubCmdList() != nullptr) {
+        if (CommandList::fromHandle(phCommandLists[i])->isCopyOffloadStreamUsed()) {
             // In-order counters are reset in patch preamble, so copy offload stream has to wait for patch preamble counter signaled after the reset.
             // Counter is not required by upper layers, so queue acquires it on its own.
             uint64_t *hostAddress = nullptr;

@@ -427,6 +427,7 @@ struct CommandListCoreFamily : public CommandList {
     bool isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut, bool remoteCopy);
     bool isRemoteAlloc(NEO::SvmAllocationData *allocData) const;
     bool isDstSystemOrRemoteAlloc(NEO::SvmAllocationData *allocData) const;
+    bool isCopyOffloadWriteOutsideOfDevice(const NEO::GraphicsAllocation *explicitDstAlloc, NEO::SvmAllocationData *dstAllocData) const;
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                   const void **pRanges);
@@ -554,14 +555,14 @@ struct CommandListCoreFamily : public CommandList {
 
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
 
-    bool beginCopyOffloadStreamRecording(bool copyOffloadOperation);
+    bool beginCopyOffloadStreamRecording(bool copyOffloadOperation, bool writeOutsideOfDevice);
     void endCopyOffloadStreamRecording();
     void appendWaitOnCopyOffloadStreamCompletion();
 
     // Regular cmd list records dual stream copy offload operations into separate copy engine command stream
     class CopyOffloadStreamScope : NEO::NonCopyableAndNonMovableClass {
       public:
-        CopyOffloadStreamScope(CommandListCoreFamily &cmdList, CmdListMemoryCopyParams &memoryCopyParams);
+        CopyOffloadStreamScope(CommandListCoreFamily &cmdList, CmdListMemoryCopyParams &memoryCopyParams, bool writeOutsideOfDevice);
         ~CopyOffloadStreamScope() {
             if (active) {
                 cmdList.endCopyOffloadStreamRecording();

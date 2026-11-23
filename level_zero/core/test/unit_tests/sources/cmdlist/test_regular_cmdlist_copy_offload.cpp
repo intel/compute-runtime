@@ -53,7 +53,7 @@ struct RegularCmdListCopyOffloadTests : public CopyOffloadInOrderFixture {
 
     template <GFXCORE_FAMILY gfxCoreFamily>
     static RegularCmdList<gfxCoreFamily> *getCopyOffloadCmdList(RegularCmdList<gfxCoreFamily> &cmdList) {
-        return static_cast<RegularCmdList<gfxCoreFamily> *>(cmdList.copyOffloadSubCmdList);
+        return static_cast<RegularCmdList<gfxCoreFamily> *>(cmdList.copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]);
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily>
@@ -202,8 +202,8 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenDualStreamCopyOffloadWhenCreating
     EXPECT_TRUE(inOrderCmdList->isRegularDualStreamCopyOffloadOperation(true));
     EXPECT_FALSE(inOrderCmdList->isRegularDualStreamCopyOffloadOperation(false));
     EXPECT_EQ(nullptr, inOrderCmdList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex]);
-    EXPECT_EQ(nullptr, inOrderCmdList->copyOffloadSubCmdList);
-    EXPECT_EQ(nullptr, inOrderCmdList->getCopyOffloadSubCmdList());
+    EXPECT_EQ(nullptr, inOrderCmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]);
+    EXPECT_EQ(nullptr, inOrderCmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
 
     auto outOfOrderCmdList = makeZeUniquePtr<RegularCmdList<FamilyType::gfxCoreFamily>>();
     outOfOrderCmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0);
@@ -297,7 +297,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenRegularCmdListWhenAppendingMemory
 
     auto copyCmdList = getCopyOffloadCmdList(*cmdList);
     ASSERT_NE(nullptr, copyCmdList);
-    EXPECT_EQ(copyCmdList, cmdList->getCopyOffloadSubCmdList());
+    EXPECT_EQ(copyCmdList, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
     EXPECT_TRUE(copyCmdList->isCopyOnly(false));
     EXPECT_TRUE(copyCmdList->internalUsage);
     EXPECT_FALSE(copyCmdList->isInOrderExecutionEnabled());
@@ -459,8 +459,8 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenNoCopyOffloadedWhenClosingThenCop
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernel(*cmdList));
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
 
-    EXPECT_EQ(nullptr, cmdList->copyOffloadSubCmdList);
-    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList());
+    EXPECT_EQ(nullptr, cmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]);
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
 }
 
 HWTEST2_F(RegularCmdListCopyOffloadTests, givenRegularCmdListWhenAppendingMemoryFillThenFillIsRecordedIntoCopyOffloadStream, IsAtLeastXeCore) {
@@ -551,16 +551,16 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenRecordedCopyOffloadStreamWhenRese
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->reset());
 
-    EXPECT_EQ(copyCmdList, cmdList->copyOffloadSubCmdList);
-    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList());
-    EXPECT_FALSE(cmdList->copyOffloadStreamUsed);
+    EXPECT_EQ(copyCmdList, cmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]);
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+    EXPECT_FALSE(cmdList->copyOffloadStreamUsed[DualStreamCopyOffload::copyOffloadReadIndex]);
     EXPECT_FALSE(cmdList->latestFlushIsDualCopyOffload);
     EXPECT_FALSE(copyCmdList->isClosed());
     auto &copyResidency = copyCmdList->getCmdContainer().getResidencyContainer();
     EXPECT_EQ(copyResidency.end(), std::find(copyResidency.begin(), copyResidency.end(), cmdList->inOrderExecInfo->getDeviceCounterAllocation()));
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
-    EXPECT_EQ(copyCmdList, cmdList->getCopyOffloadSubCmdList());
+    EXPECT_EQ(copyCmdList, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
 }
 
 HWTEST2_F(RegularCmdListCopyOffloadTests, givenEventWithKmdWaitSignaledFromCopyOffloadStreamWhenRecordingThenEventIsAssignedToCopyOffloadCmdList, IsAtLeastXeCore) {
@@ -586,10 +586,10 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenEventWithKmdWaitSignaledFromCopyO
     auto cmdListHandle = cmdList->toHandle();
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
-    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 
     ASSERT_EQ(1u, events[0]->csrs.size());
-    EXPECT_EQ(cmdQueue->copyOffloadQueue->getCsr(), events[0]->csrs[0]);
+    EXPECT_EQ(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getCsr(), events[0]->csrs[0]);
     ASSERT_EQ(1u, events[1]->csrs.size());
     EXPECT_EQ(cmdQueue->getCsr(), events[1]->csrs[0]);
 }
@@ -600,13 +600,13 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCopyOffloadStreamWhenExecutingCmd
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
 
     auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
-    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 
     auto cmdListHandle = cmdList->toHandle();
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
 
-    auto copyQueue = cmdQueue->copyOffloadQueue;
+    auto copyQueue = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex];
     ASSERT_NE(nullptr, copyQueue);
     EXPECT_TRUE(copyQueue->peekIsCopyOnlyCommandQueue());
 
@@ -619,7 +619,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCopyOffloadStreamWhenExecutingCmd
     EXPECT_LT(0u, copyTaskCount);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
-    EXPECT_EQ(copyQueue, cmdQueue->copyOffloadQueue);
+    EXPECT_EQ(copyQueue, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
     EXPECT_EQ(copyTaskCount + 1, copyCsr->peekTaskCount());
 
     // cmd list without copy offload stream does not need copy queue
@@ -630,7 +630,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCopyOffloadStreamWhenExecutingCmd
     auto computeOnlyQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
     auto computeOnlyCmdListHandle = computeOnlyCmdList->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, computeOnlyQueue->executeCommandLists(1, &computeOnlyCmdListHandle, nullptr, internalOptions));
-    EXPECT_EQ(nullptr, computeOnlyQueue->copyOffloadQueue);
+    EXPECT_EQ(nullptr, computeOnlyQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
     EXPECT_EQ(copyTaskCount + 1, copyCsr->peekTaskCount());
 }
 
@@ -644,7 +644,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenSubmittedCopyOffloadStreamWhenDes
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
 
-    auto copyQueue = cmdQueue->copyOffloadQueue;
+    auto copyQueue = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex];
     ASSERT_NE(nullptr, copyQueue);
     const auto copyQueueTaskCount = copyQueue->getTaskCount();
     EXPECT_LT(0u, copyQueueTaskCount);
@@ -669,7 +669,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCopyOffloadQueueWithoutSubmission
     auto cmdListHandle = cmdList->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->ensureCopyOffloadQueue(1, &cmdListHandle));
 
-    auto copyQueue = cmdQueue->copyOffloadQueue;
+    auto copyQueue = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex];
     ASSERT_NE(nullptr, copyQueue);
     EXPECT_EQ(0u, copyQueue->getTaskCount());
 
@@ -727,7 +727,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenSharedAllocationUsedByCopyOffload
 
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendCommandLists(1, &regularCmdListHandle, nullptr, 0, nullptr, internalOptions));
-    ASSERT_NE(nullptr, immCmdQueue->copyOffloadQueue);
+    ASSERT_NE(nullptr, immCmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 
     EXPECT_EQ(1, std::count(pageFaultManager->migratedPtrs.begin(), pageFaultManager->migratedPtrs.end(), sharedGpuVa));
 }
@@ -742,7 +742,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenTbxModeWhenSynchronizingQueueThen
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
 
-    auto copyQueue = cmdQueue->copyOffloadQueue;
+    auto copyQueue = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex];
     ASSERT_NE(nullptr, copyQueue);
 
     auto computeCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdQueue->getCsr());
@@ -795,7 +795,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenNoDualStreamCopyOffloadQueueWhenS
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
 
-    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdQueue->L0::CommandQueue::synchronize(std::numeric_limits<uint64_t>::max()));
 }
 
@@ -813,7 +813,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenDualStreamCopyOffloadWhenQuerying
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, fence->toHandle(), internalOptions));
 
-    auto copyQueue = cmdQueue->copyOffloadQueue;
+    auto copyQueue = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex];
     ASSERT_NE(nullptr, copyQueue);
 
     auto computeCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdQueue->getCsr());
@@ -845,7 +845,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenTbxModeWhenSynchronizingImmediate
     CommandListExecutionInternalOptions internalOptions = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendCommandLists(1, &regularCmdListHandle, nullptr, 0, nullptr, internalOptions));
 
-    auto copyQueue = immCmdQueue->copyOffloadQueue;
+    auto copyQueue = immCmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex];
     ASSERT_NE(nullptr, copyQueue);
     auto computeCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(immCmdQueue->getCsr());
     auto copyCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(copyQueue->getCsr());
@@ -882,7 +882,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleWhenExecutingCmdList
 
     for (uint64_t execution = 1; execution <= 2; execution++) {
         const auto computeQueueOffset = cmdQueue->commandStream.getUsed();
-        const auto copyQueueOffset = cmdQueue->copyOffloadQueue ? static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueue)->commandStream.getUsed() : 0u;
+        const auto copyQueueOffset = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex] ? static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex])->commandStream.getUsed() : 0u;
 
         CommandListExecutionInternalOptions internalOptions = {};
         ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
@@ -906,8 +906,8 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleWhenExecutingCmdList
         EXPECT_NE(computeCmds.end(), std::find(std::next(counterResetItor), computeCmds.end(), *postSyncItor));
         EXPECT_EQ(0u, getStoresToAddress<FamilyType>(computeCmds, patchPreambleCounterAddress).size());
 
-        ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
-        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueue);
+        ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
         auto copyQueueCmds = parseStream<FamilyType>(copyQueue->commandStream, copyQueueOffset);
         auto patchPreambleCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, patchPreambleCounterAddress);
         ASSERT_EQ(1u, patchPreambleCounterWaits.size());
@@ -970,8 +970,8 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleRequiredCounterFromU
     EXPECT_NE(computeCmds.end(), findPostSyncWrite<FamilyType>(computeCmds, requiredDeviceGpuAddress, requiredCounter));
 
     // cross sync is resolved by compute stream, copy offload stream waits only for patch preamble counter
-    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
-    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueue);
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
     auto copyQueueCmds = parseStream<FamilyType>(copyQueue->commandStream, 0);
     auto patchPreambleCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, requiredDeviceGpuAddress);
     ASSERT_EQ(1u, patchPreambleCounterWaits.size());
@@ -1017,9 +1017,9 @@ HWTEST2_F(RegularCmdListCopyOffloadTests,
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
 
     // cross sync is resolved by compute stream, copy offload stream waits also for external patch preamble counters
-    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 
-    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueue);
+    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
     auto copyQueueCmds = parseStream<FamilyType>(copyQueue->commandStream, 0);
 
     auto patchPreambleInternalCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, requiredDeviceGpuAddress);
@@ -1075,8 +1075,8 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleAndMultipleCmdListsW
     EXPECT_EQ(1u, cmdQueue->patchPreambleCounter.counter);
     const auto patchPreambleCounterAddress = getPatchPreambleCounterDeviceAddress(*cmdQueue);
 
-    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
-    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueue);
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
     auto copyQueueCmds = parseStream<FamilyType>(copyQueue->commandStream, 0);
     auto patchPreambleCounterWaits = getSemaphoreWaitValues<FamilyType>(copyQueueCmds, patchPreambleCounterAddress);
     ASSERT_EQ(2u, patchPreambleCounterWaits.size());
@@ -1130,8 +1130,8 @@ HWTEST2_F(RegularCmdListCopyOffloadTests,
     ze_command_list_handle_t cmdListHandles[] = {cmdList0->toHandle(), cmdList1->toHandle()};
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(2, cmdListHandles, nullptr, internalOptions));
 
-    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
-    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueue);
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
     auto copyQueueCmds = parseStream<FamilyType>(copyQueue->commandStream, 0);
 
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -1164,7 +1164,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleAndCmdListWithoutCop
     auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernel(*cmdList));
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
-    ASSERT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList());
+    ASSERT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
 
     auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
     cmdQueue->setPatchingPreamble(true);
@@ -1175,7 +1175,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleAndCmdListWithoutCop
 
     EXPECT_EQ(0u, cmdQueue->patchPreambleCounter.counter);
     EXPECT_EQ(nullptr, cmdQueue->patchPreambleCounter.hostCounterNode);
-    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 }
 
 HWTEST2_F(RegularCmdListCopyOffloadTests, givenNoPatchPreambleWhenExecutingCmdListThenPatchPreambleCounterIsNotAcquired, IsAtLeastXeCore) {
@@ -1283,10 +1283,10 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenNotDualStreamCopyOffloadOperation
     const auto counterValue = cmdList->inOrderExecInfo->getCounterValue();
 
     auto expectRecordingNotStarted = [&](bool copyOffloadOperation) {
-        EXPECT_FALSE(cmdList->beginCopyOffloadStreamRecording(copyOffloadOperation));
+        EXPECT_FALSE(cmdList->beginCopyOffloadStreamRecording(copyOffloadOperation, false));
         EXPECT_FALSE(cmdList->copyOffloadStreamRecordingActive);
-        EXPECT_FALSE(cmdList->copyOffloadStreamUsed);
-        EXPECT_EQ(nullptr, cmdList->copyOffloadSubCmdList);
+        EXPECT_FALSE(cmdList->copyOffloadStreamUsed[DualStreamCopyOffload::copyOffloadReadIndex]);
+        EXPECT_EQ(nullptr, cmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]);
         EXPECT_EQ(mainStream, cmdList->getCmdContainer().getCommandStream());
         EXPECT_EQ(mainStreamUsed, mainStream->getUsed());
         EXPECT_EQ(counterValue, cmdList->inOrderExecInfo->getCounterValue());
@@ -1303,7 +1303,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCopyOffloadStreamRecordingActiveW
     auto &mainContainer = cmdList->getCmdContainer();
     auto mainStream = mainContainer.getCommandStream();
 
-    ASSERT_TRUE(cmdList->beginCopyOffloadStreamRecording(true));
+    ASSERT_TRUE(cmdList->beginCopyOffloadStreamRecording(true, false));
     EXPECT_TRUE(cmdList->copyOffloadStreamRecordingActive);
     auto copyCmdList = getCopyOffloadCmdList(*cmdList);
     ASSERT_NE(nullptr, copyCmdList);
@@ -1316,7 +1316,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCopyOffloadStreamRecordingActiveW
     const auto mainStreamUsed = mainStream->getUsed();
     const auto counterValue = cmdList->inOrderExecInfo->getCounterValue();
 
-    EXPECT_FALSE(cmdList->beginCopyOffloadStreamRecording(true));
+    EXPECT_FALSE(cmdList->beginCopyOffloadStreamRecording(true, false));
     EXPECT_TRUE(cmdList->copyOffloadStreamRecordingActive);
     EXPECT_EQ(copyCmdList, getCopyOffloadCmdList(*cmdList));
     EXPECT_EQ(copyStream, mainContainer.getCommandStream());
@@ -1385,12 +1385,12 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCopyQueueCreationFailureWhenExecu
         VariableBackup<CommandQueueAllocatorFn> commandQueueFactoryBackup(&commandQueueFactory[FamilyType::gfxCoreFamily], FailingQueue::allocate);
 
         EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
-        EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+        EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
         EXPECT_NE(nullptr, FailingQueue::allocatedCsr);
     }
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
-    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueue);
+    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 }
 
 HWTEST2_F(RegularCmdListCopyOffloadTests, givenNoCopyQueueAndCopyCsrNotAvailableWhenDispatchingCopyOffloadCmdListThenErrorIsReturned, IsAtLeastXeCore) {
@@ -1399,7 +1399,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenNoCopyQueueAndCopyCsrNotAvailable
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
 
     auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
-    ASSERT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+    ASSERT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 
     CommandListExecutionContext ctx{};
 
@@ -1412,13 +1412,13 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenNoCopyQueueAndCopyCsrNotAvailable
         VariableBackup<CommandQueueAllocatorFn> commandQueueFactoryBackup(&commandQueueFactory[FamilyType::gfxCoreFamily], FailingQueue::allocate);
 
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdQueue->dispatchCopyOffloadCmdList(cmdList.get(), ctx));
-        EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+        EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 
         EXPECT_EQ(nullptr, FailingQueue::allocatedCsr);
     }
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdQueue->dispatchCopyOffloadCmdList(cmdList.get(), ctx));
-    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueue);
+    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1449,14 +1449,14 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenCopyOffloadCmdListDispatchFailure
     auto failingCopyQueue = new FailingExecuteCommandQueueHw<FamilyType::gfxCoreFamily>(device, copyCsr, &copyQueueDesc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, failingCopyQueue->initialize(true, true, false));
 
-    cmdQueue->copyOffloadQueue = failingCopyQueue;
+    cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex] = failingCopyQueue;
 
     auto cmdListHandle = cmdList->toHandle();
     CommandListExecutionInternalOptions internalOptions = {};
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
 
     EXPECT_EQ(1u, failingCopyQueue->executeCommandListsCalled);
-    EXPECT_EQ(failingCopyQueue, cmdQueue->copyOffloadQueue);
+    EXPECT_EQ(failingCopyQueue, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
     EXPECT_EQ(0u, cmdQueue->getTaskCount());
 }
 
@@ -1492,8 +1492,8 @@ HWTEST2_F(RegularCmdListCopyOffloadContextGroupTests, givenCopyEngineSecondaryCo
     CommandListExecutionInternalOptions internalOptions = {};
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
-    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
-    auto copyCsr = cmdQueue->copyOffloadQueue->getCsr();
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    auto copyCsr = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getCsr();
     EXPECT_EQ(1u, copyCsr->getOwningQueueCount());
 
     // copy queue is reused, queue ownership is not taken again
@@ -1523,7 +1523,7 @@ HWTEST2_F(RegularCmdListCopyOffloadContextGroupTests, givenCopyEngineSecondaryCo
     VariableBackup<CommandQueueAllocatorFn> commandQueueFactoryBackup(&commandQueueFactory[FamilyType::gfxCoreFamily], FailingQueue::allocate);
 
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
-    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 
     // queue ownership taken for copy csr is released after copy queue creation failure
     ASSERT_NE(nullptr, FailingQueue::allocatedCsr);
@@ -1546,7 +1546,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenScratchAllocationFailureWhenExecu
     auto cmdListHandle = cmdList->toHandle();
 
     auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
-    ASSERT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+    ASSERT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
 
     auto memoryManager = static_cast<NEO::MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
     memoryManager->isMockHostMemoryManager = true;
@@ -1556,8 +1556,8 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenScratchAllocationFailureWhenExecu
 
     CommandListExecutionInternalOptions internalOptions = {};
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
-    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
-    auto copyOffloadCsr = cmdQueue->copyOffloadQueue->getCsr();
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    auto copyOffloadCsr = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getCsr();
     const auto copyOffloadTaskCountAfterFailure = copyOffloadCsr->peekTaskCount();
     EXPECT_TRUE(cmdQueue->heapContainer.empty());
     EXPECT_TRUE(cmdQueue->getCsr()->getResidencyAllocations().empty());
@@ -1571,6 +1571,584 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenScratchAllocationFailureWhenExecu
     EXPECT_LT(copyOffloadTaskCountAfterFailure, copyOffloadCsr->peekTaskCount());
 
     cmdList->getCmdContainer().getSshAllocations().clear();
+}
+
+struct RegularCmdListCopyOffloadWriteStreamTests : public RegularCmdListCopyOffloadTests {
+    void SetUp() override {
+        NEO::debugManager.flags.CopyOffloadWriteEngine.set(1);
+        bcsInfoMask = 0b1111;
+
+        RegularCmdListCopyOffloadTests::SetUp();
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    static RegularCmdList<gfxCoreFamily> *getCopyOffloadWriteCmdList(RegularCmdList<gfxCoreFamily> &cmdList) {
+        return static_cast<RegularCmdList<gfxCoreFamily> *>(cmdList.copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    ze_result_t appendWriteCopy(RegularCmdList<gfxCoreFamily> &cmdList, ze_event_handle_t hSignalEvent) {
+        CmdListMemoryCopyParams copyParams = {};
+        auto result = cmdList.appendMemoryCopy(allocHostUsm(), allocDeviceUsm(), copySize, hSignalEvent, 0, nullptr, copyParams);
+        EXPECT_TRUE(copyParams.copyOffloadAllowed);
+        return result;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<RegularCmdList<gfxCoreFamily>> createGraphCmdList() {
+        auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
+        cmdList->enableCopyOffloadWriteStream();
+        return cmdList;
+    }
+
+    const NEO::EnginesT &getCopyEngines() {
+        return device->getNEODevice()->getRegularEngineGroups()[device->getCopyEngineOrdinal()].engines;
+    }
+};
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyOffloadWriteEngineEnabledWhenEnablingWriteStreamThenWriteStreamIsAllowedOnlyAfterEnabling, IsCRI) {
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+
+    EXPECT_EQ(CopyOffloadModes::dualStream, cmdList->copyOffloadMode);
+    EXPECT_FALSE(cmdList->copyOffloadWriteStreamAllowed);
+
+    cmdList->enableCopyOffloadWriteStream();
+    EXPECT_TRUE(cmdList->copyOffloadWriteStreamAllowed);
+    EXPECT_EQ(nullptr, cmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyOffloadWriteEngineDebugKeyNotSetWhenEnablingWriteStreamThenWriteStreamIsAllowed, IsCRI) {
+    NEO::debugManager.flags.CopyOffloadWriteEngine.set(-1);
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+
+    EXPECT_EQ(CopyOffloadModes::dualStream, cmdList->copyOffloadMode);
+    EXPECT_TRUE(cmdList->copyOffloadWriteStreamAllowed);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyOffloadWriteEngineDisabledByDebugKeyWhenEnablingWriteStreamThenWriteStreamIsNotAllowed, IsCRI) {
+    NEO::debugManager.flags.CopyOffloadWriteEngine.set(0);
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+
+    EXPECT_EQ(CopyOffloadModes::dualStream, cmdList->copyOffloadMode);
+    EXPECT_FALSE(cmdList->copyOffloadWriteStreamAllowed);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenMutableCmdListWhenEnablingWriteStreamThenWriteStreamIsNotAllowed, IsCRI) {
+    struct MutableRegularCmdList : public RegularCmdList<FamilyType::gfxCoreFamily> {
+        void *asMutable() override { return this; }
+    };
+
+    auto cmdList = makeZeUniquePtr<MutableRegularCmdList>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->initialize(device, NEO::EngineGroupType::renderCompute, ZE_COMMAND_LIST_FLAG_IN_ORDER));
+    cmdList->enableCopyOffloadWriteStream();
+
+    EXPECT_EQ(CopyOffloadModes::dualStream, cmdList->copyOffloadMode);
+    EXPECT_FALSE(cmdList->copyOffloadWriteStreamAllowed);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenOutOfOrderRegularCmdListWhenEnablingWriteStreamThenWriteStreamIsNotAllowed, IsCRI) {
+    auto cmdList = makeZeUniquePtr<RegularCmdList<FamilyType::gfxCoreFamily>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0));
+    cmdList->enableCopyOffloadWriteStream();
+
+    EXPECT_FALSE(cmdList->copyOffloadWriteStreamAllowed);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyToHostUsmWhenAppendingThenCopyIsRecordedIntoWriteStream, IsCRI) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    auto mainStream = cmdList->getCmdContainer().getCommandStream();
+    const auto mainStreamOffset = mainStream->getUsed();
+    const auto counterAddress = getCounterGpuAddress(*cmdList->inOrderExecInfo);
+    const auto incrementValue = cmdList->getInOrderIncrementValue();
+
+    auto dst = allocHostUsm();
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(dst, allocDeviceUsm(), copySize, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(copyParams.copyOffloadAllowed);
+
+    auto writeCmdList = getCopyOffloadWriteCmdList(*cmdList);
+    ASSERT_NE(nullptr, writeCmdList);
+    EXPECT_EQ(writeCmdList, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+    EXPECT_TRUE(cmdList->isCopyOffloadStreamUsed());
+    EXPECT_TRUE(writeCmdList->isCopyOnly(false));
+    EXPECT_TRUE(writeCmdList->internalUsage);
+    EXPECT_EQ(DualStreamCopyOffload::copyOffloadReadIndex, cmdList->activeCopyOffloadQueueIndex);
+    EXPECT_FALSE(cmdList->copyOffloadStreamRecordingActive);
+    EXPECT_TRUE(cmdList->latestFlushIsDualCopyOffload);
+    EXPECT_EQ(mainStream, cmdList->getCmdContainer().getCommandStream());
+
+    auto mainCmds = parseStream<FamilyType>(*mainStream, mainStreamOffset);
+    EXPECT_EQ(mainCmds.end(), find<XY_COPY_BLT *>(mainCmds.begin(), mainCmds.end()));
+
+    auto writeCmds = parseStream<FamilyType>(*writeCmdList->getCmdContainer().getCommandStream(), 0);
+    EXPECT_EQ(1u, findAll<XY_COPY_BLT *>(writeCmds.begin(), writeCmds.end()).size());
+    auto waitValues = getSemaphoreWaitValues<FamilyType>(writeCmds, counterAddress);
+    ASSERT_EQ(1u, waitValues.size());
+    EXPECT_EQ(incrementValue, waitValues[0]);
+
+    auto &writeResidency = writeCmdList->getCmdContainer().getResidencyContainer();
+    EXPECT_NE(writeResidency.end(), std::find(writeResidency.begin(), writeResidency.end(), getUsmAllocation(dst)));
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyToNonUsmHostPtrWhenAppendingThenCopyIsRecordedIntoWriteStream, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+
+    std::vector<uint8_t> hostBuffer(copySize);
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(hostBuffer.data(), allocDeviceUsm(), copySize, nullptr, 0, nullptr, copyParams));
+    ASSERT_TRUE(copyParams.copyOffloadAllowed);
+
+    EXPECT_NE(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->reset());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyToDeviceUsmWhenAppendingThenCopyIsRecordedIntoReadStream, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(allocDeviceUsm(), allocDeviceUsm(), copySize, nullptr, 0, nullptr, copyParams));
+    ASSERT_TRUE(copyParams.copyOffloadAllowed);
+
+    EXPECT_NE(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+    EXPECT_EQ(nullptr, cmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyRegionToHostUsmWhenAppendingThenCopyIsRecordedIntoWriteStream, IsCRI) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+
+    const uint32_t width = 16;
+    const uint32_t height = static_cast<uint32_t>(copySize) / width;
+    ze_copy_region_t region = {0, 0, 0, width, height, 1};
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopyRegion(allocHostUsm(), &region, width, 0, allocDeviceUsm(), &region, width, 0, nullptr, 0, nullptr, copyParams));
+    ASSERT_TRUE(copyParams.copyOffloadAllowed);
+
+    auto writeCmdList = getCopyOffloadWriteCmdList(*cmdList);
+    ASSERT_NE(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+
+    auto writeCmds = parseStream<FamilyType>(*writeCmdList->getCmdContainer().getCommandStream(), 0);
+    EXPECT_NE(writeCmds.end(), find<XY_COPY_BLT *>(writeCmds.begin(), writeCmds.end()));
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenWriteStreamNotAllowedWhenAppendingCopyToHostUsmThenCopyIsRecordedIntoReadStream, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    cmdList->copyOffloadWriteStreamAllowed = false;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+
+    EXPECT_NE(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+    EXPECT_EQ(nullptr, cmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadWriteIndex]);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenExplicitAllocationsToHostWhenAppendingCopyThenCopyIsRecordedIntoWriteStream, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+
+    auto dst = allocHostUsm();
+    auto src = allocDeviceUsm();
+    MemAllocInfo dstAllocInfo = {};
+    dstAllocInfo.explicitAlloc = getUsmAllocation(dst);
+    MemAllocInfo srcAllocInfo = {};
+    srcAllocInfo.explicitAlloc = getUsmAllocation(src);
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(dst, src, copySize, nullptr, 0, nullptr, copyParams, &dstAllocInfo, &srcAllocInfo));
+    ASSERT_TRUE(copyParams.copyOffloadAllowed);
+
+    EXPECT_NE(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenExplicitAllocationsToDeviceWhenAppendingCopyThenCopyIsRecordedIntoReadStream, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+
+    auto dst = allocDeviceUsm();
+    auto src = allocHostUsm();
+    MemAllocInfo dstAllocInfo = {};
+    dstAllocInfo.explicitAlloc = getUsmAllocation(dst);
+    MemAllocInfo srcAllocInfo = {};
+    srcAllocInfo.explicitAlloc = getUsmAllocation(src);
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(dst, src, copySize, nullptr, 0, nullptr, copyParams, &dstAllocInfo, &srcAllocInfo));
+    ASSERT_TRUE(copyParams.copyOffloadAllowed);
+
+    EXPECT_NE(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenReadAndWriteCopiesWhenAppendingThenEachCopyWaitsForCounterSignaledByPreviousCopy, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    const auto counterAddress = getCounterGpuAddress(*cmdList->inOrderExecInfo);
+    const auto incrementValue = cmdList->getInOrderIncrementValue();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    EXPECT_EQ(4 * incrementValue, cmdList->inOrderExecInfo->getCounterValue());
+
+    auto readCmds = parseStream<FamilyType>(*getCopyOffloadCmdList(*cmdList)->getCmdContainer().getCommandStream(), 0);
+    auto readWaitValues = getSemaphoreWaitValues<FamilyType>(readCmds, counterAddress);
+    ASSERT_EQ(2u, readWaitValues.size());
+    EXPECT_EQ(incrementValue, readWaitValues[0]);
+    EXPECT_EQ(3 * incrementValue, readWaitValues[1]);
+
+    auto writeCmds = parseStream<FamilyType>(*getCopyOffloadWriteCmdList(*cmdList)->getCmdContainer().getCommandStream(), 0);
+    auto writeWaitValues = getSemaphoreWaitValues<FamilyType>(writeCmds, counterAddress);
+    ASSERT_EQ(1u, writeWaitValues.size());
+    EXPECT_EQ(2 * incrementValue, writeWaitValues[0]);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenWriteCopyAsLastOperationWhenClosingThenComputeStreamWaitsForCompletionAndBothStreamsAreClosed, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    auto mainStream = cmdList->getCmdContainer().getCommandStream();
+    const auto counterAddress = getCounterGpuAddress(*cmdList->inOrderExecInfo);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    const auto finalCounterValue = cmdList->inOrderExecInfo->getCounterValue();
+
+    const auto offset = mainStream->getUsed();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto mainCmds = parseStream<FamilyType>(*mainStream, offset);
+    auto waitValues = getSemaphoreWaitValues<FamilyType>(mainCmds, counterAddress);
+    ASSERT_EQ(1u, waitValues.size());
+    EXPECT_EQ(finalCounterValue, waitValues[0]);
+    EXPECT_TRUE(getCopyOffloadWriteCmdList(*cmdList)->isClosed());
+    EXPECT_EQ(nullptr, cmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->reset());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+    EXPECT_TRUE(getCopyOffloadCmdList(*cmdList)->isClosed());
+    EXPECT_TRUE(getCopyOffloadWriteCmdList(*cmdList)->isClosed());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenRecordedWriteStreamWhenResettingCmdListThenWriteStreamIsReset, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto writeCmdList = getCopyOffloadWriteCmdList(*cmdList);
+    ASSERT_NE(nullptr, writeCmdList);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->reset());
+
+    EXPECT_EQ(writeCmdList, cmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    EXPECT_EQ(nullptr, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+    EXPECT_FALSE(cmdList->copyOffloadStreamUsed[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    EXPECT_FALSE(cmdList->isCopyOffloadStreamUsed());
+    EXPECT_FALSE(writeCmdList->isClosed());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    EXPECT_EQ(writeCmdList, cmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex));
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenEventWithKmdWaitSignaledFromWriteStreamWhenExecutingThenEventIsAssignedToWriteQueueCsr, IsCRI) {
+    auto eventPool = createEvents<FamilyType>(2, false);
+    events[0]->enableKmdWaitMode();
+    events[1]->enableKmdWaitMode();
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, events[0]->toHandle()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, events[1]->toHandle()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto writeCmdList = getCopyOffloadWriteCmdList(*cmdList);
+    ASSERT_EQ(1u, writeCmdList->interruptEvents.size());
+    EXPECT_EQ(events[0].get(), writeCmdList->interruptEvents[0]);
+    auto readCmdList = getCopyOffloadCmdList(*cmdList);
+    ASSERT_EQ(1u, readCmdList->interruptEvents.size());
+    EXPECT_EQ(events[1].get(), readCmdList->interruptEvents[0]);
+    EXPECT_TRUE(cmdList->interruptEvents.empty());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+
+    ASSERT_EQ(1u, events[0]->csrs.size());
+    EXPECT_EQ(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]->getCsr(), events[0]->csrs[0]);
+    ASSERT_EQ(1u, events[1]->csrs.size());
+    EXPECT_EQ(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getCsr(), events[1]->csrs[0]);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenWriteStreamWhenExecutingCmdListThenWriteStreamIsSubmittedToWriteQueueOnSecondCopyEngine, IsCRI) {
+    const auto &copyEngines = getCopyEngines();
+    ASSERT_LE(2u, copyEngines.size());
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+
+    auto readQueue = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex];
+    auto writeQueue = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex];
+    ASSERT_NE(nullptr, readQueue);
+    ASSERT_NE(nullptr, writeQueue);
+    EXPECT_TRUE(writeQueue->peekIsCopyOnlyCommandQueue());
+    EXPECT_EQ(copyEngines[0].getEngineType(), readQueue->getCsr()->getOsContext().getEngineType());
+    EXPECT_EQ(copyEngines[1].getEngineType(), writeQueue->getCsr()->getOsContext().getEngineType());
+
+    const auto readTaskCount = readQueue->getCsr()->peekTaskCount();
+    const auto writeTaskCount = writeQueue->getCsr()->peekTaskCount();
+    EXPECT_LT(0u, readTaskCount);
+    EXPECT_LT(0u, writeTaskCount);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    EXPECT_EQ(writeQueue, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    EXPECT_EQ(readTaskCount + 1, readQueue->getCsr()->peekTaskCount());
+    EXPECT_EQ(writeTaskCount + 1, writeQueue->getCsr()->peekTaskCount());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenOnlyWriteStreamWhenExecutingCmdListThenReadQueueIsCreatedWithoutSubmission, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    EXPECT_EQ(0u, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getTaskCount());
+    EXPECT_LT(0u, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]->getTaskCount());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenOnlyReadStreamWhenExecutingCmdListThenWriteQueueIsNotCreated, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+
+    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+
+    auto writeCmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*writeCmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, writeCmdList->close());
+    auto writeCmdListHandle = writeCmdList->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &writeCmdListHandle, nullptr, internalOptions));
+    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenReadQueueOnWriteCopyEngineWhenCreatingWriteQueueThenUnsupportedFeatureIsReturned, IsCRI) {
+    const auto &copyEngines = getCopyEngines();
+    ASSERT_LE(2u, copyEngines.size());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+
+    ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    copyQueueDesc.ordinal = device->getCopyEngineOrdinal();
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex] = CommandQueue::create(device, copyEngines[DualStreamCopyOffload::copyOffloadWriteIndex].commandStreamReceiver, &copyQueueDesc, true, true, false, returnValue);
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, cmdQueue->createCopyOffloadQueue(DualStreamCopyOffload::copyOffloadWriteIndex));
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenHighPriorityQueueWhenExecutingCmdListWithWriteStreamThenUnsupportedFeatureIsReturned, IsCRI) {
+    if (device->getNEODevice()->getHpCopyEngine() == nullptr) {
+        GTEST_SKIP();
+    }
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
+    auto cmdQueue = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    cmdQueue->initialize(false, false, false);
+
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyCsrNotAvailableWhenCreatingWriteQueueThenErrorIsReturned, IsCRI) {
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->createCopyOffloadQueue(DualStreamCopyOffload::copyOffloadReadIndex));
+
+    NEO::debugManager.flags.ForceBcsEngineIndex.set(std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdQueue->createCopyOffloadQueue(DualStreamCopyOffload::copyOffloadWriteIndex));
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenNoCopyQueuesWhenDispatchingCmdListWithWriteStreamThenBothQueuesAreCreated, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    CommandListExecutionContext ctx{};
+
+    {
+        DebugManagerStateRestore restorer;
+        NEO::debugManager.flags.ForceBcsEngineIndex.set(std::numeric_limits<int32_t>::max());
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdQueue->dispatchCopyOffloadCmdList(cmdList.get(), ctx));
+        EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+        EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdQueue->dispatchCopyOffloadCmdList(cmdList.get(), ctx));
+    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    EXPECT_LT(0u, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]->getTaskCount());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenNoWriteQueueWhenDispatchingCmdListWithWriteStreamAndWriteQueueCreationFailsThenErrorIsReturned, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->createCopyOffloadQueue(DualStreamCopyOffload::copyOffloadReadIndex));
+    CommandListExecutionContext ctx{};
+
+    NEO::debugManager.flags.ForceBcsEngineIndex.set(std::numeric_limits<int32_t>::max());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdQueue->dispatchCopyOffloadCmdList(cmdList.get(), ctx));
+    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    EXPECT_EQ(0u, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getTaskCount());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenReadStreamSubmissionFailureWhenDispatchingCmdListThenWriteStreamIsNotSubmitted, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    auto cmdListHandle = cmdList->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->ensureCopyOffloadQueue(1, &cmdListHandle));
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+
+    auto readCmdList = getCopyOffloadCmdList(*cmdList);
+    readCmdList->closedCmdList = false;
+
+    CommandListExecutionContext ctx{};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdQueue->dispatchCopyOffloadCmdList(cmdList.get(), ctx));
+    EXPECT_EQ(0u, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]->getTaskCount());
+
+    readCmdList->closedCmdList = true;
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenSubmittedWriteStreamWhenDestroyingComputeQueueThenWaitForWriteQueueTaskCount, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+
+    auto writeQueue = cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex];
+    ASSERT_NE(nullptr, writeQueue);
+    const auto writeQueueTaskCount = writeQueue->getTaskCount();
+    auto writeCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(writeQueue->getCsr());
+    const auto waitCalledBefore = writeCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+
+    cmdQueue.reset();
+
+    EXPECT_EQ(waitCalledBefore + 1, writeCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(writeQueueTaskCount, writeCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenWriteQueueWhenDownloadingAllocationsThenAllocationsAreDownloadedOnWriteQueueCsr, IsCRI) {
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+
+    auto readCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getCsr());
+    auto writeCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]->getCsr());
+    const auto readDownloadsBefore = readCsr->downloadAllocationsCalledCount.load();
+    const auto writeDownloadsBefore = writeCsr->downloadAllocationsCalledCount.load();
+    writeCsr->latestDownloadAllocationsBlocking = false;
+
+    cmdQueue->downloadAllocations();
+
+    EXPECT_EQ(readDownloadsBefore + 1, readCsr->downloadAllocationsCalledCount.load());
+    EXPECT_EQ(writeDownloadsBefore + 1, writeCsr->downloadAllocationsCalledCount.load());
+    EXPECT_TRUE(writeCsr->latestDownloadAllocationsBlocking.load());
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenPatchPreambleAndOnlyWriteStreamWhenExecutingCmdListThenQueueAcquiresPatchPreambleCounterAndWriteStreamWaitsForIt, IsCRI) {
+    NEO::debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    cmdQueue->setPatchingPreamble(true);
+
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+
+    EXPECT_EQ(1u, cmdQueue->patchPreambleCounter.counter);
+    EXPECT_TRUE(getCopyOffloadWriteCmdList(*cmdList)->isPatchPreambleEnabled());
+
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    auto writeQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    auto writeQueueCmds = parseStream<FamilyType>(writeQueue->commandStream, 0);
+    auto patchPreambleCounterWaits = getSemaphoreWaitValues<FamilyType>(writeQueueCmds, getPatchPreambleCounterDeviceAddress(*cmdQueue));
+    ASSERT_EQ(1u, patchPreambleCounterWaits.size());
+    EXPECT_EQ(1u, patchPreambleCounterWaits[0]);
+}
+
+struct RegularCmdListCopyOffloadWriteStreamSingleCopyEngineTests : public RegularCmdListCopyOffloadTests {
+    void SetUp() override {
+        NEO::debugManager.flags.CopyOffloadWriteEngine.set(1);
+        const auto productHelper = NEO::ProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        bcsInfoMask = 0;
+        bcsInfoMask.set(NEO::EngineHelpers::getBcsIndex(productHelper->getDefaultCopyEngine()));
+
+        RegularCmdListCopyOffloadTests::SetUp();
+    }
+};
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamSingleCopyEngineTests, givenSingleCopyEngineInCopyEngineGroupWhenEnablingWriteStreamThenWriteStreamIsNotAllowed, IsCRI) {
+    ASSERT_EQ(1u, device->getNEODevice()->getRegularEngineGroups()[device->getCopyEngineOrdinal()].engines.size());
+
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    cmdList->enableCopyOffloadWriteStream();
+
+    EXPECT_EQ(CopyOffloadModes::dualStream, cmdList->copyOffloadMode);
+    EXPECT_FALSE(cmdList->copyOffloadWriteStreamAllowed);
 }
 
 } // namespace ult

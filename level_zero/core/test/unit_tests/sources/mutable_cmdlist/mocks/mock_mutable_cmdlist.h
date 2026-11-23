@@ -71,7 +71,7 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::stageCommitVariables;
     using BaseClass::variableStorage;
 
-    using BaseCmdListClass::copyOffloadSubCmdList;
+    using BaseCmdListClass::copyOffloadSubCmdLists;
 
     WhiteBox() : ::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 };

@@ -113,12 +113,14 @@ bool CommandQueue::reassignCsr() {
 }
 
 ze_result_t CommandQueue::destroy() {
-    if (copyOffloadQueue) {
-        if (const auto copyOffloadTaskCount = copyOffloadQueue->getTaskCount(); copyOffloadTaskCount != 0) {
-            copyOffloadQueue->getCsr()->waitForCompletionWithTimeout(NEO::WaitParams{false, false, false, NEO::TimeoutControls::maxTimeout}, copyOffloadTaskCount);
+    for (auto &copyOffloadQueue : copyOffloadQueues) {
+        if (copyOffloadQueue) {
+            if (const auto copyOffloadTaskCount = copyOffloadQueue->getTaskCount(); copyOffloadTaskCount != 0) {
+                copyOffloadQueue->getCsr()->waitForCompletionWithTimeout(NEO::WaitParams{false, false, false, NEO::TimeoutControls::maxTimeout}, copyOffloadTaskCount);
+            }
+            copyOffloadQueue->destroy();
+            copyOffloadQueue = nullptr;
         }
-        copyOffloadQueue->destroy();
-        copyOffloadQueue = nullptr;
     }
 
     unregisterCsrClient();
@@ -178,9 +180,9 @@ ze_result_t CommandQueue::initialize(bool copyOnly, bool isInternal, bool immedi
     return returnValue;
 }
 
-ze_result_t CommandQueue::createCopyOffloadQueue() {
+ze_result_t CommandQueue::createCopyOffloadQueue(uint32_t queueIndex) {
     std::lock_guard<std::mutex> lock(this->copyOffloadQueueCreationMutex);
-    if (this->copyOffloadQueue != nullptr) {
+    if (this->copyOffloadQueues[queueIndex] != nullptr) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -188,9 +190,19 @@ ze_result_t CommandQueue::createCopyOffloadQueue() {
 
     NEO::CommandStreamReceiver *copyCsr = nullptr;
     bool queueOwnershipTaken = false;
-    ze_result_t returnValue = device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, desc.priority, std::nullopt, 0u, &queueOwnershipTaken);
+    ze_result_t returnValue = device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, queueIndex, desc.priority, std::nullopt, 0u, &queueOwnershipTaken);
     if (returnValue != ZE_RESULT_SUCCESS) {
         return returnValue;
+    }
+
+    if (queueIndex == DualStreamCopyOffload::copyOffloadWriteIndex) {
+        UNRECOVERABLE_IF(this->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex] == nullptr);
+        if (copyCsr->getOsContext().getEngineType() == this->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getCsr()->getOsContext().getEngineType()) {
+            if (queueOwnershipTaken) {
+                copyCsr->releaseQueueOwnership();
+            }
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
     }
 
     ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -208,39 +220,74 @@ ze_result_t CommandQueue::createCopyOffloadQueue() {
     if (queueOwnershipTaken) {
         newCopyOffloadQueue->takeCsrQueueOwnership(std::nullopt, 0u);
     }
-    this->copyOffloadQueue = newCopyOffloadQueue;
+    this->copyOffloadQueues[queueIndex] = newCopyOffloadQueue;
+    return ZE_RESULT_SUCCESS;
+}
+
+void CommandQueue::addRequiredCopyOffloadQueues(const CommandList &commandList, std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> &queuesRequired) {
+    queuesRequired[DualStreamCopyOffload::copyOffloadReadIndex] |= commandList.isCopyOffloadStreamUsed();
+    queuesRequired[DualStreamCopyOffload::copyOffloadWriteIndex] |= (commandList.getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex) != nullptr);
+}
+
+ze_result_t CommandQueue::createCopyOffloadQueues(const std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> &queuesRequired) {
+    static_assert(DualStreamCopyOffload::copyOffloadReadIndex < DualStreamCopyOffload::copyOffloadWriteIndex, "write queue engine is checked against read queue engine, so read queue has to be created first");
+    for (uint32_t queueIndex = 0; queueIndex < DualStreamCopyOffload::numCopyOffloadQueues; queueIndex++) {
+        if (queuesRequired[queueIndex] && this->copyOffloadQueues[queueIndex] == nullptr) {
+            auto returnValue = createCopyOffloadQueue(queueIndex);
+            if (returnValue != ZE_RESULT_SUCCESS) {
+                return returnValue;
+            }
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t CommandQueue::ensureCopyOffloadQueue(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists) {
-    if (this->copyOffloadQueue != nullptr) {
+    if (this->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex] != nullptr) {
         return ZE_RESULT_SUCCESS;
     }
+
+    std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> queuesRequired{};
     for (auto i = 0u; i < numCommandLists; i++) {
-        if (CommandList::fromHandle(phCommandLists[i])->getCopyOffloadSubCmdList() != nullptr) {
-            // copy queue creation initializes direct submission, which locks direct submission controller.
-            // Controller thread locks csrs while holding it, so this can't be done under ownership of this queue's csr.
-            return createCopyOffloadQueue();
+        addRequiredCopyOffloadQueues(*CommandList::fromHandle(phCommandLists[i]), queuesRequired);
+    }
+
+    // copy queue creation initializes direct submission, which locks direct submission controller.
+    // Controller thread locks csrs while holding it, so this can't be done under ownership of this queue's csr.
+    return createCopyOffloadQueues(queuesRequired);
+}
+
+ze_result_t CommandQueue::dispatchCopyOffloadCmdList(CommandList *commandList, const CommandListExecutionContext &ctx) {
+    if (!commandList->isCopyOffloadStreamUsed()) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> queuesRequired{};
+    addRequiredCopyOffloadQueues(*commandList, queuesRequired);
+    for (size_t queueIndex = 0; queueIndex < DualStreamCopyOffload::numCopyOffloadQueues; queueIndex++) {
+        if (queuesRequired[queueIndex] && this->copyOffloadQueues[queueIndex] == nullptr) {
+            // copy queue is expected to be created by ensureCopyOffloadQueue() before csr ownership is taken
+            DEBUG_BREAK_IF(true);
+            auto returnValue = createCopyOffloadQueues(queuesRequired);
+            if (returnValue != ZE_RESULT_SUCCESS) {
+                return returnValue;
+            }
+            break;
+        }
+    }
+
+    for (size_t queueIndex = 0; queueIndex < DualStreamCopyOffload::numCopyOffloadQueues; queueIndex++) {
+        auto returnValue = dispatchCopyOffloadStream(commandList, commandList->getCopyOffloadSubCmdList(queueIndex), this->copyOffloadQueues[queueIndex], ctx);
+        if (returnValue != ZE_RESULT_SUCCESS) {
+            return returnValue;
         }
     }
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t CommandQueue::dispatchCopyOffloadCmdList(CommandList *commandList, const CommandListExecutionContext &ctx) {
-    auto copyOffloadCmdList = commandList->getCopyOffloadSubCmdList();
+ze_result_t CommandQueue::dispatchCopyOffloadStream(CommandList *commandList, CommandList *copyOffloadCmdList, CommandQueue *copyQueue, const CommandListExecutionContext &ctx) {
     if (copyOffloadCmdList == nullptr) {
         return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-
-    if (this->copyOffloadQueue == nullptr) {
-        // copy queue is expected to be created by ensureCopyOffloadQueue() before csr ownership is taken
-        DEBUG_BREAK_IF(true);
-        returnValue = createCopyOffloadQueue();
-        if (returnValue != ZE_RESULT_SUCCESS) {
-            return returnValue;
-        }
     }
 
     CommandListExecutionInternalOptions internalOptions = {};
@@ -278,15 +325,17 @@ ze_result_t CommandQueue::dispatchCopyOffloadCmdList(CommandList *commandList, c
     }
 
     auto copyOffloadCmdListHandle = copyOffloadCmdList->toHandle();
-    return this->copyOffloadQueue->executeCommandLists(1, &copyOffloadCmdListHandle, nullptr, internalOptions);
+    return copyQueue->executeCommandLists(1, &copyOffloadCmdListHandle, nullptr, internalOptions);
 }
 
 void CommandQueue::downloadAllocations() {
     csr->downloadAllocations(true);
 
     // destinations of operations offloaded from regular cmd lists are resident only on copy queue csr
-    if (copyOffloadQueue) {
-        copyOffloadQueue->getCsr()->downloadAllocations(true);
+    for (auto copyOffloadQueue : copyOffloadQueues) {
+        if (copyOffloadQueue) {
+            copyOffloadQueue->getCsr()->downloadAllocations(true);
+        }
     }
 }
 

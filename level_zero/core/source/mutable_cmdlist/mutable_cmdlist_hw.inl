@@ -550,11 +550,11 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::close() {
         this->calculateAsyncPatchlistPatchSize();
         this->calculateActiveScratchPatchElemsPatchSize();
         this->calculateTotalNoopSpacePatchSize();
-        if (this->copyOffloadSubCmdList != nullptr) {
+        if (auto copyOffloadSubCmdList = this->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]) {
             // when this->updatedCommandList == false, it means it is a first closure, handled by the base class - base class close will call on copyOffloadSubCmdList->close() and this is not needed here
             if (this->updatedCommandList) {
-                static_cast<MutableCommandListCoreFamily<gfxCoreFamily> *>(this->copyOffloadSubCmdList)->toggleCommandListUpdated();
-                this->copyOffloadSubCmdList->close();
+                static_cast<MutableCommandListCoreFamily<gfxCoreFamily> *>(copyOffloadSubCmdList)->toggleCommandListUpdated();
+                copyOffloadSubCmdList->close();
             }
         }
         this->updatedCommandList = false;
@@ -1699,15 +1699,15 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendHostFunction(ze_h
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::ensureCopyOffloadSubCmdList() {
-    if (this->copyOffloadSubCmdList == nullptr) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::ensureCopyOffloadSubCmdList(size_t queueIndex) {
+    if (this->copyOffloadSubCmdLists[queueIndex] == nullptr) {
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        this->copyOffloadSubCmdList = MutableCommandList::create(this->device, NEO::EngineGroupType::copy, 0, returnValue, true);
+        this->copyOffloadSubCmdLists[queueIndex] = MutableCommandList::create(this->device, NEO::EngineGroupType::copy, 0, returnValue, true);
         UNRECOVERABLE_IF(returnValue != ZE_RESULT_SUCCESS);
 
-        this->copyOffloadSubCmdList->setupPatchPreambleEnabled(this->patchPreambleEnabled);
+        this->copyOffloadSubCmdLists[queueIndex]->setupPatchPreambleEnabled(this->patchPreambleEnabled);
     }
-    CommandListCoreFamily<gfxCoreFamily>::ensureCopyOffloadSubCmdList();
+    CommandListCoreFamily<gfxCoreFamily>::ensureCopyOffloadSubCmdList(queueIndex);
 }
 
 } // namespace MCL

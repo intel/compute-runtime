@@ -5417,7 +5417,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendMemoryCopy(usm1, usm2, size, nullptr, 0, nullptr, copyParams));
     EXPECT_TRUE(copyParams.copyOffloadAllowed);
 
-    auto copyOffloadSubCmdList = this->mutableCommandList->getBase()->getCopyOffloadSubCmdList();
+    auto copyOffloadSubCmdList = this->mutableCommandList->getBase()->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
     ASSERT_NE(nullptr, copyOffloadSubCmdList);
 
     auto mutableCopyOffloadSubCmdList = copyOffloadSubCmdList->asMutable();
@@ -5427,7 +5427,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendMemoryCopy(usm1, usm2, size, nullptr, 0, nullptr, copyParams));
     EXPECT_TRUE(copyParams.copyOffloadAllowed);
 
-    EXPECT_EQ(copyOffloadSubCmdList, this->mutableCommandList->getBase()->getCopyOffloadSubCmdList());
+    EXPECT_EQ(copyOffloadSubCmdList, this->mutableCommandList->getBase()->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -5465,7 +5465,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto copyOffloadAsMutable = whiteBoxBaseCmdList->copyOffloadSubCmdList->asMutable();
+    auto copyOffloadAsMutable = whiteBoxBaseCmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]->asMutable();
     ASSERT_NE(nullptr, copyOffloadAsMutable);
     auto copyOffloadMutableCmdList = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(copyOffloadAsMutable);
 
@@ -5600,7 +5600,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto copyOffloadAsMutable = whiteBoxBaseCmdList->copyOffloadSubCmdList->asMutable();
+    auto copyOffloadAsMutable = whiteBoxBaseCmdList->copyOffloadSubCmdLists[DualStreamCopyOffload::copyOffloadReadIndex]->asMutable();
     ASSERT_NE(nullptr, copyOffloadAsMutable);
     auto copyOffloadMutableCmdList = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(copyOffloadAsMutable);
 
@@ -5682,7 +5682,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(copyParams.copyOffloadAllowed);
 
     auto baseCmdList = this->mutableCommandList->getBase();
-    auto copyOffloadSubCmdList = baseCmdList->getCopyOffloadSubCmdList();
+    auto copyOffloadSubCmdList = baseCmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
     ASSERT_NE(nullptr, copyOffloadSubCmdList);
 
     auto &computeAsyncPatchContainer = baseCmdList->getAsyncPatchContainer();
@@ -5743,7 +5743,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto copyOffloadSubCmdList = whiteBoxBaseCmdList->getCopyOffloadSubCmdList();
+    auto copyOffloadSubCmdList = whiteBoxBaseCmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
     ASSERT_NE(nullptr, copyOffloadSubCmdList);
 
     auto &computeAsyncPatchContainer = whiteBoxBaseCmdList->getAsyncPatchContainer();

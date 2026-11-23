@@ -15,11 +15,13 @@
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/software_tags.h"
 
+#include "level_zero/core/source/cmdlist/definitions/copy_offload_mode.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_helpers.h"
 #include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 
+#include <array>
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -192,7 +194,10 @@ struct CommandQueue : _ze_command_queue_handle_t {
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeoutNanoseconds);
 
     void postSyncOperations(bool hangDetected);
-    ze_result_t createCopyOffloadQueue();
+    ze_result_t createCopyOffloadQueue(uint32_t queueIndex);
+    ze_result_t createCopyOffloadQueues(const std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> &queuesRequired);
+    static void addRequiredCopyOffloadQueues(const CommandList &commandList, std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> &queuesRequired);
+    ze_result_t dispatchCopyOffloadStream(CommandList *commandList, CommandList *copyOffloadCmdList, CommandQueue *copyQueue, const CommandListExecutionContext &ctx);
 
     CommandListStateChangeList stateChanges;
     CommandBufferManager buffers;
@@ -207,7 +212,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
     NEO::LinearStream *startingCmdBuffer = nullptr;
-    CommandQueue *copyOffloadQueue = nullptr; // executes copy offload streams recorded in regular cmd lists
+    std::array<CommandQueue *, DualStreamCopyOffload::numCopyOffloadQueues> copyOffloadQueues{}; // execute copy offload streams recorded in regular cmd lists
     std::mutex copyOffloadQueueCreationMutex;
     NEO::GraphicsAllocation *cachedSipAllocation = nullptr;
 

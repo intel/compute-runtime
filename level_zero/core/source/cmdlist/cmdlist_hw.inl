@@ -85,8 +85,8 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-CommandListCoreFamily<gfxCoreFamily>::CopyOffloadStreamScope::CopyOffloadStreamScope(CommandListCoreFamily &cmdList, CmdListMemoryCopyParams &memoryCopyParams)
-    : cmdList(cmdList), active(cmdList.beginCopyOffloadStreamRecording(memoryCopyParams.copyOffloadAllowed)) {
+CommandListCoreFamily<gfxCoreFamily>::CopyOffloadStreamScope::CopyOffloadStreamScope(CommandListCoreFamily &cmdList, CmdListMemoryCopyParams &memoryCopyParams, bool writeOutsideOfDevice)
+    : cmdList(cmdList), active(cmdList.beginCopyOffloadStreamRecording(memoryCopyParams.copyOffloadAllowed, writeOutsideOfDevice)) {
     memoryCopyParams.copyOffloadStreamRecordingActive = active;
 }
 
@@ -195,10 +195,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     destroyRecordedBcsSplitResources();
 
-    if (this->copyOffloadSubCmdList) {
-        this->copyOffloadSubCmdList->reset();
+    for (auto copyOffloadStreamCmdList : this->copyOffloadSubCmdLists) {
+        if (copyOffloadStreamCmdList) {
+            copyOffloadStreamCmdList->reset();
+        }
     }
-    this->copyOffloadStreamUsed = false;
+    this->copyOffloadStreamUsed.fill(false);
     if (!isImmediateType()) {
         this->latestFlushIsDualCopyOffload = false;
     }
@@ -469,8 +471,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     for (auto &cmdList : this->subCmdListsForRecordedBcsSplit) {
         cmdList->close();
     }
-    if (auto copyOffloadCmdList = this->getCopyOffloadSubCmdList()) {
-        copyOffloadCmdList->close();
+    for (size_t queueIndex = 0; queueIndex < DualStreamCopyOffload::numCopyOffloadQueues; queueIndex++) {
+        if (auto copyOffloadCmdList = this->getCopyOffloadSubCmdList(queueIndex)) {
+            copyOffloadCmdList->close();
+        }
     }
 
     commandContainer.removeDuplicatesFromResidencyContainer();
@@ -1170,7 +1174,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     bool shouldUseCopyOffload = this->imageCopyOffloadAllowed && this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     auto canUseCopyEngine = !(bytesPerPixel == 3 || bytesPerPixel == 6 || image->isMimickedImage());
     memoryCopyParams.copyOffloadAllowed = canUseCopyEngine && isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), remoteCopy, imageToBuffer, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams, false);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if (!canUseCopyEngine) {
@@ -1397,7 +1401,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     bool shouldUseCopyOffload = this->imageCopyOffloadAllowed && this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     auto canUseCopyEngine = !(bytesPerPixel == 3 || bytesPerPixel == 6 || image->isMimickedImage());
     memoryCopyParams.copyOffloadAllowed = canUseCopyEngine && isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, remoteCopy, false, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams, false);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if (!canUseCopyEngine) {
@@ -1645,7 +1649,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
                          (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
     bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), remoteCopy, imageToBuffer, srcImgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams, false);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImgInfo.surfaceFormat->imageElementSizeInBytes);
@@ -2332,7 +2336,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::beginCopyOffloadStreamRecording(bool copyOffloadOperation) {
+bool CommandListCoreFamily<gfxCoreFamily>::beginCopyOffloadStreamRecording(bool copyOffloadOperation, bool writeOutsideOfDevice) {
     if (!this->isRegularDualStreamCopyOffloadOperation(copyOffloadOperation) || this->copyOffloadStreamRecordingActive) {
         return false;
     }
@@ -2346,8 +2350,9 @@ bool CommandListCoreFamily<gfxCoreFamily>::beginCopyOffloadStreamRecording(bool 
         addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
     }
 
-    ensureCopyOffloadSubCmdList();
-    commandContainer.swapCommandStreamState(this->copyOffloadSubCmdList->getCmdContainer());
+    this->activeCopyOffloadQueueIndex = writeOutsideOfDevice ? DualStreamCopyOffload::copyOffloadWriteIndex : DualStreamCopyOffload::copyOffloadReadIndex;
+    ensureCopyOffloadSubCmdList(this->activeCopyOffloadQueueIndex);
+    commandContainer.swapCommandStreamState(this->copyOffloadSubCmdLists[this->activeCopyOffloadQueueIndex]->getCmdContainer());
     this->copyOffloadStreamRecordingActive = true;
 
     return true;
@@ -2355,7 +2360,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::beginCopyOffloadStreamRecording(bool 
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::endCopyOffloadStreamRecording() {
-    commandContainer.swapCommandStreamState(this->copyOffloadSubCmdList->getCmdContainer());
+    commandContainer.swapCommandStreamState(this->copyOffloadSubCmdLists[this->activeCopyOffloadQueueIndex]->getCmdContainer());
+    this->activeCopyOffloadQueueIndex = DualStreamCopyOffload::copyOffloadReadIndex;
     this->copyOffloadStreamRecordingActive = false;
 
     // next compute stream operation has to resolve in-order dependency signaled from copy offload stream
@@ -2365,7 +2371,7 @@ void CommandListCoreFamily<gfxCoreFamily>::endCopyOffloadStreamRecording() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnCopyOffloadStreamCompletion() {
-    if (!this->copyOffloadStreamUsed || !this->latestFlushIsDualCopyOffload || !hasInOrderDependencies()) {
+    if (!this->isCopyOffloadStreamUsed() || !this->latestFlushIsDualCopyOffload || !hasInOrderDependencies()) {
         return;
     }
 
@@ -2628,7 +2634,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
 
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams, this->copyOffloadWriteStreamAllowed && isCopyOffloadWriteOutsideOfDevice(dstAllocInfo ? dstAllocInfo->explicitAlloc : nullptr, dstAllocationStruct.svmAllocData));
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     uint32_t kernelCounter = 0;
@@ -2906,7 +2912,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, remoteCopy, std::max(srcSize, dstSize) <= BlitterConstants::maxD2DBcsCopySize, 0) && shouldUseCopyOffload;
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams, this->copyOffloadWriteStreamAllowed && isCopyOffloadWriteOutsideOfDevice(nullptr, dstAllocationStruct.svmAllocData));
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     auto builtInMode = this->defaultBuiltInMode;
@@ -3260,7 +3266,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
-        CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
+        CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams, false);
         auto status = appendBlitFill(ptr, pattern, patternSize, size, signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(signalEvent);
         return status;
@@ -5052,6 +5058,14 @@ bool CommandListCoreFamily<gfxCoreFamily>::isDstSystemOrRemoteAlloc(NEO::SvmAllo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isCopyOffloadWriteOutsideOfDevice(const NEO::GraphicsAllocation *explicitDstAlloc, NEO::SvmAllocationData *dstAllocData) const {
+    if (explicitDstAlloc) {
+        return NEO::MemoryPoolHelper::isSystemMemoryPool(explicitDstAlloc->getMemoryPool()) || (explicitDstAlloc->getRootDeviceIndex() != this->device->getRootDeviceIndex());
+    }
+    return (dstAllocData == nullptr) || isDstSystemOrRemoteAlloc(dstAllocData);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size, NEO::TransferDirection &directionOut) {
     if (size < minimalSizeForBcsSplit) {
         return false;
@@ -5840,7 +5854,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
                                    (signalEvent->isCounterBased() && signalEvent->isKmdWaitModeEnabled());
     if (!isImmediateType() && assignCsrOnSubmit) {
         // event signaled from copy offload stream gets csr assigned at submission of copy offload stream
-        auto submittedCmdList = this->copyOffloadStreamRecordingActive ? this->copyOffloadSubCmdList : this;
+        auto submittedCmdList = this->copyOffloadStreamRecordingActive ? this->copyOffloadSubCmdLists[this->activeCopyOffloadQueueIndex] : this;
         submittedCmdList->addInterruptEvent(signalEvent);
     }
 

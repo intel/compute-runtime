@@ -903,7 +903,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernels(uint32_t numKerne
 
 void MutableCommandListImp::addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, bool redirectToCopyOffload) {
     if (redirectToCopyOffload) {
-        auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList();
+        auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
         UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
         auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
         UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
