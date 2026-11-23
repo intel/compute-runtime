@@ -2208,8 +2208,7 @@ ze_result_t Context::mapDeviceMemToHost(const void *ptr, void **pptr, void *pNex
         return ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE;
     }
 
-    auto poolLookup = getUsmPoolOwningPtr(ptr, allocData);
-    *pptr = ptrOffset(cpuPtr, poolLookup.pool ? poolLookup.pool->getOffsetInPool(ptr) : 0u);
+    *pptr = ptrOffset(cpuPtr, ptrDiff(ptr, gpuAllocation->getGpuAddress()));
 
     return ZE_RESULT_SUCCESS;
 }
