@@ -2847,6 +2847,26 @@ HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenMultipleSubDevicesA
     EXPECT_EQ(maxOsContextCountWithRootLowPriorityContextGroup - contextGroupSize, calculateMaxOsContextCount());
 }
 
+HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenTwoStandaloneLowPriorityEnginesAndFullContextGroupSizeWhenCalculatingMaxOsContextCountThenEachLowPriorityEngineIsCountedAsSingleContext) {
+    struct GfxCoreHelperWithTwoLowPriorityEngines : GfxCoreHelperHw<FamilyType> {
+        const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            return {{aub_stream::ENGINE_CCS, EngineUsage::regular},
+                    {aub_stream::ENGINE_CCS, EngineUsage::lowPriority},
+                    {aub_stream::ENGINE_BCS, EngineUsage::regular},
+                    {aub_stream::ENGINE_BCS, EngineUsage::lowPriority}};
+        }
+    };
+
+    debugManager.flags.ContextGroupSize.set(fullContextGroupSize);
+    createExecutionEnvironmentWithOsInterface();
+    osInterface->lowPriorityContextGroupSupported = false;
+    RAIIGfxCoreHelperFactory<GfxCoreHelperWithTwoLowPriorityEngines> raiiGfxCoreHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    constexpr uint32_t regularContextGroupsCount = 2;
+    constexpr uint32_t standaloneLowPriorityEnginesCount = 2;
+    EXPECT_EQ(regularContextGroupsCount * fullContextGroupSize + standaloneLowPriorityEnginesCount, calculateMaxOsContextCount());
+}
+
 HWTEST_F(LowPriorityContextGroupMaxOsContextCountTests, givenImplicitScalingEnabledAndAffinityMaskWithSingleSubDeviceWhenCalculatingMaxOsContextCountThenRootLowPriorityContextGroupIsCounted) {
     debugManager.flags.CreateMultipleSubDevices.set(2);
     debugManager.flags.EnableImplicitScaling.set(1);

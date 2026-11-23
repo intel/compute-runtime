@@ -1140,6 +1140,74 @@ TEST_F(MultiDeviceWithContextGroupCreateCommandQueueTest, givenLowPriorityDescWh
     commandQueue->destroy();
 }
 
+struct MultiDeviceWithContextGroupAndCopyEnginesFixture : MultiDeviceCreateCommandQueueFixture<8> {
+    void setUp() {
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        defaultHwInfo->featureTable.ftrBcsInfo = 0b111;
+        MultiDeviceCreateCommandQueueFixture<8>::setUp();
+        rootDevice = driverHandle->devices[0];
+        activeSubDevice = static_cast<NEO::MockSubDevice *>(rootDevice->getNEODevice()->getSubDevice(0));
+        auto &engineGroups = activeSubDevice->getRegularEngineGroups();
+        for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(engineGroups.size()); ordinal++) {
+            if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroups[ordinal].engineGroupType)) {
+                copyOrdinal = ordinal;
+                copyEngineType = engineGroups[ordinal].engines[0].getEngineType();
+                copySecondaryContextsAvailable = rootDevice->getNEODevice()->areSecondaryEnginesAvailable() && activeSubDevice->secondaryEngines.contains(copyEngineType);
+                break;
+            }
+        }
+    }
+
+    bool isCsrOfSecondaryEngines(const std::unordered_map<aub_stream::EngineType, NEO::SecondaryContexts> &secondaryEngines, const NEO::CommandStreamReceiver *csr) const {
+        auto secondaryEnginesIt = secondaryEngines.find(csr->getOsContext().getEngineType());
+        if (secondaryEnginesIt == secondaryEngines.end()) {
+            return false;
+        }
+        auto &engines = secondaryEnginesIt->second.engines;
+        return std::any_of(engines.begin(), engines.end(), [csr](const auto &engine) { return engine.commandStreamReceiver == csr; });
+    }
+
+    VariableBackup<HardwareInfo> hwInfoBackup{defaultHwInfo.get()};
+    L0::Device *rootDevice = nullptr;
+    NEO::MockSubDevice *activeSubDevice = nullptr;
+    std::optional<uint32_t> copyOrdinal;
+    aub_stream::EngineType copyEngineType = aub_stream::EngineType::NUM_ENGINES;
+    bool copySecondaryContextsAvailable = false;
+};
+using MultiDeviceWithContextGroupAndCopyEnginesTest = Test<MultiDeviceWithContextGroupAndCopyEnginesFixture>;
+
+TEST_F(MultiDeviceWithContextGroupAndCopyEnginesTest, givenRootDeviceWithActiveSubDeviceWhenGettingCsrForCopyQueueThenSecondaryContextOfActiveSubDeviceIsAssigned) {
+    ASSERT_TRUE(copyOrdinal.has_value());
+    if (!copySecondaryContextsAvailable) {
+        GTEST_SKIP();
+    }
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    bool queueOwnershipTaken = false;
+    auto result = rootDevice->getCsrForOrdinalAndIndex(&csr, copyOrdinal.value(), 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, std::nullopt, 0u, &queueOwnershipTaken);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(queueOwnershipTaken);
+    ASSERT_NE(nullptr, csr);
+    EXPECT_TRUE(isCsrOfSecondaryEngines(activeSubDevice->secondaryEngines, csr));
+}
+
+TEST_F(MultiDeviceWithContextGroupAndCopyEnginesTest, givenRootDeviceWithActiveSubDeviceWhenGettingCsrForLowPriorityCopyQueueThenSecondaryContextOfActiveSubDeviceLowPriorityContextGroupIsAssigned) {
+    ASSERT_TRUE(copyOrdinal.has_value());
+    NEO::CommandStreamReceiver *lowPriorityCopyCsr = nullptr;
+    if (!copySecondaryContextsAvailable || rootDevice->getCsrForLowPriority(&lowPriorityCopyCsr, copyEngineType) != ZE_RESULT_SUCCESS || !lowPriorityCopyCsr->getOsContext().isPartOfContextGroup()) {
+        GTEST_SKIP();
+    }
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    bool queueOwnershipTaken = false;
+    auto result = rootDevice->getCsrForOrdinalAndIndex(&csr, copyOrdinal.value(), 0u, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, std::nullopt, 0u, &queueOwnershipTaken);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(queueOwnershipTaken);
+    ASSERT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->getOsContext().isLowPriority());
+    EXPECT_TRUE(isCsrOfSecondaryEngines(activeSubDevice->lowPrioritySecondaryEngines, csr));
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
   public:

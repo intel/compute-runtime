@@ -2016,7 +2016,8 @@ ze_result_t Device::getCsrForReassignment(NEO::CommandStreamReceiver **csr, uint
 ze_result_t Device::selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint,
                                                 bool sharedContextPriorityOverrideAllowed, bool *queueOwnershipTaken) {
     *queueOwnershipTaken = false;
-    auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
+    auto activeDevice = getActiveDevice();
+    auto &engineGroups = activeDevice->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
 
     if (!this->isQueueGroupOrdinalValid(ordinal)) {
@@ -2044,6 +2045,9 @@ ze_result_t Device::selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
 
     auto selectedDevice = this;
     if (ordinal < numEngineGroups) {
+        if (copyOnly && activeDevice != this->neoDevice) {
+            selectedDevice = activeDevice->getSpecializedDevice<Device>();
+        }
 
         if (powerHint == NEO::OsContext::getUmdPowerHintMax()) {
             auto result = getCsrForPowerHint(csr, copyOnly);
