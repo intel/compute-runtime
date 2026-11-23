@@ -143,6 +143,16 @@ HWTEST2_F(SamplerSetArgTest, givenSamplerStateMemoryWithStaleContentWhenSettingS
     EXPECT_EQ(indirectStatePointer, EncodeStates<FamilyType>::getSamplerStateBorderColorOffset(&staleSamplerState));
 }
 
+HWTEST2_F(SamplerSetArgTest, givenZeroedSamplerStateMemoryWhenSettingSamplerArgThenLowQualityCubeCornerModeIsDisabled, IsGen12LP) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    auto sampler = createSampler();
+    SAMPLER_STATE samplerState{};
+
+    sampler->setArg(&samplerState, pClDevice->getRootDeviceEnvironment());
+
+    EXPECT_FALSE(samplerState.getLowQualityCubeCornerModeEnable());
+}
+
 HWTEST_F(SamplerSetArgTest, WhenGettingKernelArgThenSamplerIsReturned) {
     auto sampler = createSampler();
     cl_sampler samplerObj = sampler.get();

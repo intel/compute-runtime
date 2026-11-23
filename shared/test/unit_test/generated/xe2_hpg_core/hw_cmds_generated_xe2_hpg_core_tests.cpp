@@ -474,8 +474,18 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenRenderSurfaceStateWhenInitCalled
 
     EXPECT_EQ(0x0u, cmd.getResourceMinLod());
     EXPECT_TRUE(cmd.getEnableSamplerRouteToLsc());
-    EXPECT_THROW(cmd.setEnableSamplerRouteToLsc(0x0u), std::exception);
     EXPECT_THROW(cmd.setResourceMinLod(0x1u), std::exception);
+}
+
+XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenRenderSurfaceStateWithNonZeroResourceMinLodWhenSettingEnableSamplerRouteToLscThenOnlyDisablingIsAccepted) {
+    using RENDER_SURFACE_STATE = NEO::Xe2HpgCoreFamily::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE cmd;
+    cmd.init();
+    cmd.TheStructure.Common.ResourceMinLOD = 1u;
+
+    EXPECT_THROW(cmd.setEnableSamplerRouteToLsc(true), std::exception);
+    cmd.setEnableSamplerRouteToLsc(false);
+    EXPECT_FALSE(cmd.getEnableSamplerRouteToLsc());
 }
 
 XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenRenderSurfaceStateWhenSetterUsedThenGetterReturnsValidValue) { // patched
@@ -498,9 +508,10 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenRenderSurfaceStateWhenSetterUsed
     cmd.setRenderCacheReadWriteMode(RENDER_SURFACE_STATE::RENDER_CACHE_READ_WRITE_MODE_READ_WRITE_CACHE);
     EXPECT_EQ(RENDER_SURFACE_STATE::RENDER_CACHE_READ_WRITE_MODE_READ_WRITE_CACHE, cmd.getRenderCacheReadWriteMode());
 
+    cmd.setEnableSamplerRouteToLsc(0x0u);
+    EXPECT_EQ(0x0u, cmd.getEnableSamplerRouteToLsc());
     cmd.setEnableSamplerRouteToLsc(0x1u);
     EXPECT_EQ(0x1u, cmd.getEnableSamplerRouteToLsc());
-    EXPECT_THROW(cmd.setEnableSamplerRouteToLsc(0x0u), std::exception);
 
     cmd.setVerticalLineStrideOffset(0x0u);
     EXPECT_EQ(0x0u, cmd.getVerticalLineStrideOffset());

@@ -185,6 +185,15 @@ HWTEST_F(ImageSetArgTest, givenSurfaceStateMemoryWithStaleContentWhenSettingImag
     EXPECT_EQ(0, memcmp(&zeroedSurfaceState, &staleSurfaceState, surfaceStateSize));
 }
 
+HWTEST2_F(ImageSetArgTest, givenZeroedSurfaceStateMemoryWhenSettingImageArgThenSamplerRouteToLscIsDisabled, IsXe2HpgCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE surfaceState{};
+
+    srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
+
+    EXPECT_FALSE(surfaceState.getEnableSamplerRouteToLsc());
+}
+
 HWTEST_F(ImageSetArgTest, givenMippedImageWhenSettingMipTailStartLodThenProgramValueFromGmmResourceinfo) {
     using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 

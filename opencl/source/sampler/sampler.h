@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,7 @@ class Sampler : public BaseObject<_cl_sampler> {
 template <typename GfxFamily>
 struct SamplerHw : public Sampler {
     void setArg(void *memory, const RootDeviceEnvironment &rootDeviceEnvironment) override;
+    void appendSamplerStateParams(void *samplerState) {}
     static constexpr float getGenSamplerMaxLod() {
         return 14.0f;
     }

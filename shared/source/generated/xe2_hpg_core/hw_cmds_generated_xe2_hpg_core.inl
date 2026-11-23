@@ -1825,8 +1825,8 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline RENDER_CACHE_READ_WRITE_MODE getRenderCacheReadWriteMode() const {
         return static_cast<RENDER_CACHE_READ_WRITE_MODE>(TheStructure.Common.RenderCacheReadWriteMode);
     }
-    inline void setEnableSamplerRouteToLsc(const bool value) {
-        UNRECOVERABLE_IF(value == 0x0);
+    inline void setEnableSamplerRouteToLsc(const bool value) { // patched
+        UNRECOVERABLE_IF(value && getResourceMinLod() != 0u);
         TheStructure.Common.EnableSamplerRouteToLsc = value;
     }
     inline bool getEnableSamplerRouteToLsc() const {

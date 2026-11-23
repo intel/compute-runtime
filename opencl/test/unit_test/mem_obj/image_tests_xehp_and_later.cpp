@@ -35,7 +35,9 @@ using namespace NEO;
 
 using XeHPAndLaterImageTests = ::testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, WhenAppendingSurfaceStateParamsThenDoNothing) {
+using IsAtLeastXeCoreExceptXe2HpgCore = MatchAll<IsAtLeastXeCore, IsNotGfxCore<IGFX_XE2_HPG_CORE>>;
+
+HWTEST2_F(XeHPAndLaterImageTests, WhenAppendingSurfaceStateParamsThenDoNothing, IsAtLeastXeCoreExceptXe2HpgCore) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelperUlt<Image1dDefaults>::create(&context));

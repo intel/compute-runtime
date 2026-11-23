@@ -95,6 +95,8 @@ void SamplerHw<GfxFamily>::setArg(void *memory, const RootDeviceEnvironment &roo
     samplerState->setMinLod(minLodValue.getRawAccess());
     samplerState->setMaxLod(maxLodValue.getRawAccess());
 
+    appendSamplerStateParams(samplerState);
+
     auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     helper.adjustSamplerState(samplerState, hwInfo);
