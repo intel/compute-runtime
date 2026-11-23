@@ -238,8 +238,8 @@ bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllo
     mappedAllocation->storageInfo = physicalWddmAllocation->storageInfo;
     mappedAllocation->setMappedPhysicalMemoryReservation(true);
     mappedAllocation->setSharedPhysicalMemoryMapping(true);
+    mappedAllocation->setMappedPhysicalAllocation(physicalAllocation);
     for (uint32_t handleId = 0; handleId < physicalAllocation->getNumGmms(); handleId++) {
-        mappedAllocation->setGmm(physicalAllocation->getGmm(handleId), handleId);
         mappedAllocation->setHandle(physicalWddmAllocation->getHandle(handleId), handleId);
     }
 
@@ -247,7 +247,7 @@ bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllo
         return false;
     }
 
-    registerPhysicalMemoryMapping(*physicalAllocation, *mappedAllocation);
+    registerPhysicalMemoryMapping(*physicalAllocation);
     multiGraphicsAllocation.addAllocation(mappedAllocation.release());
 
     return true;

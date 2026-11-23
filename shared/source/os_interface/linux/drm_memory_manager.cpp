@@ -1124,9 +1124,7 @@ bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAlloc
     drmAllocation->storageInfo = drmPhysicalAllocation->storageInfo;
     drmAllocation->setNumHandles(drmPhysicalAllocation->getNumHandles());
     drmAllocation->setSharedPhysicalMemoryMapping(true);
-    for (uint32_t handleId = 0; handleId < physicalAllocation->getNumGmms(); handleId++) {
-        drmAllocation->setGmm(physicalAllocation->getGmm(handleId), handleId);
-    }
+    drmAllocation->setMappedPhysicalAllocation(physicalAllocation);
     // gpuRange is owned by the caller's virtual-memory reservation, so it is deliberately not
     // tracked as a reserved address range here.
 
@@ -1139,7 +1137,7 @@ bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAlloc
         freeGraphicsMemory(drmAllocation);
         return false;
     }
-    registerPhysicalMemoryMapping(*physicalAllocation, *drmAllocation);
+    registerPhysicalMemoryMapping(*physicalAllocation);
 
     return true;
 }
@@ -2336,10 +2334,8 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         ioctlHelper->munmapFunction(*this, drmAlloc->getMmapPtr(), drmAlloc->getMmapSize());
     }
 
-    if (!gfxAllocation->isSharedPhysicalMemoryMapping()) {
-        for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-            gfxAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
-        }
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
     }
 
     if (gfxAllocation->getFragmentCount()) {
