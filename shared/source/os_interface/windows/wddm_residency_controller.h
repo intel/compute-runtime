@@ -52,15 +52,17 @@ class WddmResidencyController {
 
     bool isInitialized() const;
 
-    void removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
+    void removeAllocation(GraphicsAllocation *gfxAllocation);
+    void addToEvictionAllocations(WddmAllocation &allocation);
+    void removeFromEvictionAllocations(GraphicsAllocation *gfxAllocation);
 
     ResidencyContainer &getEvictionAllocations() {
         return this->evictionAllocations;
     }
 
   protected:
+    void removeNonResidentFromEvictionAllocations(const std::vector<WddmAllocation *> &allocations);
     size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext);
-    void removeAllocationImpl(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
 
     SpinLock lock;
     SpinLock trimCallbackLock;

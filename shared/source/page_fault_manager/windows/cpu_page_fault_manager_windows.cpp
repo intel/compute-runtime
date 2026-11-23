@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/page_fault_manager/windows/tbx_page_fault_manager_windows.h"
 
 namespace NEO {
@@ -91,13 +92,11 @@ void PageFaultManagerWindows::allowCPUMemoryEvictionImpl(bool evict, void *ptr, 
         auto &residencyController = static_cast<OsContextWin *>(&csr.getOsContext())->getResidencyController();
 
         auto lock = residencyController.acquireLock();
-        auto &evictContainer = residencyController.getEvictionAllocations();
-        auto iter = std::find(evictContainer.begin(), evictContainer.end(), allocData->cpuAllocation);
-        auto allocInEvictionList = iter != evictContainer.end();
-        if (evict && !allocInEvictionList) {
-            evictContainer.push_back(allocData->cpuAllocation);
-        } else if (!evict && allocInEvictionList) {
-            evictContainer.erase(iter);
+        auto &cpuAllocation = static_cast<WddmAllocation &>(*allocData->cpuAllocation);
+        if (evict) {
+            residencyController.addToEvictionAllocations(cpuAllocation);
+        } else {
+            residencyController.removeFromEvictionAllocations(&cpuAllocation);
         }
     }
 }

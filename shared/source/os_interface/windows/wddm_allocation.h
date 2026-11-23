@@ -114,6 +114,8 @@ class WddmAllocation : public GraphicsAllocation {
     void setPhysicalMemoryReservation(bool physicalMemoryReservation) { this->physicalMemoryReservation = physicalMemoryReservation; }
     bool isMappedPhysicalMemoryReservation() const { return mappedPhysicalMemoryReservation; }
     void setMappedPhysicalMemoryReservation(bool mappedPhysicalMemoryReservation) { this->mappedPhysicalMemoryReservation = mappedPhysicalMemoryReservation; }
+    bool isInEvictionAllocations() const { return inEvictionAllocations; }
+    void setInEvictionAllocations(bool inEvictionAllocations) { this->inEvictionAllocations = inEvictionAllocations; }
 
     D3DGPU_VIRTUAL_ADDRESS getReservedGpuVirtualAddress() const { return reservedGpuVirtualAddress; }
     D3DGPU_VIRTUAL_ADDRESS &getReservedGpuVirtualAddressToModify() { return reservedGpuVirtualAddress; }
@@ -145,5 +147,6 @@ class WddmAllocation : public GraphicsAllocation {
     bool mappedPhysicalMemoryReservation = false;
     bool makeResidentBeforeLockRequired = false;
     bool ipcSupportedAllocationByDefault = false;
+    bool inEvictionAllocations = false;
 };
 } // namespace NEO

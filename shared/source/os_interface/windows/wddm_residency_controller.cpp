@@ -190,19 +190,28 @@ bool WddmResidencyController::isInitialized() const {
     return true;
 }
 
-void WddmResidencyController::removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation) {
+void WddmResidencyController::removeAllocation(GraphicsAllocation *gfxAllocation) {
     std::unique_lock<std::mutex> lock1(this->lock, std::defer_lock);
     std::unique_lock<std::mutex> lock2(this->trimCallbackLock, std::defer_lock);
     std::lock(lock1, lock2);
 
-    this->removeAllocationImpl(container, gfxAllocation);
+    this->removeFromEvictionAllocations(gfxAllocation);
 }
 
-void WddmResidencyController::removeAllocationImpl(ResidencyContainer &container, GraphicsAllocation *gfxAllocation) {
-    auto iter = std::find(container.begin(), container.end(), gfxAllocation);
-    if (iter != container.end()) {
-        container.erase(iter);
+void WddmResidencyController::removeFromEvictionAllocations(GraphicsAllocation *gfxAllocation) {
+    auto iter = std::find(this->evictionAllocations.begin(), this->evictionAllocations.end(), gfxAllocation);
+    if (iter != this->evictionAllocations.end()) {
+        this->evictionAllocations.erase(iter);
+        static_cast<WddmAllocation *>(gfxAllocation)->setInEvictionAllocations(false);
     }
+}
+
+void WddmResidencyController::addToEvictionAllocations(WddmAllocation &allocation) {
+    if (allocation.isInEvictionAllocations()) {
+        return;
+    }
+    allocation.setInEvictionAllocations(true);
+    this->evictionAllocations.push_back(&allocation);
 }
 
 } // namespace NEO

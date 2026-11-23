@@ -15,8 +15,10 @@
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
+#include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 
 #include "gtest/gtest.h"
 
@@ -153,16 +155,22 @@ TEST_F(PageFaultManagerTest,
     auto ptr = unifiedMemoryManager->createUnifiedAllocationWithDeviceStorage(4096u, {}, unifiedMemoryProperties);
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     pageFaultManager->insertAllocation(ptr, 10, unifiedMemoryManager.get(), cmdQ, {});
+    {
+        MockWddmAllocation wddmCpuAllocation(rootDeviceEnvironment->getGmmHelper());
+        VariableBackup<GraphicsAllocation *> cpuAllocationBackup(&unifiedMemoryManager->getSVMAlloc(ptr)->cpuAllocation, &wddmCpuAllocation);
 
-    EXPECT_EQ(0u, osContext->getResidencyController().getEvictionAllocations().size());
-    pageFaultManager->allowCPUMemoryEvictionImpl(true, ptr, *csr, &osInterface);
-    EXPECT_EQ(1u, osContext->getResidencyController().getEvictionAllocations().size());
+        EXPECT_EQ(0u, osContext->getResidencyController().getEvictionAllocations().size());
+        pageFaultManager->allowCPUMemoryEvictionImpl(true, ptr, *csr, &osInterface);
+        EXPECT_EQ(1u, osContext->getResidencyController().getEvictionAllocations().size());
+        EXPECT_TRUE(wddmCpuAllocation.isInEvictionAllocations());
 
-    pageFaultManager->allowCPUMemoryEvictionImpl(true, ptr, *csr, &osInterface);
-    EXPECT_EQ(1u, osContext->getResidencyController().getEvictionAllocations().size());
+        pageFaultManager->allowCPUMemoryEvictionImpl(true, ptr, *csr, &osInterface);
+        EXPECT_EQ(1u, osContext->getResidencyController().getEvictionAllocations().size());
 
-    pageFaultManager->allowCPUMemoryEvictionImpl(false, ptr, *csr, &osInterface);
-    EXPECT_EQ(0u, osContext->getResidencyController().getEvictionAllocations().size());
+        pageFaultManager->allowCPUMemoryEvictionImpl(false, ptr, *csr, &osInterface);
+        EXPECT_EQ(0u, osContext->getResidencyController().getEvictionAllocations().size());
+        EXPECT_FALSE(wddmCpuAllocation.isInEvictionAllocations());
+    }
 
     unifiedMemoryManager->freeSVMAlloc(ptr);
 }

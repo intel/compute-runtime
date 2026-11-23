@@ -292,7 +292,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
     EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, givenAllocationResidentInTwoContextAndOneAlreadyFinishedWhenTrimThenRemoveOneInstance) {
+TEST_F(WddmResidencyControllerWithGdiTest, givenAllocationResidentInTwoContextsAndUnusedInOneWhenPeriodicTrimThenItStaysInEvictionAllocationsUntilEvictedInBoth) {
     auto osContextId2 = osContextId + 1;
     auto mockOsContextWin2 = std::make_unique<MockOsContextWin>(*wddm, 0, osContextId2, EngineDescriptorHelper::getDefaultDescriptor());
     mockOsContextWin2->contextInitialized = true;
@@ -307,32 +307,89 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenAllocationResidentInTwoContextAn
     trimNotification.NumBytesToTrim = 0;
 
     MockWddmAllocation allocation1(rootDeviceEnvironment->getGmmHelper());
-
     allocation1.getResidencyData().updateCompletionData(25, osContextId);
     allocation1.getResidencyData().resident[osContextId] = true;
-    wddm->getResidencyController().getEvictionAllocations().push_back(&allocation1);
-
     allocation1.getResidencyData().updateCompletionData(0, osContextId2);
     allocation1.getResidencyData().resident[osContextId2] = true;
-    wddm->getResidencyController().getEvictionAllocations().push_back(&allocation1);
-
-    EXPECT_EQ(wddm->getResidencyController().getEvictionAllocations().size(), 2u);
+    auto &wddmResidencyController = wddm->getResidencyController();
+    wddmResidencyController.addToEvictionAllocations(allocation1);
+    wddmResidencyController.addToEvictionAllocations(allocation1);
+    EXPECT_EQ(1u, wddmResidencyController.getEvictionAllocations().size());
 
     mockOsContextWin->lastTrimFenceValue = 10;
     mockOsContextWin->getMonitoredFence().currentFenceValue = 20;
-
-    wddm->evictResult.called = 0;
     wddm->callBaseEvict = false;
 
-    wddm->getResidencyController().trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
-
-    // Single evict called
-    EXPECT_EQ(wddm->getResidencyController().getEvictionAllocations().size(), 1u);
-    // marked nonresident
+    wddmResidencyController.trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
     EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId2]);
+    EXPECT_EQ(1u, wddmResidencyController.getEvictionAllocations().size());
+    EXPECT_TRUE(allocation1.isInEvictionAllocations());
+
+    mockOsContextWin->lastTrimFenceValue = 30;
+    wddmResidencyController.trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(wddmResidencyController.getEvictionAllocations().empty());
+    EXPECT_FALSE(allocation1.isInEvictionAllocations());
 
     const_cast<EngineControlContainer &>(engines).pop_back();
+}
+
+TEST_F(WddmResidencyControllerWithGdiTest, givenAllocationResidentInTwoContextsAndOneSkippedWhenTrimmingToBudgetThenItStaysInEvictionAllocationsUntilEvictedInBoth) {
+    auto osContextId2 = osContextId + 1;
+    auto mockOsContextWin2 = std::make_unique<MockOsContextWin>(*wddm, 0, osContextId2, EngineDescriptorHelper::getDefaultDescriptor());
+    mockOsContextWin2->contextInitialized = true;
+    wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin2);
+    std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 0u, 1));
+    auto &engines = executionEnvironment->memoryManager->getRegisteredEngines(0);
+    const_cast<EngineControlContainer &>(engines).emplace_back(csr2.get(), mockOsContextWin2.get());
+    csr2->setupContext(*mockOsContextWin2);
+
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
+    allocation.getResidencyData().updateCompletionData(0, osContextId);
+    allocation.getResidencyData().resident[osContextId] = true;
+    allocation.getResidencyData().updateCompletionData(0, osContextId2);
+    allocation.getResidencyData().resident[osContextId2] = true;
+    auto &wddmResidencyController = wddm->getResidencyController();
+    wddmResidencyController.addToEvictionAllocations(allocation);
+    wddm->callBaseEvict = false;
+
+    StackVec<CommandStreamReceiver *, 5> skippedCsrs{csr2.get()};
+    wddmResidencyController.trimResidencyToBudget(std::numeric_limits<uint64_t>::max(), skippedCsrs);
+    EXPECT_FALSE(allocation.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(allocation.getResidencyData().resident[osContextId2]);
+    EXPECT_EQ(1u, wddmResidencyController.getEvictionAllocations().size());
+    EXPECT_TRUE(allocation.isInEvictionAllocations());
+
+    wddmResidencyController.trimResidencyToBudget(std::numeric_limits<uint64_t>::max(), {});
+    EXPECT_FALSE(allocation.getResidencyData().resident[osContextId2]);
+    EXPECT_TRUE(wddmResidencyController.getEvictionAllocations().empty());
+    EXPECT_FALSE(allocation.isInEvictionAllocations());
+
+    const_cast<EngineControlContainer &>(engines).pop_back();
+}
+
+TEST_F(WddmResidencyControllerWithGdiTest, givenAllocationRemovedFromEvictionAllocationsByTrimWhenAddingItAgainThenItIsAddedOnce) {
+    D3DKMT_TRIMNOTIFICATION trimNotification = {0};
+    trimNotification.Flags.PeriodicTrim = 1;
+
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
+    allocation.getResidencyData().resident[osContextId] = true;
+    mockOsContextWin->lastTrimFenceValue = 10;
+    auto &wddmResidencyController = wddm->getResidencyController();
+
+    wddmResidencyController.addToEvictionAllocations(allocation);
+    wddmResidencyController.addToEvictionAllocations(allocation);
+    EXPECT_EQ(1u, wddmResidencyController.getEvictionAllocations().size());
+    EXPECT_TRUE(allocation.isInEvictionAllocations());
+
+    wddmResidencyController.trimResidency(trimNotification.Flags, 0u);
+    EXPECT_TRUE(wddmResidencyController.getEvictionAllocations().empty());
+    EXPECT_FALSE(allocation.isInEvictionAllocations());
+
+    wddmResidencyController.addToEvictionAllocations(allocation);
+    EXPECT_EQ(1u, wddmResidencyController.getEvictionAllocations().size());
+    wddmResidencyController.getEvictionAllocations().clear();
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPeriodicTrimWhenTrimResidencyPeriodicTrimIsCalledThenOneAllocationIsTrimmed) {

@@ -157,7 +157,7 @@ void WddmMemoryManager::freeGpuVaMappingOutsideReservation(Wddm &wddm, uint64_t 
 void WddmMemoryManager::removeAllocationFromResidencyControllers(GraphicsAllocation &allocation) {
     for (auto &engine : getRegisteredEngines(allocation.getRootDeviceIndex())) {
         auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
-        residencyController.removeAllocation(residencyController.getEvictionAllocations(), &allocation);
+        residencyController.removeAllocation(&allocation);
     }
 }
 

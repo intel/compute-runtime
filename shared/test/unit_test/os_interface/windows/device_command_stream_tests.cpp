@@ -561,6 +561,21 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, WhenMakingNonResidentThenAllocationIsP
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
+HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenAllocationMadeNonResidentAfterEachSubmissionWhenFreeingItThenItIsNotLeftInEvictionAllocations) {
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+    auto &evictionAllocations = static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().getEvictionAllocations();
+
+    for (auto submission = 0u; submission < 3u; submission++) {
+        csr->makeResident(*allocation);
+        csr->makeNonResident(*allocation);
+    }
+    EXPECT_EQ(1u, std::count(evictionAllocations.begin(), evictionAllocations.end(), allocation));
+
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(0u, std::count(evictionAllocations.begin(), evictionAllocations.end(), allocation));
+}
+
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, WhenProcesssingEvictionThenEvictionAllocationsListIsNotCleared) {
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);

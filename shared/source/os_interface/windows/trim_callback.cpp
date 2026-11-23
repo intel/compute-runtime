@@ -18,6 +18,8 @@
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/source/utilities/logger.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback) {
@@ -127,7 +129,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
             handlesToEvict.clear();
         });
 
-        std::for_each(allocationsToRemove.begin(), allocationsToRemove.end(), [this](GraphicsAllocation *allocationToRemove) { removeAllocationImpl(evictionAllocations, allocationToRemove); });
+        removeNonResidentFromEvictionAllocations(allocationsToRemove);
     }
 
     if (flags.TrimToBudget) {
@@ -168,6 +170,15 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
     }
 
     perfLogResidencyTrimCallbackEnd(wddm.getResidencyLogger(), flags.Value, this, callbackStart);
+}
+
+void WddmResidencyController::removeNonResidentFromEvictionAllocations(const std::vector<WddmAllocation *> &allocations) {
+    for (auto allocation : allocations) {
+        const auto &resident = allocation->getResidencyData().resident;
+        if (std::find(resident.begin(), resident.end(), true) == resident.end()) {
+            removeFromEvictionAllocations(allocation);
+        }
+    }
 }
 
 bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
@@ -246,7 +257,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, const StackV
         handlesToEvict.clear();
     });
 
-    std::for_each(allocationsToRemove.begin(), allocationsToRemove.end(), [this](GraphicsAllocation *allocationToRemove) { removeAllocationImpl(evictionAllocations, allocationToRemove); });
+    removeNonResidentFromEvictionAllocations(allocationsToRemove);
 
     return numberOfBytesToTrim == 0;
 }
