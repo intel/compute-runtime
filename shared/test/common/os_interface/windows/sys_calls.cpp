@@ -293,7 +293,11 @@ BOOL resetEvent(HANDLE hEvent) {
     return resetEventResult;
 }
 
+std::atomic<size_t> setEventCalled = 0u;
+HANDLE setEventLastHandle = nullptr;
 BOOL setEvent(HANDLE hEvent) {
+    setEventCalled++;
+    setEventLastHandle = hEvent;
     return TRUE;
 }
 

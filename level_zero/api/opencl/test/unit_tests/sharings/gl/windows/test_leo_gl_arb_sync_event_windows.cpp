@@ -13,10 +13,12 @@
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_gl_private_intel.h"
@@ -140,6 +142,33 @@ TEST_F(LeoGlArbSyncEventOsTest, givenSignalAtSubmissionWhenSignalArbSyncObjectIs
 
 TEST_F(LeoGlArbSyncEventOsTest, givenNoSignalAtSubmissionWhenSignalArbSyncObjectIsCalledThenServerClientSyncIsSignalledAfterGpuCompletion) {
     EXPECT_EQ(0u, signalAndGetServerClientSignalAtSubmission(false));
+}
+
+struct LeoGlArbSyncEventOsClientEventTest : LeoGlArbSyncEventOsTest {
+    size_t signalAndCountClientEventSets(bool signalAtSubmission) {
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        OsContextWin osContext(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0], preemptionMode));
+
+        CL_GL_SYNC_INFO syncInfo = {};
+        syncInfo.event = reinterpret_cast<HANDLE>(0x77);
+        VariableBackup<HANDLE> lastHandleBackup(&NEO::SysCalls::setEventLastHandle, nullptr);
+        auto setEventCalledBefore = NEO::SysCalls::setEventCalled.load();
+        signalArbSyncObject(osContext, syncInfo, signalAtSubmission);
+        auto setEventCalls = NEO::SysCalls::setEventCalled.load() - setEventCalledBefore;
+        if (setEventCalls > 0u) {
+            EXPECT_EQ(syncInfo.event, NEO::SysCalls::setEventLastHandle);
+        }
+        return setEventCalls;
+    }
+};
+
+TEST_F(LeoGlArbSyncEventOsClientEventTest, givenSignalAtSubmissionWhenSignalArbSyncObjectIsCalledThenClientEventIsSet) {
+    EXPECT_EQ(1u, signalAndCountClientEventSets(true));
+}
+
+TEST_F(LeoGlArbSyncEventOsClientEventTest, givenNoSignalAtSubmissionWhenSignalArbSyncObjectIsCalledThenClientEventIsNotSet) {
+    EXPECT_EQ(0u, signalAndCountClientEventSets(false));
 }
 
 } // namespace ult

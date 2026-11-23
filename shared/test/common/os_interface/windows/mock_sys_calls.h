@@ -101,6 +101,8 @@ extern DWORD waitForMultipleObjectsReturnValue;
 extern size_t waitForMultipleObjectsCalled;
 extern std::atomic<size_t> resetEventCalled;
 extern BOOL resetEventResult;
+extern std::atomic<size_t> setEventCalled;
+extern HANDLE setEventLastHandle;
 extern size_t setWaitableTimerCalled;
 extern int64_t setWaitableTimerLastDueTime;
 extern BOOL setWaitableTimerResult;

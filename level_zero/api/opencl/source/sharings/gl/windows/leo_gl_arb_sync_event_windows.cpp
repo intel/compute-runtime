@@ -141,6 +141,12 @@ void signalArbSyncObject(NEO::OsContext &osContext, CL_GL_SYNC_INFO &glSyncInfo,
     signalSubmissionSyncInfo.ObjectCount = 1;
     status = wddm->getGdi()->signalSynchronizationObject(&signalSubmissionSyncInfo);
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
+
+    if (signalAtSubmission) {
+        // GL reads GL_SYNC_STATUS from this event with a zero timeout, and KMD sets it asynchronously
+        [[maybe_unused]] auto ret = SysCalls::setEvent(glSyncInfo.event);
+        DEBUG_BREAK_IF(TRUE != ret);
+    }
 }
 
 void serverWaitForArbSyncObject(NEO::OSInterface &osInterface, CL_GL_SYNC_INFO &glSyncInfo, bool cpuSync) {

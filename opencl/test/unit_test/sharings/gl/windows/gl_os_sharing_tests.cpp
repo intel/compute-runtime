@@ -440,6 +440,34 @@ TEST_F(GlArbSyncEventOsTest, givenSignalAtSubmissionWhenSignalArbSyncObjectIsCal
     EXPECT_EQ(1u, SignalSyncObjectMock::getServerClientSignalAtSubmission());
 }
 
+struct GlArbSyncEventOsClientEventTest : GlArbSyncEventOsTest {
+    size_t signalAndCountClientEventSets(bool signalAtSubmission) {
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+        wddm->init();
+        auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        OsContextWin osContext(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0], preemptionMode));
+
+        CL_GL_SYNC_INFO syncInfo = {};
+        syncInfo.event = reinterpret_cast<HANDLE>(0x77);
+        VariableBackup<HANDLE> lastHandleBackup(&SysCalls::setEventLastHandle, nullptr);
+        auto setEventCalledBefore = SysCalls::setEventCalled.load();
+        signalArbSyncObject(osContext, syncInfo, signalAtSubmission);
+        auto setEventCalls = SysCalls::setEventCalled.load() - setEventCalledBefore;
+        if (setEventCalls > 0u) {
+            EXPECT_EQ(syncInfo.event, SysCalls::setEventLastHandle);
+        }
+        return setEventCalls;
+    }
+};
+
+TEST_F(GlArbSyncEventOsClientEventTest, givenSignalAtSubmissionWhenSignalArbSyncObjectIsCalledThenClientEventIsSet) {
+    EXPECT_EQ(1u, signalAndCountClientEventSets(true));
+}
+
+TEST_F(GlArbSyncEventOsClientEventTest, givenNoSignalAtSubmissionWhenSignalArbSyncObjectIsCalledThenClientEventIsNotSet) {
+    EXPECT_EQ(0u, signalAndCountClientEventSets(false));
+}
+
 TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSynchronizationObjectFailsThenWaitFlagDoesNotGetSet) {
     struct FailWaitSyncObjectMock {
         static NTSTATUS __stdcall waitForSynchObject(_In_ CONST_FROM_WDK_10_0_18328_0 D3DKMT_WAITFORSYNCHRONIZATIONOBJECT *waitData) {
