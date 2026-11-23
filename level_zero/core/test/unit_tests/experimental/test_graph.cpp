@@ -47,6 +47,7 @@ namespace ult {
 
 struct GraphFixture : public DeviceFixture {
     void setUp() {
+        debugManager.flags.ForceGraphImplicitSyncMutation.set(0);
         DeviceFixture::setUp();
         ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &cmdQueueDesc, &immCmdListHandle));
@@ -59,6 +60,7 @@ struct GraphFixture : public DeviceFixture {
 
     ze_command_list_handle_t immCmdListHandle;
     L0::CommandList *immCmdList = nullptr;
+    DebugManagerStateRestore graphDbgRestorer;
 };
 
 struct GraphExternalWaitEventFixtureInit : public GraphFixture {
@@ -69,8 +71,6 @@ struct GraphExternalWaitEventFixtureInit : public GraphFixture {
 
     template <typename FamilyType>
     void testExternalWaitEventRootChild(bool externalWaitRoot, bool externalWaitChild);
-
-    DebugManagerStateRestore dbgRestorer;
 };
 
 template <int32_t contextGroupSize>
@@ -99,10 +99,56 @@ struct GraphPatchPreambleBarrierFixture : public GraphFixture {
         debugManager.flags.ContextGroupSize.set(64);
         GraphFixture::setUp();
     }
-
-    DebugManagerStateRestore dbgRestorer;
 };
 using GraphPatchPreambleBarrierTest = Test<GraphPatchPreambleBarrierFixture>;
+
+struct GraphImplicitSyncMutationFixture : public GraphFixture {
+    void setUp() {
+        GraphFixture::setUp();
+        debugManager.flags.ForceGraphImplicitSyncMutation.set(1);
+    }
+};
+using GraphImplicitSyncMutationTest = Test<GraphImplicitSyncMutationFixture>;
+
+struct GraphImplicitSyncMutationExternalWaitEventFixture : public GraphImplicitSyncMutationFixture {
+    void setUp() {
+        GraphImplicitSyncMutationFixture::setUp();
+
+        ze_result_t returnValue = ZE_RESULT_ERROR_UNKNOWN;
+        ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+        queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+        this->inOrderCmdList.reset(CommandList::createImmediate(this->device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        this->inOrderCmdList->setOrdinal(0);
+        auto hCmdList = this->inOrderCmdList->toHandle();
+
+        ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(this->context->toHandle(), this->device->toHandle(), &eventDesc, &this->externalEvent));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(hCmdList, this->externalEvent, 0U, nullptr));
+
+        this->srcGraph = std::make_unique<L0::Graph>(this->context, true, false);
+        auto hGraph = this->srcGraph->toHandle();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(hCmdList, nullptr, 1U, &this->externalEvent));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
+    }
+
+    void tearDown() {
+        this->srcGraph.reset();
+        if (nullptr != this->externalEvent) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(this->externalEvent));
+        }
+        this->inOrderCmdList.reset();
+        GraphImplicitSyncMutationFixture::tearDown();
+    }
+
+    GraphsCleanupGuard graphCleanup;
+    std::unique_ptr<L0::CommandList> inOrderCmdList;
+    std::unique_ptr<L0::Graph> srcGraph;
+    ze_event_handle_t externalEvent = nullptr;
+};
+using GraphImplicitSyncMutationExternalWaitEventTest = Test<GraphImplicitSyncMutationExternalWaitEventFixture>;
 using GraphTestInstantiationExternalWaitEventMultiEngineTest = Test<GraphExternalWaitEventFixture<64>>;
 
 struct LaunchKernelWithArgumentsVisitorCapture {
@@ -343,7 +389,6 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphBeginCaptureReturn
 
 TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphSupportedWhenGraphCreateIsCalledThenGraphAndItsCommandListsAreMutable) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideRecordReplayGraphCapability.set(static_cast<int32_t>(ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_MUTABLE_GRAPH));
 
     ze_mutable_graph_exp_desc_t mutableGraphDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_DESC};
@@ -369,7 +414,6 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphSupporte
 
 TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphNotSupportedWhenGraphCreateIsCalledThenUnsupportedFeatureIsReturned) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideRecordReplayGraphCapability.set(static_cast<int32_t>(ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH));
 
     ze_mutable_graph_exp_desc_t mutableGraphDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_DESC};
@@ -380,7 +424,6 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphNotSuppo
 
 TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphSupportedWhenBeginGraphCaptureIsCalledThenGraphSubgraphAndTheirCommandListsAreMutable) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideRecordReplayGraphCapability.set(static_cast<int32_t>(ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_MUTABLE_GRAPH));
 
     auto forkEventHandle = createCounterBasedEvent(context, device, false);
@@ -422,7 +465,6 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphSupporte
 
 TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphNotSupportedWhenBeginGraphCaptureIsCalledThenUnsupportedFeatureIsReturned) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideRecordReplayGraphCapability.set(static_cast<int32_t>(ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH));
 
     ze_mutable_graph_exp_desc_t mutableGraphDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_DESC};
@@ -880,7 +922,6 @@ TEST_F(GraphTestApiInstantiate, GivenDumpGraphOnInstantiateFlagSetWhenInstantiat
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
 
-    DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DumpGraphOnInstantiate.set(true);
 
     VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> fopenBackup(&NEO::IoFunctions::fopenPtr, NEO::IoFunctions::mockFopen);
@@ -909,7 +950,6 @@ TEST_F(GraphTestApiInstantiate, GivenDumpGraphOnInstantiateFlagNotSetWhenInstant
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
 
-    DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DumpGraphOnInstantiate.set(false);
 
     VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> fopenBackup(&NEO::IoFunctions::fopenPtr, NEO::IoFunctions::mockFopen);
@@ -2597,7 +2637,6 @@ TEST_F(GraphInstantiationValidation, GivenNotMutableGraphWhenJoiningWithAppendKe
 
 TEST_F(GraphInstantiationValidation, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorInForkedSubgraphThenNodeIsReturnedByRootGraph) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
     ContextStubMock ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
@@ -2644,7 +2683,6 @@ TEST_F(GraphInstantiationValidation, GivenMutableGraphWhenCapturingAppendKernelW
 
 TEST_F(GraphInstantiationValidation, GivenMutableGraphWhenCapturingAppendKernelsWithGraphNodeDescriptorsInRootAndForkedSubgraphThenNodesAreIndexedInCaptureOrder) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
     ContextStubMock ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
@@ -2729,7 +2767,6 @@ TEST_F(GraphInstantiationValidation, GivenFlatCaptureWhenCapturingAppendKernelsW
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorThenCommandIsRecorded) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
 
     MockGraphContextReturningSpecificCmdList ctx;
@@ -2819,7 +2856,6 @@ TEST_F(GraphTestInstantiationTest, GivenCapturedAppendKernelsWithGraphNodeDescri
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorWithNullNodeHandlePointerThenInvalidArgumentIsReturned) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
 
     MockGraphContextReturningSpecificCmdList ctx;
@@ -2847,7 +2883,6 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWit
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndGraphNodeDescriptorWithFlagNotSupportedByDeviceWhenCapturingAppendKernelThenUnsupportedFeatureIsReturnedAndCommandIsNotRecorded) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT));
 
     MockGraphContextReturningSpecificCmdList ctx;
@@ -2879,7 +2914,6 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndGraphNodeDescriptorWithFl
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceWithoutMutableGraphCapabilitiesWhenCapturingAppendKernelWithZeroGraphNodeFlagsThenUnsupportedFeatureIsReturnedAndCommandIsNotRecorded) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(0);
 
     MockGraphContextReturningSpecificCmdList ctx;
@@ -2911,7 +2945,6 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceWithoutMutableGraph
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceSupportingOnlyKernelInstructionWhenCapturingAppendKernelWithZeroGraphNodeFlagsThenUnsupportedFeatureIsReturnedAndCommandIsNotRecorded) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION));
 
     MockGraphContextReturningSpecificCmdList ctx;
@@ -2943,7 +2976,6 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceSupportingOnlyKerne
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceWithMutableGraphCapabilitiesWhenCapturingAppendKernelWithZeroGraphNodeFlagsThenGraphNodeIsCreated) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
 
     MockGraphContextReturningSpecificCmdList ctx;
@@ -2982,7 +3014,6 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceWithMutableGraphCap
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelsWithGraphNodeDescriptorsThenGraphNodesAreCreatedAndStoredInGraph) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT));
 
     MockGraphContextReturningSpecificCmdList ctx;
@@ -3118,11 +3149,138 @@ TEST(GraphGetNodesTest, GivenCountGreaterThanNumberOfNodesWhenGettingNodesThenCo
 TEST_F(GraphTestInstantiationTest, GivenGraphPatchPreambleDebugFlagWhenInstantiatingGraphThenUseDebugSettingForPatchPreamble) {
     GraphsCleanupGuard graphCleanup;
 
-    DebugManagerStateRestore restorer;
     debugManager.flags.ForceDisableGraphPatchPreamble.set(1);
 
     MockExecutableGraph execGraph;
     EXPECT_FALSE(execGraph.usePatchingPreamble);
+}
+
+TEST_F(GraphTestInstantiationTest, GivenImplicitSyncMutationDebugFlagWhenCreatingExecutableGraphThenUseDebugSettingForImplicitSyncMutation) {
+    GraphsCleanupGuard graphCleanup;
+
+    debugManager.flags.ForceGraphImplicitSyncMutation.set(-1);
+    MockExecutableGraph defaultExecGraph;
+    EXPECT_TRUE(defaultExecGraph.implicitSyncMutation);
+
+    debugManager.flags.ForceGraphImplicitSyncMutation.set(0);
+    MockExecutableGraph disabledExecGraph;
+    EXPECT_FALSE(disabledExecGraph.implicitSyncMutation);
+
+    debugManager.flags.ForceGraphImplicitSyncMutation.set(1);
+    MockExecutableGraph enabledExecGraph;
+    EXPECT_TRUE(enabledExecGraph.implicitSyncMutation);
+}
+
+TEST_F(GraphTestInstantiationTest, GivenImplicitSyncMutationDisabledWhenExecutingExecutableGraphThenLastExecutionIsNotRecorded) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(nullptr, execGraph.lastExecutionCsr);
+}
+
+HWTEST_F(GraphImplicitSyncMutationTest, GivenExecutableGraphNotExecutedWhenWaitingForLastExecutionThenCsrIsNotWaitedFor) {
+    GraphsCleanupGuard graphCleanup;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    const auto waitCallsBefore = ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+
+    MockExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.waitForLastExecution());
+    EXPECT_EQ(waitCallsBefore, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+}
+
+HWTEST_F(GraphImplicitSyncMutationTest, GivenExecutableGraphExecutedTwiceWhenWaitingForLastExecutionThenCsrIsWaitedForTaskCountOfLastExecutionOnlyOnce) {
+    GraphsCleanupGuard graphCleanup;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+
+    MockExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ultCsr, execGraph.lastExecutionCsr);
+    EXPECT_EQ(ultCsr->peekTaskCount(), execGraph.lastExecutionTaskCount);
+
+    const auto waitCallsBefore = ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.waitForLastExecution());
+    EXPECT_EQ(waitCallsBefore + 1, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(execGraph.lastExecutionTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(nullptr, execGraph.lastExecutionCsr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.waitForLastExecution());
+    EXPECT_EQ(waitCallsBefore + 1, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+}
+
+HWTEST_F(GraphImplicitSyncMutationTest, GivenGpuHangWhenWaitingForLastExecutionThenDeviceLostIsReturnedAndNextWaitWaitsAgain) {
+    GraphsCleanupGuard graphCleanup;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+
+    MockExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
+
+    ultCsr->callBaseWaitForCompletionWithTimeout = false;
+    ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
+    const auto waitCallsBefore = ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, execGraph.waitForLastExecution());
+    EXPECT_EQ(ultCsr, execGraph.lastExecutionCsr);
+
+    ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.waitForLastExecution());
+    EXPECT_EQ(waitCallsBefore + 2, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(nullptr, execGraph.lastExecutionCsr);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, GraphImplicitSyncMutationExternalWaitEventTest, GivenPatchPreambleDisabledAndExternalWaitEventWhenExecutingExecutableGraphAgainThenLastExecutionIsWaitedFor) {
+    debugManager.flags.ForceDisableGraphPatchPreamble.set(1);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(inOrderCmdList->getCsr(false));
+
+    MockExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*srcGraph));
+    const auto waitCallsBefore = ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(inOrderCmdList.get(), nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(waitCallsBefore, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    const auto firstExecutionTaskCount = execGraph.lastExecutionTaskCount;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(inOrderCmdList.get(), nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(waitCallsBefore + 1, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(firstExecutionTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, GraphImplicitSyncMutationExternalWaitEventTest, GivenPatchPreambleEnabledAndExternalWaitEventWhenExecutingExecutableGraphAgainThenLastExecutionIsNotWaitedFor) {
+    debugManager.flags.ForceDisableGraphPatchPreamble.set(0);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(inOrderCmdList->getCsr(false));
+
+    MockExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*srcGraph));
+    const auto waitCallsBefore = ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(inOrderCmdList.get(), nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(inOrderCmdList.get(), nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(waitCallsBefore, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, GraphImplicitSyncMutationExternalWaitEventTest, GivenPatchPreambleDisabledAndExternalWaitEventAndGpuHangWhenExecutingExecutableGraphAgainThenDeviceLostIsReturnedAndGraphIsNotSubmitted) {
+    debugManager.flags.ForceDisableGraphPatchPreamble.set(1);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(inOrderCmdList->getCsr(false));
+
+    MockExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*srcGraph));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(inOrderCmdList.get(), nullptr, nullptr, 0, nullptr));
+    const auto firstExecutionTaskCount = ultCsr->peekTaskCount();
+
+    ultCsr->callBaseWaitForCompletionWithTimeout = false;
+    ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, execGraph.execute(inOrderCmdList.get(), nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(firstExecutionTaskCount, ultCsr->peekTaskCount());
+    EXPECT_EQ(ultCsr, execGraph.lastExecutionCsr);
+    EXPECT_EQ(firstExecutionTaskCount, execGraph.lastExecutionTaskCount);
+}
+
+TEST_F(GraphImplicitSyncMutationTest, GivenFailedExecutionWhenExecutingExecutableGraphThenLastExecutionIsNotRecorded) {
+    GraphsCleanupGuard graphCleanup;
+    Mock<CommandList> commandList;
+    commandList.appendBarrierResult = ZE_RESULT_ERROR_UNKNOWN;
+
+    MockExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, execGraph.execute(&commandList, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(nullptr, execGraph.lastExecutionCsr);
 }
 
 TEST_F(GraphTestInstantiationTest, givenEventResetClosureAndEnforcedEventsWhenInstantiatingThenUseCapturedEventHandle) {
@@ -3601,7 +3759,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenKernelWithArgumentsC
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInstantiation, GivenMutableGraphWithGraphNodesWhenInstantiatingThenCommandOfEachNodeIsStoredAtNodeIndex) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
     MockGraphContextReturningSpecificCmdList ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
@@ -6123,7 +6280,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(64);
 
     ze_command_list_handle_t immCmdListHandleMultiEngine;
@@ -6632,7 +6788,6 @@ struct ForkedGraphWithExternalSignalEventsTest {
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             GraphTestInstantiationTest,
             GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenExternalSignalEventsUsedThenPatchPreambleCrossSyncsUseSamePatchPreambleCountersAsExternalEvents) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(0);
     GraphsCleanupGuard graphCleanup;
     ForkedGraphWithExternalSignalEventsTest graph;
@@ -6790,7 +6945,6 @@ struct GraphBarrierStreamCommands {
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             GraphTestInstantiationTest,
             GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenGraphIsExecutedMoreThanOnceThenInOrderCompletionIsUsedToSynchronizeBeforePatchPreamble) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(0);
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     GraphsCleanupGuard graphCleanup;
@@ -6826,7 +6980,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWTEST2_F(GraphPatchPreambleBarrierTest,
           GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenGraphIsExecutedWithBarrierThenPatchPreambleCountersOfExecutorsAreNotAcquired,
           IsAtLeastXe3pCore) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     GraphsCleanupGuard graphCleanup;
 
@@ -6848,7 +7001,6 @@ HWTEST2_F(GraphPatchPreambleBarrierTest,
 HWTEST2_F(GraphPatchPreambleBarrierTest,
           GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenGraphIsExecutedMoreThanOnceThenBarrierIsUsedToSynchronizeBeforeAndAfterPatchPreamble,
           IsAtLeastXe3pCore) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     GraphsCleanupGuard graphCleanup;
 
@@ -6880,7 +7032,6 @@ HWTEST2_F(GraphPatchPreambleBarrierTest,
 HWTEST2_F(GraphPatchPreambleBarrierTest,
           GivenInOrderCmdListsAndMonolithicPolicyOnAGraphWithMultipleForksWhenGraphIsExecutedThenEachExecutorDispatchesSingleBarrierArriveAndRelease,
           IsAtLeastXe3pCore) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     GraphsCleanupGuard graphCleanup;
 
@@ -6913,7 +7064,6 @@ HWTEST2_F(GraphPatchPreambleBarrierTest,
 HWTEST2_F(GraphPatchPreambleBarrierTest,
           GivenForkedGraphWhenSubmissionOfFirstSegmentFailsThenBarrierCounterIsNotAdvancedAndNextExecutionUsesSameBarrierValues,
           IsAtLeastXe3pCore) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     GraphsCleanupGuard graphCleanup;
 
@@ -6944,7 +7094,6 @@ HWTEST2_F(GraphPatchPreambleBarrierTest,
 HWTEST2_F(GraphPatchPreambleBarrierTest,
           GivenForkedGraphExecutedOnRootCommandListWhenGraphIsExecutedOnAnotherRootCommandListThenPreviousRootSubmissionOnOtherCsrIsAwaitedBeforeBarrierArrive,
           IsAtLeastXe3pCore) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     GraphsCleanupGuard graphCleanup;
 
@@ -6996,7 +7145,6 @@ HWTEST2_F(GraphPatchPreambleBarrierTest,
 HWTEST2_F(GraphTestInstantiationTest,
           GivenGraphPatchPreambleBarrierSupportedWhenQueueDoesNotTrackSubmissionsForPatchPreambleThenPatchPreambleCountersAreAwaitedInsteadOfBarrier,
           IsAtLeastXe3pCore) {
-    DebugManagerStateRestore restorer;
     debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(1);
     debugManager.flags.ContextGroupSize.set(0);
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
@@ -7027,7 +7175,6 @@ HWTEST2_F(GraphPatchPreambleBarrierTest,
           IsAtLeastXe3pCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
-    DebugManagerStateRestore restorer;
     debugManager.flags.ForceDisableGraphPatchPreamble.set(1);
     GraphsCleanupGuard graphCleanup;
 
@@ -7579,7 +7726,6 @@ TEST_F(GraphExecution, GivenGraphWithForkWhenInstantiatingToExecutableAndAppendR
 
 TEST_F(GraphExecution, GivenForceForkPolicyDebugKeyWhenCreateGraphSettingsThenFollowDebugKeyValue) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
 
     debugManager.flags.ForceGraphForkPolicy.set(GraphInstatiateSettings::ForkPolicy::ForkPolicyMonolythicLevels);
     bool multiEngine = false;
@@ -8765,7 +8911,6 @@ TEST_F(GraphTestCaptureRestrictions, GivenHostSynchronizeWhenCapturingCmdlistThe
 
 TEST_F(GraphTestCaptureRestrictions, GivenImplicitlyCounterBasedEventSignalledByCaptureWhenSignalledByNotInOrderCommandListThenRecordedSignalIsReleased) {
     GraphsCleanupGuard graphCleanup;
-    DebugManagerStateRestore restorer;
     debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
 
     ze_event_pool_desc_t poolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, 1};
@@ -9171,6 +9316,7 @@ TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenVisitFailsThenSignalE
 TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledAndNoSourceGraphWhenAppendingGraphThenExecutableGraphIsExecuted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.GraphEagerSubmit.set(true);
+    debugManager.flags.ForceGraphImplicitSyncMutation.set(0);
 
     GraphsCleanupGuard graphCleanup;
     MockExecutableGraph execGraph;
@@ -9181,6 +9327,9 @@ TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledAndNoSourceGraphWhenAppen
 }
 
 TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitDisabledWhenAppendingGraphThenSourceGraphIsNotVisitedAndExecutableGraphIsExecuted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceGraphImplicitSyncMutation.set(0);
+
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
     TestableGraphForEagerSubmit srcGraph{&ctx, true, false};

@@ -36,6 +36,9 @@ struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::executionTarget;
     using ExecutableGraph::graphWideImmediateCountersCrossSyncs;
     using ExecutableGraph::graphWidePatchPreambleCrossSync;
+    using ExecutableGraph::implicitSyncMutation;
+    using ExecutableGraph::lastExecutionCsr;
+    using ExecutableGraph::lastExecutionTaskCount;
     using ExecutableGraph::myCommandLists;
     using ExecutableGraph::myOrderedSegments;
     using ExecutableGraph::patchPreambleBarrierCounter;
@@ -44,6 +47,7 @@ struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::subGraphs;
     using ExecutableGraph::updatedNodeCommandLists;
     using ExecutableGraph::usePatchingPreamble;
+    using ExecutableGraph::waitForLastExecution;
 };
 
 } // namespace ult

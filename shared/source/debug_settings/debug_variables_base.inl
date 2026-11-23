@@ -366,6 +366,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, UseMemorySynchronizationForHostFunction, -1, "-1
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDisableGraphPatchPreamble, -1, "-1: default, 0: enable patch preamble, 1: disable graph patch preamble. If disabled, do not patch preamble graph internal command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceEnableRegularCmdListPatchPreamble, -1, "-1: default, 0: disable patch preamble on regular cmdlist, 1: enable regular cmdlist patch preamble. If enabled, use patch preamble on api command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceGraphForkPolicy, -1, "-1: default, >=0: Use GraphInstatiateSettings::ForkPolicy policy")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceGraphImplicitSyncMutation, -1, "-1: default, 0: disable, 1: enable. If enabled, executable graph waits on host for its last execution before mutating its command lists on host")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGraphPatchPreambleBarrierSupport, -1, "-1: default, 0: disabled, 1: enabled. If enabled, patch preambles of graph segments executed on different command lists are synchronized with a shared barrier")
 DECLARE_DEBUG_VARIABLE(bool, GraphEagerSubmit, false, "Execute graph in eager mode: zeCommandListAppendGraphExt visits source graph and reappends recorded commands one by one instead of submitting instantiated command lists")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStateCacheInvalidationWa, -1, "-1: default, 0: disabled, 1: enabled. When enabled, insert a PIPE_CONTROL with state cache invalidation on the CCS after the walker for kernels that contain stateful access")

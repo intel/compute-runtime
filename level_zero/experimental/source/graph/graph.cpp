@@ -7,6 +7,9 @@
 
 #include "level_zero/experimental/source/graph/graph.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -1836,6 +1839,10 @@ ExecutableGraph::ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&o
     if (overrideDisablePatchingPreamble != -1) {
         this->usePatchingPreamble = (overrideDisablePatchingPreamble == 0);
     }
+    const int32_t overrideImplicitSyncMutation = NEO::debugManager.flags.ForceGraphImplicitSyncMutation.get();
+    if (overrideImplicitSyncMutation != -1) {
+        this->implicitSyncMutation = (overrideImplicitSyncMutation == 1);
+    }
 }
 
 ExecutableGraph::~ExecutableGraph() {
@@ -2168,6 +2175,27 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
         executionTarget = this->executionTarget;
     }
     UNRECOVERABLE_IF(nullptr == executionTarget);
+    const auto result = this->executeOnTarget(executionTarget, hSignalEvent, numWaitEvents, phWaitEvents);
+    if ((ZE_RESULT_SUCCESS == result) && this->implicitSyncMutation) {
+        this->lastExecutionCsr = executionTarget->getCsr(false);
+        this->lastExecutionTaskCount = this->lastExecutionCsr->peekTaskCount();
+    }
+    return result;
+}
+
+auto ExecutableGraph::waitForLastExecution() -> ze_result_t {
+    if (nullptr == this->lastExecutionCsr) {
+        return ZE_RESULT_SUCCESS;
+    }
+    const auto waitStatus = this->lastExecutionCsr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, false, NEO::TimeoutControls::maxTimeout}, this->lastExecutionTaskCount);
+    if (NEO::WaitStatus::gpuHang == waitStatus) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+    this->lastExecutionCsr = nullptr;
+    return ZE_RESULT_SUCCESS;
+}
+
+auto ExecutableGraph::executeOnTarget(L0::CommandList *executionTarget, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) -> ze_result_t {
     if (this->empty()) {
         CmdListWaitEventParameters waitEventsParameters = {
             .outWaitCmds = nullptr,
@@ -2216,6 +2244,12 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
     // first the driver needs to perform refresh of external wait events (mutate),
     // so when they income into a graph, mutation refreshes the outer state inside mcls
     if (this->externalCbEventStorage->externalCbWaitEventsPresent()) {
+        if (false == this->usePatchingPreamble) {
+            const auto waitResult = this->waitForLastExecution();
+            if (ZE_RESULT_SUCCESS != waitResult) {
+                return waitResult;
+            }
+        }
         this->externalCbEventStorage->refreshExternalCbWaitEvents();
         this->externalCbEventStorage->commitMclForExternalCbWaitEvents();
     }

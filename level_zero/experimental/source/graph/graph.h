@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/utilities/mem_lifetime.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
@@ -41,6 +42,7 @@ static_assert(IsCompliantWithDdiHandlesExt<_ze_graph_node_handle_t>);
 typedef void(ZE_CALLBACK *zex_mem_graph_free_callback_fn_t)(void *pUserData);
 
 namespace NEO {
+class CommandStreamReceiver;
 class TagNodeBase;
 } // namespace NEO
 
@@ -1014,6 +1016,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     L0::CommandList *allocateAndAddCommandListSubmissionNode(uint32_t estimatedNumberOfCommands);
 
+    auto executeOnTarget(L0::CommandList *executionTarget, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) -> ze_result_t;
+    auto waitForLastExecution() -> ze_result_t;
     auto commitUpdatedNodeCommandLists() -> void;
 
     Graph *src = nullptr;
@@ -1036,7 +1040,11 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     GraphPatchPreambleBarrierCounter patchPreambleBarrierCounter;
     GraphSegmentsCrossSync segmentsCrossSync;
 
+    NEO::CommandStreamReceiver *lastExecutionCsr = nullptr;
+    TaskCountType lastExecutionTaskCount = 0;
+
     bool usePatchingPreamble = true;
+    bool implicitSyncMutation = true;
     bool patchPreambleBarrierSupported = false;
     bool mutableExecGraph = false;
 };
