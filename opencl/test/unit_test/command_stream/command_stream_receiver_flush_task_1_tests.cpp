@@ -636,6 +636,9 @@ SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsR
 
 SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableL3ConfigWhenFlushingTaskThenDontReloadSba) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    if (!isStateBaseAddressProgrammingEnabled<FamilyType>()) {
+        GTEST_SKIP();
+    }
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     {
@@ -662,6 +665,9 @@ SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableL3ConfigWhen
 
 SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableGrfConfigWhenFlushingTaskThenDontReloadSba) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    if (!isStateBaseAddressProgrammingEnabled<FamilyType>()) {
+        GTEST_SKIP();
+    }
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     {
