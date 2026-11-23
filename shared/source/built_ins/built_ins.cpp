@@ -16,7 +16,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/file_io.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -73,9 +72,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         }
 
         if (type == SipKernelType::csr) {
-            auto preemptionSurfaceSize = sipBuiltIn.first->getStateSaveAreaSize(&device);
-            rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = preemptionSurfaceSize;
-            UNRECOVERABLE_IF(preemptionSurfaceSize == 0);
+            UNRECOVERABLE_IF(sipBuiltIn.first->updateRequiredPreemptionSurfaceSize(device) == 0);
         }
     };
     std::call_once(sipBuiltIn.second, initializer);

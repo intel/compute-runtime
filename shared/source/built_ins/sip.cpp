@@ -152,8 +152,8 @@ bool SipKernel::initBuiltinsSipKernel(SipKernelType type, Device &device, OsCont
     return true;
 }
 
-static size_t updateRequiredPreemptionSurfaceSize(const SipKernel &sipKernel, Device &device) {
-    auto preemptionSurfaceSize = sipKernel.getStateSaveAreaSize(&device);
+size_t SipKernel::updateRequiredPreemptionSurfaceSize(Device &device) const {
+    auto preemptionSurfaceSize = this->getStateSaveAreaSize(&device);
     if (preemptionSurfaceSize != 0) {
         device.getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = preemptionSurfaceSize;
     }
@@ -200,7 +200,7 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
         sipKernel = std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
 
         if (type == SipKernelType::csr) {
-            updateRequiredPreemptionSurfaceSize(*sipKernel, device);
+            sipKernel->updateRequiredPreemptionSurfaceSize(device);
         }
         return true;
     }
@@ -227,7 +227,7 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
         return false;
     }
     UNRECOVERABLE_IF(sipBinary.empty());
-    if (const auto &binaryFileName = debugManager.flags.LoadBinarySipFromFile.get(); binaryFileName != "unk") {
+    if (const auto &binaryFileName = debugManager.flags.LoadBinarySipFromFile.getRef(); binaryFileName != "unk") {
         sipBinary = readFile(binaryFileName);
         if (sipBinary.empty()) {
             return false;
@@ -254,7 +254,7 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
     sipKernel = std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary));
 
     if (type == SipKernelType::csr) {
-        UNRECOVERABLE_IF(updateRequiredPreemptionSurfaceSize(*sipKernel, device) == 0);
+        UNRECOVERABLE_IF(sipKernel->updateRequiredPreemptionSurfaceSize(device) == 0);
     }
     return true;
 }
@@ -267,7 +267,7 @@ SipClassType SipKernel::selectSipClassType(const GfxCoreHelper &gfxCoreHelper) {
     if (isExternalLibRequired(gfxCoreHelper)) {
         return SipClassType::externalLib;
     }
-    if (debugManager.flags.LoadBinarySipFromFile.get() != "unk") {
+    if (debugManager.flags.LoadBinarySipFromFile.getRef() != "unk") {
         return SipClassType::rawBinaryFromFile;
     }
     return SipClassType::builtins;
@@ -278,7 +278,7 @@ bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext 
 
     switch (SipKernel::classType) {
     case SipClassType::rawBinaryFromFile:
-        return SipKernel::initRawBinaryFromFileKernel(type, device, debugManager.flags.LoadBinarySipFromFile.get());
+        return SipKernel::initRawBinaryFromFileKernel(type, device, debugManager.flags.LoadBinarySipFromFile.getRef());
     case SipClassType::externalLib:
         return SipKernel::initSipKernelFromExternalLib(type, device);
     default:

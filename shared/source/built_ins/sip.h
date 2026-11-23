@@ -45,6 +45,7 @@ class SipKernel : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL GraphicsAllocation *getSipAllocation() const;
     MOCKABLE_VIRTUAL const std::vector<char> &getStateSaveAreaHeader() const;
     MOCKABLE_VIRTUAL size_t getStateSaveAreaSize(Device *device) const;
+    size_t updateRequiredPreemptionSurfaceSize(Device &device) const;
     MOCKABLE_VIRTUAL const std::vector<char> &getBinary() const;
 
     MOCKABLE_VIRTUAL void parseBinaryForContextId();
