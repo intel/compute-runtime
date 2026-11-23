@@ -15,11 +15,13 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
 #include "level_zero/api/opencl/test/common/fixtures/leo_event_callbacks_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
@@ -500,38 +502,37 @@ TEST_F(ClEnqueueSvmMapTest, givenReadOnlyMappedSvmBufferWhenClEnqueueUnmapMemObj
     registerDeviceStorageAlloc();
 
     cl_int errcode = CL_SUCCESS;
-    cl_mem buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(svmStorage), &svmStorage, &errcode);
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(clContext, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(svmStorage), &svmStorage, &errcode)));
     ASSERT_EQ(CL_SUCCESS, errcode);
     ASSERT_NE(nullptr, buffer);
 
-    auto mappedPtr = clEnqueueMapBuffer(commandQueue, buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
+    auto mappedPtr = clEnqueueMapBuffer(commandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
     ASSERT_EQ(CL_SUCCESS, errcode);
     EXPECT_EQ(static_cast<void *>(&svmStorage), mappedPtr);
     EXPECT_EQ(1u, mockCmdList.migrationCalled);
     ASSERT_NE(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 
-    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer.get(), mappedPtr, 0, nullptr, nullptr));
     EXPECT_EQ(1u, mockCmdList.migrationCalled);
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
 
-    mappedPtr = clEnqueueMapBuffer(commandQueue, buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
+    mappedPtr = clEnqueueMapBuffer(commandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
     ASSERT_EQ(CL_SUCCESS, errcode);
     EXPECT_EQ(2u, mockCmdList.migrationCalled);
 
-    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer.get(), mappedPtr, 0, nullptr, nullptr));
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
 TEST_F(ClEnqueueSvmMapTest, givenWriteInvalidateMappedSvmBufferWhenUnmappedThenHostToDeviceMigrationIsPerformed) {
     registerDeviceStorageAlloc();
 
     cl_int errcode = CL_SUCCESS;
-    cl_mem buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(svmStorage), &svmStorage, &errcode);
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(clContext, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(svmStorage), &svmStorage, &errcode)));
     ASSERT_EQ(CL_SUCCESS, errcode);
     ASSERT_NE(nullptr, buffer);
 
-    auto mappedPtr = clEnqueueMapBuffer(commandQueue, buffer, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
+    auto mappedPtr = clEnqueueMapBuffer(commandQueue, buffer.get(), CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0, sizeof(svmStorage), 0, nullptr, nullptr, &errcode);
     ASSERT_EQ(CL_SUCCESS, errcode);
     EXPECT_EQ(static_cast<void *>(&svmStorage), mappedPtr);
 
@@ -540,13 +541,11 @@ TEST_F(ClEnqueueSvmMapTest, givenWriteInvalidateMappedSvmBufferWhenUnmappedThenH
     EXPECT_FALSE(mapOperation->readOnlyMap);
 
     auto migrationsAfterMap = mockCmdList.migrationCalled;
-    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer, mappedPtr, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(commandQueue, buffer.get(), mappedPtr, 0, nullptr, nullptr));
     EXPECT_EQ(migrationsAfterMap + 1u, mockCmdList.migrationCalled);
     EXPECT_EQ(cpuAllocation.get(), mockCmdList.migrationSrcAlloc);
     EXPECT_EQ(nullptr, mockCmdList.migrationDstAlloc);
     EXPECT_EQ(nullptr, svmManager->getSvmMapOperation(&svmStorage));
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
 struct SvmFreeCallbackRecord {

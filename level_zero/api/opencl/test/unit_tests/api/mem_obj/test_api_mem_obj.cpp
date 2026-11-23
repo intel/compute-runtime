@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
@@ -92,11 +93,8 @@ struct CreateBufferWithUnalignedHostPtrTest : public Test<OclFixture> {
 
 TEST_F(CreateBufferWithUnalignedHostPtrTest, givenPageUnalignedHostPtrWhenCreateBufferThenApplicationStorageIsWrappedWithoutCopy) {
     cl_int retVal = CL_INVALID_VALUE;
-    auto clBuffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, unalignedHostPtr, &retVal);
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, unalignedHostPtr, &retVal)));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, clBuffer);
-
-    auto buffer = castToObject<Buffer>(clBuffer);
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(unalignedHostPtr, buffer->getCpuPtr());
 
@@ -110,25 +108,22 @@ TEST_F(CreateBufferWithUnalignedHostPtrTest, givenPageUnalignedHostPtrWhenCreate
     EXPECT_TRUE(isAligned<MemoryConstants::pageSize>(allocation->getGpuAddressWithoutOffset()));
 
     auto usmPtr = buffer->getUsmPtr();
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clBuffer));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer.release()));
     EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(usmPtr));
 }
 
 TEST_F(CreateBufferWithUnalignedHostPtrTest, givenCacheLineAlignedHostPtrWhenCreateBufferWithUseHostPtrThenBufferAndItsSubBufferAreZeroCopy) {
     cl_int retVal = CL_INVALID_VALUE;
-    auto clBuffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, unalignedHostPtr, &retVal);
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, unalignedHostPtr, &retVal)));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, clBuffer);
-    EXPECT_TRUE(castToObject<Buffer>(clBuffer)->isZeroCopy());
+    ASSERT_NE(nullptr, buffer);
+    EXPECT_TRUE(buffer->isZeroCopy());
 
     cl_buffer_region region{0, MemoryConstants::cacheLineSize};
-    auto clSubBuffer = clCreateSubBuffer(clBuffer, CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
+    auto subBuffer = clUniquePtr(castToObject<Buffer>(clCreateSubBuffer(buffer.get(), CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal)));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, clSubBuffer);
-    EXPECT_TRUE(castToObject<Buffer>(clSubBuffer)->isZeroCopy());
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clSubBuffer));
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clBuffer));
+    ASSERT_NE(nullptr, subBuffer);
+    EXPECT_TRUE(subBuffer->isZeroCopy());
 }
 
 TEST_F(CreateBufferWithUnalignedHostPtrTest, givenHostPtrNotAlignedToCacheLineWhenCreateBufferWithUseHostPtrThenBufferIsNotZeroCopy) {
@@ -145,11 +140,8 @@ TEST_F(CreateBufferWithUnalignedHostPtrTest, givenHostPtrNotAlignedToCacheLineWh
 
 TEST_F(CreateBufferWithUnalignedHostPtrTest, givenPageAlignedHostPtrWhenCreateBufferThenApplicationStorageIsWrappedWithoutCopy) {
     cl_int retVal = CL_INVALID_VALUE;
-    auto clBuffer = clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, basePtr, &retVal);
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, allocSize, basePtr, &retVal)));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, clBuffer);
-
-    auto buffer = castToObject<Buffer>(clBuffer);
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(basePtr, buffer->getCpuPtr());
 
@@ -162,7 +154,7 @@ TEST_F(CreateBufferWithUnalignedHostPtrTest, givenPageAlignedHostPtrWhenCreateBu
     EXPECT_EQ(0u, allocation->getAllocationOffset());
 
     auto usmPtr = buffer->getUsmPtr();
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(clBuffer));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer.release()));
     EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(usmPtr));
 }
 
@@ -788,16 +780,16 @@ struct LeoNv12ImageTest : LeoMemObjApiFixture {
         nv12Desc.image_height = height;
     }
 
-    cl_mem createParent() {
+    ReleaseableObjectPtr<Image> createParent() {
         cl_int err = CL_INVALID_VALUE;
-        auto parent = clCreateImage(context.get(),
-                                    CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL,
-                                    &nv12Format, &nv12Desc, nullptr, &err);
+        auto parent = clUniquePtr(castToObject<Image>(clCreateImage(context.get(),
+                                                                    CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL,
+                                                                    &nv12Format, &nv12Desc, nullptr, &err)));
         EXPECT_EQ(CL_SUCCESS, err);
         return parent;
     }
 
-    cl_mem createPlane(cl_mem parent, cl_channel_order order, size_t planeIndex, cl_int *err) {
+    ReleaseableObjectPtr<Image> createPlane(cl_mem parent, cl_channel_order order, size_t planeIndex, cl_int *err) {
         cl_image_format planeFormat{};
         planeFormat.image_channel_order = order;
         planeFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -805,7 +797,7 @@ struct LeoNv12ImageTest : LeoMemObjApiFixture {
         planeDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
         planeDesc.mem_object = parent;
         planeDesc.image_depth = planeIndex;
-        return clCreateImage(context.get(), CL_MEM_READ_WRITE, &planeFormat, &planeDesc, nullptr, err);
+        return clUniquePtr(castToObject<Image>(clCreateImage(context.get(), CL_MEM_READ_WRITE, &planeFormat, &planeDesc, nullptr, err)));
     }
 
     static constexpr size_t width = 16;
@@ -817,7 +809,6 @@ struct LeoNv12ImageTest : LeoMemObjApiFixture {
 TEST_F(LeoNv12ImageTest, givenNV12FormatWhenCreatingParentImageThenImageIsCreated) {
     auto parent = createParent();
     ASSERT_NE(nullptr, parent);
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
 }
 
 TEST_F(LeoNv12ImageTest, givenNV12ParentWhenExtractingYPlaneThenDimensionsMatchParentAndParentIsAssociated) {
@@ -825,23 +816,20 @@ TEST_F(LeoNv12ImageTest, givenNV12ParentWhenExtractingYPlaneThenDimensionsMatchP
     ASSERT_NE(nullptr, parent);
 
     cl_int err = CL_INVALID_VALUE;
-    auto yPlane = createPlane(parent, CL_R, 0, &err);
+    auto yPlane = createPlane(parent.get(), CL_R, 0, &err);
     ASSERT_EQ(CL_SUCCESS, err);
     ASSERT_NE(nullptr, yPlane);
 
     size_t planeWidth = 0;
     size_t planeHeight = 0;
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane, CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane, CL_IMAGE_HEIGHT, sizeof(planeHeight), &planeHeight, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane.get(), CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane.get(), CL_IMAGE_HEIGHT, sizeof(planeHeight), &planeHeight, nullptr));
     EXPECT_EQ(width, planeWidth);
     EXPECT_EQ(height, planeHeight);
 
     cl_mem associated = nullptr;
-    EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(yPlane, CL_MEM_ASSOCIATED_MEMOBJECT, sizeof(associated), &associated, nullptr));
-    EXPECT_EQ(parent, associated);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(yPlane));
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+    EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(yPlane.get(), CL_MEM_ASSOCIATED_MEMOBJECT, sizeof(associated), &associated, nullptr));
+    EXPECT_EQ(static_cast<cl_mem>(parent.get()), associated);
 }
 
 TEST_F(LeoNv12ImageTest, givenNV12ParentWhenExtractingUVPlaneThenDimensionsAreHalved) {
@@ -849,19 +837,16 @@ TEST_F(LeoNv12ImageTest, givenNV12ParentWhenExtractingUVPlaneThenDimensionsAreHa
     ASSERT_NE(nullptr, parent);
 
     cl_int err = CL_INVALID_VALUE;
-    auto uvPlane = createPlane(parent, CL_RG, 1, &err);
+    auto uvPlane = createPlane(parent.get(), CL_RG, 1, &err);
     ASSERT_EQ(CL_SUCCESS, err);
     ASSERT_NE(nullptr, uvPlane);
 
     size_t planeWidth = 0;
     size_t planeHeight = 0;
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(uvPlane, CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(uvPlane, CL_IMAGE_HEIGHT, sizeof(planeHeight), &planeHeight, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(uvPlane.get(), CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(uvPlane.get(), CL_IMAGE_HEIGHT, sizeof(planeHeight), &planeHeight, nullptr));
     EXPECT_EQ(width / 2, planeWidth);
     EXPECT_EQ(height / 2, planeHeight);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(uvPlane));
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
 }
 
 TEST_F(LeoNv12ImageTest, givenInvalidPlaneIndexWhenExtractingPlaneThenInvalidImageDescriptorReturned) {
@@ -869,11 +854,9 @@ TEST_F(LeoNv12ImageTest, givenInvalidPlaneIndexWhenExtractingPlaneThenInvalidIma
     ASSERT_NE(nullptr, parent);
 
     cl_int err = CL_SUCCESS;
-    auto badPlane = createPlane(parent, CL_R, 2, &err);
+    auto badPlane = createPlane(parent.get(), CL_R, 2, &err);
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, err);
     EXPECT_EQ(nullptr, badPlane);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
 }
 
 TEST_F(LeoNv12ImageTest, givenParentReleasedBeforePlaneThenPlaneKeepsParentAlive) {
@@ -881,17 +864,15 @@ TEST_F(LeoNv12ImageTest, givenParentReleasedBeforePlaneThenPlaneKeepsParentAlive
     ASSERT_NE(nullptr, parent);
 
     cl_int err = CL_INVALID_VALUE;
-    auto yPlane = createPlane(parent, CL_R, 0, &err);
+    auto yPlane = createPlane(parent.get(), CL_R, 0, &err);
     ASSERT_EQ(CL_SUCCESS, err);
     ASSERT_NE(nullptr, yPlane);
 
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent.release()));
 
     size_t planeWidth = 0;
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane, CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(yPlane.get(), CL_IMAGE_WIDTH, sizeof(planeWidth), &planeWidth, nullptr));
     EXPECT_EQ(width, planeWidth);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(yPlane));
 }
 
 struct WhiteBoxNv12Context : public Context {
@@ -926,9 +907,9 @@ TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrThenYAndUVPlanes
     std::vector<uint8_t> hostData((width * height * 3) / 2, 0x80);
 
     cl_int err = CL_INVALID_VALUE;
-    auto parent = clCreateImage(hostPtrContext.get(),
-                                CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_COPY_HOST_PTR,
-                                &nv12Format, &nv12Desc, hostData.data(), &err);
+    auto parent = clUniquePtr(castToObject<Image>(clCreateImage(hostPtrContext.get(),
+                                                                CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_COPY_HOST_PTR,
+                                                                &nv12Format, &nv12Desc, hostData.data(), &err)));
     EXPECT_EQ(CL_SUCCESS, err);
     ASSERT_NE(nullptr, parent);
 
@@ -947,8 +928,6 @@ TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrThenYAndUVPlanes
     EXPECT_EQ(height / 2, uvWrite.dstRegion->height);
     EXPECT_EQ(width, uvWrite.srcRowPitch);
     EXPECT_EQ(static_cast<const void *>(hostData.data() + width * height), uvWrite.srcptr);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
 }
 
 TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrAndRowPitchThenUVPlaneOffsetUsesRowPitch) {
@@ -957,9 +936,9 @@ TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrAndRowPitchThenU
     std::vector<uint8_t> hostData(rowPitch * height * 3 / 2, 0x40);
 
     cl_int err = CL_INVALID_VALUE;
-    auto parent = clCreateImage(hostPtrContext.get(),
-                                CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_COPY_HOST_PTR,
-                                &nv12Format, &nv12Desc, hostData.data(), &err);
+    auto parent = clUniquePtr(castToObject<Image>(clCreateImage(hostPtrContext.get(),
+                                                                CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_COPY_HOST_PTR,
+                                                                &nv12Format, &nv12Desc, hostData.data(), &err)));
     EXPECT_EQ(CL_SUCCESS, err);
     ASSERT_NE(nullptr, parent);
 
@@ -967,8 +946,6 @@ TEST_F(LeoNv12HostPtrImageTest, givenNV12ImageCreatedWithHostPtrAndRowPitchThenU
     EXPECT_EQ(static_cast<uint32_t>(rowPitch), capturingCmdList.appendImageCopyFromMemoryExtArgs[0].srcRowPitch);
     EXPECT_EQ(static_cast<uint32_t>(rowPitch), capturingCmdList.appendImageCopyFromMemoryExtArgs[1].srcRowPitch);
     EXPECT_EQ(static_cast<const void *>(hostData.data() + rowPitch * height), capturingCmdList.appendImageCopyFromMemoryExtArgs[1].srcptr);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(parent));
 }
 
 TEST_F(LeoNv12HostPtrImageTest, givenHostPtrCopyFailureWhenCreateImageThenNoImageIsReturnedAndErrorIsPropagated) {
@@ -1362,7 +1339,7 @@ struct LeoPooledBufferMemoryTest : public LeoBufferMemoryTest {
 
 TEST_F(LeoPooledBufferMemoryTest, givenBufferInDeviceUsmPoolWhenCreatingMapAllocationThenItIsHostUsmPoolChunkOfBufferSizeFreedOnRelease) {
     cl_int errcode = CL_INVALID_VALUE;
-    auto buffer = castToObject<Buffer>(clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE, pooledBufferSize, nullptr, &errcode));
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBuffer(leoContext.get(), CL_MEM_READ_WRITE, pooledBufferSize, nullptr, &errcode)));
     ASSERT_EQ(CL_SUCCESS, errcode);
     ASSERT_TRUE(driverHandle->getUsmPoolOwningPtr(buffer->getUsmPtr(), svmManager->getSVMAlloc(buffer->getUsmPtr())).isAllocatedInPool());
 
@@ -1373,7 +1350,7 @@ TEST_F(LeoPooledBufferMemoryTest, givenBufferInDeviceUsmPoolWhenCreatingMapAlloc
     EXPECT_EQ(cpuPtr, hostPoolLookup.pooledAllocationBasePtr);
     EXPECT_EQ(pooledBufferSize, hostPoolLookup.pooledAllocationSize);
 
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer.release()));
     EXPECT_FALSE(driverHandle->getHostUsmPoolOwningPtr(cpuPtr).isAllocatedInPool());
 }
 

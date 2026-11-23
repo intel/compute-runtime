@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -311,19 +312,17 @@ TEST_F(LeoInteropBufferFixture, givenImportedBufferWhenQueryingMemPropertiesThen
     void *usmPtr = &importedStorage;
     cl_mem_properties props[] = {CL_MEM_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(usmPtr), 0};
 
-    auto buffer = clCreateBufferWithProperties(leoContext.get(), props, 0, sizeof(importedStorage), nullptr, nullptr);
+    auto buffer = clUniquePtr(castToObject<Buffer>(clCreateBufferWithProperties(leoContext.get(), props, 0, sizeof(importedStorage), nullptr, nullptr)));
     ASSERT_NE(nullptr, buffer);
 
     cl_mem_properties stored[8] = {};
     size_t storedSize = 0;
-    EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(buffer, CL_MEM_PROPERTIES, sizeof(stored), stored, &storedSize));
+    EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(buffer.get(), CL_MEM_PROPERTIES, sizeof(stored), stored, &storedSize));
 
     ASSERT_EQ(3u * sizeof(cl_mem_properties), storedSize);
     EXPECT_EQ(static_cast<cl_mem_properties>(CL_MEM_L0_HANDLE_INTEL), stored[0]);
     EXPECT_EQ(reinterpret_cast<cl_mem_properties>(usmPtr), stored[1]);
     EXPECT_EQ(0u, stored[2]);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
 TEST_F(LeoInteropBufferFixture, givenImageHandleKeyWhenCreatingBufferThenInvalidValueIsReturned) {
@@ -383,9 +382,9 @@ struct LeoInteropImageFixture : public Test<OclFixture> {
         Test<OclFixture>::TearDown();
     }
 
-    cl_mem createPlainImage() {
+    ReleaseableObjectPtr<Image> createPlainImage() {
         cl_int errcode = CL_INVALID_VALUE;
-        auto image = clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &errcode);
+        auto image = clUniquePtr(castToObject<Image>(clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &errcode)));
         EXPECT_EQ(CL_SUCCESS, errcode);
         return image;
     }
@@ -402,11 +401,9 @@ TEST_F(LeoInteropImageFixture, givenImageWhenQueryingImageInfoThenSingleL0Handle
 
     ze_image_handle_t queried = nullptr;
     size_t queriedSize = 0;
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(image, CL_IMAGE_L0_HANDLE_INTEL, sizeof(queried), &queried, &queriedSize));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(image.get(), CL_IMAGE_L0_HANDLE_INTEL, sizeof(queried), &queried, &queriedSize));
     EXPECT_EQ(sizeof(ze_image_handle_t), queriedSize);
-    EXPECT_EQ(castToObject<Image>(image)->getL0Handle(), queried);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(image));
+    EXPECT_EQ(image->getL0Handle(), queried);
 }
 
 TEST_F(LeoInteropImageFixture, givenImageWhenQueryingSizeOnlyThenOneHandlePerRootDeviceIsReported) {
@@ -414,10 +411,8 @@ TEST_F(LeoInteropImageFixture, givenImageWhenQueryingSizeOnlyThenOneHandlePerRoo
     ASSERT_NE(nullptr, image);
 
     size_t queriedSize = 0;
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(image, CL_IMAGE_L0_HANDLE_INTEL, 0, nullptr, &queriedSize));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(image.get(), CL_IMAGE_L0_HANDLE_INTEL, 0, nullptr, &queriedSize));
     EXPECT_EQ(leoContext->getRootDeviceIndices().size() * sizeof(ze_image_handle_t), queriedSize);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(image));
 }
 
 TEST_F(LeoInteropImageFixture, givenImageWhenQueryingBufferHandleThroughMemObjectInfoThenInvalidValueIsReturned) {
@@ -425,9 +420,7 @@ TEST_F(LeoInteropImageFixture, givenImageWhenQueryingBufferHandleThroughMemObjec
     ASSERT_NE(nullptr, image);
 
     void *queried = nullptr;
-    EXPECT_EQ(CL_INVALID_VALUE, clGetMemObjectInfo(image, CL_MEM_L0_HANDLE_INTEL, sizeof(queried), &queried, nullptr));
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(image));
+    EXPECT_EQ(CL_INVALID_VALUE, clGetMemObjectInfo(image.get(), CL_MEM_L0_HANDLE_INTEL, sizeof(queried), &queried, nullptr));
 }
 
 TEST_F(LeoInteropImageFixture, givenBufferWhenQueryingImageHandleThroughImageInfoThenInvalidMemObjectIsReturned) {
@@ -445,58 +438,53 @@ TEST_F(LeoInteropImageFixture, givenBufferWhenQueryingImageHandleThroughImageInf
 TEST_F(LeoInteropImageFixture, givenImportedL0ImageWhenCreatingImageThenHandleIsAdoptedAndQueryable) {
     auto sourceImage = createPlainImage();
     ASSERT_NE(nullptr, sourceImage);
-    auto sourceHandle = castToObject<Image>(sourceImage)->getL0Handle();
+    auto sourceHandle = sourceImage->getL0Handle();
 
     cl_mem_properties props[] = {CL_IMAGE_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(sourceHandle),
                                  CL_IMAGE_L0_HANDLE_LIST_END_INTEL, 0};
     cl_int errcode = CL_INVALID_VALUE;
-    auto importedImage = clCreateImageWithProperties(leoContext.get(), props, CL_MEM_READ_WRITE,
-                                                     &imageFormat, &imageDesc, nullptr, &errcode);
+    auto importedImage = clUniquePtr(castToObject<Image>(clCreateImageWithProperties(leoContext.get(), props, CL_MEM_READ_WRITE,
+                                                                                     &imageFormat, &imageDesc, nullptr, &errcode)));
     ASSERT_EQ(CL_SUCCESS, errcode);
     ASSERT_NE(nullptr, importedImage);
 
     ze_image_handle_t queried = nullptr;
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(importedImage, CL_IMAGE_L0_HANDLE_INTEL, sizeof(queried), &queried, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(importedImage.get(), CL_IMAGE_L0_HANDLE_INTEL, sizeof(queried), &queried, nullptr));
     EXPECT_EQ(sourceHandle, queried);
 
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(importedImage));
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(importedImage.release()));
 
     size_t width = 0;
-    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(sourceImage, CL_IMAGE_WIDTH, sizeof(width), &width, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clGetImageInfo(sourceImage.get(), CL_IMAGE_WIDTH, sizeof(width), &width, nullptr));
     EXPECT_EQ(imageDesc.image_width, width);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(sourceImage));
 }
 
 TEST_F(LeoInteropImageFixture, givenImportedL0ImageWhenQueryingMemPropertiesThenHandleListRoundTripsWithTerminator) {
     auto sourceImage = createPlainImage();
     ASSERT_NE(nullptr, sourceImage);
-    auto sourceHandle = castToObject<Image>(sourceImage)->getL0Handle();
+    auto sourceHandle = sourceImage->getL0Handle();
 
     cl_mem_properties props[] = {CL_IMAGE_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(sourceHandle),
                                  CL_IMAGE_L0_HANDLE_LIST_END_INTEL, 0};
-    auto importedImage = clCreateImageWithProperties(leoContext.get(), props, CL_MEM_READ_WRITE,
-                                                     &imageFormat, &imageDesc, nullptr, nullptr);
+    auto importedImage = clUniquePtr(castToObject<Image>(clCreateImageWithProperties(leoContext.get(), props, CL_MEM_READ_WRITE,
+                                                                                     &imageFormat, &imageDesc, nullptr, nullptr)));
     ASSERT_NE(nullptr, importedImage);
 
     cl_mem_properties stored[8] = {};
     size_t storedSize = 0;
-    EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(importedImage, CL_MEM_PROPERTIES, sizeof(stored), stored, &storedSize));
+    EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(importedImage.get(), CL_MEM_PROPERTIES, sizeof(stored), stored, &storedSize));
 
     ASSERT_EQ(4u * sizeof(cl_mem_properties), storedSize);
     EXPECT_EQ(static_cast<cl_mem_properties>(CL_IMAGE_L0_HANDLE_INTEL), stored[0]);
     EXPECT_EQ(reinterpret_cast<cl_mem_properties>(sourceHandle), stored[1]);
     EXPECT_EQ(static_cast<cl_mem_properties>(CL_IMAGE_L0_HANDLE_LIST_END_INTEL), stored[2]);
     EXPECT_EQ(0u, stored[3]);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(importedImage));
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(sourceImage));
 }
 
 TEST_F(LeoInteropImageFixture, givenBufferHandleKeyWhenCreatingImageThenInvalidPropertyIsReturned) {
     auto sourceImage = createPlainImage();
     ASSERT_NE(nullptr, sourceImage);
-    auto sourceHandle = castToObject<Image>(sourceImage)->getL0Handle();
+    auto sourceHandle = sourceImage->getL0Handle();
 
     cl_mem_properties props[] = {CL_MEM_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(sourceHandle), 0};
     cl_int errcode = CL_SUCCESS;
@@ -504,8 +492,6 @@ TEST_F(LeoInteropImageFixture, givenBufferHandleKeyWhenCreatingImageThenInvalidP
                                                      &imageFormat, &imageDesc, nullptr, &errcode);
     EXPECT_EQ(nullptr, importedImage);
     EXPECT_EQ(CL_INVALID_PROPERTY, errcode);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(sourceImage));
 }
 
 TEST_F(LeoInteropImageFixture, givenEmptyHandleListWhenCreatingImageThenInvalidPropertyIsReturned) {
@@ -520,7 +506,7 @@ TEST_F(LeoInteropImageFixture, givenEmptyHandleListWhenCreatingImageThenInvalidP
 TEST_F(LeoInteropImageFixture, givenMoreHandlesThanRootDevicesWhenCreatingImageThenInvalidPropertyIsReturned) {
     auto sourceImage = createPlainImage();
     ASSERT_NE(nullptr, sourceImage);
-    auto sourceHandle = castToObject<Image>(sourceImage)->getL0Handle();
+    auto sourceHandle = sourceImage->getL0Handle();
 
     ASSERT_EQ(1u, leoContext->getRootDeviceIndices().size());
     cl_mem_properties props[] = {CL_IMAGE_L0_HANDLE_INTEL,
@@ -532,8 +518,6 @@ TEST_F(LeoInteropImageFixture, givenMoreHandlesThanRootDevicesWhenCreatingImageT
                                                      &imageFormat, &imageDesc, nullptr, &errcode);
     EXPECT_EQ(nullptr, importedImage);
     EXPECT_EQ(CL_INVALID_PROPERTY, errcode);
-
-    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(sourceImage));
 }
 
 /*****************************************************************************

@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -417,15 +418,15 @@ TEST_F(MemObjInfoFixture, givenRetainedBufferWithCallbackWhenReleasedOnceThenCal
     MemObjCallbackRecorder::reset();
 
     cl_int errcode = CL_SUCCESS;
-    auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 128u, nullptr, &errcode);
+    auto buffer = clUniquePtr(asMemObj(clCreateBuffer(clContext, CL_MEM_READ_WRITE, 128u, nullptr, &errcode)));
     ASSERT_EQ(CL_SUCCESS, errcode);
-    asMemObj(buffer)->addCallback(&MemObjCallbackRecorder::callback<4>, nullptr);
+    buffer->addCallback(&MemObjCallbackRecorder::callback<4>, nullptr);
 
-    ASSERT_EQ(CL_SUCCESS, clRetainMemObject(buffer));
-    ASSERT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+    ASSERT_EQ(CL_SUCCESS, clRetainMemObject(buffer.get()));
+    ASSERT_EQ(CL_SUCCESS, clReleaseMemObject(buffer.get()));
     EXPECT_EQ(0u, MemObjCallbackRecorder::count);
 
-    ASSERT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+    ASSERT_EQ(CL_SUCCESS, clReleaseMemObject(buffer.release()));
     EXPECT_EQ(1u, MemObjCallbackRecorder::count);
 }
 

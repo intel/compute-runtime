@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
@@ -1314,13 +1315,13 @@ TEST_F(LeoCommandBufferImageTest, givenImageFromBufferWhenRecordingFillImageThen
     desc.image_width = imageWidth;
     desc.mem_object = buffer;
     cl_int errcode = CL_INVALID_VALUE;
-    auto imageFromBuffer = clCreateImage(clContext, CL_MEM_READ_WRITE, &rgbaFormat, &desc, nullptr, &errcode);
+    auto imageFromBuffer = clUniquePtr(castToObject<Image>(clCreateImage(clContext, CL_MEM_READ_WRITE, &rgbaFormat, &desc, nullptr, &errcode)));
     ASSERT_EQ(CL_SUCCESS, errcode);
-    auto l0Image = castToObject<Image>(imageFromBuffer)->getL0Object();
+    auto l0Image = imageFromBuffer->getL0Object();
     const size_t fillOrigin[3] = {2u, 0u, 0u};
     const size_t fillRegion[3] = {3u, 1u, 1u};
 
-    EXPECT_EQ(CL_SUCCESS, clCommandFillImageKHR(commandBuffer, nullptr, nullptr, imageFromBuffer, fillColor, fillOrigin, fillRegion, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clCommandFillImageKHR(commandBuffer, nullptr, nullptr, imageFromBuffer.get(), fillColor, fillOrigin, fillRegion, 0u, nullptr, nullptr, nullptr));
 
     ASSERT_EQ(1u, recordedCmdList.appendMemoryFillArgs.count());
     const auto &args = recordedCmdList.appendMemoryFillArgs[0];
@@ -1332,7 +1333,6 @@ TEST_F(LeoCommandBufferImageTest, givenImageFromBufferWhenRecordingFillImageThen
     EXPECT_EQ(0u, recordedCmdList.appendLaunchKernelArgs.count());
 
     releaseCommandBuffer();
-    clReleaseMemObject(imageFromBuffer);
 }
 
 TEST_F(LeoCommandBufferImageTest, givenFillRegionOutsideImageFromBufferWhenRecordingFillImageThenInvalidValueIsReturnedAndNothingIsRecorded) {
