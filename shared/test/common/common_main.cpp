@@ -18,19 +18,16 @@
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
-#include "shared/test/common/helpers/debug_variables_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
-#include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/mock_sip_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
-#include "shared/test/common/helpers/virtual_file_system_listener.h"
+#include "shared/test/common/helpers/ult_main_helpers.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_os_thread.h"
 #include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/common/test_stats.h"
 #include "shared/test/common/tests_configuration.h"
 
 #include "gtest/gtest.h"
@@ -52,8 +49,6 @@
 #include "shared/test/common/helpers/mock_file_io.h"
 
 namespace NEO {
-extern std::map<std::string, std::stringstream> virtualFileList;
-extern std::map<std::string, std::stringstream> virtualFileListTestKernelsOnly;
 
 namespace PagaFaultManagerTestConfig {
 bool disabled = false;
@@ -177,12 +172,9 @@ int main(int argc, char **argv) {
                        << std::hex << 5;
 #endif
     int retVal = 0;
-    bool useDefaultListener = false;
+    UltCommandLineOptions ultOptions;
     bool enableAbrt = true;
     bool enableSegv = true;
-    bool showTestStats = false;
-    bool dumpTestStats = false;
-    std::string dumpTestStatsFileName = "";
     applyWorkarounds();
     applyCommonWorkarounds();
 
@@ -229,19 +221,10 @@ int main(int argc, char **argv) {
     auto baseTestFilesApiSpecific = testFilesApiSpecific;
 
     for (int i = 1; i < argc; ++i) {
-        if (!strcmp("--disable_default_listener", argv[i])) {
-            useDefaultListener = false;
-        } else if (!strcmp("--enable_default_listener", argv[i])) {
-            useDefaultListener = true;
-        } else if (!strcmp("--disable_alarm", argv[i])) {
-            enableAlarm = false;
-        } else if (!strcmp("--show_test_stats", argv[i])) {
-            showTestStats = true;
-        } else if (!strcmp("--dump_test_stats", argv[i])) {
-            dumpTestStats = true;
-            ++i;
-            dumpTestStatsFileName = std::string(argv[i]);
-        } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { // disable tests which raise page fault signal during execution
+        if (parseCommonUltOption(argc, argv, i, ultOptions, enableAlarm)) {
+            continue;
+        }
+        if (!strcmp("--disable_pagefaulting_tests", argv[i])) { // disable tests which raise page fault signal during execution
             NEO::PagaFaultManagerTestConfig::disabled = true;
         } else if (!strcmp("--tbx", argv[i])) {
             if (isAubTestMode(testMode)) {
@@ -349,7 +332,6 @@ int main(int argc, char **argv) {
     }
 
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    auto defaultListener = listeners.default_result_printer();
 
     defaultHwInfo = std::make_unique<HardwareInfo>();
 
@@ -416,27 +398,19 @@ int main(int argc, char **argv) {
 
         *defaultHwInfo = hwInfoForTests;
 
-        if (!useDefaultListener) {
-            if (!customEventListener) {
-                customEventListener = new CCustomEventListener(defaultListener);
-            }
-            customEventListener->setHwPrefix(hardwarePrefix[productFamily]);
-        }
-
         if (!ultListenersInitialized) {
-            if (!useDefaultListener) {
-                listeners.Release(defaultListener);
-
-                listeners.Append(customEventListener);
+            if (!ultOptions.useDefaultListener) {
+                customEventListener = replaceDefaultResultPrinter(listeners);
             }
 
             listeners.Append(new MockSipListener);
-            listeners.Append(new MemoryLeakListener);
-            listeners.Append(new DebugVariablesListener);
-            listeners.Append(new NEO::VirtualFileSystemListener);
+            appendCommonUltListeners(listeners);
 
             addUltListener(listeners);
             ultListenersInitialized = true;
+        }
+        if (customEventListener) {
+            customEventListener->setHwPrefix(hardwarePrefix[productFamily]);
         }
 
         setupExternalDependencies();
@@ -537,16 +511,7 @@ int main(int argc, char **argv) {
 
         virtualFileListTestKernelsOnly.clear();
 
-        if (showTestStats) {
-            std::cout << getTestStats() << std::endl;
-        }
-
-        if (dumpTestStats) {
-            std::ofstream dumpTestStatsFile;
-            dumpTestStatsFile.open(dumpTestStatsFileName);
-            dumpTestStatsFile << getTestStatsJson();
-            dumpTestStatsFile.close();
-        }
+        reportTestStats(ultOptions);
         cleanTestHelpers();
 
         if (retVal != 0) {

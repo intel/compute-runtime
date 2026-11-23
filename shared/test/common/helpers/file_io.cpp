@@ -11,21 +11,17 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/stdio.h"
 #include "shared/source/utilities/io_functions.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 
-#include <cstring>
 #include <map>
-#include <new>
 #include <sstream>
 
 namespace NEO {
-extern std::map<std::string, std::stringstream> virtualFileList;
-extern std::map<std::string, std::stringstream> virtualFileListTestKernelsOnly;
 
 bool fileExists(const std::string &fileName) {
     FILE *pFile = nullptr;
 
     DEBUG_BREAK_IF(fileName.empty());
-    DEBUG_BREAK_IF(fileName == "");
 
     if (NEO::virtualFileList.contains(fileName)) {
         return true;
@@ -40,7 +36,6 @@ bool fileExists(const std::string &fileName) {
 
 bool fileExistsHasSize(const std::string &fileName) {
     DEBUG_BREAK_IF(fileName.empty());
-    DEBUG_BREAK_IF(fileName == "");
 
     auto it = NEO::virtualFileList.find(fileName);
     if (it != NEO::virtualFileList.end()) {
@@ -80,38 +75,9 @@ bool virtualFileExists(const std::string &fileName) {
     return false;
 }
 
-std::unique_ptr<char[]> loadDataFromVirtualFile(
-    const char *filename,
-    size_t &retSize) {
-
-    auto it = NEO::virtualFileList.find(filename);
-    if (it == NEO::virtualFileList.end()) {
-        retSize = 0;
-        return nullptr;
-    }
-    std::unique_ptr<char[]> ret;
-
-    std::stringstream &fileStream = it->second;
-
-    fileStream.seekg(0, std::ios::end);
-    retSize = static_cast<size_t>(fileStream.tellg());
-    fileStream.seekg(0, std::ios::beg);
-
-    ret.reset(new (std::nothrow) char[retSize + 1]);
-    if (ret) {
-        memset(ret.get(), 0x00, retSize + 1);
-        fileStream.read(ret.get(), retSize);
-    } else {
-        retSize = 0;
-    }
-
-    return ret;
-}
-
-std::unique_ptr<char[]> loadDataFromVirtualFileTestKernelsOnly(const char *filename, size_t &retSize) {
-
-    auto it = NEO::virtualFileListTestKernelsOnly.find(filename);
-    if (it == NEO::virtualFileListTestKernelsOnly.end()) {
+static std::unique_ptr<char[]> loadDataFromVirtualFileList(std::map<std::string, std::stringstream> &fileList, const char *filename, size_t &retSize) {
+    auto it = fileList.find(filename);
+    if (it == fileList.end()) {
         retSize = 0;
         return nullptr;
     }
@@ -121,12 +87,14 @@ std::unique_ptr<char[]> loadDataFromVirtualFileTestKernelsOnly(const char *filen
     fileStream.seekg(0, std::ios::beg);
 
     auto ret = std::make_unique<char[]>(retSize + 1);
-    if (ret) {
-        ret[retSize] = 0x00;
-        fileStream.read(ret.get(), retSize);
-    } else {
-        retSize = 0;
-    }
-
+    fileStream.read(ret.get(), retSize);
     return ret;
+}
+
+std::unique_ptr<char[]> loadDataFromVirtualFile(const char *filename, size_t &retSize) {
+    return loadDataFromVirtualFileList(NEO::virtualFileList, filename, retSize);
+}
+
+std::unique_ptr<char[]> loadDataFromVirtualFileTestKernelsOnly(const char *filename, size_t &retSize) {
+    return loadDataFromVirtualFileList(NEO::virtualFileListTestKernelsOnly, filename, retSize);
 }

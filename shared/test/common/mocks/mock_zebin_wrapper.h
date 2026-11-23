@@ -9,12 +9,9 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
-
-namespace NEO {
-extern std::map<std::string, std::stringstream> virtualFileList;
-}
 
 namespace NEO {
 template <size_t binariesCount = 1u, Elf::ElfIdentifierClass numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64>

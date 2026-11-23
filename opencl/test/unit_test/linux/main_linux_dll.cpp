@@ -21,13 +21,13 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/debug_variables_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
+#include "shared/test/common/helpers/ult_main_helpers.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/signal_utils.h"
@@ -892,28 +892,16 @@ TEST(SysCalls, WhenSysCallsGetNumThreadsCalledThenCallIsRedirectedToOs) {
 
 bool enableAlarm = true;
 int main(int argc, char **argv) {
-    bool useDefaultListener = false;
-
     ::testing::InitGoogleTest(&argc, argv);
 
-    // parse remaining args assuming they're mine
+    UltCommandLineOptions ultOptions;
     for (int i = 1; i < argc; ++i) {
-        if (!strcmp("--disable_default_listener", argv[i])) {
-            useDefaultListener = false;
-        } else if (!strcmp("--enable_default_listener", argv[i])) {
-            useDefaultListener = true;
-        } else if (!strcmp("--disable_alarm", argv[i])) {
-            enableAlarm = false;
-        }
+        parseCommonUltOption(argc, argv, i, ultOptions, enableAlarm);
     }
 
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (useDefaultListener == false) {
-        auto defaultListener = listeners.default_result_printer();
-        auto customEventListener = new CCustomEventListener(defaultListener);
-
-        listeners.Release(defaultListener);
-        listeners.Append(customEventListener);
+    if (!ultOptions.useDefaultListener) {
+        replaceDefaultResultPrinter(listeners);
     }
     listeners.Append(new DebugVariablesListener);
 
@@ -940,6 +928,7 @@ int main(int argc, char **argv) {
     }
 
     auto retVal = RUN_ALL_TESTS();
+    reportTestStats(ultOptions);
 
     return retVal;
 }

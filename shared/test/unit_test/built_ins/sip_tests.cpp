@@ -17,6 +17,7 @@
 #include "shared/test/common/fixtures/sip_external_lib_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -39,9 +40,6 @@
 #include <map>
 
 using namespace NEO;
-namespace NEO {
-extern std::map<std::string, std::stringstream> virtualFileList;
-}
 
 struct RawBinarySipFixture : public DeviceWithoutSipFixture {
     void setUp() {

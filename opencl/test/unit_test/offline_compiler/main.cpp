@@ -9,19 +9,14 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/logger.h"
-#include "shared/test/common/helpers/custom_event_listener.h"
-#include "shared/test/common/helpers/debug_variables_listener.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
-#include "shared/test/common/helpers/virtual_file_system_listener.h"
+#include "shared/test/common/helpers/ult_main_helpers.h"
 #include "shared/test/common/libult/signal_utils.h"
-#include "shared/test/common/test_stats.h"
 
 #include "environment.h"
 #include "limits.h"
 
-#include <fstream>
 #include <igfxfmid.h>
 #include <regex>
 
@@ -70,13 +65,10 @@ void applyWorkarounds() {
 
 int main(int argc, char **argv) {
     int retVal = 0;
-    bool useDefaultListener = false;
+    NEO::UltCommandLineOptions ultOptions;
     bool enableAbrt = true;
     bool enableAlarm = true;
     bool enableSegv = true;
-    bool showTestStats = false;
-    bool dumpTestStats = false;
-    std::string dumpTestStatsFileName = "";
 
     std::string devicePrefix(DEFAULT_TEST_PLATFORM_NAME);
     std::string productConfig("");
@@ -104,23 +96,12 @@ int main(int argc, char **argv) {
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);
-    if (argc > 0) {
-        // parse remaining args assuming they're mine
-        for (int i = 0; i < argc; i++) {
-            if (strcmp("--use_default_listener", argv[i]) == 0) {
-                useDefaultListener = true;
-            } else if (!strcmp("--disable_alarm", argv[i])) {
-                enableAlarm = false;
-            } else if (strcmp("--device", argv[i]) == 0) {
-                ++i;
-                devicePrefix = argv[i];
-            } else if (!strcmp("--show_test_stats", argv[i])) {
-                showTestStats = true;
-            } else if (!strcmp("--dump_test_stats", argv[i])) {
-                dumpTestStats = true;
-                ++i;
-                dumpTestStatsFileName = std::string(argv[i]);
-            }
+    for (int i = 1; i < argc; i++) {
+        if (NEO::parseCommonUltOption(argc, argv, i, ultOptions, enableAlarm)) {
+            continue;
+        }
+        if (strcmp("--device", argv[i]) == 0 && i + 1 < argc) {
+            devicePrefix = argv[++i];
         }
     }
 
@@ -172,16 +153,10 @@ int main(int argc, char **argv) {
 #endif
 
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (useDefaultListener == false) {
-        auto defaultListener = listeners.default_result_printer();
-        auto customEventListener = new CCustomEventListener(defaultListener);
-
-        listeners.Release(defaultListener);
-        listeners.Append(customEventListener);
+    if (!ultOptions.useDefaultListener) {
+        NEO::replaceDefaultResultPrinter(listeners);
     }
-    listeners.Append(new NEO::MemoryLeakListener);
-    listeners.Append(new NEO::VirtualFileSystemListener);
-    listeners.Append(new NEO::DebugVariablesListener);
+    NEO::appendCommonUltListeners(listeners);
 
     gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, productConfig)));
 
@@ -203,16 +178,7 @@ int main(int argc, char **argv) {
     retVal = RUN_ALL_TESTS();
     cleanupSignals();
 
-    if (showTestStats) {
-        std::cout << getTestStats() << std::endl;
-    }
-
-    if (dumpTestStats) {
-        std::ofstream dumpTestStatsFile;
-        dumpTestStatsFile.open(dumpTestStatsFileName);
-        dumpTestStatsFile << getTestStatsJson();
-        dumpTestStatsFile.close();
-    }
+    NEO::reportTestStats(ultOptions);
 
     return retVal;
 }

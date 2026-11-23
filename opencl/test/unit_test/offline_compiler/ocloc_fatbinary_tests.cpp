@@ -18,6 +18,7 @@
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
@@ -33,7 +34,6 @@
 extern Environment *gEnvironment;
 
 namespace NEO {
-extern std::map<std::string, std::stringstream> virtualFileList;
 
 auto searchInArchiveByFilename(const Ar::Ar &archive, const ConstStringRef &name) {
     const auto isSearchedFile = [&name](const auto &file) {

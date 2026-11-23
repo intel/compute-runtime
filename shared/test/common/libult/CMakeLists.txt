@@ -104,6 +104,8 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/ult_main_helpers.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/ult_main_helpers.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/file_io.cpp

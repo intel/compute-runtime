@@ -9,6 +9,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/test/common/fixtures/sip_external_lib_fixture.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gfx_core_helper.h"
@@ -34,10 +35,6 @@
 
 #include <limits>
 #include <list>
-
-namespace NEO {
-extern std::map<std::string, std::stringstream> virtualFileList;
-}
 
 namespace L0 {
 namespace ult {

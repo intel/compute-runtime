@@ -16,10 +16,6 @@
 #include <map>
 #include <utility>
 
-namespace NEO {
-extern std::map<std::string, std::stringstream> virtualFileList;
-} // namespace NEO
-
 template <DebugFunctionalityLevel debugLevel>
 class TestFileLogger : public NEO::FileLogger<debugLevel> {
   public:

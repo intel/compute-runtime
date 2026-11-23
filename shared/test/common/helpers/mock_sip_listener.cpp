@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,12 +13,10 @@
 
 namespace NEO {
 
-void MockSipListener::OnTestEnd(const testing::TestInfo &testInfo) {
-    if (MockSipData::mockSipKernel) {
-        if (MockSipData::mockSipKernel->tempSipMemoryAllocation) {
-            printf("*** WARNING: test did not free sip kernels, test name: %s ***\n", testInfo.name());
-            MockSipData::mockSipKernel->tempSipMemoryAllocation.reset(nullptr);
-        }
+void MockSipListener::OnTestEnd(const testing::TestInfo &) {
+    if (MockSipData::mockSipKernel && MockSipData::mockSipKernel->tempSipMemoryAllocation) {
+        ADD_FAILURE() << "test did not free SIP kernels";
+        MockSipData::mockSipKernel->tempSipMemoryAllocation.reset(nullptr);
     }
 }
 

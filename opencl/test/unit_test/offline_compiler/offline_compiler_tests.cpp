@@ -27,6 +27,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_contains_regex.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compiler_cache.h"
@@ -60,7 +61,6 @@
 extern Environment *gEnvironment;
 
 namespace NEO {
-extern std::map<std::string, std::stringstream> virtualFileList;
 
 void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singleArgs, int numOfBuild) {
 
