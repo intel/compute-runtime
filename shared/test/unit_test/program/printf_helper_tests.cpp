@@ -12,6 +12,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <cmath>
 #include <deque>
 
@@ -595,6 +596,70 @@ TEST_F(PrintFormatterTest, GivenTooLongStringWhenPrintedThenOutputIsTruncated) {
     auto testedLength = strnlen_s(testedLongString.get(), PrintFormatter::maxSinglePrintStringLength + 1024);
     auto actualLength = strnlen_s(actualOutput.get(), PrintFormatter::maxSinglePrintStringLength + 1024);
     EXPECT_GT(testedLength, actualLength);
+}
+
+class PrintFormatterOutputBoundsTest : public PrintFormatterTest {
+  public:
+    struct MockPrintFormatter : public PrintFormatter {
+        using PrintFormatter::output;
+        using PrintFormatter::PrintFormatter;
+    };
+
+    static constexpr size_t guardedOutputSize = 2 * PrintFormatter::maxSinglePrintStringLength;
+    static constexpr char guardByte = 0x5a;
+
+    void SetUp() override {
+        guardedFormatter.output = std::make_unique_for_overwrite<char[]>(guardedOutputSize);
+        memset(guardedFormatter.output.get(), guardByte, guardedOutputSize);
+    }
+
+    std::string printKernelOutput() {
+        std::string actualOutput;
+        guardedFormatter.printKernelOutput([&actualOutput](char *str) { actualOutput = str; });
+        return actualOutput;
+    }
+
+    size_t countBytesWrittenPastOutputBuffer() const {
+        return static_cast<size_t>(std::count_if(guardedFormatter.output.get() + PrintFormatter::maxSinglePrintStringLength,
+                                                 guardedFormatter.output.get() + guardedOutputSize,
+                                                 [](char c) { return c != guardByte; }));
+    }
+
+    MockPrintFormatter guardedFormatter{underlyingBuffer, printfBufferSize};
+};
+
+TEST_F(PrintFormatterOutputBoundsTest, GivenConversionFillingOutputBufferWhenPrintingTrailingCharactersThenNothingIsWrittenPastOutputBuffer) {
+    storeData(injectFormatString("%16383d\n"));
+    injectValue(1);
+
+    auto actualOutput = printKernelOutput();
+
+    EXPECT_EQ(std::string(PrintFormatter::maxSinglePrintStringLength - 2, ' ') + "1", actualOutput);
+    EXPECT_EQ(0u, countBytesWrittenPastOutputBuffer());
+}
+
+TEST_F(PrintFormatterOutputBoundsTest, GivenConversionWiderThanOutputBufferWhenPrintingThenNothingIsWrittenPastOutputBuffer) {
+    storeData(injectFormatString("%20000d%%%%"));
+    injectValue(1);
+
+    printKernelOutput();
+
+    EXPECT_EQ(0u, countBytesWrittenPastOutputBuffer());
+}
+
+TEST_F(PrintFormatterOutputBoundsTest, GivenVectorConversionWiderThanOutputBufferWhenPrintingThenNothingIsWrittenPastOutputBuffer) {
+    int channelCount = 16;
+
+    storeData(injectFormatString("%2000v16d"));
+    storeData(PrintfDataType::vectorIntType);
+    storeData(channelCount);
+    for (int i = 0; i < channelCount; i++) {
+        storeData(i + 1);
+    }
+
+    printKernelOutput();
+
+    EXPECT_EQ(0u, countBytesWrittenPastOutputBuffer());
 }
 
 TEST_F(PrintFormatterTest, GivenNullTokenWhenPrintingThenNullIsInserted) {

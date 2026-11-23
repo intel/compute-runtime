@@ -67,7 +67,9 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
         if (formatString[i] == '%') {
             size_t end = i;
             if (end + 1 <= length && formatString[end + 1] == '%') {
-                output[cursor++] = '%';
+                if (cursor < maxSinglePrintStringLength - 1) {
+                    output[cursor++] = '%';
+                }
                 i++;
                 continue;
             }
@@ -91,7 +93,7 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
             }
 
             i = end - 1;
-        } else {
+        } else if (cursor < maxSinglePrintStringLength - 1) {
             output[cursor++] = formatString[i];
         }
     }

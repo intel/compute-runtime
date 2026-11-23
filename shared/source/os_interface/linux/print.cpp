@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/print.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
@@ -24,12 +25,12 @@ void printToStderr(const char *str) {
 template <class T>
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, T value) {
     auto retVal = snprintf(output, outputSize, format, value);
-    return retVal < 0 ? 0 : static_cast<size_t>(retVal);
+    return retVal < 0 ? 0 : std::min(static_cast<size_t>(retVal), outputSize - 1);
 }
 
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, const char *value) {
     auto retVal = snprintf(output, outputSize, format, value);
-    return retVal < 0 ? 0 : static_cast<size_t>(retVal);
+    return retVal < 0 ? 0 : std::min(static_cast<size_t>(retVal), outputSize - 1);
 }
 
 template size_t simpleSprintf<float>(char *output, size_t output_size, const char *format, float value);
