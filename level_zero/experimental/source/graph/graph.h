@@ -975,6 +975,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                GraphSegmentsCrossSync *segmentsCrossSync);
 
+    auto updateNodes(uint32_t numNodes, ze_graph_node_handle_t *phNodes, const void **ppUpdateDescs) -> ze_result_t;
+
     WeaklyShared<ExternalCbEventInfoContainer> getExternalCbEventInfoContainer() {
         return externalCbEventStorage;
     }
@@ -1011,6 +1013,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     L0::CommandList *allocateAndAddCommandListSubmissionNode(uint32_t estimatedNumberOfCommands);
 
+    auto commitUpdatedNodeCommandLists() -> void;
+
     Graph *src = nullptr;
     L0::CommandList *executionTarget = nullptr;
     std::vector<std::unique_ptr<L0::CommandList>> myCommandLists;
@@ -1021,6 +1025,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     WeaklyShared<OrderedExecutableSegmentsList> orderedCommands; // shared between graph and subgraphs
     WeaklyShared<ExternalCbEventInfoContainer> externalCbEventStorage;
     WeaklyShared<ExecutableGraphNodeCommands> nodeCommands;
+    std::vector<L0::CommandList *> updatedNodeCommandLists;
 
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;

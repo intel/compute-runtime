@@ -3314,33 +3314,6 @@ struct GraphInternalEventFixture : public GraphFixture {
 
 using GraphInternalEventTest = Test<GraphInternalEventFixture>;
 
-template <GFXCORE_FAMILY gfxCoreFamily>
-struct CommandIdRecordingCommandList : Mock<CommandList> {
-    struct RecordingMutableCommandList : MutableCommandListCoreFamily<gfxCoreFamily> {
-        ze_result_t getNextCommandIdForGraphNode(ze_mutable_graph_node_exp_flags_t flags, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override {
-            recordedFlags.push_back(flags);
-            if (ZE_RESULT_SUCCESS != getNextCommandIdResult) {
-                return getNextCommandIdResult;
-            }
-            *pCommandId = ++getNextCommandIdCalled;
-            return ZE_RESULT_SUCCESS;
-        }
-
-        uint64_t getNextCommandIdCalled = 0;
-        std::vector<ze_mutable_graph_node_exp_flags_t> recordedFlags;
-        ze_result_t getNextCommandIdResult = ZE_RESULT_SUCCESS;
-    } mutableCommandList;
-
-    explicit CommandIdRecordingCommandList(L0::Device *device) {
-        this->device = device;
-        this->mutableCommandList.base = this;
-    }
-
-    void *asMutable() override {
-        return static_cast<L0::MCL::MutableCommandList *>(&this->mutableCommandList);
-    }
-};
-
 TEST_F(GraphInternalEventTest, givenSignalOnlyClosuresAndEnforcedExternalWaitWhenInstantiatingThenDoNotRegisterWaits) {
     ze_event_counter_based_desc_t eventDesc = {
         .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
@@ -6117,6 +6090,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     MI_BATCH_BUFFER_START *chainBackBbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartDwordBuffer);
     ASSERT_NE(nullptr, chainBackBbStartCmd);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            GivenUpdatedNodeCommandListWhenExecutingExecutableGraphThenCommandListIsClosedOnlyOnce) {
+    GraphsCleanupGuard graphCleanup;
+
+    Graph srcGraph(context, true, false);
+    immCmdList->setGraphCaptureTarget(&srcGraph);
+    srcGraph.startCapturingFrom(*immCmdList, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0U, nullptr));
+    srcGraph.stopCapturing();
+    immCmdList->setGraphCaptureTarget(nullptr);
+
+    MockExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(srcGraph));
+    Mock<CommandList> updatedCommandList;
+    execGraph.updatedNodeCommandLists.push_back(&updatedCommandList);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(1u, updatedCommandList.closeCalled);
+    EXPECT_TRUE(execGraph.updatedNodeCommandLists.empty());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
+    EXPECT_EQ(1u, updatedCommandList.closeCalled);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -9545,11 +9543,7 @@ TEST(GraphTestMutableGraphNodeExp, GivenMutableGraphNodeExpFunctionsWhenCalledTh
     ContextStubMock ctx;
     MockGraph graph{&ctx, true, false};
     ze_executable_graph_handle_t hExecutableGraph = reinterpret_cast<ze_executable_graph_handle_t>(0x1234);
-    ze_graph_node_handle_t hNode = reinterpret_cast<ze_graph_node_handle_t>(0x5678);
 
-    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
-    const void *updateDescs[] = {&groupCountDesc};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeExecutableGraphNodesUpdateExp(hExecutableGraph, 1, &hNode, updateDescs, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeExecutableGraphUpdateExp(hExecutableGraph, graph.toHandle(), nullptr));
 }
 

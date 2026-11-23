@@ -27,6 +27,7 @@
 #include "level_zero/experimental/source/graph/graph_export.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include <algorithm>
 #include <cstring>
 #include <type_traits>
 #include <unordered_map>
@@ -2073,6 +2074,90 @@ ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segme
     return ZE_RESULT_SUCCESS;
 }
 
+inline ze_result_t validateExecutableGraphNodeUpdateDescriptors(const GraphNode &graphNode, const void *pUpdateDesc) {
+    if (nullptr == pUpdateDesc) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    const auto nodeFlags = graphNode.getEffectiveFlags();
+    const auto numKernelArguments = graphNode.getKernel()->getKernelDescriptor().payloadMappings.explicitArgs.size();
+    auto desc = static_cast<const ze_base_desc_t *>(pUpdateDesc);
+    while (desc) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC) {
+            if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION)) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+            auto launchKernelDesc = reinterpret_cast<const ze_graph_node_update_launch_kernel_exp_desc_t *>(desc);
+            if ((0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT)) && (0u != numKernelArguments) &&
+                ((nullptr == launchKernelDesc->pArgSizes) || (nullptr == launchKernelDesc->pArgValues))) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC) {
+            if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            auto kernelArgumentDesc = reinterpret_cast<const ze_graph_node_update_kernel_argument_exp_desc_t *>(desc);
+            if (kernelArgumentDesc->argIndex >= numKernelArguments) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC) {
+            if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC) {
+            if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC) {
+            if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        desc = static_cast<const ze_base_desc_t *>(desc->pNext);
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+auto ExecutableGraph::updateNodes(uint32_t numNodes, ze_graph_node_handle_t *phNodes, const void **ppUpdateDescs) -> ze_result_t {
+    const auto &graphNodes = this->src->getGraphNodes();
+    for (uint32_t i = 0U; i < numNodes; ++i) {
+        if (nullptr == phNodes[i]) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        const auto graphNode = GraphNode::fromHandle(phNodes[i]);
+        const auto nodeIndex = graphNode->getIndex();
+        if ((nodeIndex >= graphNodes.size()) || (graphNodes[nodeIndex].get() != graphNode)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        auto result = validateExecutableGraphNodeUpdateDescriptors(*graphNode, ppUpdateDescs[i]);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+    }
+
+    for (uint32_t i = 0U; i < numNodes; ++i) {
+        const auto graphNode = GraphNode::fromHandle(phNodes[i]);
+        const auto &nodeCommand = (*this->nodeCommands)[graphNode->getIndex()];
+        auto mutableCommandList = static_cast<L0::MCL::MutableCommandList *>(nodeCommand.commandList->asMutable());
+        if (this->updatedNodeCommandLists.end() == std::find(this->updatedNodeCommandLists.begin(), this->updatedNodeCommandLists.end(), nodeCommand.commandList)) {
+            this->updatedNodeCommandLists.push_back(nodeCommand.commandList);
+        }
+        auto result = mutableCommandList->updateMutableCommandForGraphNode(nodeCommand.commandId, graphNode->getFlags(), ppUpdateDescs[i]);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+auto ExecutableGraph::commitUpdatedNodeCommandLists() -> void {
+    for (auto *updatedCommandList : this->updatedNodeCommandLists) {
+        updatedCommandList->close();
+    }
+    this->updatedNodeCommandLists.clear();
+}
+
 ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     if (nullptr == executionTarget) {
         executionTarget = this->executionTarget;
@@ -2129,6 +2214,8 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
         this->externalCbEventStorage->refreshExternalCbWaitEvents();
         this->externalCbEventStorage->commitMclForExternalCbWaitEvents();
     }
+
+    this->commitUpdatedNodeCommandLists();
 
     // signal is an outgoing state, so attaching inside state of segments (executors/icl - patch preamble)/(commands/mcl - in order exec info) to show it to the outside world
     if (this->externalCbEventStorage->externalCbSignalEventsPresent()) {

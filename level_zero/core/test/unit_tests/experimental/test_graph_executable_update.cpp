@@ -1,0 +1,313 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "level_zero/api/internal/l0_graph.h"
+#include "level_zero/core/test/unit_tests/experimental/test_graph.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include <array>
+
+namespace L0 {
+namespace ult {
+
+struct ExecutableGraphNodesUpdateFixture : public DeviceFixture {
+    void setUp() {
+        DeviceFixture::setUp();
+        module = std::make_unique<Mock<Module>>(device, nullptr);
+        kernel.setModule(module.get());
+        executableGraph.src = &sourceGraph;
+    }
+
+    void tearDown() {
+        DeviceFixture::tearDown();
+    }
+
+    void setNumKernelArguments(size_t numKernelArguments) {
+        kernel.descriptor.payloadMappings.explicitArgs.resize(numKernelArguments);
+    }
+
+    GraphNode *createInstantiatedNode(ze_mutable_graph_node_exp_flags_t flags, uint64_t commandId, L0::CommandList *commandList) {
+        auto &createdGraphNode = sourceGraph.recordedApiCommands.externalStorage.graphNode;
+        createdGraphNode = std::make_unique<GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, flags);
+        createdGraphNode->setKernel(&kernel);
+        sourceGraph.storeCreatedGraphNode();
+        executableGraph.getNodeCommands()->push_back({commandId, commandList});
+        return sourceGraph.graphNodes->back().get();
+    }
+
+    ze_result_t updateNode(GraphNode &node, const void *pUpdateDesc) {
+        ze_graph_node_handle_t nodeHandle = node.toHandle();
+        return executableGraph.updateNodes(1u, &nodeHandle, &pUpdateDesc);
+    }
+
+    std::unique_ptr<Mock<Module>> module;
+    Mock<KernelImp> kernel;
+    ContextStubMock context;
+    MockGraph sourceGraph{&context, true, true};
+    MockExecutableGraph executableGraph;
+    const size_t kernelArgumentSize = sizeof(uint32_t);
+    const uint32_t kernelArgumentValue = 1u;
+    const void *kernelArgumentValues = &kernelArgumentValue;
+};
+
+using ExecutableGraphNodesUpdateTest = Test<ExecutableGraphNodesUpdateFixture>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodesOfExecutableGraphWhenUpdatingThenDescriptorsArePassedToMutableCommandListWithNodeCommandIdAndFlagsAndCommandListIsRecordedOnce) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto defaultFlagsNode = createInstantiatedNode(0u, 1u, &commandList);
+    auto groupSizeNode = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE, 2u, &commandList);
+
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    ze_graph_node_update_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC};
+    std::array<ze_graph_node_handle_t, 2> nodes = {defaultFlagsNode->toHandle(), groupSizeNode->toHandle()};
+    std::array<const void *, 2> updateDescs = {&groupCountDesc, &groupSizeDesc};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.updateNodes(2u, nodes.data(), updateDescs.data()));
+
+    const auto &updates = commandList.mutableCommandList.recordedGraphNodeUpdates;
+    ASSERT_EQ(2u, updates.size());
+    EXPECT_EQ(1u, updates[0].commandId);
+    EXPECT_EQ(0u, updates[0].flags);
+    EXPECT_EQ(&groupCountDesc, updates[0].pUpdateDesc);
+    EXPECT_EQ(2u, updates[1].commandId);
+    EXPECT_EQ(static_cast<ze_mutable_graph_node_exp_flags_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE), updates[1].flags);
+    EXPECT_EQ(&groupSizeDesc, updates[1].pUpdateDesc);
+    EXPECT_EQ(std::vector<L0::CommandList *>{&commandList}, executableGraph.updatedNodeCommandLists);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodeWithKernelArgumentAndGlobalOffsetFlagsWhenUpdatingWithAllowedDescriptorChainThenChainIsPassedToMutableCommandList) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    setNumKernelArguments(1u);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET, 1u, &commandList);
+
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.pArgSizes = &kernelArgumentSize;
+    launchKernelDesc.pArgValues = &kernelArgumentValues;
+    ze_graph_node_update_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC};
+    globalOffsetDesc.pNext = &launchKernelDesc;
+    ze_graph_node_update_kernel_argument_exp_desc_t kernelArgumentDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC};
+    kernelArgumentDesc.argIndex = 0u;
+    kernelArgumentDesc.pNext = &globalOffsetDesc;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, updateNode(*node, &kernelArgumentDesc));
+
+    const auto &updates = commandList.mutableCommandList.recordedGraphNodeUpdates;
+    ASSERT_EQ(1u, updates.size());
+    EXPECT_EQ(&kernelArgumentDesc, updates[0].pUpdateDesc);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodeNotInstantiatedInExecutableGraphWhenUpdatingThenInvalidArgumentIsReturned) {
+    GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT};
+    node.setKernel(&kernel);
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(node, &groupCountDesc));
+    EXPECT_TRUE(executableGraph.updatedNodeCommandLists.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodeOfOtherGraphWithIndexOfInstantiatedNodeWhenUpdatingThenInvalidArgumentIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto instantiatedNode = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+    GraphNode otherGraphNode{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT};
+    otherGraphNode.setKernel(&kernel);
+    otherGraphNode.setIndex(instantiatedNode->getIndex());
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(otherGraphNode, &groupCountDesc));
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+    EXPECT_TRUE(executableGraph.updatedNodeCommandLists.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenSecondNodeWithDescriptorNotAllowedByItsFlagsWhenUpdatingThenInvalidArgumentIsReturnedAndNoNodeIsUpdated) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto groupCountNode = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+    auto secondGroupCountNode = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 2u, &commandList);
+
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    ze_graph_node_update_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC};
+    std::array<ze_graph_node_handle_t, 2> nodes = {groupCountNode->toHandle(), secondGroupCountNode->toHandle()};
+    std::array<const void *, 2> updateDescs = {&groupCountDesc, &groupSizeDesc};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, executableGraph.updateNodes(2u, nodes.data(), updateDescs.data()));
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+    EXPECT_TRUE(executableGraph.updatedNodeCommandLists.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenDescriptorsNotAllowedByNodeFlagsWhenUpdatingThenInvalidArgumentIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    setNumKernelArguments(1u);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS, 1u, &commandList);
+
+    ze_graph_node_update_kernel_argument_exp_desc_t kernelArgumentDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    ze_graph_node_update_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC};
+    ze_graph_node_update_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC};
+    const std::array<const void *, 4> notAllowedDescs = {&kernelArgumentDesc, &groupCountDesc, &groupSizeDesc, &globalOffsetDesc};
+
+    for (const void *updateDesc : notAllowedDescs) {
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(*node, updateDesc));
+    }
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenKernelArgumentDescriptorWithIndexOutOfRangeWhenUpdatingThenInvalidArgumentIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    setNumKernelArguments(1u);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, 1u, &commandList);
+
+    ze_graph_node_update_kernel_argument_exp_desc_t kernelArgumentDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC};
+    kernelArgumentDesc.argIndex = 1u;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(*node, &kernelArgumentDesc));
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodeWithKernelInstructionFlagWhenUpdatingWithLaunchKernelDescriptorThenUnsupportedFeatureIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION, 1u, &commandList);
+
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, updateNode(*node, &launchKernelDesc));
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodeWithKernelArgumentFlagAndKernelWithArgumentsWhenUpdatingWithLaunchKernelDescriptorWithoutArgumentArraysThenInvalidArgumentIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    setNumKernelArguments(1u);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, 1u, &commandList);
+
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelWithoutSizesDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelWithoutSizesDesc.pArgValues = &kernelArgumentValues;
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelWithoutValuesDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelWithoutValuesDesc.pArgSizes = &kernelArgumentSize;
+    const std::array<const void *, 2> invalidDescs = {&launchKernelWithoutSizesDesc, &launchKernelWithoutValuesDesc};
+
+    for (const void *updateDesc : invalidDescs) {
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(*node, updateDesc));
+    }
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodeWithKernelArgumentFlagAndKernelWithoutArgumentsWhenUpdatingWithLaunchKernelDescriptorWithoutArgumentArraysThenDescriptorIsPassedToMutableCommandList) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, 1u, &commandList);
+
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, updateNode(*node, &launchKernelDesc));
+    EXPECT_EQ(1u, commandList.mutableCommandList.recordedGraphNodeUpdates.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodeWithoutKernelArgumentFlagAndKernelWithArgumentsWhenUpdatingWithLaunchKernelDescriptorWithoutArgumentArraysThenDescriptorIsPassedToMutableCommandList) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    setNumKernelArguments(1u);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, updateNode(*node, &launchKernelDesc));
+    EXPECT_EQ(1u, commandList.mutableCommandList.recordedGraphNodeUpdates.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenDescriptorChainWithSecondDescriptorNotAllowedByNodeFlagsWhenUpdatingThenInvalidArgumentIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+
+    ze_graph_node_update_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC};
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    groupCountDesc.pNext = &groupSizeDesc;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(*node, &groupCountDesc));
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenUnsupportedUpdateDescriptorWhenUpdatingThenUnsupportedFeatureIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(0u, 1u, &commandList);
+
+    ze_graph_node_update_signal_event_exp_desc_t signalEventDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_SIGNAL_EVENT_EXP_DESC};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, updateNode(*node, &signalEventDesc));
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNullUpdateDescriptorWhenUpdatingThenInvalidArgumentIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(0u, 1u, &commandList);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(*node, nullptr));
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNullNodeHandleWhenUpdatingThenInvalidArgumentIsReturned) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    std::array<ze_graph_node_handle_t, 2> nodes = {node->toHandle(), nullptr};
+    std::array<const void *, 2> updateDescs = {&groupCountDesc, &groupCountDesc};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, executableGraph.updateNodes(2u, nodes.data(), updateDescs.data()));
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+    EXPECT_TRUE(executableGraph.updatedNodeCommandLists.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenMutableCommandListUpdateFailureWhenUpdatingThenErrorIsReturnedAndCommandListIsRecordedForCommit) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    commandList.mutableCommandList.updateMutableCommandForGraphNodeResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(*node, &groupCountDesc));
+    EXPECT_EQ(std::vector<L0::CommandList *>{&commandList}, executableGraph.updatedNodeCommandLists);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenValidArgumentsWhenUpdatingExecutableGraphNodesThroughApiThenNodeIsUpdated) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    ze_graph_node_handle_t nodeHandle = node->toHandle();
+    const void *updateDesc = &groupCountDesc;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeExecutableGraphNodesUpdateExp(executableGraph.toHandle(), 1u, &nodeHandle, &updateDesc, nullptr));
+    const auto &updates = commandList.mutableCommandList.recordedGraphNodeUpdates;
+    ASSERT_EQ(1u, updates.size());
+    EXPECT_EQ(&groupCountDesc, updates[0].pUpdateDesc);
+    EXPECT_EQ(std::vector<L0::CommandList *>{&commandList}, executableGraph.updatedNodeCommandLists);
+}
+
+TEST_F(ExecutableGraphNodesUpdateTest, givenUpdatedNodeCommandListsWhenCommittingThenEachCommandListIsClosedOnceAndListIsCleared) {
+    Mock<CommandList> firstCommandList;
+    Mock<CommandList> secondCommandList;
+    executableGraph.updatedNodeCommandLists = {&firstCommandList, &secondCommandList};
+
+    executableGraph.commitUpdatedNodeCommandLists();
+
+    EXPECT_EQ(1u, firstCommandList.closeCalled);
+    EXPECT_EQ(1u, secondCommandList.closeCalled);
+    EXPECT_TRUE(executableGraph.updatedNodeCommandLists.empty());
+}
+
+TEST_F(ExecutableGraphNodesUpdateTest, givenNullArgumentsOrZeroNodesWhenUpdatingExecutableGraphNodesThenInvalidArgumentIsReturned) {
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    const void *updateDesc = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeExecutableGraphNodesUpdateExp(nullptr, 1u, &nodeHandle, &updateDesc, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeExecutableGraphNodesUpdateExp(executableGraph.toHandle(), 0u, &nodeHandle, &updateDesc, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeExecutableGraphNodesUpdateExp(executableGraph.toHandle(), 1u, nullptr, &updateDesc, nullptr));
+
+    ze_graph_node_handle_t instantiatedNodeHandle = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, nullptr)->toHandle();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeExecutableGraphNodesUpdateExp(executableGraph.toHandle(), 1u, &instantiatedNodeHandle, nullptr, nullptr));
+}
+
+} // namespace ult
+} // namespace L0

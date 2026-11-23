@@ -16,8 +16,11 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_cmdlist.h"
 #include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/ze_api.h"
+
+#include <vector>
 
 using namespace NEO;
 
@@ -105,6 +108,46 @@ struct MockGraphContextReturningNewCmdList : ContextStubMock {
     ze_result_t createCommandList(ze_device_handle_t hDevice, const ze_command_list_desc_t *desc, ze_command_list_handle_t *commandList, uint32_t estimatedNumberOfCommands) override {
         *commandList = new Mock<CommandList>;
         return ZE_RESULT_SUCCESS;
+    }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct CommandIdRecordingCommandList : Mock<CommandList> {
+    struct RecordingMutableCommandList : MutableCommandListCoreFamily<gfxCoreFamily> {
+        struct GraphNodeUpdate {
+            uint64_t commandId = 0;
+            ze_mutable_graph_node_exp_flags_t flags = 0;
+            const void *pUpdateDesc = nullptr;
+        };
+
+        ze_result_t getNextCommandIdForGraphNode(ze_mutable_graph_node_exp_flags_t flags, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override {
+            recordedFlags.push_back(flags);
+            if (ZE_RESULT_SUCCESS != getNextCommandIdResult) {
+                return getNextCommandIdResult;
+            }
+            *pCommandId = ++getNextCommandIdCalled;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        ze_result_t updateMutableCommandForGraphNode(uint64_t commandId, ze_mutable_graph_node_exp_flags_t flags, const void *pUpdateDesc) override {
+            recordedGraphNodeUpdates.push_back({commandId, flags, pUpdateDesc});
+            return updateMutableCommandForGraphNodeResult;
+        }
+
+        uint64_t getNextCommandIdCalled = 0;
+        std::vector<ze_mutable_graph_node_exp_flags_t> recordedFlags;
+        ze_result_t getNextCommandIdResult = ZE_RESULT_SUCCESS;
+        std::vector<GraphNodeUpdate> recordedGraphNodeUpdates;
+        ze_result_t updateMutableCommandForGraphNodeResult = ZE_RESULT_SUCCESS;
+    } mutableCommandList;
+
+    explicit CommandIdRecordingCommandList(L0::Device *device) {
+        this->device = device;
+        this->mutableCommandList.base = this;
+    }
+
+    void *asMutable() override {
+        return static_cast<L0::MCL::MutableCommandList *>(&this->mutableCommandList);
     }
 };
 

@@ -31,6 +31,7 @@ struct MockGraph : Graph {
 };
 
 struct MockExecutableGraph : ExecutableGraph {
+    using ExecutableGraph::commitUpdatedNodeCommandLists;
     using ExecutableGraph::ExecutableGraph;
     using ExecutableGraph::executionTarget;
     using ExecutableGraph::graphWideImmediateCountersCrossSyncs;
@@ -41,6 +42,7 @@ struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::segmentsCrossSync;
     using ExecutableGraph::src;
     using ExecutableGraph::subGraphs;
+    using ExecutableGraph::updatedNodeCommandLists;
     using ExecutableGraph::usePatchingPreamble;
 };
 
