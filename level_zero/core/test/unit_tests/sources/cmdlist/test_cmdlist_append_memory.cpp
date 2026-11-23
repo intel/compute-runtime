@@ -2595,6 +2595,54 @@ HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryWithNonUsmPt
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
 }
 
+HWTEST2_F(StagingImageBuffersFixture, givenSpaceCheckFailsForStagingChunkWhenAppendImageCopyFromMemoryThenErrorIsReturned, ImageStagingSupport) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.checkAvailableSpaceFailFromCall = 2u;
+
+    ze_image_desc_t imgDesc = {};
+    imgDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    imgDesc.type = ZE_IMAGE_TYPE_3D;
+    imgDesc.width = 8;
+    imgDesc.height = 4;
+    imgDesc.depth = 1;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &imgDesc);
+
+    ze_image_region_t region = {0, 0, 0, 8, 4, 1};
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
+    auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+    EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
+    EXPECT_EQ(2u, cmdList.checkAvailableSpaceCalledCount);
+}
+
+HWTEST2_F(StagingImageBuffersFixture, givenSpaceCheckFailsForStagingChunkWhenAppendImageCopyToMemoryThenErrorIsReturned, ImageStagingSupport) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.checkAvailableSpaceFailFromCall = 2u;
+
+    ze_image_desc_t imgDesc = {};
+    imgDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    imgDesc.type = ZE_IMAGE_TYPE_3D;
+    imgDesc.width = 8;
+    imgDesc.height = 4;
+    imgDesc.depth = 1;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &imgDesc);
+
+    ze_image_region_t region = {0, 0, 0, 8, 4, 1};
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
+    auto res = cmdList.appendImageCopyToMemory(hostBuf, imageHw->toHandle(), &region, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+    EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
+    EXPECT_EQ(2u, cmdList.checkAvailableSpaceCalledCount);
+}
+
 HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyToMemoryWithNonUsmPtrThenStagingUsed, ImageStagingSupport) {
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();

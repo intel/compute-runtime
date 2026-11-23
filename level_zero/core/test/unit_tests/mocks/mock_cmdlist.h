@@ -920,6 +920,9 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
         if (hasRelaxedOrderingDependencies) {
             ++checkAvailableSpaceWithRelaxedOrderingCalledCount;
         }
+        if (checkAvailableSpaceFailFromCall != 0u && checkAvailableSpaceCalledCount >= checkAvailableSpaceFailFromCall) {
+            return checkAvailableSpaceFailResult;
+        }
         return BaseClass::checkAvailableSpace(numEvents, hasRelaxedOrderingDependencies, commandSize, requestCommandBufferInLocalMem);
     }
 
@@ -988,6 +991,8 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     uint32_t executeCommandListImmediateWithFlushTaskCalledCount = 0;
     uint32_t checkAvailableSpaceCalledCount = 0;
     uint32_t checkAvailableSpaceWithRelaxedOrderingCalledCount = 0;
+    uint32_t checkAvailableSpaceFailFromCall = 0;
+    ze_result_t checkAvailableSpaceFailResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
 
     bool callAppendWriteToMemoryBase = true;
     ze_result_t appendWriteToMemoryCalledCountReturnValue = ZE_RESULT_SUCCESS;

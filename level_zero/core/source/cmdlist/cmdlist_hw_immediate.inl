@@ -958,7 +958,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
         ret = appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, isStallingOperation);
     } else {
         if (waitEventsParameters.relaxedOrderingAllowed) {
-            checkAvailableSpace(numWaitEvents, true, commonImmediateCommandSize, false);
+            ret = checkAvailableSpace(numWaitEvents, true, commonImmediateCommandSize, false);
+            if (ret != ZE_RESULT_SUCCESS) {
+                return ret;
+            }
         }
 
         ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParameters);
@@ -2893,7 +2896,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingImageTra
         fillRegion(chunkRegion, origin, region);
         chunkRegion.mipLevel = getRegionMipLevel(pRegion, imgInfo.imgDesc.numMipLevels);
 
-        checkAvailableSpace(0, relaxedOrdering, estimateCommandSizeForImageCopyBlit(hImage, &chunkRegion), false);
+        auto spaceCheckStatus = checkAvailableSpace(0, relaxedOrdering, estimateCommandSizeForImageCopyBlit(hImage, &chunkRegion), false);
+        if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
+            return spaceCheckStatus;
+        }
 
         auto isFirstTransfer = (globalOrigin[1] == origin[1] && globalOrigin[2] == origin[2]);
         auto isLastTransfer = (globalOrigin[1] + globalRegion[1] == origin[1] + region[1]) &&
