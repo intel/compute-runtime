@@ -10,6 +10,8 @@
 
 #include "third_party/uapi-eudebug/drm/xe_drm.h"
 
+#include <cstring>
+
 using namespace NEO;
 TEST(EuDebugInterfaceUpstreamTest, whenGettingParamValueThenCorrectValueIsReturned) {
     EuDebugInterfaceUpstream euDebugInterface{};
@@ -28,7 +30,7 @@ TEST(EuDebugInterfaceUpstreamTest, whenGettingParamValueThenCorrectValueIsReturn
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::eventTypeExecQueuePlacements));
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::eventTypeMetadata));
     EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::eventTypeOpen));
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_PAGEFAULT), euDebugInterface.getParamValue(EuDebugParam::eventTypePagefault));
+    EXPECT_EQ(static_cast<uint32_t>(0), euDebugInterface.getParamValue(EuDebugParam::eventTypePagefault));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_READ), euDebugInterface.getParamValue(EuDebugParam::eventTypeRead));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_VM), euDebugInterface.getParamValue(EuDebugParam::eventTypeVm));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_VM_BIND), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBind));
@@ -56,7 +58,7 @@ TEST(EuDebugInterfaceUpstreamTest, whenGettingParamValueThenCorrectValueIsReturn
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_MODULE_AREA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataModuleArea));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SBA_AREA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSbaArea));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsDebugDataSipArea));
-    EXPECT_EQ(static_cast<uint32_t>(XE_VM_BIND_OP_EXTENSIONS_DEBUG_DATA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionDebugDataName));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_EXTENSION_DEBUG_DATA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionDebugDataName));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_ADD_DEBUG_DATA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsAddDebugData));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_REMOVE_DEBUG_DATA), euDebugInterface.getParamValue(EuDebugParam::vmBindOpExtensionsRemoveDebugData));
 }
@@ -149,31 +151,11 @@ TEST(EuDebugInterfaceUpstreamTest, givenValidDrmVmBindUfenceWhenConvertingToInte
     EXPECT_EQ(0x32u, event.vmBindRefSeqno);
 }
 
-TEST(EuDebugInterfaceUpstreamTest, givenValidDrmPageFaultWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
+TEST(EuDebugInterfaceUpstreamTest, givenDrmEventWhenConvertingToPageFaultThenUnrecoverableIsHit) {
     EuDebugInterfaceUpstream euDebugInterface{};
 
-    alignas(drm_xe_eudebug_event_pagefault) uint8_t drmPageFaultStorage[sizeof(drm_xe_eudebug_event_pagefault) + 4 * sizeof(uint8_t)] = {};
-    auto drmPageFault = reinterpret_cast<drm_xe_eudebug_event_pagefault *>(drmPageFaultStorage);
-    drmPageFault->exec_queue_handle = 0x64;
-    drmPageFault->flags = 0x0F;
-    drmPageFault->lrc_handle = 0x4096;
-    drmPageFault->pagefault_address = 0x128;
-    drmPageFault->bitmask_size = 4;
-    drmPageFault->bitmask[0] = 0x1;
-    drmPageFault->bitmask[1] = 0x2;
-    drmPageFault->bitmask[2] = 0x3;
-    drmPageFault->bitmask[3] = 0x4;
-
-    auto event = euDebugInterface.toEuDebugEventPageFault(drmPageFault);
-    EXPECT_EQ(0x64u, event->execQueueHandle);
-    EXPECT_EQ(0x0Fu, event->flags);
-    EXPECT_EQ(0x4096u, event->lrcHandle);
-    EXPECT_EQ(0x128u, event->pagefaultAddress);
-    EXPECT_EQ(4u, event->bitmaskSize);
-    EXPECT_EQ(0x1u, event->bitmask[0]);
-    EXPECT_EQ(0x2u, event->bitmask[1]);
-    EXPECT_EQ(0x3u, event->bitmask[2]);
-    EXPECT_EQ(0x4u, event->bitmask[3]);
+    drm_xe_eudebug_event drmEvent = {};
+    EXPECT_THROW(euDebugInterface.toEuDebugEventPageFault(&drmEvent), std::exception);
 }
 
 TEST(EuDebugInterfaceUpstreamTest, givenValidDrmEuControlWhenConvertingToInterfaceTypeThenFieldsAreCorrect) {
@@ -219,28 +201,73 @@ TEST(EuDebugInterfaceUpstreamTest, givenValidDrmConnectwhenConvertingToInterface
     EXPECT_EQ(0u, connect.version);
 }
 
-TEST(EuDebugInterfaceUpstreamTest, givenValidDrmVmBindOpDebugDataWhenConvertingToInterfaceVmBindOpDebugDataThenFieldsAreCorrect) {
+struct EuDebugInterfaceUpstreamDebugDataTest : public ::testing::Test {
+    static constexpr char pathname[] = "/tmp/debug_data.elf";
+    static constexpr size_t headerSize = sizeof(drm_xe_eudebug_event_vm_bind_op_debug_data);
+    static constexpr size_t maxPathnameBytesInEvent = sizeof(EuDebugEventVmBindOpDebugData::pathName) + 8;
+
+    void SetUp() override {
+        drmEvent = reinterpret_cast<drm_xe_eudebug_event_vm_bind_op_debug_data *>(storage);
+        memcpy(drmEvent->pathname, pathname, sizeof(pathname));
+    }
+
     EuDebugInterfaceUpstream euDebugInterface{};
+    alignas(drm_xe_eudebug_event_vm_bind_op_debug_data) uint8_t storage[headerSize + maxPathnameBytesInEvent] = {};
+    drm_xe_eudebug_event_vm_bind_op_debug_data *drmEvent = nullptr;
+};
 
-    drm_xe_eudebug_event_vm_bind_op_debug_data drmVmBindOpDebugData = {};
-    drmVmBindOpDebugData.vm_bind_ref_seqno = 0x32;
-    drmVmBindOpDebugData.num_extensions = 0x64;
-    drmVmBindOpDebugData.addr = 0x128;
-    drmVmBindOpDebugData.range = 0x256;
-    drmVmBindOpDebugData.flags = 0x512;
-    drmVmBindOpDebugData.offset = 0x1024;
-    drmVmBindOpDebugData.reserved = 0x2048;
-    drmVmBindOpDebugData.pseudopath = 0x4096;
+TEST_F(EuDebugInterfaceUpstreamDebugDataTest, givenPseudoPathWhenConvertingToInterfaceVmBindOpDebugDataThenFieldsAreCorrect) {
+    drmEvent->base.len = headerSize;
+    drmEvent->vm_bind_ref_seqno = 0x32;
+    drmEvent->addr = 0x128;
+    drmEvent->range = 0x256;
+    drmEvent->flags = DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO;
+    drmEvent->offset = 0x1024;
+    drmEvent->reserved = 0x2048;
+    drmEvent->pseudopath = DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA;
 
-    auto event = euDebugInterface.toEuDebugEventVmBindOpDebugData(&drmVmBindOpDebugData);
+    auto event = euDebugInterface.toEuDebugEventVmBindOpDebugData(drmEvent);
+    EXPECT_EQ(headerSize, event.base.len);
     EXPECT_EQ(0x32u, event.vmBindRefSeqno);
-    EXPECT_EQ(0x64u, event.numExtensions);
     EXPECT_EQ(0x128u, event.addr);
     EXPECT_EQ(0x256u, event.range);
-    EXPECT_EQ(0x512u, event.flags);
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO), event.flags);
     EXPECT_EQ(0x1024u, event.offset);
     EXPECT_EQ(0x2048u, event.reserved);
-    EXPECT_EQ(0x4096u, event.pseudoPath);
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA), event.pseudoPath);
+}
+
+TEST_F(EuDebugInterfaceUpstreamDebugDataTest, givenPathnameWhenConvertingToInterfaceVmBindOpDebugDataThenPathnameIsCopied) {
+    drmEvent->base.len = headerSize + sizeof(pathname);
+    drmEvent->addr = 0x128;
+    drmEvent->range = 0x256;
+
+    auto event = euDebugInterface.toEuDebugEventVmBindOpDebugData(drmEvent);
+    EXPECT_EQ(0x128u, event.addr);
+    EXPECT_EQ(0x256u, event.range);
+    EXPECT_STREQ(pathname, event.pathName);
+}
+
+TEST_F(EuDebugInterfaceUpstreamDebugDataTest, givenPathnameLongerThanEventLengthWhenConvertingToInterfaceVmBindOpDebugDataThenPathnameIsBoundedByEventLength) {
+    drmEvent->base.len = headerSize + 4;
+
+    auto event = euDebugInterface.toEuDebugEventVmBindOpDebugData(drmEvent);
+    EXPECT_STREQ("/tmp", event.pathName);
+}
+
+TEST_F(EuDebugInterfaceUpstreamDebugDataTest, givenEventLengthShorterThanHeaderWhenConvertingToInterfaceVmBindOpDebugDataThenPathnameIsEmpty) {
+    drmEvent->base.len = sizeof(drm_xe_eudebug_event);
+
+    auto event = euDebugInterface.toEuDebugEventVmBindOpDebugData(drmEvent);
+    EXPECT_STREQ("", event.pathName);
+}
+
+TEST_F(EuDebugInterfaceUpstreamDebugDataTest, givenPathnameLongerThanPathMaxWhenConvertingToInterfaceVmBindOpDebugDataThenPathnameIsTruncatedAndTerminated) {
+    drmEvent->base.len = headerSize + maxPathnameBytesInEvent;
+    memset(drmEvent->pathname, 'a', maxPathnameBytesInEvent);
+
+    auto event = euDebugInterface.toEuDebugEventVmBindOpDebugData(drmEvent);
+    EXPECT_EQ(sizeof(event.pathName) - 1, strnlen(event.pathName, sizeof(event.pathName)));
 }
 
 TEST(EuDebugInterfaceUpstreamTest, givenInterfaceConnectWhenConvertingToDrmConnectThenDrmTypeIsCorrect) {

@@ -2054,7 +2054,6 @@ TEST_F(DebugApiLinuxTestXe, GivenEventTypeVmBindOpDebugDataWhenHandleInternalEve
     vmBindOpDebugData->base.len = sizeof(NEO::EuDebugEventVmBindOpDebugData);
     vmBindOpDebugData->base.seqno = 2;
     vmBindOpDebugData->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
-    vmBindOpDebugData->numExtensions = 0;
     vmBindOpDebugData->addr = 0xffff1234;
     vmBindOpDebugData->range = 65536;
     vmBindOpDebugData->flags = 0x1;
@@ -2118,7 +2117,6 @@ TEST_F(DebugApiLinuxTestXe, GivenVmBindOpDebugDataEventWhenHandlingEventThenData
     vmBindDebugData.range = 4096;
     vmBindDebugData.flags = 0x1;
     vmBindDebugData.offset = 0x100;
-    vmBindDebugData.numExtensions = 0;
     strcpy(vmBindDebugData.pathName, "/path/to/debug/data");
 
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugData.base));
@@ -2578,7 +2576,6 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingSBAVmBindEventThen
     vmBindDebugDataSba.range = 4096;
     vmBindDebugDataSba.flags = static_cast<uint64_t>(NEO::EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
     vmBindDebugDataSba.offset = 0;
-    vmBindDebugDataSba.numExtensions = 0;
     vmBindDebugDataSba.pseudoPath = static_cast<uint64_t>(NEO::EuDebugParam::vmBindOpExtensionsDebugDataSbaArea);
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugDataSba.base));
 
@@ -2642,7 +2639,6 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingSIPVmBindEventThen
     vmBindDebugDataSip.range = 8192;
     vmBindDebugDataSip.flags = static_cast<uint64_t>(NEO::EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
     vmBindDebugDataSip.offset = 0;
-    vmBindDebugDataSip.numExtensions = 0;
     vmBindDebugDataSip.pseudoPath = static_cast<uint64_t>(NEO::EuDebugParam::vmBindOpExtensionsDebugDataSipArea);
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugDataSip.base));
 
@@ -2705,7 +2701,6 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingModuleDebugAreaVmB
     vmBindDebugDataModule.range = 16384;
     vmBindDebugDataModule.flags = static_cast<uint64_t>(NEO::EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag);
     vmBindDebugDataModule.offset = 0;
-    vmBindDebugDataModule.numExtensions = 0;
     vmBindDebugDataModule.pseudoPath = static_cast<uint64_t>(NEO::EuDebugParam::vmBindOpExtensionsDebugDataModuleArea);
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugDataModule.base));
 
@@ -2770,7 +2765,6 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingISAVmBindEventThen
     vmBindDebugDataSegment1.range = 16384;
     vmBindDebugDataSegment1.flags = 0;
     vmBindDebugDataSegment1.offset = 0x300;
-    vmBindDebugDataSegment1.numExtensions = 0;
     strcpy(vmBindDebugDataSegment1.pathName, "/path/to/debug/data");
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugDataSegment1.base));
 
@@ -2785,7 +2779,6 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingISAVmBindEventThen
     vmBindDebugDataSegment2.range = 16384;
     vmBindDebugDataSegment2.flags = 0;
     vmBindDebugDataSegment2.offset = 0x300;
-    vmBindDebugDataSegment2.numExtensions = 0;
     strcpy(vmBindDebugDataSegment2.pathName, "/path/to/debug/data");
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugDataSegment2.base));
 
@@ -2801,7 +2794,6 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingISAVmBindEventThen
     vmBindDebugDataSegment3.range = 16384;
     vmBindDebugDataSegment3.flags = 0;
     vmBindDebugDataSegment3.offset = 0x300;
-    vmBindDebugDataSegment3.numExtensions = 0;
     strcpy(vmBindDebugDataSegment3.pathName, "/path/to/debug/data");
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugDataSegment3.base));
 
@@ -2830,7 +2822,6 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceWhenHandlingISAVmBindEventThen
     vmBindDebugDataSegment4.range = 16384;
     vmBindDebugDataSegment4.flags = 0;
     vmBindDebugDataSegment4.offset = 0x300;
-    vmBindDebugDataSegment4.numExtensions = 0;
     strcpy(vmBindDebugDataSegment4.pathName, "/path/to/debug/data");
 
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugDataSegment4.base));
@@ -3236,7 +3227,6 @@ TEST_F(DebugApiLinuxTestXe, GivenUpstreamInterfaceAndBadElfFileWhenHandlingBindT
     vmBindDebugDataSegment1.range = 16384;
     vmBindDebugDataSegment1.flags = 0;
     vmBindDebugDataSegment1.offset = 0x300;
-    vmBindDebugDataSegment1.numExtensions = 0;
     strcpy(vmBindDebugDataSegment1.pathName, "/path/to/debug/data");
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindDebugDataSegment1.base));
     NEO::EuDebugEventVmBindUfence vmBindUfence1{};

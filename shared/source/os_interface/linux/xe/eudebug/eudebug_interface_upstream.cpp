@@ -8,9 +8,11 @@
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_upstream.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 
 #include "third_party/uapi-eudebug/drm/xe_drm.h"
 
+#include <algorithm>
 #include <cstring>
 
 namespace NEO {
@@ -45,7 +47,7 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
     case EuDebugParam::eventTypeOpen:
         return 0;
     case EuDebugParam::eventTypePagefault:
-        return DRM_XE_EUDEBUG_EVENT_PAGEFAULT;
+        return 0;
     case EuDebugParam::eventTypeSyncHost:
         return 0;
     case EuDebugParam::eventTypeRead:
@@ -109,7 +111,7 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
     case EuDebugParam::vmBindOpExtensionsDebugDataPseudoFlag:
         return DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO;
     case EuDebugParam::vmBindOpExtensionDebugDataName:
-        return XE_VM_BIND_OP_EXTENSIONS_DEBUG_DATA;
+        return DRM_XE_VM_BIND_OP_EXTENSION_DEBUG_DATA;
     }
     return 0;
 }
@@ -247,28 +249,8 @@ EuDebugEventVmBindUfence EuDebugInterfaceUpstream::toEuDebugEventVmBindUfence(co
 }
 
 std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)> EuDebugInterfaceUpstream::toEuDebugEventPageFault(const void *drmType) {
-    const drm_xe_eudebug_event_pagefault *event = static_cast<const drm_xe_eudebug_event_pagefault *>(drmType);
-    EuDebugEventPageFault *pPageFaultEvent = static_cast<EuDebugEventPageFault *>(malloc(sizeof(EuDebugEventPageFault) + event->bitmask_size * sizeof(uint8_t)));
-
-    pPageFaultEvent->base.len = event->base.len;
-    pPageFaultEvent->base.type = event->base.type;
-    pPageFaultEvent->base.flags = event->base.flags;
-    pPageFaultEvent->base.seqno = event->base.seqno;
-    pPageFaultEvent->base.reserved = event->base.reserved;
-
-    memcpy(pPageFaultEvent->bitmask, event->bitmask, event->bitmask_size * sizeof(uint8_t));
-    pPageFaultEvent->bitmaskSize = event->bitmask_size;
-    pPageFaultEvent->flags = event->flags;
-    pPageFaultEvent->execQueueHandle = event->exec_queue_handle;
-    pPageFaultEvent->lrcHandle = event->lrc_handle;
-    pPageFaultEvent->pagefaultAddress = event->pagefault_address;
-    pPageFaultEvent->clientHandle = defaultClientHandle;
-
-    auto deleter = [](EuDebugEventPageFault *ptr) {
-        free(ptr);
-    };
-
-    return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(pPageFaultEvent, deleter);
+    UNRECOVERABLE_IF(true);
+    return std::unique_ptr<EuDebugEventPageFault, void (*)(EuDebugEventPageFault *)>(nullptr, [](EuDebugEventPageFault *ptr) {});
 }
 
 EuDebugEventSyncHost EuDebugInterfaceUpstream::toEuDebugEventSyncHost(const void *drmType) {
@@ -303,13 +285,19 @@ EuDebugEventVmBindOpDebugData EuDebugInterfaceUpstream::toEuDebugEventVmBindOpDe
 
     vmBindDebugDataEvent.clientHandle = defaultClientHandle;
     vmBindDebugDataEvent.vmBindRefSeqno = event->vm_bind_ref_seqno;
-    vmBindDebugDataEvent.numExtensions = event->num_extensions;
     vmBindDebugDataEvent.addr = event->addr;
     vmBindDebugDataEvent.range = event->range;
     vmBindDebugDataEvent.flags = event->flags;
     vmBindDebugDataEvent.offset = event->offset;
     vmBindDebugDataEvent.reserved = event->reserved;
-    memcpy(vmBindDebugDataEvent.pathName, event->pathname, sizeof(event->pathname));
+
+    if (event->flags & DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO) {
+        vmBindDebugDataEvent.pseudoPath = event->pseudopath;
+    } else {
+        constexpr size_t pathnameOffset = offsetof(drm_xe_eudebug_event_vm_bind_op_debug_data, pathname);
+        const size_t pathnameSizeInEvent = event->base.len > pathnameOffset ? event->base.len - pathnameOffset : 0;
+        strncpy_s(vmBindDebugDataEvent.pathName, sizeof(vmBindDebugDataEvent.pathName), event->pathname, std::min(pathnameSizeInEvent, sizeof(vmBindDebugDataEvent.pathName) - 1));
+    }
 
     return vmBindDebugDataEvent;
 }
@@ -382,8 +370,7 @@ std::unique_ptr<void, void (*)(void *)> EuDebugInterfaceUpstream::toDrmEuDebugAc
     return std::unique_ptr<void, void (*)(void *)>(pDrmAckEvent, deleter);
 }
 
-static_assert(sizeof(EuDebugEventVmBindOpDebugData::pathName) ==
-              sizeof(drm_xe_eudebug_event_vm_bind_op_debug_data::pathname));
+static_assert(sizeof(EuDebugEventVmBindOpDebugData::pathName) == sizeof(drm_xe_vm_bind_op_ext_debug_data::pathname));
 
 static_assert(offsetof(EuDebugEvent, len) == offsetof(drm_xe_eudebug_event, len));
 static_assert(offsetof(EuDebugEvent, type) == offsetof(drm_xe_eudebug_event, type));

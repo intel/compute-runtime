@@ -101,7 +101,6 @@ struct EuDebugEventVmBindOpDebugData {
     struct EuDebugEvent base;
     uint64_t clientHandle;
     uint64_t vmBindRefSeqno;
-    uint64_t numExtensions;
     uint64_t addr;
     uint64_t range;
     uint64_t flags;

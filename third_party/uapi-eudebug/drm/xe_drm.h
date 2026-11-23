@@ -93,6 +93,7 @@ extern "C" {
  *  - &DRM_IOCTL_XE_VM_QUERY_MEM_RANGE_ATTRS
  *  - &DRM_IOCTL_XE_EXEC_QUEUE_SET_PROPERTY
  *  - &DRM_IOCTL_XE_VM_GET_PROPERTY
+ *  - &DRM_IOCTL_XE_EUDEBUG_CONNECT
  */
 
 /*
@@ -1042,10 +1043,16 @@ struct drm_xe_vm_destroy {
  * or annotate the VM range with a pseudopath by setting the
  * %DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO flag and providing one of the supported
  * pseudopath values:
+ *
  *  - %DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_MODULE_AREA
  *  - %DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SBA_AREA
  *  - %DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA
  *
+ * Debug data operations take effect as the ioctl processes them, they are not
+ * ordered against earlier work on the bind exec queue. A
+ * &DRM_IOCTL_XE_VM_BIND carrying a debug data operation therefore does not
+ * support in-fences: any &struct drm_xe_sync without %DRM_XE_SYNC_FLAG_SIGNAL
+ * fails the ioctl with -EOPNOTSUPP.
  */
 struct drm_xe_vm_bind_op_ext_debug_data {
 	/** @base: Base user extension */
@@ -1076,11 +1083,15 @@ struct drm_xe_vm_bind_op_ext_debug_data {
 #define DRM_XE_VM_BIND_DEBUG_DATA_PSEUDO_SIP_AREA	0x3
 		/**
 		 * @pseudopath: Pseudopath used when
-		 * %DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO is set
+		 * %DRM_XE_VM_BIND_DEBUG_DATA_FLAG_PSEUDO is set, the rest
+		 * of the union MBZ then
 		 */
 		__u64 pseudopath;
 
-		/** @pathname: Path to the debug data file */
+		/**
+		 * @pathname: Path to the debug data file, NUL terminated and
+		 * not empty
+		 */
 		char pathname[PATH_MAX];
 	};
 };
@@ -1147,8 +1158,14 @@ struct drm_xe_vm_bind_op_ext_debug_data {
  *    the memory region advised by madvise.
  */
 struct drm_xe_vm_bind_op {
-#define	XE_VM_BIND_OP_EXTENSIONS_DEBUG_DATA 0
-	/** @extensions: Pointer to the first extension struct, if any */
+#define DRM_XE_VM_BIND_OP_EXTENSION_DEBUG_DATA	0
+	/**
+	 * @extensions: Pointer to the first extension struct, if any. The
+	 * only extension is %DRM_XE_VM_BIND_OP_EXTENSION_DEBUG_DATA, which is
+	 * required by, and only valid for, %DRM_XE_VM_BIND_OP_ADD_DEBUG_DATA
+	 * and %DRM_XE_VM_BIND_OP_REMOVE_DEBUG_DATA. Any other extension, or
+	 * an extension on another operation, is rejected.
+	 */
 	__u64 extensions;
 
 	/**
@@ -1202,7 +1219,11 @@ struct drm_xe_vm_bind_op {
 	 * attributes likely do not apply.  Simply leaving as zero is one
 	 * option (still a valid pat_index). Same applies to
 	 * DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR bindings as for such mapping
-	 * there is no actual memory being mapped.
+	 * there is no actual memory being mapped, and to the
+	 * %DRM_XE_VM_BIND_OP_ADD_DEBUG_DATA and
+	 * %DRM_XE_VM_BIND_OP_REMOVE_DEBUG_DATA operations, which annotate a
+	 * range rather than map anything: the value is ignored for them, so
+	 * zero is fine.
 	 */
 	__u16 pat_index;
 
@@ -1366,8 +1387,8 @@ struct xe_vm_fault {
 #define FAULT_LEVEL_PML4	3
 #define FAULT_LEVEL_PML5	4
 	__u8 fault_level;
-	/** @pad: MBZ */
-	__u8 pad;
+	/** @srcid: ID of the faulting hardware unit */
+	__u8 srcid;
 	/** @reserved: MBZ */
 	__u64 reserved[4];
 };
@@ -1465,6 +1486,17 @@ struct drm_xe_vm_get_property {
  *  - %DRM_XE_EXEC_QUEUE_SET_DISABLE_STATE_CACHE_PERF_FIX - Set the queue to
  *    enable render color cache keying on BTP+BTI instead of just BTI
  *    (only valid for render queues).
+ *  - %DRM_XE_EXEC_QUEUE_SET_PROPERTY_EUDEBUG - Make the queue debuggable
+ *    by an EU debugger. The queue runs in runalone mode, one engine at
+ *    a time, with a preemption timeout of 0. Fails with -EINVAL unless
+ *    the value is exactly %DRM_XE_EXEC_QUEUE_EUDEBUG_FLAG_ENABLE and the
+ *    queue is a width 1 render or compute queue on a VM created with
+ *    %DRM_XE_VM_CREATE_FLAG_FAULT_MODE,
+ *    not combined with %DRM_XE_EXEC_QUEUE_SET_PROPERTY_PXP_TYPE or
+ *    %DRM_XE_EXEC_QUEUE_SET_PROPERTY_MULTI_GROUP. Fails with
+ *    -EOPNOTSUPP if the kernel is built without CONFIG_DRM_XE_EUDEBUG
+ *    or the GuC does not support debug contexts, and with -EPERM if
+ *    eudebug is not enabled through sysfs.
  *
  * The example below shows how to use &struct drm_xe_exec_queue_create to create
  * a simple exec_queue (no parallel submission) of class
@@ -1565,6 +1597,12 @@ struct drm_xe_exec_queue_destroy {
  *
  * The @property can be:
  *  - %DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN
+ *
+ * For %DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN, @value is a bitmask of ban reasons:
+ *  - %DRM_XE_EXEC_QUEUE_BAN_REASON_GPU_HANG - banned due to GPU hang/timeout
+ *  - %DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE - banned due to memory page offline
+ *
+ * A @value of 0 means the exec queue is not banned.
  */
 struct drm_xe_exec_queue_get_property {
 	/** @extensions: Pointer to the first extension struct, if any */
@@ -1577,7 +1615,17 @@ struct drm_xe_exec_queue_get_property {
 	/** @property: property to get */
 	__u32 property;
 
-	/** @value: property value */
+	/**
+	 * @value: property value
+	 *
+	 * For %DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN, this is a bitmask of:
+	 *  - %DRM_XE_EXEC_QUEUE_BAN_REASON_GPU_HANG - banned due to GPU hang/timeout
+	 *  - %DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE - banned due to memory page offline
+	 *
+	 * Value of 0 means the exec queue is not banned.
+	 */
+#define DRM_XE_EXEC_QUEUE_BAN_REASON_GPU_HANG		(1 << 0)
+#define DRM_XE_EXEC_QUEUE_BAN_REASON_PAGE_OFFLINE	(1 << 1)
 	__u64 value;
 
 	/** @reserved: Reserved */
@@ -2696,6 +2744,14 @@ enum drm_xe_ras_error_component {
  * struct drm_xe_eudebug_connect - Input of &DRM_IOCTL_XE_EUDEBUG_CONNECT
  *
  * This structure is used to connect to an eudebug interface of target drm file.
+ *
+ * On connect, the resources the target already has are first relayed to
+ * the debugger as events. This is called discovery. The events are
+ * queued before the ioctl returns. If they do not fit the event queue,
+ * the ioctl fails with -ENOSPC.
+ *
+ * The ioctl waits for the target's resource ioctls in flight to finish,
+ * and fails with -EINTR if a fatal signal arrives meanwhile.
  */
 struct drm_xe_eudebug_connect {
 	/** @extensions: Pointer to the first extension struct, if any */
