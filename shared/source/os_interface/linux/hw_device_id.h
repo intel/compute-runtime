@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/hw_device_id.h"
 
 #include <string>
+#include <utility>
 namespace NEO {
 
 class HwDeviceIdDrm : public HwDeviceId {
@@ -24,6 +25,7 @@ class HwDeviceIdDrm : public HwDeviceId {
           fileDescriptor(fileDescriptorIn), pciPath(pciPathIn), devNodePath(devNodePathIn) {}
     ~HwDeviceIdDrm() override;
     int getFileDescriptor() const { return fileDescriptor; }
+    int releaseFileDescriptor() { return std::exchange(this->fileDescriptor, -1); }
     const char *getPciPath() const { return pciPath.c_str(); }
     const char *getDeviceNode() const { return devNodePath.c_str(); }
 

@@ -662,6 +662,25 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenFileDescriptorIsClosed) {
     EXPECT_EQ(fileDescriptor, SysCalls::closeFuncArgPassed);
 }
 
+TEST(HwDeviceId, givenInvalidFileDescriptorWhenHwDeviceIdIsDestroyedThenCloseIsNotCalled) {
+    SysCalls::closeFuncCalled = 0;
+    {
+        HwDeviceIdDrm hwDeviceId(-1, "");
+    }
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+}
+
+TEST(HwDeviceId, givenReleasedFileDescriptorWhenHwDeviceIdIsDestroyedThenReleasedFileDescriptorIsNotClosed) {
+    SysCalls::closeFuncCalled = 0;
+    const int fileDescriptor = 0x1234;
+    {
+        HwDeviceIdDrm hwDeviceId(fileDescriptor, "");
+        EXPECT_EQ(fileDescriptor, hwDeviceId.releaseFileDescriptor());
+        EXPECT_EQ(-1, hwDeviceId.getFileDescriptor());
+    }
+    EXPECT_EQ(0u, SysCalls::closeFuncCalled);
+}
+
 TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());

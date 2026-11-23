@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,42 @@ TEST(sysmanHwDeviceIdTest, whenOpenFileDescriptorIsCalledMultipleTimesThenCloseI
         EXPECT_EQ(NEO::SysCalls::closeFuncCalled, referenceCloseCount);
     }
     EXPECT_EQ(NEO::SysCalls::closeFuncCalled, referenceCloseCount + 1u);
+}
+
+TEST(sysmanHwDeviceIdTest, givenDrmHwDeviceIdWithOpenFileDescriptorWhenSysmanHwDeviceIdIsCreatedThenFileDescriptorIsMovedToSysmanHwDeviceId) {
+
+    constexpr int discoveredFileDescriptor = 0x1234;
+    std::unique_ptr<NEO::HwDeviceId> hwDeviceId = std::make_unique<NEO::HwDeviceIdDrm>(discoveredFileDescriptor, "mockPciPath", "mockDevNodePath");
+    auto sysmanHwDeviceId = createSysmanHwDeviceId(hwDeviceId);
+
+    EXPECT_EQ(-1, static_cast<NEO::HwDeviceIdDrm *>(hwDeviceId.get())->getFileDescriptor());
+    EXPECT_EQ(discoveredFileDescriptor, static_cast<NEO::HwDeviceIdDrm *>(sysmanHwDeviceId.get())->getFileDescriptor());
+    EXPECT_STREQ("mockPciPath", static_cast<NEO::HwDeviceIdDrm *>(sysmanHwDeviceId.get())->getPciPath());
+    EXPECT_STREQ("mockDevNodePath", static_cast<NEO::HwDeviceIdDrm *>(sysmanHwDeviceId.get())->getDeviceNode());
+}
+
+TEST(sysmanHwDeviceIdTest, givenDrmHwDeviceIdWithOpenFileDescriptorWhenSysmanHwDeviceIdIsUsedAndBothAreDestroyedThenFileDescriptorIsClosedOnlyOnce) {
+
+    constexpr int discoveredFileDescriptor = 0x1234;
+    static uint32_t discoveredFileDescriptorCloseCount = 0;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        if (fileDescriptor == discoveredFileDescriptor) {
+            discoveredFileDescriptorCloseCount++;
+        }
+        return 0;
+    });
+    discoveredFileDescriptorCloseCount = 0;
+
+    {
+        std::unique_ptr<NEO::HwDeviceId> hwDeviceId = std::make_unique<NEO::HwDeviceIdDrm>(discoveredFileDescriptor, "mockPciPath", "mockDevNodePath");
+        auto sysmanHwDeviceId = createSysmanHwDeviceId(hwDeviceId);
+        {
+            auto instance = static_cast<SysmanHwDeviceIdDrm *>(sysmanHwDeviceId.get())->getSingleInstance();
+            EXPECT_EQ(discoveredFileDescriptor, instance.getFileDescriptor());
+        }
+        EXPECT_EQ(1u, discoveredFileDescriptorCloseCount);
+    }
+    EXPECT_EQ(1u, discoveredFileDescriptorCloseCount);
 }
 
 TEST(sysmanHwDeviceIdTest, whenCreatingSysmanHwDeviceIdforWddmSystemThenSameHwDeviceIdIsReturned) {

@@ -49,7 +49,8 @@ std::unique_ptr<NEO::HwDeviceId> createSysmanHwDeviceId(std::unique_ptr<NEO::HwD
     }
 
     const auto hwDeviceIdDrm = static_cast<NEO::HwDeviceIdDrm *>(hwDeviceId.get());
-    return std::make_unique<SysmanHwDeviceIdDrm>(hwDeviceIdDrm->getFileDescriptor(), hwDeviceIdDrm->getPciPath(), hwDeviceIdDrm->getDeviceNode());
+    const auto fileDescriptor = hwDeviceIdDrm->releaseFileDescriptor();
+    return std::make_unique<SysmanHwDeviceIdDrm>(fileDescriptor, hwDeviceIdDrm->getPciPath(), hwDeviceIdDrm->getDeviceNode());
 }
 
 } // namespace Sysman
