@@ -924,6 +924,28 @@ TEST_F(PrintFormatterTest, GivenVector16WhenPrintingThenAllValuesAreInserted) {
     EXPECT_STREQ("1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16", actualOutput);
 }
 
+TEST_F(PrintFormatterTest, GivenVectorConversionLongerThan1024CharactersWhenPrintingThenAllValuesAreInserted) {
+    int channelCount = 4;
+
+    auto formatString = injectFormatString("%" + std::string(2000, '-') + "v4d");
+    storeData(formatString);
+
+    storeData(PrintfDataType::vectorIntType);
+    // channel count
+    storeData(channelCount);
+
+    // channel values
+    for (int i = 0; i < channelCount; i++) {
+        storeData(i + 1);
+    }
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter.printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    EXPECT_STREQ("1,2,3,4", actualOutput);
+}
+
 // ------------------- vector types ----------------------------
 TEST_F(PrintFormatterTest, GivenVectorOfBytesWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;

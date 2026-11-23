@@ -13,6 +13,7 @@
 
 #include <cctype>
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <string>
@@ -104,11 +105,11 @@ class PrintFormatter {
         read(&valueCount);
 
         size_t charactersPrinted = 0;
-        char strippedFormat[1024]{};
+        auto strippedFormat = std::make_unique<char[]>(strlen(inputFormatString) + 1);
 
-        stripVectorFormat(inputFormatString, strippedFormat);
-        stripVectorTypeConversion(strippedFormat);
-        std::string formatString(strippedFormat);
+        stripVectorFormat(inputFormatString, strippedFormat.get());
+        stripVectorTypeConversion(strippedFormat.get());
+        std::string formatString(strippedFormat.get());
         adjustFormatString<T>(formatString);
 
         for (int i = 0; i < valueCount; i++) {
