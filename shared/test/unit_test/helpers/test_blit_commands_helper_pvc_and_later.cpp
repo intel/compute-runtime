@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 
@@ -401,6 +402,24 @@ HWTEST2_F(BlitTests, GivenDispatchDummyBlitWhenWorkaroundIsNotRequiredThenDummyA
     EncodeDummyBlitWaArgs waArgs{false, rootDeviceEnvironment};
     BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgs);
     EXPECT_EQ(nullptr, rootDeviceEnvironment->getDummyAllocation());
+}
+
+HWTEST2_F(BlitTests, givenCopySizeAroundHalfOfL3WhenAppendBlitCommandsMemCopyThenCachedMocsDefaultIsProgrammed, IsXeHpcCore) {
+    auto gmmHelper = pDevice->getGmmHelper();
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(pDevice->getRootDeviceEnvironment().getGmmClientContext());
+    mockClientContext->passedUsageTypeForGetMemoryObjectQuery = GMM_RESOURCE_USAGE_UNKNOWN;
+    const size_t halfL3Size = static_cast<size_t>(pDevice->getHardwareInfo().gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte / 2);
+
+    for (const auto &[copySize, expectedMocs] : {std::pair{halfL3Size - 1, gmmHelper->getL3EnabledMOCS()}, std::pair{halfL3Size, gmmHelper->getUncachedMOCS()}}) {
+        auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+        BlitProperties properties = {};
+        properties.copySize = {copySize, 1, 1};
+        properties.bytesPerPixel = 1;
+        NEO::BlitCommandsHelper<FamilyType>::appendBlitCommandsMemCopy(properties, bltCmd, pDevice->getRootDeviceEnvironment());
+        EXPECT_EQ(expectedMocs, bltCmd.getDestinationMOCS());
+        EXPECT_EQ(expectedMocs, bltCmd.getSourceMOCS());
+        EXPECT_EQ(GMM_RESOURCE_USAGE_UNKNOWN, mockClientContext->passedUsageTypeForGetMemoryObjectQuery);
+    }
 }
 
 HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse, IsWithinXe3CoreAndXe3pCore) {

@@ -68,7 +68,7 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
     auto usage = CacheSettingsHelper::getGmmUsageType(graphicsAllocation.getAllocationType(), false, productHelper, hwInfo);
-    uint32_t mocs = gmmHelper->getMOCS(usage);
+    uint32_t mocs = gmmHelper->getMOCS(graphicsAllocation.getDefaultGmm(), usage);
 
     uint64_t gpuVa = gmmHelper->decanonize(graphicsAllocation.getGpuAddress()) + offset;
 

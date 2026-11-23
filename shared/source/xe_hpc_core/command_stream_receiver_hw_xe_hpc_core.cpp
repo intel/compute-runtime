@@ -57,13 +57,12 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         blitCmd.setCopyType(MEM_COPY::COPY_TYPE::COPY_TYPE_LINEAR_COPY);
     }
 
-    auto cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER;
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+    auto mocs = gmmHelper->getL3EnabledMOCS();
     // if transfer size bigger then L3 size, copy with L3 disabled
     if (blitProperties.copySize.x * blitProperties.copySize.y * blitProperties.copySize.z * blitProperties.bytesPerPixel >= (rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte / 2)) {
-        cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+        mocs = gmmHelper->getUncachedMOCS();
     }
-
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(cachePolicy);
 
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
         mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());

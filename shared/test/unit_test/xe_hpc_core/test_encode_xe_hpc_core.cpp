@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
@@ -20,6 +21,9 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
@@ -220,6 +224,25 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPr
     auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
 
     EXPECT_TRUE(statePrefetchCmd->getParserStall());
+}
+
+XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenAllocationWithGmmWhenProgrammingPrefetchThenMocsIsQueriedWithItsGmm) {
+    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.getMutableHardwareInfo()->platform.usRevId = 0b0011'1000;
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment.getGmmClientContext());
+
+    MockGraphicsAllocation allocation;
+    allocation.setDefaultGmm(std::make_unique<MockGmm>(rootDeviceEnvironment.getGmmHelper()));
+    mockClientContext->passedResourceInfoForGetMemoryObjectQuery = nullptr;
+    uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, rootDeviceEnvironment);
+
+    EXPECT_EQ(sizeof(STATE_PREFETCH), linearStream.getUsed());
+    EXPECT_EQ(allocation.getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetMemoryObjectQuery);
 }
 
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenProgrammingStateComputeModeThenProperFieldsAreSet) {
