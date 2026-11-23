@@ -746,8 +746,15 @@ bool isGraphNodeDescriptorPresent(const void *pNext);
 bool areGraphNodeDescriptorFlagsSupported(ze_command_list_handle_t hCommandList, const void *pNext);
 void updateGraphNodeReferences(ze_graph_node_handle_t graphNodeHandle, ze_group_count_t *groupCounts, ze_group_size_t *groupSizes);
 
-struct CapturedLaunchKernelState : NEO::NonCopyableAndNonMovableClass {
+struct CapturedLaunchKernelState {
+    CapturedLaunchKernelState() = default;
     ~CapturedLaunchKernelState();
+
+    CapturedLaunchKernelState(const CapturedLaunchKernelState &) = delete;
+    CapturedLaunchKernelState &operator=(const CapturedLaunchKernelState &) = delete;
+    CapturedLaunchKernelState(CapturedLaunchKernelState &&) = delete;
+    CapturedLaunchKernelState &operator=(CapturedLaunchKernelState &&) = delete;
+
     void *clonedPNext = nullptr;
     ze_graph_node_handle_t graphNodeHandle = nullptr;
 };
