@@ -26,9 +26,11 @@
 
 namespace L0::MCL::Program::Decoder {
 
-void MclDecoder::decode(const MclDecoderArgs &args) {
+bool MclDecoder::decode(const MclDecoderArgs &args) {
     MclDecoder decoder;
-    decoder.decodeElf(args.binary);
+    if (false == decoder.decodeElf(args.binary)) {
+        return false;
+    }
     decoder.createRequiredAllocations(args.device->getNEODevice(), *args.cmdContainer, args.allocs->ihAlloc,
                                       args.allocs->constsAlloc, args.allocs->varsAlloc, args.allocs->stringsAlloc,
                                       args.heapless);
@@ -138,6 +140,7 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
                                                                   args.device->getHwInfo().capabilityTable.grfSize,
                                                                   dispatchParams, args.partitionCount, args.cmdListEngine);
     }
+    return true;
 }
 
 // relocated fields follow the command layout, e.g. 64-bit SBA addresses are only dword aligned
@@ -224,6 +227,15 @@ bool MclDecoder::decodeElf(ArrayRef<const uint8_t> mclElfBinary) {
             auto targetSectionType = static_cast<SectionType>(elf.sectionHeaders[hdr->info].header->type);
             program.elfRelocs.push_back({targetSectionType,
                                          {reinterpret_cast<const ElfRela *>(data.begin()), hdr->size / hdr->entsize}});
+        }
+    }
+
+    const auto symbolCount = program.elfSymbolData.size();
+    for (const auto &elfSymbol : program.elfSymbolData) {
+        const auto symbolType = static_cast<Symbols::SymbolType>(elfSymbol.getType());
+        if ((symbolType == Symbols::SymbolType::var && Symbols::VariableSymbolValue(elfSymbol.value).id >= symbolCount) ||
+            (symbolType == Symbols::SymbolType::dispatch && Symbols::DispatchSymbolValue(elfSymbol.value).dispatchId >= symbolCount)) {
+            return false;
         }
     }
     return true;

@@ -11,10 +11,12 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
+#include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mcl_encoder.h"
 #include "level_zero/experimental/source/mutable_cmdlist/program/mcl_decoder.h"
 #include "level_zero/experimental/source/mutable_cmdlist/program/mcl_encoder.h"
 
 #include <array>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -23,11 +25,6 @@ namespace ult {
 
 using namespace L0::MCL;
 using namespace L0::MCL::Program;
-
-struct MockMclEncoder : public Encoder::MclEncoder {
-    using Encoder::MclEncoder::addSymbol;
-    using Encoder::MclEncoder::program;
-};
 
 struct MockMclDecoder : public Decoder::MclDecoder {
     using Decoder::MclDecoder::instructionHeapHostCopy;
@@ -168,6 +165,54 @@ TEST_F(MclProgramKernelDataTest, givenKernelIsaSymbolWithZeroSizeWhenDecodedThen
     Decoder::MclDecoder decoder;
     ASSERT_TRUE(decoder.decodeElf({binary.data(), binary.size()}));
     EXPECT_THROW(decoder.parseSymbols(), std::exception);
+}
+
+class MclDecoderSymbolIdTest : public ::testing::Test {
+  public:
+    std::vector<uint8_t> encodeSymbol(Symbols::SymbolType type, uint64_t value) {
+        MockMclEncoder encoder;
+        encoder.addSymbol("symbol", Sections::SectionType::shtUndef, type, value, 4u);
+        return encoder.encodeProgram();
+    }
+
+    std::vector<uint8_t> encodeVar(uint32_t id) {
+        Symbols::VariableSymbolValue varSymbol{};
+        varSymbol.id = id;
+        return encodeSymbol(Symbols::SymbolType::var, varSymbol.data);
+    }
+
+    std::vector<uint8_t> encodeDispatch(uint16_t dispatchId) {
+        Symbols::DispatchSymbolValue dispatchSymbol{};
+        dispatchSymbol.dispatchId = dispatchId;
+        return encodeSymbol(Symbols::SymbolType::dispatch, dispatchSymbol.data);
+    }
+
+    bool decodeElf(const std::vector<uint8_t> &binary) {
+        MockMclDecoder decoder;
+        auto decoded = decoder.decodeElf({binary.data(), binary.size()});
+        symbolCount = decoder.program.elfSymbolData.size();
+        return decoded;
+    }
+
+    size_t symbolCount = 0u;
+};
+
+TEST_F(MclDecoderSymbolIdTest, givenVarSymbolIdWhenDecodingElfThenOnlyIdsBelowSymbolCountAreAccepted) {
+    ASSERT_TRUE(decodeElf(encodeVar(0u)));
+    ASSERT_LT(1u, symbolCount);
+
+    EXPECT_TRUE(decodeElf(encodeVar(static_cast<uint32_t>(symbolCount - 1))));
+    EXPECT_FALSE(decodeElf(encodeVar(static_cast<uint32_t>(symbolCount))));
+    EXPECT_FALSE(decodeElf(encodeVar(std::numeric_limits<uint32_t>::max())));
+}
+
+TEST_F(MclDecoderSymbolIdTest, givenDispatchSymbolIdWhenDecodingElfThenOnlyIdsBelowSymbolCountAreAccepted) {
+    ASSERT_TRUE(decodeElf(encodeDispatch(0u)));
+    ASSERT_LT(1u, symbolCount);
+
+    EXPECT_TRUE(decodeElf(encodeDispatch(static_cast<uint16_t>(symbolCount - 1))));
+    EXPECT_FALSE(decodeElf(encodeDispatch(static_cast<uint16_t>(symbolCount))));
+    EXPECT_FALSE(decodeElf(encodeDispatch(std::numeric_limits<uint16_t>::max())));
 }
 
 } // namespace ult

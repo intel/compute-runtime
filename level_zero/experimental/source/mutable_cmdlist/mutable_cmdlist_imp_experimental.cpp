@@ -222,7 +222,9 @@ ze_result_t MutableCommandListImp::loadFromBinary(const uint8_t *pBinary, const 
     args.partitionCount = base->getPartitionCount();
     args.heapless = this->getBase()->isHeaplessModeEnabled();
     args.mutableWalkerCmds = &mutableWalkerCmds;
-    Program::Decoder::MclDecoder::decode(args);
+    if (false == Program::Decoder::MclDecoder::decode(args)) {
+        return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
+    }
     if (base->getCmdListStateBaseAddressTracking()) {
         auto &sbaRequiredProperties = base->getRequiredStreamState().stateBaseAddress;
         if (base->getCmdListHeapAddressModel() == NEO::HeapAddressModel::privateHeaps) {

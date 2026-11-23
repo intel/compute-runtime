@@ -28,6 +28,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
+#include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mcl_encoder.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_load_register_imm_hw.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_pipe_control_hw.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_semaphore_wait_hw.h"
@@ -37,6 +38,11 @@
 #include "level_zero/experimental/source/mutable_cmdlist/program/mcl_decoder.h"
 
 #include "copy_offload_mode.h"
+
+#include <array>
+#include <cstring>
+#include <limits>
+#include <vector>
 
 namespace L0 {
 namespace ult {
@@ -5951,6 +5957,105 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(0, memcmp(isaContent.data(), upload.data.data() + loadedKernel.kernelStartOffset, isaSize));
 
     isaMemoryManager->restoreCpuPtrs();
+}
+
+class MclBinaryLoadTest : public MutableCommandListTest {
+  protected:
+    static void addOutOfRangeVarSymbol(MockMclEncoder &encoder) {
+        using namespace L0::MCL::Program;
+        Symbols::VariableSymbolValue varSymbol{};
+        varSymbol.id = std::numeric_limits<uint32_t>::max();
+        encoder.addSymbol(Symbols::SymbolNames::varPrefix.str() + "var", Sections::SectionType::shtUndef, Symbols::SymbolType::var, varSymbol.data, 4u);
+    }
+
+    static void addOutOfRangeDispatchSymbol(MockMclEncoder &encoder) {
+        using namespace L0::MCL::Program;
+        Symbols::DispatchSymbolValue dispatchSymbol{};
+        dispatchSymbol.dispatchId = std::numeric_limits<uint16_t>::max();
+        encoder.addSymbol(Symbols::SymbolNames::dispatchPrefix.str() + "0", Sections::SectionType::shtUndef, Symbols::SymbolType::dispatch, dispatchSymbol.data, 0u);
+    }
+
+    static void expectNativeBinaryIsRejected(MutableCommandList &mutableCmdList, const std::vector<uint8_t> &binary) {
+        auto commandStream = mutableCmdList.base->getCmdContainer().getCommandStream();
+        const auto usedBefore = commandStream->getUsed();
+        const auto cpuBaseBefore = commandStream->getCpuBase();
+        const auto variablesBefore = mutableCmdList.variableStorage.size();
+        const auto ihAllocBefore = mutableCmdList.allocs.ihAlloc.get();
+
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, mutableCmdList.loadFromBinary(binary.data(), binary.size()));
+
+        EXPECT_EQ(usedBefore, commandStream->getUsed());
+        EXPECT_EQ(cpuBaseBefore, commandStream->getCpuBase());
+        EXPECT_EQ(variablesBefore, mutableCmdList.variableStorage.size());
+        EXPECT_EQ(ihAllocBefore, mutableCmdList.allocs.ihAlloc.get());
+    }
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MclBinaryLoadTest,
+            givenNativeBinaryWithVarSymbolIdOutOfRangeWhenLoadingFromBinaryThenInvalidNativeBinaryIsReturnedAndNothingIsLoaded) {
+    MockMclEncoder encoder;
+    addOutOfRangeVarSymbol(encoder);
+
+    expectNativeBinaryIsRejected(*mutableCommandList, encoder.encodeProgram());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MclBinaryLoadTest,
+            givenNativeBinaryWithDispatchIdOutOfRangeWhenLoadingFromBinaryThenInvalidNativeBinaryIsReturnedAndNothingIsLoaded) {
+    MockMclEncoder encoder;
+    addOutOfRangeDispatchSymbol(encoder);
+
+    expectNativeBinaryIsRejected(*mutableCommandList, encoder.encodeProgram());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MclBinaryLoadTest,
+            givenRejectedNativeBinaryWhenLoadingValidNativeBinaryThenCommandListIsLoaded) {
+    IsaInLocalMemory isa{*mockKernelImmData->getIsaGraphicsAllocation(), mockKernelImmData->getIsaSize()};
+    ze_mutable_command_id_exp_desc_t mutableCommandIdExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    mutableCommandIdExpDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListGetNextCommandIdExp(mutableCommandList->toHandle(), &mutableCommandIdExpDesc, &commandId));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    size_t binarySize = 0u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNativeBinary(nullptr, &binarySize, nullptr, 0u));
+    std::vector<uint8_t> validBinary(binarySize);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNativeBinary(validBinary.data(), &binarySize, nullptr, 0u));
+
+    auto commandStream = mutableCommandList->base->getCmdContainer().getCommandStream();
+    const auto used = commandStream->getUsed();
+    const auto commandBuffer = static_cast<const uint8_t *>(commandStream->getCpuBase());
+    ASSERT_GT(used, 0u);
+    ASSERT_NE(nullptr, commandBuffer);
+    const std::vector<uint8_t> commandsBefore(commandBuffer, commandBuffer + used);
+
+    MockMclEncoder encoder;
+    addOutOfRangeVarSymbol(encoder);
+    encoder.program.cs = commandsBefore;
+    encoder.program.cs.front() ^= 1u;
+    const auto invalidBinary = encoder.encodeProgram();
+
+    const auto copyCallsBefore = memoryManager->copyMemoryToAllocationCalledTimes;
+    expectNativeBinaryIsRejected(*mutableCommandList, invalidBinary);
+    EXPECT_EQ(copyCallsBefore, memoryManager->copyMemoryToAllocationCalledTimes);
+    ASSERT_EQ(used, commandStream->getUsed());
+    ASSERT_NE(nullptr, commandStream->getCpuBase());
+    EXPECT_EQ(0, std::memcmp(commandsBefore.data(), commandStream->getCpuBase(), used));
+
+    auto loadedCommandList = createMutableCmdList();
+    expectNativeBinaryIsRejected(*loadedCommandList, invalidBinary);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, loadedCommandList->loadFromBinary(validBinary.data(), validBinary.size()));
+    EXPECT_EQ(mutableCommandList->kernelData.size(), loadedCommandList->kernelData.size());
+    EXPECT_EQ(mutableCommandList->dispatches.size(), loadedCommandList->dispatches.size());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MclBinaryLoadTest,
+            givenBinaryWhichIsNotElfWhenLoadingFromBinaryThenInvalidNativeBinaryIsReturned) {
+    const std::array<uint8_t, 64> notElf = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, mutableCommandList->loadFromBinary(notElf.data(), notElf.size()));
 }
 
 } // namespace ult

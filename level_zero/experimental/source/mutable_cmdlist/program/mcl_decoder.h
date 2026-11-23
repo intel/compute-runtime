@@ -101,7 +101,7 @@ class MclDecoder {
     };
 
   public:
-    static void decode(const MclDecoderArgs &args);
+    static bool decode(const MclDecoderArgs &args);
     MclDecoder() = default;
     bool decodeElf(ArrayRef<const uint8_t> mclElfBinary);
 
