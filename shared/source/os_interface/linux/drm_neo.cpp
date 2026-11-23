@@ -1487,7 +1487,11 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     auto numberOfCCS = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
     constexpr uint32_t maxEngines = 9u;
 
-    bool useVirtualEnginesForBcs = EngineHelpers::isBcsVirtualEngineEnabled(engineType);
+    const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    const auto hpCopyEngineType = gfxCoreHelper.getDefaultHpCopyEngine(*rootDeviceEnvironment.getHardwareInfo());
+
+    const bool useVirtualEnginesForBcs = EngineHelpers::isBcsVirtualEngineEnabled(engineType, rootDeviceEnvironment.getProductHelper()) &&
+                                         engineType != hpCopyEngineType;
     auto numberOfBCS = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.count();
 
     if (debugManager.flags.LimitEngineCountForVirtualBcs.get() != -1) {
@@ -1504,9 +1508,6 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     ContextEnginesLoadBalance<maxEngines> balancer{};
 
     ioctlHelper->insertEngineToContextParams(contextEngines, 0u, engine, deviceIndex, false);
-
-    const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const auto hpCopyEngineType = gfxCoreHelper.getDefaultHpCopyEngine(*rootDeviceEnvironment.getHardwareInfo());
 
     bool setupVirtualEngines = false;
     unsigned int engineCount = static_cast<unsigned int>(numberOfCCS);

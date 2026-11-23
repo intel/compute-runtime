@@ -32,6 +32,7 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(isHostUsmPoolAllocatorSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDeviceUsmPoolAllocatorSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(is2MBLocalMemAlignmentEnabled, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isBcsVirtualEngineForAllCopyEnginesSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDisableScratchPagesRequiredForDebugger, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isEuDebugPageFaultSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getStorageInfoLocalOnlyFlag, bool, false, (LocalMemAllocationMode, bool));

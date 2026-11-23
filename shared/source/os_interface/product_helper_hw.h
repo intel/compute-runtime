@@ -62,6 +62,7 @@ class ProductHelperHw : public ProductHelper {
     bool isDisableScratchPagesRequiredForDebugger() const override;
     bool isLowPriorityContextGroupSupported() const override;
     bool areSecondaryContextsSupported() const override;
+    bool isBcsVirtualEngineForAllCopyEnginesSupported() const override;
     bool isPrimaryContextsAggregationSupported() const override;
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
     bool isDcFlushAllowed() const override;

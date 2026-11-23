@@ -14,7 +14,9 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
@@ -182,7 +184,7 @@ static void givenBcsEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(s
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
     auto extensions = drm->receivedContextParamEngines.extensions;
 
-    if (EngineHelpers::isBcsVirtualEngineEnabled(engineType)) {
+    if (EngineHelpers::isBcsVirtualEngineEnabled(engineType, drm->rootDeviceEnvironment.getProductHelper())) {
         EXPECT_NE(0ull, extensions);
         EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1 + numBcsSiblings, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
         EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), drm->receivedContextParamEngines.engines[0].engineClass);
@@ -544,6 +546,69 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenHpCopyEngineAndOnlyTwoBcsWhenCreatingContex
     auto extensions = drm->receivedContextParamEngines.extensions;
     EXPECT_EQ(0ull, extensions);
     EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
+}
+
+HWTEST2_PRODUCT_F(DrmTestXeHPCAndLater, givenBcsVirtualEngineForAllCopyEnginesSupportedWhenCreatingContextForEachCopyEngineThenEnableLoadBalancing, IsPVC) {
+    HardwareInfo localHwInfo = *defaultHwInfo;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
+
+    RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii{*executionEnvironment->rootDeviceEnvironments[0]};
+    raii.mockProductHelper->isBcsVirtualEngineForAllCopyEnginesSupportedValue = true;
+
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->supportedCopyEnginesMask = maxNBitValue(9);
+    drm->queryEngineInfo();
+    EXPECT_NE(nullptr, drm->engineInfo);
+    auto hwInfo = drm->rootDeviceEnvironment.getHardwareInfo();
+    EXPECT_EQ(drm->supportedCopyEnginesMask.count(), hwInfo->featureTable.ftrBcsInfo.count());
+
+    auto numBcs = drm->supportedCopyEnginesMask.count();
+    for (auto engineIndex = 0u; engineIndex < numBcs; engineIndex++) {
+        auto engineType = EngineHelpers::getBcsEngineAtIdx(engineIndex);
+        auto numBcsSiblings = engineIndex > 0u ? numBcs - 1 : numBcs;
+        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(engineType, drm->rootDeviceEnvironment.getProductHelper()));
+        givenBcsEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(drm, engineType, numBcsSiblings, engineIndex, 0u);
+    }
+}
+
+HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledAndHpCopyEngineWhenCreatingContextForHpCopyEngineThenDisableLoadBalancing, IsXeHpcCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
+
+    HardwareInfo localHwInfo = *defaultHwInfo;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
+    localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 0;
+    localHwInfo.capabilityTable.isIntegratedDevice = false;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
+
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const override {
+            return aub_stream::ENGINE_BCS8;
+        }
+    };
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->supportedCopyEnginesMask = maxNBitValue(9);
+    drm->queryEngineInfo();
+    EXPECT_NE(nullptr, drm->engineInfo);
+
+    drm->receivedContextParamRequestCount = 0u;
+    auto drmContextId = 42u;
+    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, aub_stream::ENGINE_BCS8);
+    EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
+    EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
+    EXPECT_EQ(0ull, drm->receivedContextParamEngines.extensions);
+    EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
+    EXPECT_EQ(static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), drm->receivedContextParamEngines.engines[0].engineClass);
+    EXPECT_EQ(8u, DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engineInstance));
 }
 
 HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContextThenDisableLoadBalancing, IsXeHpcCore) {

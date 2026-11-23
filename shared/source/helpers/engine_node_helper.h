@@ -16,6 +16,7 @@
 
 namespace NEO {
 enum PreemptionMode : uint32_t;
+class ProductHelper;
 struct HardwareInfo;
 struct SelectorCopyEngine;
 struct RootDeviceEnvironment;
@@ -48,7 +49,7 @@ namespace EngineHelpers {
 bool isCcs(aub_stream::EngineType engineType);
 bool isComputeEngine(aub_stream::EngineType engineType);
 bool isBcs(aub_stream::EngineType engineType);
-bool isBcsVirtualEngineEnabled(aub_stream::EngineType engineType);
+bool isBcsVirtualEngineEnabled(aub_stream::EngineType engineType, const ProductHelper &productHelper);
 aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, SelectorCopyEngine &selectorCopyEngine, bool internalUsage);
 void releaseBcsEngineType(aub_stream::EngineType engineType, SelectorCopyEngine &selectorCopyEngine, const RootDeviceEnvironment &rootDeviceEnvironment);
 aub_stream::EngineType remapEngineTypeToHwSpecific(aub_stream::EngineType inputType, const RootDeviceEnvironment &rootDeviceEnvironment);
