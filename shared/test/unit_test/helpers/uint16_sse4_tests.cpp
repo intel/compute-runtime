@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,17 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
+
 using namespace NEO;
+
+using Lanes = std::array<uint16_t, NEO::uint16x8_t::numChannels>;
+
+static Lanes getLanes(const NEO::uint16x8_t &vector) {
+    Lanes lanes = {};
+    vector.storeUnaligned(lanes.data());
+    return lanes;
+}
 
 TEST(Uint16Sse4, GivenMaskWhenCastingToBoolThenTrueIsReturned) {
     EXPECT_TRUE(static_cast<bool>(NEO::uint16x8_t::mask()));
@@ -35,8 +45,9 @@ TEST(Uint16Sse4, GivenOneWhenCreatingThenInstancesAreSame) {
 
 TEST(Uint16Sse4, GivenValueWhenCreatingThenConstructorIsReplicated) {
     NEO::uint16x8_t allSevens(7u);
+    auto storedLanes = getLanes(allSevens);
     for (int i = 0; i < NEO::uint16x8_t::numChannels; ++i) {
-        EXPECT_EQ(7u, allSevens.get(i));
+        EXPECT_EQ(7u, storedLanes[i]);
     }
 }
 
@@ -47,24 +58,27 @@ static const uint16_t laneValues[] = {
 
 TEST(Uint16Sse4, GivenArrayWhenCreatingThenConstructorIsReplicated) {
     NEO::uint16x8_t lanes(laneValues);
+    auto storedLanes = getLanes(lanes);
     for (int i = 0; i < NEO::uint16x8_t::numChannels; ++i) {
-        EXPECT_EQ(static_cast<uint16_t>(i), lanes.get(i));
+        EXPECT_EQ(static_cast<uint16_t>(i), storedLanes[i]);
     }
 }
 
 TEST(Uint16Sse4, WhenLoadingThenValuesAreSetCorrectly) {
     NEO::uint16x8_t lanes;
     lanes.load(laneValues);
+    auto storedLanes = getLanes(lanes);
     for (int i = 0; i < NEO::uint16x8_t::numChannels; ++i) {
-        EXPECT_EQ(static_cast<uint16_t>(i), lanes.get(i));
+        EXPECT_EQ(static_cast<uint16_t>(i), storedLanes[i]);
     }
 }
 
 TEST(Uint16Sse4, WhenLoadingUnalignedThenValuesAreSetCorrectly) {
     NEO::uint16x8_t lanes;
     lanes.loadUnaligned(laneValues + 1);
+    auto storedLanes = getLanes(lanes);
     for (int i = 0; i < NEO::uint16x8_t::numChannels; ++i) {
-        EXPECT_EQ(static_cast<uint16_t>(i + 1), lanes.get(i));
+        EXPECT_EQ(static_cast<uint16_t>(i + 1), storedLanes[i]);
     }
 }
 
@@ -96,8 +110,9 @@ TEST(Uint16Sse4, WhenDecrementingThenValuesAreSetCorrectly) {
     NEO::uint16x8_t result(laneValues);
     result -= NEO::uint16x8_t::one();
 
+    auto storedLanes = getLanes(result);
     for (int i = 0; i < NEO::uint16x8_t::numChannels; ++i) {
-        EXPECT_EQ(static_cast<uint16_t>(i - 1), result.get(i));
+        EXPECT_EQ(static_cast<uint16_t>(i - 1), storedLanes[i]);
     }
 }
 
@@ -105,8 +120,9 @@ TEST(Uint16Sse4, WhenIncrementingThenValuesAreSetCorrectly) {
     NEO::uint16x8_t result(laneValues);
     result += NEO::uint16x8_t::one();
 
+    auto storedLanes = getLanes(result);
     for (int i = 0; i < NEO::uint16x8_t::numChannels; ++i) {
-        EXPECT_EQ(static_cast<uint16_t>(i + 1), result.get(i));
+        EXPECT_EQ(static_cast<uint16_t>(i + 1), storedLanes[i]);
     }
 }
 
@@ -118,14 +134,10 @@ TEST(Uint16Sse4, WhenBlendingThenValuesAreSetCorrectly) {
     // c = mask ? a : b
     c = blend(a, b, NEO::uint16x8_t::mask());
 
-    for (int i = 0; i < NEO::uint16x8_t::numChannels; ++i) {
-        EXPECT_EQ(a.get(i), c.get(i));
-    }
+    EXPECT_EQ(getLanes(a), getLanes(c));
 
     // c = mask ? a : b
     c = blend(a, b, NEO::uint16x8_t::zero());
 
-    for (int i = 0; i < NEO::uint16x8_t::numChannels; ++i) {
-        EXPECT_EQ(b.get(i), c.get(i));
-    }
+    EXPECT_EQ(getLanes(b), getLanes(c));
 }
