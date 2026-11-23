@@ -337,6 +337,8 @@ TEST_F(MultiDeviceContextTests,
 
 TEST_F(MultiDeviceContextTests,
        givenDeviceMemoryOfRootDeviceWhenMakeMemoryResidentCalledOnPeerRootDeviceAndThenOnItsSubDeviceThenSubDeviceReusesPeerAllocationOfItsRootDevice) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     auto &rootDeviceEnvironments = driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments;
     rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
     rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
@@ -436,6 +438,8 @@ TEST_F(MultiDeviceContextTests,
 
 TEST_F(MultiDeviceContextTests,
        givenDeviceMemoryOfRootDeviceWhenMakeMemoryResidentCalledOnSubDevicesOfPeerRootDeviceBeforePeerRootDeviceThenAllShareOneImport) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     auto &rootDeviceEnvironments = driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments;
     rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
     rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
