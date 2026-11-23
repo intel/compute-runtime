@@ -50,6 +50,7 @@ TEST(CapsGen12LpTest, givenTglReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsTgl.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsTgl.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsTgl.availableSemaphore64);
+    EXPECT_FALSE(capsTgl.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsTgl.bFloat16ConversionSupported);
     EXPECT_TRUE(capsTgl.bindlessAddressingDisabled);
     EXPECT_FALSE(capsTgl.blitImageAllowedForDepthFormat);
@@ -127,6 +128,7 @@ TEST(CapsGen12LpTest, givenRklReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsRkl.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsRkl.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsRkl.availableSemaphore64);
+    EXPECT_FALSE(capsRkl.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsRkl.bFloat16ConversionSupported);
     EXPECT_TRUE(capsRkl.bindlessAddressingDisabled);
     EXPECT_FALSE(capsRkl.blitImageAllowedForDepthFormat);
@@ -204,6 +206,7 @@ TEST(CapsGen12LpTest, givenAdlSReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsAdlS.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsAdlS.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsAdlS.availableSemaphore64);
+    EXPECT_FALSE(capsAdlS.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsAdlS.bFloat16ConversionSupported);
     EXPECT_TRUE(capsAdlS.bindlessAddressingDisabled);
     EXPECT_FALSE(capsAdlS.blitImageAllowedForDepthFormat);
@@ -281,6 +284,7 @@ TEST(CapsGen12LpTest, givenAdlPReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsAdlP.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsAdlP.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsAdlP.availableSemaphore64);
+    EXPECT_FALSE(capsAdlP.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsAdlP.bFloat16ConversionSupported);
     EXPECT_TRUE(capsAdlP.bindlessAddressingDisabled);
     EXPECT_FALSE(capsAdlP.blitImageAllowedForDepthFormat);
@@ -358,6 +362,7 @@ TEST(CapsGen12LpTest, givenAdlNReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsAdlN.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsAdlN.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsAdlN.availableSemaphore64);
+    EXPECT_FALSE(capsAdlN.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsAdlN.bFloat16ConversionSupported);
     EXPECT_TRUE(capsAdlN.bindlessAddressingDisabled);
     EXPECT_FALSE(capsAdlN.blitImageAllowedForDepthFormat);
@@ -435,6 +440,7 @@ TEST(CapsGen12LpTest, givenDg1ReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsDg1.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsDg1.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsDg1.availableSemaphore64);
+    EXPECT_FALSE(capsDg1.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsDg1.bFloat16ConversionSupported);
     EXPECT_TRUE(capsDg1.bindlessAddressingDisabled);
     EXPECT_FALSE(capsDg1.blitImageAllowedForDepthFormat);

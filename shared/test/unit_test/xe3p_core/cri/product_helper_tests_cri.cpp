@@ -265,10 +265,6 @@ CRITEST_F(CriProductHelper, givenCriWhenAskingForCopyOffloadWriteEngineSupportTh
     EXPECT_TRUE(productHelper->isCopyOffloadWriteEngineSupported());
 }
 
-CRITEST_F(CriProductHelper, givenCriWhenAskingForBcsVirtualEngineForAllCopyEnginesSupportThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isBcsVirtualEngineForAllCopyEnginesSupported());
-}
-
 CRITEST_F(CriProductHelper, givenCriWhenAskingForRegularCmdListDualStreamCopyOffloadSupportThenReturnTrueByDefaultAndRespectDebugFlag) {
     DebugManagerStateRestore restorer;
 

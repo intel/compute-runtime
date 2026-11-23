@@ -1161,10 +1161,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForCopyOffloadWriteEngin
     EXPECT_TRUE(productHelper->isCopyOffloadWriteEngineSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingForBcsVirtualEngineForAllCopyEnginesSupportThenReturnFalse, IsNotCRI) {
-    EXPECT_FALSE(productHelper->isBcsVirtualEngineForAllCopyEnginesSupported());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenFalseReturned) {
     for (auto preemptionMode : {PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread}) {
         for (bool hostWaitablePostSync : {true, false}) {

@@ -67,6 +67,7 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsPvc.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPvc.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPvc.availableSemaphore64);
+    EXPECT_FALSE(capsPvc.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsPvc.bFloat16ConversionSupported);
     EXPECT_TRUE(capsPvc.bindlessAddressingDisabled);
     EXPECT_FALSE(capsPvc.blitImageAllowedForDepthFormat);
@@ -144,6 +145,7 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsPvcVg.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsPvcVg.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsPvcVg.availableSemaphore64);
+    EXPECT_FALSE(capsPvcVg.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsPvcVg.bFloat16ConversionSupported);
     EXPECT_TRUE(capsPvcVg.bindlessAddressingDisabled);
     EXPECT_FALSE(capsPvcVg.blitImageAllowedForDepthFormat);

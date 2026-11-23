@@ -129,7 +129,6 @@ class ProductHelper {
     virtual bool isDisableScratchPagesRequiredForDebugger() const = 0;
     virtual bool isLowPriorityContextGroupSupported() const = 0;
     virtual bool areSecondaryContextsSupported() const = 0;
-    virtual bool isBcsVirtualEngineForAllCopyEnginesSupported() const = 0;
     virtual bool isPrimaryContextsAggregationSupported() const = 0;
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDcFlushAllowed() const = 0;

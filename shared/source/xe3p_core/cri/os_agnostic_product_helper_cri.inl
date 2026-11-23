@@ -92,11 +92,6 @@ bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBcsVirtualEngineForAllCopyEnginesSupported() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::is2MBLocalMemAlignmentEnabled() const {
     return true;
 }

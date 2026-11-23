@@ -15,7 +15,6 @@
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -68,45 +67,45 @@ TEST(EngineNodeHelperTest, givenBcsWhenGettingBcsIndexThenReturnCorrectIndex) {
 }
 
 TEST(EngineNodeHelperTest, givenBcsVirtualEngineForAllCopyEnginesNotSupportedWhenCheckingBcsVirtualEngineEnabledThenReturnTrueOnlyForBcsAndBcs1) {
-    MockProductHelper productHelper{};
-    productHelper.isBcsVirtualEngineForAllCopyEnginesSupportedResult = false;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.bcsVirtualEngineForAllCopyEnginesSupported = false;
 
-    EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS, productHelper));
-    EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS1, productHelper));
+    EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS, hwInfo));
+    EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS1, hwInfo));
     for (auto engineType = static_cast<uint32_t>(aub_stream::ENGINE_BCS2); engineType <= static_cast<uint32_t>(aub_stream::ENGINE_BCS8); engineType++) {
-        EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(static_cast<aub_stream::EngineType>(engineType), productHelper));
+        EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(static_cast<aub_stream::EngineType>(engineType), hwInfo));
     }
-    EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_CCS, productHelper));
+    EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_CCS, hwInfo));
 }
 
 TEST(EngineNodeHelperTest, givenBcsVirtualEngineForAllCopyEnginesSupportedWhenCheckingBcsVirtualEngineEnabledThenReturnTrueForAllBcsEngines) {
-    MockProductHelper productHelper{};
-    productHelper.isBcsVirtualEngineForAllCopyEnginesSupportedResult = true;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.caps.bcsVirtualEngineForAllCopyEnginesSupported = true;
 
-    EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS, productHelper));
+    EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS, hwInfo));
     for (auto engineType = static_cast<uint32_t>(aub_stream::ENGINE_BCS1); engineType <= static_cast<uint32_t>(aub_stream::ENGINE_BCS8); engineType++) {
-        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(static_cast<aub_stream::EngineType>(engineType), productHelper));
+        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(static_cast<aub_stream::EngineType>(engineType), hwInfo));
     }
-    EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_CCS, productHelper));
-    EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_RCS, productHelper));
+    EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_CCS, hwInfo));
+    EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_RCS, hwInfo));
 }
 
 TEST(EngineNodeHelperTest, givenUseDrmVirtualEnginesForBcsSetWhenCheckingBcsVirtualEngineEnabledThenDebugFlagIsReturned) {
     DebugManagerStateRestore restore;
-    MockProductHelper productHelper{};
+    HardwareInfo hwInfo = *defaultHwInfo;
 
     for (const bool allCopyEnginesSupported : {false, true}) {
-        productHelper.isBcsVirtualEngineForAllCopyEnginesSupportedResult = allCopyEnginesSupported;
+        hwInfo.caps.bcsVirtualEngineForAllCopyEnginesSupported = allCopyEnginesSupported;
 
         debugManager.flags.UseDrmVirtualEnginesForBcs.set(0);
-        EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS, productHelper));
-        EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS1, productHelper));
-        EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS2, productHelper));
+        EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS, hwInfo));
+        EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS1, hwInfo));
+        EXPECT_FALSE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS2, hwInfo));
 
         debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
-        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS, productHelper));
-        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS1, productHelper));
-        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS2, productHelper));
+        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS, hwInfo));
+        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS1, hwInfo));
+        EXPECT_TRUE(EngineHelpers::isBcsVirtualEngineEnabled(aub_stream::ENGINE_BCS2, hwInfo));
     }
 }
 

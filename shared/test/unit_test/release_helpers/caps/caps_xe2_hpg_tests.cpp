@@ -73,6 +73,7 @@ TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG21.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsBmgG21.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsBmgG21.availableSemaphore64);
+    EXPECT_FALSE(capsBmgG21.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsBmgG21.bFloat16ConversionSupported);
     EXPECT_FALSE(capsBmgG21.bindlessAddressingDisabled);
     EXPECT_TRUE(capsBmgG21.blitImageAllowedForDepthFormat);
@@ -150,6 +151,7 @@ TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG31.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsBmgG31.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsBmgG31.availableSemaphore64);
+    EXPECT_FALSE(capsBmgG31.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsBmgG31.bFloat16ConversionSupported);
     EXPECT_FALSE(capsBmgG31.bindlessAddressingDisabled);
     EXPECT_TRUE(capsBmgG31.blitImageAllowedForDepthFormat);
@@ -227,6 +229,7 @@ TEST(CapsXe2HpgTest, givenLnlReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsLnl.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsLnl.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsLnl.availableSemaphore64);
+    EXPECT_FALSE(capsLnl.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsLnl.bFloat16ConversionSupported);
     EXPECT_FALSE(capsLnl.bindlessAddressingDisabled);
     EXPECT_TRUE(capsLnl.blitImageAllowedForDepthFormat);

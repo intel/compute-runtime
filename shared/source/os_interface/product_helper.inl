@@ -400,11 +400,6 @@ bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isBcsVirtualEngineForAllCopyEnginesSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPrimaryContextsAggregationSupported() const {
     return false;
 }

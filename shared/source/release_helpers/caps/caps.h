@@ -41,6 +41,7 @@ struct Caps {
     bool adjustWalkOrderAvailable = false;
     bool auxSurfaceModeOverrideRequired = false;
     bool availableSemaphore64 = false;
+    bool bcsVirtualEngineForAllCopyEnginesSupported = false;
     bool bFloat16ConversionSupported = false;
     bool bindlessAddressingDisabled = false;
     bool blitImageAllowedForDepthFormat = false;

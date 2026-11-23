@@ -43,6 +43,7 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(adjustWalkOrderAvailable)                                  \
     NEO_COPY_CAP_FUNC(auxSurfaceModeOverrideRequired)                            \
     NEO_COPY_CAP_FUNC(availableSemaphore64)                                      \
+    NEO_COPY_CAP_FUNC(bcsVirtualEngineForAllCopyEnginesSupported)                \
     NEO_COPY_CAP_FUNC(bFloat16ConversionSupported)                               \
     NEO_COPY_CAP_FUNC(bindlessAddressingDisabled)                                \
     NEO_COPY_CAP_FUNC(blitImageAllowedForDepthFormat)                            \

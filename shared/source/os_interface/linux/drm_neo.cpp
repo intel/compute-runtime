@@ -1490,7 +1490,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     const auto hpCopyEngineType = gfxCoreHelper.getDefaultHpCopyEngine(*rootDeviceEnvironment.getHardwareInfo());
 
-    const bool useVirtualEnginesForBcs = EngineHelpers::isBcsVirtualEngineEnabled(engineType, rootDeviceEnvironment.getProductHelper()) &&
+    const bool useVirtualEnginesForBcs = EngineHelpers::isBcsVirtualEngineEnabled(engineType, *rootDeviceEnvironment.getHardwareInfo()) &&
                                          engineType != hpCopyEngineType;
     auto numberOfBCS = rootDeviceEnvironment.getHardwareInfo()->featureTable.ftrBcsInfo.count();
 
