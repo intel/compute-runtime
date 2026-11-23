@@ -145,7 +145,6 @@ void DirectSubmissionController::checkNewSubmissions() {
                 continue;
             }
             if (isCsrIdleDetectionEnabled && hasContextGroupProgressed(csr)) {
-                state.idleSince.reset();
                 continue;
             }
             bool isCopyEngineIdle = true;
@@ -154,18 +153,10 @@ void DirectSubmissionController::checkNewSubmissions() {
             }
             auto lock = csr->obtainUniqueOwnership();
             if (!isCsrIdleDetectionEnabled || (isDirectSubmissionIdle(csr, lock) && isCopyEngineIdle)) {
-                const auto idleTimeout = isBcs ? this->timeout / this->bcsTimeoutDivisor : this->timeout;
-                if (!state.idleSince.has_value()) {
-                    state.idleSince = getCpuTimestamp();
-                } else if (now - state.idleSince.value() >= idleTimeout) {
-                    csr->stopDirectSubmission(false, false);
-                    state.isActive = false;
-                    state.isStopped = true;
-                    state.idleSince.reset();
-                    --activeSubmissionsCount;
-                }
-            } else {
-                state.idleSince.reset();
+                csr->stopDirectSubmission(false, false);
+                state.isActive = false;
+                state.isStopped = true;
+                --activeSubmissionsCount;
             }
             state.taskCount = csr->peekTaskCount();
         } else {
@@ -174,7 +165,6 @@ void DirectSubmissionController::checkNewSubmissions() {
             }
 
             state.isStopped = false;
-            state.idleSince = now;
             state.taskCount = taskCount;
         }
     }

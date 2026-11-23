@@ -64,9 +64,7 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     }
 
     SteadyClock::time_point getCpuTimestamp() override {
-        auto current = cpuTimestamp;
-        cpuTimestamp += cpuTimestampIncrementPerCall;
-        return current;
+        return cpuTimestamp;
     }
 
     TimeoutElapsedMode timeoutElapsed() override {
@@ -78,7 +76,6 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     }
 
     SteadyClock::time_point cpuTimestamp{};
-    std::chrono::microseconds cpuTimestampIncrementPerCall{0};
     std::atomic<bool> waitOnConditionVar{false};
     std::atomic<bool> sleepCalled{false};
     std::atomic<bool> sleepReturnValue{false};
