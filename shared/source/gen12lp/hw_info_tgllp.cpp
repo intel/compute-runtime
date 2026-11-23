@@ -9,7 +9,9 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_tgllp.h"
+#include "shared/source/helpers/cache_policy_gen12lp.inl"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/enable_product.inl"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 
 #include "aubstream/engine_node.h"
@@ -142,4 +144,7 @@ void TGLLP::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAn
 };
 
 void (*TGLLP::setupHardwareInfo)(HardwareInfo *, bool) = TGLLP::setupHardwareInfoImpl;
+
+template struct L1CachePolicyHelper<IGFX_TIGERLAKE_LP>;
+template EnableGfxProductHw<IGFX_TIGERLAKE_LP>::EnableGfxProductHw();
 } // namespace NEO

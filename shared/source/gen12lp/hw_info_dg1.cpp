@@ -9,7 +9,9 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
+#include "shared/source/helpers/cache_policy_gen12lp.inl"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/enable_product.inl"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 
 #include "aubstream/engine_node.h"
@@ -141,4 +143,7 @@ void DG1::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 };
 
 void (*DG1::setupHardwareInfo)(HardwareInfo *, bool) = DG1::setupHardwareInfoImpl;
+
+template struct L1CachePolicyHelper<IGFX_DG1>;
+template EnableGfxProductHw<IGFX_DG1>::EnableGfxProductHw();
 } // namespace NEO
