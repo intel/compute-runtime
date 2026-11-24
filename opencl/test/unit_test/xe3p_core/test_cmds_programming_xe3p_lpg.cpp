@@ -33,7 +33,5 @@ HWTEST2_F(CmdsProgrammingTestXe3pLpg, givenEnable64BitAddressingWhenSbaIsProgram
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto heaplessModeEnabled = stateBaseAddress->getBaseAddressDisable();
-
-    EXPECT_TRUE(heaplessModeEnabled);
+    EXPECT_EQ(STATE_BASE_ADDRESS::BASEADDR_DIS_FULL_64B_MODE, stateBaseAddress->getBaseaddrDis());
 }

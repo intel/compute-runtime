@@ -41,19 +41,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenN
     }
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenAdjustPipelineSelectCalledThenCommandHasGpgpuType, IsXeCore) {
-    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
-    GenCmdList commands;
-    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
-
-    auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
-    ASSERT_NE(itorCmd, commands.end());
-
-    auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
-    EXPECT_EQ(cmd->getPipelineSelection(), PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-}
-
 HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWithKernelDpasThenSystolicModeEnabled, IsXeCore) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;

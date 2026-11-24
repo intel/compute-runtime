@@ -210,7 +210,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenModuleWithL1CachePolicyOverrideWhe
     auto itorSba = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorSba);
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itorSba);
-    EXPECT_EQ(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(expectedL1CacheControl), cmdSba->getL1CacheControlCachePolicy());
+    EXPECT_EQ(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(expectedL1CacheControl), cmdSba->getL1CacheControl());
 }
 
 using CommandListAppendLaunchKernelL1CachePolicy = Test<CommandListPrivateHeapsFixture>;
@@ -249,7 +249,7 @@ HWTEST2_F(CommandListAppendLaunchKernelL1CachePolicy, GivenModuleL1CachePolicyOv
         auto stateBaseAddressCommands = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(0u, stateBaseAddressCommands.size());
         auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*stateBaseAddressCommands.back());
-        return static_cast<uint32_t>(cmdSba->getL1CacheControlCachePolicy());
+        return static_cast<uint32_t>(cmdSba->getL1CacheControl());
     };
 
     module->translationUnit->l1CachePolicyOverride = overridePolicy;
@@ -319,7 +319,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenNonTrackingCommandListWhenModuleL1
         auto stateBaseAddressCommands = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(0u, stateBaseAddressCommands.size());
         auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*stateBaseAddressCommands.back());
-        return static_cast<uint32_t>(cmdSba->getL1CacheControlCachePolicy());
+        return static_cast<uint32_t>(cmdSba->getL1CacheControl());
     };
 
     module->getTranslationUnit()->l1CachePolicyOverride = overridePolicy;

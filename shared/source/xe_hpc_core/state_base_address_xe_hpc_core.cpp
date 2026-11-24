@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,5 +9,10 @@
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
+
+template <>
+void setSbaStatelessCompressionParams<XeHpcCoreFamily>(typename XeHpcCoreFamily::STATE_BASE_ADDRESS *stateBaseAddress, MemoryCompressionState memoryCompressionState) {
+}
+
 template struct StateBaseAddressHelper<XeHpcCoreFamily>;
 } // namespace NEO

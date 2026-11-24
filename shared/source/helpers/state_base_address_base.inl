@@ -61,7 +61,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         if (args.sbaProperties->surfaceStateBaseAddress.value != StreamProperty64::initValue) {
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->surfaceStateBaseAddress.value));
-            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(args.sbaProperties->surfaceStateSize.value * (MemoryConstants::pageSize / sizeof(RENDER_SURFACE_STATE))));
+            const auto sshSurfaceStateCount = static_cast<uint32_t>(args.sbaProperties->surfaceStateSize.value * (MemoryConstants::pageSize / sizeof(RENDER_SURFACE_STATE)));
+            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(sshSurfaceStateCount - 1);
         }
 
         if (args.sbaProperties->statelessMocs.value != StreamProperty::initValue) {
@@ -117,6 +118,10 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     if (debugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
         args.statelessMocsIndex = debugManager.flags.OverrideStatelessMocsIndex.get();
+    }
+
+    if (args.statelessMocsIndex == CacheSettings::unknownMocs) {
+        args.statelessMocsIndex = unknownStatelessMocsIndex;
     }
 
     args.statelessMocsIndex = args.statelessMocsIndex << 1;

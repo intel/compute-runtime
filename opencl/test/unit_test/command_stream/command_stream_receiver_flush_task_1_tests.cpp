@@ -811,7 +811,8 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenSshHeapChangeWhenFlushTaskIs
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     configureCSRtoNonDirtyState<FamilyType>(false);
 
-    ssh.replaceBuffer(nullptr, 0);
+    std::vector<uint8_t> newSshBuffer(2 * MemoryConstants::pageSize);
+    ssh.replaceBuffer(newSshBuffer.data(), newSshBuffer.size());
     flushTask(commandStreamReceiver);
 
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
@@ -1085,7 +1086,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, WhenGettingCsThenReturnCsWithEno
     EXPECT_GE(commandStream.getAvailableSpace(), sizeRequested);
     commandStream.getSpace(sizeRequested - sizeCQReserves);
 
-    MockGraphicsAllocation allocation((void *)MemoryConstants::pageSize64k, 1);
+    MockGraphicsAllocation allocation((void *)MemoryConstants::pageSize64k, sizeof(typename FamilyType::RENDER_SURFACE_STATE));
     IndirectHeap linear(&allocation);
 
     auto blocking = true;

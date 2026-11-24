@@ -617,7 +617,7 @@ XE2_HPG_CORETEST_F(Xe2HpgSbaTest, givenSpecificProductFamilyWhenAppendingSbaThen
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControl());
 }
 
 XE2_HPG_CORETEST_F(Xe2HpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
@@ -632,21 +632,21 @@ XE2_HPG_CORETEST_F(Xe2HpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsPr
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(0u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(0u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
 
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(2u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(2u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceAllResourcesUncached.set(true);
 
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(1u, sbaCmd.getL1CacheControl());
 }
 
 const std::vector<uint32_t> slmSizesPerThreadGroupXe2 = slmSizesInBytes({0, 1, 2, 4, 8, 16, 24, 32, 48, 64, 96, 128});

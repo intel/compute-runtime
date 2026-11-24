@@ -16,6 +16,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/state_base_address.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/debug_env_reader.h"
@@ -213,8 +214,6 @@ HWTEST_TEMPLATED_F(CommandStreamReceiverFlushTaskGmockTestsWithMockCsrHw2, given
 }
 
 HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectStateBaseAddresPatchInfoIsCalledThenAppropriateAddressesAreTaken, IsHeapfulRequired) {
-    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-
     std::unique_ptr<MockCsrHw2<FamilyType>> mockCsr(new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment);
     mockCsr->overwriteFlatBatchBufferHelper(mockHelper);
@@ -249,7 +248,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
     if (deviceUsesDsh) {
         PatchInfoData dshPatch = mockHelper->patchInfoDataVector[dshPatchIndex];
         EXPECT_EQ(dshPatch.sourceAllocation, dsh.getGraphicsAllocation()->getGpuAddress());
-        EXPECT_EQ(dshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET);
+        EXPECT_EQ(dshPatch.targetAllocationOffset, commandOffset + StateBaseAddressHelper<FamilyType>::dynamicStateBaseAddressByteOffset);
     }
 
     if constexpr (TestTraits<FamilyType::gfxCoreFamily>::iohInSbaSupported) {
@@ -257,18 +256,18 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
         PatchInfoData iohPatch = mockHelper->patchInfoDataVector[iohPatchIndex];
 
         EXPECT_EQ(iohPatch.sourceAllocation, ioh.getGraphicsAllocation()->getGpuAddress());
-        EXPECT_EQ(iohPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET);
+        EXPECT_EQ(iohPatch.targetAllocationOffset, commandOffset + StateBaseAddressHelper<FamilyType>::indirectObjectBaseAddressByteOffset);
     }
 
     // SSH
     PatchInfoData sshPatch = mockHelper->patchInfoDataVector[sshPatchIndex];
     EXPECT_EQ(sshPatch.sourceAllocation, ssh.getGraphicsAllocation()->getGpuAddress());
-    EXPECT_EQ(sshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET);
+    EXPECT_EQ(sshPatch.targetAllocationOffset, commandOffset + StateBaseAddressHelper<FamilyType>::surfaceStateBaseAddressByteOffset);
 
     // GSH
     PatchInfoData gshPatch = mockHelper->patchInfoDataVector[gshPatchIndex];
     EXPECT_EQ(gshPatch.sourceAllocation, generalStateBase);
-    EXPECT_EQ(gshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET);
+    EXPECT_EQ(gshPatch.targetAllocationOffset, commandOffset + StateBaseAddressHelper<FamilyType>::generalStateBaseAddressByteOffset);
 
     EXPECT_EQ(0u, mockHelper->registerCommandChunkCalled);
     EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);

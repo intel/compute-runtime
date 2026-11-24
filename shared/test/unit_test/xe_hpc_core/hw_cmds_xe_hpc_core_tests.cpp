@@ -32,25 +32,48 @@ XE_HPC_CORETEST_F(XeHpcCoreHwCmdTest, givenStateBaseAddressWhenProgrammingMocsTh
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     stateBaseAddress.setGeneralStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setStatelessDataPortAccessMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setSurfaceStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setDynamicStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setInstructionMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.InstructionMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.InstructionMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setBindlessSurfaceStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMOCSTables);
+}
 
-    stateBaseAddress.setBindlessSamplerStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMocsTables);
+XE_HPC_CORETEST_F(XeHpcCoreHwCmdTest, givenOddMocsWhenProgrammingStateBaseAddressMocsThenEncryptedDataBitIsSet) {
+    auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
+    constexpr uint32_t mocs = 5u;
+    stateBaseAddress.setGeneralStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.GeneralStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getGeneralStateMemoryObjectControlState());
+    stateBaseAddress.setStatelessDataPortAccessMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getStatelessDataPortAccessMemoryObjectControlState());
+    stateBaseAddress.setSurfaceStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.SurfaceStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getSurfaceStateMemoryObjectControlState());
+    stateBaseAddress.setDynamicStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.DynamicStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getDynamicStateMemoryObjectControlState());
+    stateBaseAddress.setIndirectObjectMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.IndirectObjectMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getIndirectObjectMemoryObjectControlState());
+    stateBaseAddress.setInstructionMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.InstructionMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getInstructionMemoryObjectControlState());
+    stateBaseAddress.setBindlessSurfaceStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getBindlessSurfaceStateMemoryObjectControlState());
 }
 
 XE_HPC_CORETEST_F(XeHpcCoreHwCmdTest, givenPostSyncDataWhenProgrammingMocsThenMocsIndexIsSetProperly) {

@@ -8,10 +8,13 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 using namespace NEO;
 
@@ -27,6 +30,21 @@ HWTEST2_F(L3ControlTests, givenL3ControlWhenAdjustCalledThenUnTypedDataPortCache
 
     EXPECT_FALSE(l3ControlOnStart.getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(l3Control.getUnTypedDataPortCacheFlush());
+}
+
+using CommandEncodeStatesXeHpgCoreTest = Test<CommandEncodeStatesFixture>;
+
+XE_HPG_CORETEST_F(CommandEncodeStatesXeHpgCoreTest, givenCommandContainerWhenAdjustPipelineSelectCalledThenCommandHasGpgpuType) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
+    ASSERT_NE(itorCmd, commands.end());
+
+    auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
+    EXPECT_EQ(cmd->getPipelineSelection(), PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 }
 
 void testProgrammingStateComputeModeXeLpgWithEnabledWa(ExecutionEnvironment &executionEnvironment) {

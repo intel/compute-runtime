@@ -70,11 +70,11 @@ DG2TEST_F(Dg2SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramCorre
     args.setGeneralStateBaseAddress = true;
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, sbaCmd.getL1CacheControl());
 
     args.isDebuggerActive = true;
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControl());
 }
 
 DG2TEST_F(Dg2SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
@@ -88,19 +88,19 @@ DG2TEST_F(Dg2SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThen
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(0u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(0u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(2u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(2u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceAllResourcesUncached.set(true);
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(1u, sbaCmd.getL1CacheControl());
 }

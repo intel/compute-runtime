@@ -33,25 +33,25 @@ XE3_CORETEST_F(Xe3CoreHwCmdTest, givenStateBaseAddressWhenProgrammingMocsThenMoc
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     stateBaseAddress.setGeneralStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setStatelessDataPortAccessMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setSurfaceStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setDynamicStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setInstructionMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.InstructionMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.InstructionMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setBindlessSurfaceStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setBindlessSamplerStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMOCSTables);
 }
 
 XE3_CORETEST_F(Xe3CoreHwCmdTest, givenPostSyncDataWhenProgrammingMocsThenMocsIndexIsSetProperly) {

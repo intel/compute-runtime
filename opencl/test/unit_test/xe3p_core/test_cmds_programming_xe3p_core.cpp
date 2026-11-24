@@ -53,7 +53,7 @@ XE3P_CORETEST_F(CmdsProgrammingTestsXe3pCore, givenL3ToL1DebugFlagWhenStatelessM
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
 
-    auto actualL1CachePolicy = static_cast<uint8_t>(stateBaseAddress->getL1CacheControlCachePolicy());
+    auto actualL1CachePolicy = static_cast<uint8_t>(stateBaseAddress->getL1CacheControl());
 
     EXPECT_EQ(pDevice->getProductHelper().getL1CachePolicy(false), actualL1CachePolicy);
 }

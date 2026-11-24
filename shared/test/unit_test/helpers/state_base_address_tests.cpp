@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -275,31 +276,31 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControl());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(2);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, stateBaseAddress.getL1CacheControl());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(3);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, stateBaseAddress.getL1CacheControl());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(4);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, stateBaseAddress.getL1CacheControl());
 
         debugManager.flags.ForceAllResourcesUncached.set(true);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, stateBaseAddress.getL1CacheControl());
     }
     args.isDebuggerActive = true;
     {
@@ -307,31 +308,31 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControl());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(2);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, stateBaseAddress.getL1CacheControl());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(3);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, stateBaseAddress.getL1CacheControl());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(4);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, stateBaseAddress.getL1CacheControl());
 
         debugManager.flags.ForceAllResourcesUncached.set(true);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, stateBaseAddress.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, stateBaseAddress.getL1CacheControl());
     }
 }
 
@@ -359,13 +360,13 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
 
         StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-        EXPECT_EQ(input.cachePolicy, sbaCmd.getL1CacheControlCachePolicy());
+        EXPECT_EQ(input.cachePolicy, sbaCmd.getL1CacheControl());
 
         debugManager.flags.ForceAllResourcesUncached.set(true);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, sbaCmd.getL1CacheControlCachePolicy());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, sbaCmd.getL1CacheControl());
     }
 }
 
@@ -663,6 +664,18 @@ SBA_HWTEST_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingDynamicStateSurf
     EXPECT_EQ((mocsIndex << 1), sbaCmd.getStatelessDataPortAccessMemoryObjectControlState());
 }
 
+HWTEST2_F(SbaTest, givenUnknownStatelessMocsWhenProgrammingStateBaseAddressThenUnknownStatelessMocsIndexIsProgrammed, IsSbaRequired) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    STATE_BASE_ADDRESS sbaCmd = FamilyType::cmdInitStateBaseAddress;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
+    args.statelessMocsIndex = CacheSettings::unknownMocs;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_EQ(StateBaseAddressHelper<FamilyType>::unknownStatelessMocsIndex << 1, sbaCmd.getStatelessDataPortAccessMemoryObjectControlState());
+}
+
 using IndirectBaseAddressPlatforms = IsGen12LP;
 
 HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStatePropertyThenCommandDispatchedCorrectlyIndirectBaseAddress, IndirectBaseAddressPlatforms) {
@@ -735,7 +748,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStat
     args.bindlessSurfaceStateBaseAddress = 0;
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
-    EXPECT_EQ(surfaceHeapSize * MemoryConstants::pageSize / sizeof(RENDER_SURFACE_STATE), sbaCmd.getBindlessSurfaceStateSize());
+    EXPECT_EQ(surfaceHeapSize * MemoryConstants::pageSize / sizeof(RENDER_SURFACE_STATE) - 1, sbaCmd.getBindlessSurfaceStateSize());
     EXPECT_EQ(surfaceHeapBase, sbaCmd.getBindlessSurfaceStateBaseAddress());
     EXPECT_TRUE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
 }

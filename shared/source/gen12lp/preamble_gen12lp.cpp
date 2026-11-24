@@ -110,7 +110,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     if (pipelineSelectArgs.systolicPipelineSelectSupport) {
         mask |= pipelineSelectSystolicModeEnableMaskBits;
-        pipelineSelectCmd.setSpecialModeEnable(pipelineSelectArgs.systolicPipelineSelectMode);
+        pipelineSelectCmd.setSystolicModeEnable(pipelineSelectArgs.systolicPipelineSelectMode);
     }
 
     pipelineSelectCmd.setMaskBits(mask);

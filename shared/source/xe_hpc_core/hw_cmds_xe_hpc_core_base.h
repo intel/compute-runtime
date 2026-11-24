@@ -166,4 +166,12 @@ struct XeHpcCoreFamily : public XeHpcCore {
     }
 };
 
+enum class MemoryCompressionState;
+
+template <typename GfxFamily>
+void setSbaStatelessCompressionParams(typename GfxFamily::STATE_BASE_ADDRESS *stateBaseAddress,
+                                      MemoryCompressionState memoryCompressionState);
+template <>
+void setSbaStatelessCompressionParams<XeHpcCoreFamily>(typename XeHpcCoreFamily::STATE_BASE_ADDRESS *stateBaseAddress,
+                                                       MemoryCompressionState memoryCompressionState);
 } // namespace NEO

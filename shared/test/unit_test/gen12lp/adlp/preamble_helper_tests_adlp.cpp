@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ ADLPTEST_F(PreambleHelperTestsAdlp, givenSystolicPipelineSelectModeDisabledWhenP
     const auto &ps = *reinterpret_cast<PIPELINE_SELECT *>(*itorPipelineSelect);
 
     const auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
-    EXPECT_FALSE(ps.getSpecialModeEnable());
+    EXPECT_FALSE(ps.getSystolicModeEnable());
     EXPECT_EQ(expectedMask, ps.getMaskBits());
     EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, ps.getPipelineSelection());
 }
@@ -85,7 +85,7 @@ ADLPTEST_F(PreambleHelperTestsAdlp, givenSystolicPipelineSelectModeEnabledWhenPr
     const auto &ps = *reinterpret_cast<PIPELINE_SELECT *>(*itorPipelineSelect);
 
     const auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits | pipelineSelectSystolicModeEnableMaskBits;
-    EXPECT_TRUE(ps.getSpecialModeEnable());
+    EXPECT_TRUE(ps.getSystolicModeEnable());
     EXPECT_EQ(expectedMask, ps.getMaskBits());
     EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, ps.getPipelineSelection());
 }

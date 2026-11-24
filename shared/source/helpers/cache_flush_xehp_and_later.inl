@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ inline void flushGpuCache(LinearStream *commandStream, std::span<const L3Range> 
     uint32_t basel3ControlLength = 3;
     uint32_t sizeOfl3FlushAddressRangeInDwords = 2;
     uint32_t length = basel3ControlLength + static_cast<uint32_t>(ranges.size()) * sizeOfl3FlushAddressRangeInDwords;
-    cmdL3Control.setLength(length);
+    cmdL3Control.setDwordLength(length);
     cmdL3Control.setHdcPipelineFlush(true);
     if (postSyncAddress != 0) {
         cmdL3Control.setPostSyncOperation(L3_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);

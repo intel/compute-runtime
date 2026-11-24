@@ -13,6 +13,8 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/pipeline_select_helper.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -525,7 +527,7 @@ XE_HPC_CORETEST_F(XeHpcSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenPr
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControl());
 }
 
 XE_HPC_CORETEST_F(XeHpcSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
@@ -540,21 +542,21 @@ XE_HPC_CORETEST_F(XeHpcSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProg
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(0u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(0u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(2u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(2u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceAllResourcesUncached.set(true);
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(1u, sbaCmd.getL1CacheControl());
 }
 
 using XeHpcCoreSamplerStateTest = ::testing::Test;
@@ -604,4 +606,52 @@ XE_HPC_CORETEST_F(XeHpcCoreSamplerStateTest, givenForceSamplerLowFilteringPrecis
     for (auto dword : sampler) {
         EXPECT_EQ(0u, dword);
     }
+}
+
+using XeHpcCoreSbaTest = SbaTest;
+
+XE_HPC_CORETEST_F(XeHpcCoreSbaTest, givenMemoryCompressionEnabledWhenAppendingSbaThenSbaIsProgrammedAsWithoutCompression) {
+    auto programSba = [&](MemoryCompressionState memoryCompressionState) {
+        auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+        StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
+        args.setGeneralStateBaseAddress = true;
+        args.memoryCompressionState = memoryCompressionState;
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
+        return sbaCmd;
+    };
+
+    auto sbaWithoutCompression = programSba(MemoryCompressionState::notApplicable);
+    auto sbaWithCompression = programSba(MemoryCompressionState::enabled);
+    EXPECT_EQ(0, memcmp(&sbaWithoutCompression, &sbaWithCompression, sizeof(sbaWithCompression)));
+}
+
+XE_HPC_CORETEST_F(XeHpcCoreSbaTest, givenDynamicStateHeapWhenAppendingSbaThenBindlessSamplerStateDwordsStayZero) {
+    constexpr uint32_t bindlessSamplerStateDwords[] = {19u, 20u, 21u};
+    for (auto useGlobalHeapsBaseAddress : {false, true}) {
+        auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+        StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, &dsh, nullptr);
+        args.useGlobalHeapsBaseAddress = useGlobalHeapsBaseAddress;
+        args.globalHeapsBaseAddress = 0x10000u;
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
+        for (auto dwordIndex : bindlessSamplerStateDwords) {
+            const uint32_t dword = sbaCmd.TheStructure.RawData[dwordIndex];
+            EXPECT_EQ(0u, dword);
+        }
+    }
+}
+
+using CommandEncodeStatesXeHpcCoreTest = Test<CommandEncodeStatesFixture>;
+
+XE_HPC_CORETEST_F(CommandEncodeStatesXeHpcCoreTest, givenCommandContainerWhenAdjustPipelineSelectCalledThenPipelineSelectionMaskBitsAreNotSet) {
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), descriptor);
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
+    ASSERT_NE(itorCmd, commands.end());
+
+    auto cmd = genCmdCast<PIPELINE_SELECT *>(*itorCmd);
+    EXPECT_EQ(0u, cmd->getMaskBits() & pipelineSelectEnablePipelineSelectMaskBits);
+    EXPECT_EQ(0u, cmd->TheStructure.RawData[0] & pipelineSelectEnablePipelineSelectMaskBits);
 }

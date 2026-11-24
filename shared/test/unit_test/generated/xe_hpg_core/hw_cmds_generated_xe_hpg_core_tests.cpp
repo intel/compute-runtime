@@ -1867,25 +1867,25 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenStateBaseAddressWhenInitCalledThen
     EXPECT_EQ(STATE_BASE_ADDRESS::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED, cmd.TheStructure.Common._3DCommandOpcode);
     EXPECT_EQ(STATE_BASE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON, cmd.TheStructure.Common.CommandSubtype);
     EXPECT_EQ(STATE_BASE_ADDRESS::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMOCSTables); // patched
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.GeneralStateBaseAddress);
-    EXPECT_EQ(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED, cmd.TheStructure.Common.EnableMemoryCompressionForAllStatelessAccesses);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables); // patched
-    EXPECT_EQ(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, cmd.TheStructure.Common.L1CachePolicyL1CacheControl);   // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables);            // patched
+    EXPECT_FALSE(cmd.TheStructure.Common.EnableMemoryCompressionForAllStatelessAccesses);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMOCSTables); // patched
+    EXPECT_EQ(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, cmd.TheStructure.Common.L1CacheControl);               // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMOCSTables);            // patched
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.SurfaceStateBaseAddress);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMOCSTables); // patched
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.DynamicStateBaseAddress);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.InstructionMemoryObjectControlStateIndexToMOCSTables); // patched
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.InstructionBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.GeneralStateBufferSize);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DynamicStateBufferSize);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.IndirectObjectBufferSize);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.InstructionBufferSize);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMOCSTables); // patched
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.BindlessSurfaceStateBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSurfaceStateSize);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMOCSTables); // patched
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.BindlessSamplerStateBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSamplerStateBufferSize);
 }
@@ -1905,11 +1905,11 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenStateBaseAddressWhenSetterUsedThen
     cmd.setGeneralStateBaseAddress(0xfffffffffffff000ull);
     EXPECT_EQ(0xfffffffffffff000ull, cmd.getGeneralStateBaseAddress());
 
-    cmd.setEnableMemoryCompressionForAllStatelessAccesses(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED);
-    EXPECT_EQ(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED, cmd.getEnableMemoryCompressionForAllStatelessAccesses());
+    cmd.setEnableMemoryCompressionForAllStatelessAccesses(false);
+    EXPECT_FALSE(cmd.getEnableMemoryCompressionForAllStatelessAccesses());
 
-    cmd.setEnableMemoryCompressionForAllStatelessAccesses(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_ENABLED);
-    EXPECT_EQ(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_ENABLED, cmd.getEnableMemoryCompressionForAllStatelessAccesses());
+    cmd.setEnableMemoryCompressionForAllStatelessAccesses(true);
+    EXPECT_TRUE(cmd.getEnableMemoryCompressionForAllStatelessAccesses());
 
     cmd.setStatelessDataPortAccessMemoryObjectControlState(0x0u);               // patched
     EXPECT_EQ(0x0u, cmd.getStatelessDataPortAccessMemoryObjectControlState());  // patched

@@ -189,13 +189,17 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
         auto itorCmd = find<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
         while (itorCmd != cmdList.end()) {
             auto cmd = getCommand<PIPELINE_SELECT>(itorCmd, cmdList.end());
-            if (cmd->getPipelineSelection() == PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU &&
-                pipelineSelectEnablePipelineSelectMaskBits == (pipelineSelectEnablePipelineSelectMaskBits & cmd->getMaskBits())) {
+            if constexpr (requires { cmd->getPipelineSelection(); }) {
+                if (cmd->getPipelineSelection() == PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU &&
+                    pipelineSelectEnablePipelineSelectMaskBits == (pipelineSelectEnablePipelineSelectMaskBits & cmd->getMaskBits())) {
+                    numberOfGpgpuSelects++;
+                }
+                if (cmd->getPipelineSelection() == PIPELINE_SELECT::PIPELINE_SELECTION_3D &&
+                    pipelineSelectEnablePipelineSelectMaskBits == (pipelineSelectEnablePipelineSelectMaskBits & cmd->getMaskBits())) {
+                    numberOf3dSelects++;
+                }
+            } else {
                 numberOfGpgpuSelects++;
-            }
-            if (cmd->getPipelineSelection() == PIPELINE_SELECT::PIPELINE_SELECTION_3D &&
-                pipelineSelectEnablePipelineSelectMaskBits == (pipelineSelectEnablePipelineSelectMaskBits & cmd->getMaskBits())) {
-                numberOf3dSelects++;
             }
             itorCmd = find<PIPELINE_SELECT *>(++itorCmd, cmdList.end());
         }

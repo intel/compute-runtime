@@ -251,7 +251,9 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseA
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getGeneralStateMemoryObjectControlState());
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getInstructionMemoryObjectControlState());
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSurfaceStateMemoryObjectControlState());
-    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState());
+    if constexpr (requires { stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState(); }) {
+        EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState());
+    }
     EXPECT_EQ(expectedMocsForStateless, stateBaseAddress->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
@@ -278,7 +280,9 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseA
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getGeneralStateMemoryObjectControlState());
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getInstructionMemoryObjectControlState());
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSurfaceStateMemoryObjectControlState());
-    EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState());
+    if constexpr (requires { stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState(); }) {
+        EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getBindlessSamplerStateMemoryObjectControlState());
+    }
 }
 
 HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, givenL3ToL1DebugFlagWhenStatelessMocsIsProgrammedThenItHasL1CachingOn, IsHeapfulRequiredAndAtLeastXeCore) {
@@ -337,7 +341,10 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamRece
     EXPECT_EQ(bindlessSurfaceSize, stateBaseAddress->getBindlessSurfaceStateSize());
 }
 
-HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenSetBindlessSamplerStateBaseAddressModifyEnable, IsHeapfulRequiredAndAtLeastXeCore) {
+using IsAtLeastXeCoreWithSampler = MatchAll<IsAtLeastXeCore, SupportsSampler>;
+using IsHeapfulRequiredAndAtLeastXeCoreWithSampler = IsHeapfulRequiredAnd<IsAtLeastXeCoreWithSampler>;
+
+HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenSetBindlessSamplerStateBaseAddressModifyEnable, IsHeapfulRequiredAndAtLeastXeCoreWithSampler) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessModeEnabled) {
@@ -447,7 +454,10 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsXe
 
     PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, pipelineArgs, rootDeviceEnvironment);
 
-    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits;
+    uint32_t expectedMask = 0;
+    if constexpr (requires { cmd->getPipelineSelection(); }) {
+        expectedMask = pipelineSelectEnablePipelineSelectMaskBits;
+    }
 
     if (pipelineArgs.systolicPipelineSelectSupport) {
         expectedMask |= pipelineSelectSystolicModeEnableMaskBits;

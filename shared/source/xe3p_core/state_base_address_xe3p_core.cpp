@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ void setSbaStatelessCompressionParams<GfxFamily>(typename GfxFamily::STATE_BASE_
 
 template <>
 void StateBaseAddressHelper<GfxFamily>::programHeaplessStateBaseAddress(STATE_BASE_ADDRESS &sba) {
-    sba.setBaseAddressDisable(true);
+    sba.setBaseaddrDis(STATE_BASE_ADDRESS::BASEADDR_DIS_FULL_64B_MODE);
 }
 
 template struct StateBaseAddressHelper<GfxFamily>;

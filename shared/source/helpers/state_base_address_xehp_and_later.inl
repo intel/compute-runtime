@@ -15,12 +15,15 @@ namespace NEO {
 
 template <typename GfxFamily>
 void setSbaStatelessCompressionParams(typename GfxFamily::STATE_BASE_ADDRESS *stateBaseAddress, MemoryCompressionState memoryCompressionState) {
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    stateBaseAddress->setEnableMemoryCompressionForAllStatelessAccesses(memoryCompressionState == MemoryCompressionState::enabled);
+}
 
-    if (memoryCompressionState == MemoryCompressionState::enabled) {
-        stateBaseAddress->setEnableMemoryCompressionForAllStatelessAccesses(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_ENABLED);
-    } else {
-        stateBaseAddress->setEnableMemoryCompressionForAllStatelessAccesses(STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED);
+template <typename GfxFamily>
+void setSbaBindlessSamplerState(typename GfxFamily::STATE_BASE_ADDRESS &stateBaseAddress, uint64_t baseAddress, uint32_t bufferSize) {
+    if constexpr (requires { stateBaseAddress.setBindlessSamplerStateBaseAddress(baseAddress); }) {
+        stateBaseAddress.setBindlessSamplerStateBaseAddress(baseAddress);
+        stateBaseAddress.setBindlessSamplerStateBufferSize(bufferSize);
+        stateBaseAddress.setBindlessSamplerStateBaseAddressModifyEnable(true);
     }
 }
 
@@ -39,9 +42,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         }
 
         if (args.sbaProperties->dynamicStateBaseAddress.value != StreamProperty64::initValue) {
-            args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddress(args.sbaProperties->dynamicStateBaseAddress.value);
-            args.stateBaseAddressCmd->setBindlessSamplerStateBufferSize(static_cast<uint32_t>(args.sbaProperties->dynamicStateSize.value));
-            args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
+            setSbaBindlessSamplerState<GfxFamily>(*args.stateBaseAddressCmd, args.sbaProperties->dynamicStateBaseAddress.value, static_cast<uint32_t>(args.sbaProperties->dynamicStateSize.value));
         }
     }
     if (args.setGeneralStateBaseAddress && is64bit) {
@@ -62,14 +63,10 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         }
 
         if (args.dsh) {
-            args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddress(args.dsh->getHeapGpuBase());
-            args.stateBaseAddressCmd->setBindlessSamplerStateBufferSize(args.dsh->getHeapSizeInPages());
-            args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
+            setSbaBindlessSamplerState<GfxFamily>(*args.stateBaseAddressCmd, args.dsh->getHeapGpuBase(), args.dsh->getHeapSizeInPages());
         }
     } else {
-        args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
-        args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddress(args.globalHeapsBaseAddress);
-        args.stateBaseAddressCmd->setBindlessSamplerStateBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+        setSbaBindlessSamplerState<GfxFamily>(*args.stateBaseAddressCmd, args.globalHeapsBaseAddress, MemoryConstants::sizeOf4GBinPageEntities);
     }
 
     auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
@@ -81,7 +78,9 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     args.stateBaseAddressCmd->setDynamicStateMemoryObjectControlState(heapMocsValue);
     args.stateBaseAddressCmd->setGeneralStateMemoryObjectControlState(heapMocsValue);
     args.stateBaseAddressCmd->setBindlessSurfaceStateMemoryObjectControlState(heapMocsValue);
-    args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue);
+    if constexpr (requires { args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue); }) {
+        args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue);
+    }
 
     if constexpr (GfxFamily::samplerArbitrationControl) {
         if (debugManager.flags.OverrideSamplerArbitrationControl.get() != -1) {
@@ -130,11 +129,11 @@ uint32_t StateBaseAddressHelper<GfxFamily>::getMaxBindlessSurfaceStates() {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args) {
     auto cachePolicy = args.isDebuggerActive ? args.l1CachePolicyDebuggerActive : args.l1CachePolicy;
-    args.stateBaseAddressCmd->setL1CacheControlCachePolicy(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(cachePolicy));
+    args.stateBaseAddressCmd->setL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(cachePolicy));
 
     if (debugManager.flags.ForceStatelessL1CachingPolicy.get() != -1 &&
         debugManager.flags.ForceAllResourcesUncached.get() == false) {
-        args.stateBaseAddressCmd->setL1CacheControlCachePolicy(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(debugManager.flags.ForceStatelessL1CachingPolicy.get()));
+        args.stateBaseAddressCmd->setL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(debugManager.flags.ForceStatelessL1CachingPolicy.get()));
     }
 }
 

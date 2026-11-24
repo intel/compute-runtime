@@ -46,7 +46,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagWhenStatelessMocsIsProgra
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
 
-    EXPECT_EQ(stateBaseAddress->getL1CacheControlCachePolicy(), STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB);
+    EXPECT_EQ(stateBaseAddress->getL1CacheControl(), STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB);
 }
 
 DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagAndDebuggerInitializedWhenStatelessMocsIsProgrammedThenItHasCorrectL1CachingOn) {
@@ -67,7 +67,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagAndDebuggerInitializedWhe
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
 
-    EXPECT_EQ(stateBaseAddress->getL1CacheControlCachePolicy(), STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
+    EXPECT_EQ(stateBaseAddress->getL1CacheControl(), STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
 }
 
 DG2TEST_F(CmdsProgrammingTestsDg2, whenAppendingRssThenProgramWBL1CachePolicyUnlessDebuggerIsActive) {

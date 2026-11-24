@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 
     PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
+    constexpr bool hasPipelineSelection = requires { cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU); };
 
     if (MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
         PipeControlArgs args;
@@ -33,7 +34,9 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     if (debugManager.flags.CleanStateInPreamble.get()) {
         auto cmdBuffer = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-        cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_3D);
+        if constexpr (hasPipelineSelection) {
+            cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_3D);
+        }
         *cmdBuffer = cmd;
 
         PipeControlArgs args = {};
@@ -43,9 +46,12 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     auto cmdBuffer = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
 
-    auto mask = pipelineSelectEnablePipelineSelectMaskBits;
+    uint32_t mask = 0;
 
-    cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+    if constexpr (hasPipelineSelection) {
+        mask = pipelineSelectEnablePipelineSelectMaskBits;
+        cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+    }
 
     bool systolicSupport = pipelineSelectArgs.systolicPipelineSelectSupport;
     bool systolicValue = pipelineSelectArgs.systolicPipelineSelectMode;

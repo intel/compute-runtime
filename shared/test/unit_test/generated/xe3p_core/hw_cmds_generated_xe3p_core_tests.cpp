@@ -2052,24 +2052,24 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenStateBaseAddressWhenInitCalledThenFie
     EXPECT_EQ(STATE_BASE_ADDRESS::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED, cmd.TheStructure.Common._3DCommandOpcode);
     EXPECT_EQ(STATE_BASE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON, cmd.TheStructure.Common.CommandSubtype);
     EXPECT_EQ(STATE_BASE_ADDRESS::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMOCSTables);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.GeneralStateBaseAddress);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables);
-    EXPECT_EQ(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, cmd.TheStructure.Common.L1CacheControlCachePolicy); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMOCSTables);
+    EXPECT_EQ(STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, cmd.TheStructure.Common.L1CacheControl); // patched
     EXPECT_EQ(STATE_BASE_ADDRESS::SAMPLER_ARBITRATION_CONTROL_ROUND_ROBIN, cmd.TheStructure.Common.SamplerArbitrationControl);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMOCSTables);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.SurfaceStateBaseAddress);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMOCSTables);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.DynamicStateBaseAddress);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.InstructionMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.InstructionMemoryObjectControlStateIndexToMOCSTables);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.InstructionBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.GeneralStateBufferSize);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DynamicStateBufferSize);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.InstructionBufferSize);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMOCSTables);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.BindlessSurfaceStateBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSurfaceStateSize);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMOCSTables);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.BindlessSamplerStateBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.BindlessSamplerStateBufferSize);
 }
@@ -4876,7 +4876,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenStateSystemMemFenceAddressWhenInitCal
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ContextRestoreInvalid);
     EXPECT_EQ(STATE_SYSTEM_MEM_FENCE_ADDRESS::_3D_COMMAND_SUB_OPCODE_STATE_SYSTEM_MEM_FENCE_ADDRESS, cmd.TheStructure.Common._3DCommandSubOpcode);
     EXPECT_EQ(STATE_SYSTEM_MEM_FENCE_ADDRESS::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED, cmd.TheStructure.Common._3DCommandOpcode);
-    EXPECT_EQ(STATE_SYSTEM_MEM_FENCE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON_, cmd.TheStructure.Common.CommandSubtype); // patched
+    EXPECT_EQ(STATE_SYSTEM_MEM_FENCE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON, cmd.TheStructure.Common.CommandSubtype); // patched
     EXPECT_EQ(STATE_SYSTEM_MEM_FENCE_ADDRESS::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.SystemMemoryFenceAddress);
 }

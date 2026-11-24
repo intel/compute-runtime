@@ -1377,7 +1377,7 @@ XE3P_CORETEST_F(Xe3pSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgr
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(pDevice->getProductHelper().getL1CachePolicy(false), sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(pDevice->getProductHelper().getL1CachePolicy(false), sbaCmd.getL1CacheControl());
 }
 
 XE3P_CORETEST_F(Xe3pSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
@@ -1391,13 +1391,13 @@ XE3P_CORETEST_F(Xe3pSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgram
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(0u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(0u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceStatelessL1CachingPolicy.set(1u);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(1u, sbaCmd.getL1CacheControl());
 }
 
 XE3P_CORETEST_F(Xe3pSbaTest, givenOverrideSamplerArbitrationControlWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {

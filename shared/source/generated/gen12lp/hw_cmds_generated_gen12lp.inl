@@ -1887,7 +1887,7 @@ typedef struct tagPIPELINE_SELECT {
             uint32_t MediaSamplerDopClockGateEnable : BITFIELD_RANGE(4, 4);
             uint32_t Reserved_5 : BITFIELD_RANGE(5, 5);
             uint32_t MediaSamplerPowerClockGateDisable : BITFIELD_RANGE(6, 6);
-            uint32_t SpecialModeEnable : BITFIELD_RANGE(7, 7); // ADL-only, patched
+            uint32_t SystolicModeEnable : BITFIELD_RANGE(7, 7);
             uint32_t MaskBits : BITFIELD_RANGE(8, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
@@ -1915,7 +1915,6 @@ typedef struct tagPIPELINE_SELECT {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.PipelineSelection = PIPELINE_SELECTION_3D;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_PIPELINE_SELECT;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_SINGLE_DW;
@@ -1960,18 +1959,42 @@ typedef struct tagPIPELINE_SELECT {
     inline bool getMediaSamplerPowerClockGateDisable() const {
         return TheStructure.Common.MediaSamplerPowerClockGateDisable;
     }
-    inline void setSpecialModeEnable(const bool value) {
-        TheStructure.Common.SpecialModeEnable = value;
+    inline void setSystolicModeEnable(const bool value) {
+        TheStructure.Common.SystolicModeEnable = value;
     }
-    inline bool getSpecialModeEnable() const {
-        return TheStructure.Common.SpecialModeEnable;
+    inline bool getSystolicModeEnable() const {
+        return TheStructure.Common.SystolicModeEnable;
     }
     inline void setMaskBits(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xff);
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.MaskBits = value;
     }
     inline uint32_t getMaskBits() const {
         return TheStructure.Common.MaskBits;
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
 } PIPELINE_SELECT;
 STATIC_ASSERT(4 == sizeof(PIPELINE_SELECT));
@@ -3407,72 +3430,87 @@ STATIC_ASSERT(16 == sizeof(SAMPLER_STATE));
 typedef struct tagSTATE_BASE_ADDRESS {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1-2
             uint64_t GeneralStateBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_33 : BITFIELD_RANGE(1, 3);
-            uint64_t GeneralStateMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t GeneralStateMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint64_t GeneralStateMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(4, 4);
+            uint64_t GeneralStateMemoryObjectControlStateIndexToMOCSTables : BITFIELD_RANGE(5, 10);
             uint64_t Reserved_43 : BITFIELD_RANGE(11, 11);
             uint64_t GeneralStateBaseAddress : BITFIELD_RANGE(12, 63);
+            // DWORD 3
             uint32_t Reserved_96 : BITFIELD_RANGE(0, 15);
-            uint32_t StatelessDataPortAccessMemoryObjectControlState_Reserved : BITFIELD_RANGE(16, 16);
-            uint32_t StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(17, 22);
+            uint32_t StatelessDataPortAccessMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(16, 16);
+            uint32_t StatelessDataPortAccessMemoryObjectControlStateIndexToMOCSTables : BITFIELD_RANGE(17, 22);
             uint32_t Reserved_119 : BITFIELD_RANGE(23, 31);
+            // DWORD 4-5
             uint64_t SurfaceStateBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_129 : BITFIELD_RANGE(1, 3);
-            uint64_t SurfaceStateMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t SurfaceStateMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint64_t SurfaceStateMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(4, 4);
+            uint64_t SurfaceStateMemoryObjectControlStateIndexToMOCSTables : BITFIELD_RANGE(5, 10);
             uint64_t Reserved_139 : BITFIELD_RANGE(11, 11);
             uint64_t SurfaceStateBaseAddress : BITFIELD_RANGE(12, 63);
+            // DWORD 6-7
             uint64_t DynamicStateBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_193 : BITFIELD_RANGE(1, 3);
-            uint64_t DynamicStateMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t DynamicStateMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint64_t DynamicStateMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(4, 4);
+            uint64_t DynamicStateMemoryObjectControlStateIndexToMOCSTables : BITFIELD_RANGE(5, 10);
             uint64_t Reserved_203 : BITFIELD_RANGE(11, 11);
             uint64_t DynamicStateBaseAddress : BITFIELD_RANGE(12, 63);
+            // DWORD 8-9
             uint64_t IndirectObjectBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_257 : BITFIELD_RANGE(1, 3);
-            uint64_t IndirectObjectMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t IndirectObjectMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint64_t IndirectObjectMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(4, 4);
+            uint64_t IndirectObjectMemoryObjectControlStateIndexToMOCSTables : BITFIELD_RANGE(5, 10);
             uint64_t Reserved_267 : BITFIELD_RANGE(11, 11);
             uint64_t IndirectObjectBaseAddress : BITFIELD_RANGE(12, 63);
+            // DWORD 10-11
             uint64_t InstructionBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_321 : BITFIELD_RANGE(1, 3);
-            uint64_t InstructionMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t InstructionMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint64_t InstructionMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(4, 4);
+            uint64_t InstructionMemoryObjectControlStateIndexToMOCSTables : BITFIELD_RANGE(5, 10);
             uint64_t Reserved_331 : BITFIELD_RANGE(11, 11);
             uint64_t InstructionBaseAddress : BITFIELD_RANGE(12, 63);
+            // DWORD 12
             uint32_t GeneralStateBufferSizeModifyEnable : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_385 : BITFIELD_RANGE(1, 11);
             uint32_t GeneralStateBufferSize : BITFIELD_RANGE(12, 31);
+            // DWORD 13
             uint32_t DynamicStateBufferSizeModifyEnable : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_417 : BITFIELD_RANGE(1, 11);
             uint32_t DynamicStateBufferSize : BITFIELD_RANGE(12, 31);
+            // DWORD 14
             uint32_t IndirectObjectBufferSizeModifyEnable : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_449 : BITFIELD_RANGE(1, 11);
             uint32_t IndirectObjectBufferSize : BITFIELD_RANGE(12, 31);
+            // DWORD 15
             uint32_t InstructionBufferSizeModifyEnable : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_481 : BITFIELD_RANGE(1, 11);
             uint32_t InstructionBufferSize : BITFIELD_RANGE(12, 31);
+            // DWORD 16-17
             uint64_t BindlessSurfaceStateBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_513 : BITFIELD_RANGE(1, 3);
-            uint64_t BindlessSurfaceStateMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint64_t BindlessSurfaceStateMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(4, 4);
+            uint64_t BindlessSurfaceStateMemoryObjectControlStateIndexToMOCSTables : BITFIELD_RANGE(5, 10);
             uint64_t Reserved_523 : BITFIELD_RANGE(11, 11);
             uint64_t BindlessSurfaceStateBaseAddress : BITFIELD_RANGE(12, 63);
+            // DWORD 18
             uint32_t Reserved_576 : BITFIELD_RANGE(0, 11);
             uint32_t BindlessSurfaceStateSize : BITFIELD_RANGE(12, 31);
+            // DWORD 19-20
             uint64_t BindlessSamplerStateBaseAddressModifyEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_609 : BITFIELD_RANGE(1, 3);
-            uint64_t BindlessSamplerStateMemoryObjectControlState_Reserved : BITFIELD_RANGE(4, 4);
-            uint64_t BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint64_t BindlessSamplerStateMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(4, 4);
+            uint64_t BindlessSamplerStateMemoryObjectControlStateIndexToMOCSTables : BITFIELD_RANGE(5, 10);
             uint64_t Reserved_619 : BITFIELD_RANGE(11, 11);
             uint64_t BindlessSamplerStateBaseAddress : BITFIELD_RANGE(12, 63);
+            // DWORD 21
             uint32_t Reserved_672 : BITFIELD_RANGE(0, 11);
             uint32_t BindlessSamplerStateBufferSize : BITFIELD_RANGE(12, 31);
         } Common;
@@ -3493,28 +3531,39 @@ typedef struct tagSTATE_BASE_ADDRESS {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    typedef enum tagPATCH_CONSTANTS {
-        GENERALSTATEBASEADDRESS_BYTEOFFSET = 0x4,
-        GENERALSTATEBASEADDRESS_INDEX = 0x1,
-        SURFACESTATEBASEADDRESS_BYTEOFFSET = 0x10,
-        SURFACESTATEBASEADDRESS_INDEX = 0x4,
-        DYNAMICSTATEBASEADDRESS_BYTEOFFSET = 0x18,
-        DYNAMICSTATEBASEADDRESS_INDEX = 0x6,
-        INDIRECTOBJECTBASEADDRESS_BYTEOFFSET = 0x20,
-        INDIRECTOBJECTBASEADDRESS_INDEX = 0x8,
-        INSTRUCTIONBASEADDRESS_BYTEOFFSET = 0x28,
-        INSTRUCTIONBASEADDRESS_INDEX = 0xa,
-        BINDLESSSURFACESTATEBASEADDRESS_BYTEOFFSET = 0x40,
-        BINDLESSSURFACESTATEBASEADDRESS_INDEX = 0x10,
-        BINDLESSSAMPLERSTATEBASEADDRESS_BYTEOFFSET = 0x4c,
-        BINDLESSSAMPLERSTATEBASEADDRESS_INDEX = 0x13,
-    } PATCH_CONSTANTS;
+    typedef enum tagGENERALSTATEBASEADDRESS {
+        GENERALSTATEBASEADDRESS_BIT_SHIFT = 0xc,
+        GENERALSTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
+    } GENERALSTATEBASEADDRESS;
+    typedef enum tagSURFACESTATEBASEADDRESS {
+        SURFACESTATEBASEADDRESS_BIT_SHIFT = 0xc,
+        SURFACESTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
+    } SURFACESTATEBASEADDRESS;
+    typedef enum tagDYNAMICSTATEBASEADDRESS {
+        DYNAMICSTATEBASEADDRESS_BIT_SHIFT = 0xc,
+        DYNAMICSTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
+    } DYNAMICSTATEBASEADDRESS;
+    typedef enum tagINDIRECTOBJECTBASEADDRESS {
+        INDIRECTOBJECTBASEADDRESS_BIT_SHIFT = 0xc,
+        INDIRECTOBJECTBASEADDRESS_ALIGN_SIZE = 0x1000,
+    } INDIRECTOBJECTBASEADDRESS;
+    typedef enum tagINSTRUCTIONBASEADDRESS {
+        INSTRUCTIONBASEADDRESS_BIT_SHIFT = 0xc,
+        INSTRUCTIONBASEADDRESS_ALIGN_SIZE = 0x1000,
+    } INSTRUCTIONBASEADDRESS;
+    typedef enum tagBINDLESSSURFACESTATEBASEADDRESS {
+        BINDLESSSURFACESTATEBASEADDRESS_BIT_SHIFT = 0xc,
+        BINDLESSSURFACESTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
+    } BINDLESSSURFACESTATEBASEADDRESS;
+    typedef enum tagBINDLESSSAMPLERSTATEBASEADDRESS {
+        BINDLESSSAMPLERSTATEBASEADDRESS_BIT_SHIFT = 0xc,
+        BINDLESSSAMPLERSTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
+    } BINDLESSSAMPLERSTATEBASEADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_BASE_ADDRESS;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
     static tagSTATE_BASE_ADDRESS sInit() {
@@ -3523,283 +3572,254 @@ typedef struct tagSTATE_BASE_ADDRESS {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 22);
+        UNRECOVERABLE_IF(index >= 22);
         return TheStructure.RawData[index];
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setGeneralStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.GeneralStateBaseAddressModifyEnable = value;
     }
     inline bool getGeneralStateBaseAddressModifyEnable() const {
-        return (TheStructure.Common.GeneralStateBaseAddressModifyEnable);
+        return TheStructure.Common.GeneralStateBaseAddressModifyEnable;
     }
-    inline void setGeneralStateMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.GeneralStateMemoryObjectControlState_Reserved = value;
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setGeneralStateMemoryObjectControlState(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMOCSTables = value >> 1;
+        TheStructure.Common.GeneralStateMemoryObjectControlStateEncryptedData = value & 1;
     }
-    inline uint64_t getGeneralStateMemoryObjectControlStateReserved() const {
-        return (TheStructure.Common.GeneralStateMemoryObjectControlState_Reserved);
+    inline uint32_t getGeneralStateMemoryObjectControlState() const {
+        return static_cast<uint32_t>((TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMOCSTables << 1) | TheStructure.Common.GeneralStateMemoryObjectControlStateEncryptedData);
     }
-    inline void setGeneralStateMemoryObjectControlState(const uint64_t value) {
-        TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getGeneralStateMemoryObjectControlState() const {
-        return (TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables << 1);
-    }
-    typedef enum tagGENERALSTATEBASEADDRESS {
-        GENERALSTATEBASEADDRESS_BIT_SHIFT = 0xc,
-        GENERALSTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } GENERALSTATEBASEADDRESS;
     inline void setGeneralStateBaseAddress(const uint64_t value) {
         TheStructure.Common.GeneralStateBaseAddress = value >> GENERALSTATEBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getGeneralStateBaseAddress() const {
-        return (TheStructure.Common.GeneralStateBaseAddress << GENERALSTATEBASEADDRESS_BIT_SHIFT);
+        return TheStructure.Common.GeneralStateBaseAddress << GENERALSTATEBASEADDRESS_BIT_SHIFT;
     }
-    inline void setStatelessDataPortAccessMemoryObjectControlStateReserved(const uint32_t value) {
-        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved = value;
-    }
-    inline uint32_t getStatelessDataPortAccessMemoryObjectControlStateReserved() const {
-        return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved);
-    }
+    // Manual generator override: MOCS includes the encryption bit.
     inline void setStatelessDataPortAccessMemoryObjectControlState(const uint32_t value) {
-        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved = value;
-        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables = (value >> 1);
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMOCSTables = value >> 1;
+        TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateEncryptedData = value & 1;
     }
     inline uint32_t getStatelessDataPortAccessMemoryObjectControlState() const {
-        uint32_t mocs = TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved;
-        mocs |= (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables << 1);
-        return (mocs);
+        return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMOCSTables << 1) | TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateEncryptedData;
     }
     inline void setSurfaceStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.SurfaceStateBaseAddressModifyEnable = value;
     }
     inline bool getSurfaceStateBaseAddressModifyEnable() const {
-        return (TheStructure.Common.SurfaceStateBaseAddressModifyEnable);
+        return TheStructure.Common.SurfaceStateBaseAddressModifyEnable;
     }
-    inline void setSurfaceStateMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.SurfaceStateMemoryObjectControlState_Reserved = value;
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setSurfaceStateMemoryObjectControlState(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMOCSTables = value >> 1;
+        TheStructure.Common.SurfaceStateMemoryObjectControlStateEncryptedData = value & 1;
     }
-    inline uint64_t getSurfaceStateMemoryObjectControlStateReserved() const {
-        return (TheStructure.Common.SurfaceStateMemoryObjectControlState_Reserved);
+    inline uint32_t getSurfaceStateMemoryObjectControlState() const {
+        return static_cast<uint32_t>((TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMOCSTables << 1) | TheStructure.Common.SurfaceStateMemoryObjectControlStateEncryptedData);
     }
-    inline void setSurfaceStateMemoryObjectControlState(const uint64_t value) {
-        TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getSurfaceStateMemoryObjectControlState() const {
-        return (TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables << 1);
-    }
-    typedef enum tagSURFACESTATEBASEADDRESS {
-        SURFACESTATEBASEADDRESS_BIT_SHIFT = 0xc,
-        SURFACESTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } SURFACESTATEBASEADDRESS;
     inline void setSurfaceStateBaseAddress(const uint64_t value) {
         TheStructure.Common.SurfaceStateBaseAddress = value >> SURFACESTATEBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getSurfaceStateBaseAddress() const {
-        return (TheStructure.Common.SurfaceStateBaseAddress << SURFACESTATEBASEADDRESS_BIT_SHIFT);
+        return TheStructure.Common.SurfaceStateBaseAddress << SURFACESTATEBASEADDRESS_BIT_SHIFT;
     }
     inline void setDynamicStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.DynamicStateBaseAddressModifyEnable = value;
     }
     inline bool getDynamicStateBaseAddressModifyEnable() const {
-        return (TheStructure.Common.DynamicStateBaseAddressModifyEnable);
+        return TheStructure.Common.DynamicStateBaseAddressModifyEnable;
     }
-    inline void setDynamicStateMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.DynamicStateMemoryObjectControlState_Reserved = value;
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setDynamicStateMemoryObjectControlState(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMOCSTables = value >> 1;
+        TheStructure.Common.DynamicStateMemoryObjectControlStateEncryptedData = value & 1;
     }
-    inline uint64_t getDynamicStateMemoryObjectControlStateReserved() const {
-        return (TheStructure.Common.DynamicStateMemoryObjectControlState_Reserved);
+    inline uint32_t getDynamicStateMemoryObjectControlState() const {
+        return static_cast<uint32_t>((TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMOCSTables << 1) | TheStructure.Common.DynamicStateMemoryObjectControlStateEncryptedData);
     }
-    inline void setDynamicStateMemoryObjectControlState(const uint64_t value) {
-        TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getDynamicStateMemoryObjectControlState() const {
-        return (TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables << 1);
-    }
-    typedef enum tagDYNAMICSTATEBASEADDRESS {
-        DYNAMICSTATEBASEADDRESS_BIT_SHIFT = 0xc,
-        DYNAMICSTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } DYNAMICSTATEBASEADDRESS;
     inline void setDynamicStateBaseAddress(const uint64_t value) {
         TheStructure.Common.DynamicStateBaseAddress = value >> DYNAMICSTATEBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getDynamicStateBaseAddress() const {
-        return (TheStructure.Common.DynamicStateBaseAddress << DYNAMICSTATEBASEADDRESS_BIT_SHIFT);
+        return TheStructure.Common.DynamicStateBaseAddress << DYNAMICSTATEBASEADDRESS_BIT_SHIFT;
     }
     inline void setIndirectObjectBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.IndirectObjectBaseAddressModifyEnable = value;
     }
     inline bool getIndirectObjectBaseAddressModifyEnable() const {
-        return (TheStructure.Common.IndirectObjectBaseAddressModifyEnable);
+        return TheStructure.Common.IndirectObjectBaseAddressModifyEnable;
     }
-    inline void setIndirectObjectMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved = value;
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setIndirectObjectMemoryObjectControlState(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.IndirectObjectMemoryObjectControlStateIndexToMOCSTables = value >> 1;
+        TheStructure.Common.IndirectObjectMemoryObjectControlStateEncryptedData = value & 1;
     }
-    inline uint64_t getIndirectObjectMemoryObjectControlStateReserved() const {
-        return (TheStructure.Common.IndirectObjectMemoryObjectControlState_Reserved);
+    inline uint32_t getIndirectObjectMemoryObjectControlState() const {
+        return static_cast<uint32_t>((TheStructure.Common.IndirectObjectMemoryObjectControlStateIndexToMOCSTables << 1) | TheStructure.Common.IndirectObjectMemoryObjectControlStateEncryptedData);
     }
-    inline void setIndirectObjectMemoryObjectControlState(const uint64_t value) {
-        TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getIndirectObjectMemoryObjectControlState() const {
-        return (TheStructure.Common.IndirectObjectMemoryObjectControlState_IndexToMocsTables << 1);
-    }
-    typedef enum tagINDIRECTOBJECTBASEADDRESS {
-        INDIRECTOBJECTBASEADDRESS_BIT_SHIFT = 0xc,
-        INDIRECTOBJECTBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } INDIRECTOBJECTBASEADDRESS;
     inline void setIndirectObjectBaseAddress(const uint64_t value) {
         TheStructure.Common.IndirectObjectBaseAddress = value >> INDIRECTOBJECTBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getIndirectObjectBaseAddress() const {
-        return (TheStructure.Common.IndirectObjectBaseAddress << INDIRECTOBJECTBASEADDRESS_BIT_SHIFT);
+        return TheStructure.Common.IndirectObjectBaseAddress << INDIRECTOBJECTBASEADDRESS_BIT_SHIFT;
     }
     inline void setInstructionBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.InstructionBaseAddressModifyEnable = value;
     }
     inline bool getInstructionBaseAddressModifyEnable() const {
-        return (TheStructure.Common.InstructionBaseAddressModifyEnable);
+        return TheStructure.Common.InstructionBaseAddressModifyEnable;
     }
-    inline void setInstructionMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.InstructionMemoryObjectControlState_Reserved = value;
-    }
-    inline uint64_t getInstructionMemoryObjectControlStateReserved() const {
-        return (TheStructure.Common.InstructionMemoryObjectControlState_Reserved);
-    }
+    // Manual generator override: MOCS includes the encryption bit.
     inline void setInstructionMemoryObjectControlState(const uint32_t value) {
-        uint64_t val = static_cast<uint64_t>(value);
-        TheStructure.Common.InstructionMemoryObjectControlState_Reserved = val;
-        TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables = (val >> 1);
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.InstructionMemoryObjectControlStateIndexToMOCSTables = value >> 1;
+        TheStructure.Common.InstructionMemoryObjectControlStateEncryptedData = value & 1;
     }
     inline uint32_t getInstructionMemoryObjectControlState() const {
-        uint64_t mocs = TheStructure.Common.InstructionMemoryObjectControlState_Reserved;
-        mocs |= (TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables << 1);
-        return static_cast<uint32_t>(mocs);
+        return static_cast<uint32_t>((TheStructure.Common.InstructionMemoryObjectControlStateIndexToMOCSTables << 1) | TheStructure.Common.InstructionMemoryObjectControlStateEncryptedData);
     }
-    typedef enum tagINSTRUCTIONBASEADDRESS {
-        INSTRUCTIONBASEADDRESS_BIT_SHIFT = 0xc,
-        INSTRUCTIONBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } INSTRUCTIONBASEADDRESS;
     inline void setInstructionBaseAddress(const uint64_t value) {
         TheStructure.Common.InstructionBaseAddress = value >> INSTRUCTIONBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getInstructionBaseAddress() const {
-        return (TheStructure.Common.InstructionBaseAddress << INSTRUCTIONBASEADDRESS_BIT_SHIFT);
+        return TheStructure.Common.InstructionBaseAddress << INSTRUCTIONBASEADDRESS_BIT_SHIFT;
     }
     inline void setGeneralStateBufferSizeModifyEnable(const bool value) {
         TheStructure.Common.GeneralStateBufferSizeModifyEnable = value;
     }
     inline bool getGeneralStateBufferSizeModifyEnable() const {
-        return (TheStructure.Common.GeneralStateBufferSizeModifyEnable);
+        return TheStructure.Common.GeneralStateBufferSizeModifyEnable;
     }
     inline void setGeneralStateBufferSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffu);
         TheStructure.Common.GeneralStateBufferSize = value;
     }
     inline uint32_t getGeneralStateBufferSize() const {
-        return (TheStructure.Common.GeneralStateBufferSize);
+        return TheStructure.Common.GeneralStateBufferSize;
     }
     inline void setDynamicStateBufferSizeModifyEnable(const bool value) {
         TheStructure.Common.DynamicStateBufferSizeModifyEnable = value;
     }
     inline bool getDynamicStateBufferSizeModifyEnable() const {
-        return (TheStructure.Common.DynamicStateBufferSizeModifyEnable);
+        return TheStructure.Common.DynamicStateBufferSizeModifyEnable;
     }
     inline void setDynamicStateBufferSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffu);
         TheStructure.Common.DynamicStateBufferSize = value;
     }
     inline uint32_t getDynamicStateBufferSize() const {
-        return (TheStructure.Common.DynamicStateBufferSize);
+        return TheStructure.Common.DynamicStateBufferSize;
     }
     inline void setIndirectObjectBufferSizeModifyEnable(const bool value) {
         TheStructure.Common.IndirectObjectBufferSizeModifyEnable = value;
     }
     inline bool getIndirectObjectBufferSizeModifyEnable() const {
-        return (TheStructure.Common.IndirectObjectBufferSizeModifyEnable);
+        return TheStructure.Common.IndirectObjectBufferSizeModifyEnable;
     }
     inline void setIndirectObjectBufferSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffu);
         TheStructure.Common.IndirectObjectBufferSize = value;
     }
     inline uint32_t getIndirectObjectBufferSize() const {
-        return (TheStructure.Common.IndirectObjectBufferSize);
+        return TheStructure.Common.IndirectObjectBufferSize;
     }
     inline void setInstructionBufferSizeModifyEnable(const bool value) {
         TheStructure.Common.InstructionBufferSizeModifyEnable = value;
     }
     inline bool getInstructionBufferSizeModifyEnable() const {
-        return (TheStructure.Common.InstructionBufferSizeModifyEnable);
+        return TheStructure.Common.InstructionBufferSizeModifyEnable;
     }
     inline void setInstructionBufferSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffu);
         TheStructure.Common.InstructionBufferSize = value;
     }
     inline uint32_t getInstructionBufferSize() const {
-        return (TheStructure.Common.InstructionBufferSize);
+        return TheStructure.Common.InstructionBufferSize;
     }
     inline void setBindlessSurfaceStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.BindlessSurfaceStateBaseAddressModifyEnable = value;
     }
     inline bool getBindlessSurfaceStateBaseAddressModifyEnable() const {
-        return (TheStructure.Common.BindlessSurfaceStateBaseAddressModifyEnable);
+        return TheStructure.Common.BindlessSurfaceStateBaseAddressModifyEnable;
     }
-    inline void setBindlessSurfaceStateMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_Reserved = value;
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setBindlessSurfaceStateMemoryObjectControlState(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMOCSTables = value >> 1;
+        TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateEncryptedData = value & 1;
     }
-    inline uint64_t getBindlessSurfaceStateMemoryObjectControlStateReserved() const {
-        return (TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_Reserved);
+    inline uint32_t getBindlessSurfaceStateMemoryObjectControlState() const {
+        return static_cast<uint32_t>((TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMOCSTables << 1) | TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateEncryptedData);
     }
-    inline void setBindlessSurfaceStateMemoryObjectControlState(const uint64_t value) {
-        TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getBindlessSurfaceStateMemoryObjectControlState() const {
-        return (TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables << 1);
-    }
-    typedef enum tagBINDLESSSURFACESTATEBASEADDRESS {
-        BINDLESSSURFACESTATEBASEADDRESS_BIT_SHIFT = 0xc,
-        BINDLESSSURFACESTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } BINDLESSSURFACESTATEBASEADDRESS;
     inline void setBindlessSurfaceStateBaseAddress(const uint64_t value) {
         TheStructure.Common.BindlessSurfaceStateBaseAddress = value >> BINDLESSSURFACESTATEBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getBindlessSurfaceStateBaseAddress() const {
-        return (TheStructure.Common.BindlessSurfaceStateBaseAddress << BINDLESSSURFACESTATEBASEADDRESS_BIT_SHIFT);
+        return TheStructure.Common.BindlessSurfaceStateBaseAddress << BINDLESSSURFACESTATEBASEADDRESS_BIT_SHIFT;
     }
     inline void setBindlessSurfaceStateSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffu);
         TheStructure.Common.BindlessSurfaceStateSize = value;
     }
     inline uint32_t getBindlessSurfaceStateSize() const {
-        return (TheStructure.Common.BindlessSurfaceStateSize);
+        return TheStructure.Common.BindlessSurfaceStateSize;
     }
     inline void setBindlessSamplerStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.BindlessSamplerStateBaseAddressModifyEnable = value;
     }
     inline bool getBindlessSamplerStateBaseAddressModifyEnable() const {
-        return (TheStructure.Common.BindlessSamplerStateBaseAddressModifyEnable);
+        return TheStructure.Common.BindlessSamplerStateBaseAddressModifyEnable;
     }
-    inline void setBindlessSamplerStateMemoryObjectControlStateReserved(const uint64_t value) {
-        TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_Reserved = value;
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setBindlessSamplerStateMemoryObjectControlState(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMOCSTables = value >> 1;
+        TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateEncryptedData = value & 1;
     }
-    inline uint64_t getBindlessSamplerStateMemoryObjectControlStateReserved() const {
-        return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_Reserved);
+    inline uint32_t getBindlessSamplerStateMemoryObjectControlState() const {
+        return static_cast<uint32_t>((TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMOCSTables << 1) | TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateEncryptedData);
     }
-    inline void setBindlessSamplerStateMemoryObjectControlState(const uint64_t value) {
-        TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables = value >> 1;
-    }
-    inline uint64_t getBindlessSamplerStateMemoryObjectControlState() const {
-        return (TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables << 1);
-    }
-    typedef enum tagBINDLESSSAMPLERSTATEBASEADDRESS {
-        BINDLESSSAMPLERSTATEBASEADDRESS_BIT_SHIFT = 0xc,
-        BINDLESSSAMPLERSTATEBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } BINDLESSSAMPLERSTATEBASEADDRESS;
     inline void setBindlessSamplerStateBaseAddress(const uint64_t value) {
         TheStructure.Common.BindlessSamplerStateBaseAddress = value >> BINDLESSSAMPLERSTATEBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getBindlessSamplerStateBaseAddress() const {
-        return (TheStructure.Common.BindlessSamplerStateBaseAddress << BINDLESSSAMPLERSTATEBASEADDRESS_BIT_SHIFT);
+        return TheStructure.Common.BindlessSamplerStateBaseAddress << BINDLESSSAMPLERSTATEBASEADDRESS_BIT_SHIFT;
     }
     inline void setBindlessSamplerStateBufferSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffu);
         TheStructure.Common.BindlessSamplerStateBufferSize = value;
     }
     inline uint32_t getBindlessSamplerStateBufferSize() const {
-        return (TheStructure.Common.BindlessSamplerStateBufferSize);
+        return TheStructure.Common.BindlessSamplerStateBufferSize;
     }
 } STATE_BASE_ADDRESS;
 STATIC_ASSERT(88 == sizeof(STATE_BASE_ADDRESS));
@@ -5008,17 +5028,17 @@ typedef struct tagL3_FLUSH_ADDRESS_RANGE {
 } L3_FLUSH_ADDRESS_RANGE;
 STATIC_ASSERT(8 == sizeof(L3_FLUSH_ADDRESS_RANGE));
 
-struct L3_CONTROL_BASE {
+typedef struct tagL3_CONTROL_BASE {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t Length : BITFIELD_RANGE(0, 7);
             uint32_t DepthCacheFlush : BITFIELD_RANGE(8, 8);
             uint32_t RenderTargetCacheFlushEnable : BITFIELD_RANGE(9, 9);
             uint32_t HdcPipelineFlush : BITFIELD_RANGE(10, 10);
             uint32_t Reserved_11 : BITFIELD_RANGE(11, 13);
             uint32_t PostSyncOperation : BITFIELD_RANGE(14, 14);
-            uint32_t PostSyncOperationL3CacheabilityControl : BITFIELD_RANGE(15, 15); // removed on DG1
-            uint32_t Reserved_16 : BITFIELD_RANGE(16, 19);
+            uint32_t Reserved_15 : BITFIELD_RANGE(15, 19);
             uint32_t CommandStreamerStallEnable : BITFIELD_RANGE(20, 20);
             uint32_t DestinationAddressType : BITFIELD_RANGE(21, 21);
             uint32_t Reserved_22 : BITFIELD_RANGE(22, 22);
@@ -5029,19 +5049,14 @@ struct L3_CONTROL_BASE {
         } Common;
         uint32_t RawData[1];
     } TheStructure;
-
     typedef enum tagLENGTH {
-        LENGTH_POST_SYNC_OPERATION_DISABLED = 1,
-        LENGTH_POST_SYNC_OPERATION_ENABLED = 5,
+        LENGTH_1_126_L3_FLUSH_ADDRESS_RANGES_MIN = 0x5,
+        LENGTH_1_126_L3_FLUSH_ADDRESS_RANGES_MAX = 0xff,
     } LENGTH;
     typedef enum tagPOST_SYNC_OPERATION {
         POST_SYNC_OPERATION_NO_WRITE = 0x0,
         POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA = 0x1,
     } POST_SYNC_OPERATION;
-    typedef enum tagPOST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL {
-        POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_DEFAULT_MOCS = 0x0,
-        POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_CACHEABLE_MOCS = 0x1,
-    } POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL;
     typedef enum tagDESTINATION_ADDRESS_TYPE {
         DESTINATION_ADDRESS_TYPE_PPGTT = 0x0,
         DESTINATION_ADDRESS_TYPE_GGTT = 0x1,
@@ -5060,28 +5075,20 @@ struct L3_CONTROL_BASE {
     } TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_WRITE;
-        TheStructure.Common.PostSyncOperationL3CacheabilityControl = POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_DEFAULT_MOCS;
-        TheStructure.Common.DestinationAddressType = DESTINATION_ADDRESS_TYPE_PPGTT;
+        TheStructure.Common.Length = 0x5;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_L3_CONTROL;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_L3_CONTROL;
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_3D;
         TheStructure.Common.Type = TYPE_GFXPIPE;
     }
-    static L3_CONTROL_BASE sInit() {
+    static tagL3_CONTROL_BASE sInit() {
         L3_CONTROL_BASE state;
         state.init();
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        UNRECOVERABLE_IF(index >= 7);
+        UNRECOVERABLE_IF(index >= 1);
         return TheStructure.RawData[index];
-    }
-    inline void setLength(const LENGTH value) {
-        TheStructure.Common.Length = value;
-    }
-    inline LENGTH getLength() const {
-        return (LENGTH)TheStructure.Common.Length;
     }
     inline void setDepthCacheFlush(const bool value) {
         TheStructure.Common.DepthCacheFlush = value;
@@ -5107,12 +5114,6 @@ struct L3_CONTROL_BASE {
     inline POST_SYNC_OPERATION getPostSyncOperation() const {
         return static_cast<POST_SYNC_OPERATION>(TheStructure.Common.PostSyncOperation);
     }
-    inline void setPostSyncOperationL3CacheabilityControl(const POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL value) {
-        TheStructure.Common.PostSyncOperationL3CacheabilityControl = value;
-    }
-    inline POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL getPostSyncOperationL3CacheabilityControl() const {
-        return static_cast<POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL>(TheStructure.Common.PostSyncOperationL3CacheabilityControl);
-    }
     inline void setCommandStreamerStallEnable(const bool value) {
         TheStructure.Common.CommandStreamerStallEnable = value;
     }
@@ -5125,35 +5126,61 @@ struct L3_CONTROL_BASE {
     inline DESTINATION_ADDRESS_TYPE getDestinationAddressType() const {
         return static_cast<DESTINATION_ADDRESS_TYPE>(TheStructure.Common.DestinationAddressType);
     }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
     inline void setType(const TYPE value) {
         TheStructure.Common.Type = value;
     }
     inline TYPE getType() const {
         return static_cast<TYPE>(TheStructure.Common.Type);
     }
-};
+} L3_CONTROL_BASE;
 
-struct L3_CONTROL_POST_SYNC_DATA {
+typedef struct tagL3_CONTROL_POST_SYNC_DATA {
     union tagTheStructure {
         struct tagCommon {
-            uint64_t Reserved_96 : BITFIELD_RANGE(0, 2);
+            // DWORD 0-1
+            uint64_t Reserved_0 : BITFIELD_RANGE(0, 2);
             uint64_t Address : BITFIELD_RANGE(3, 47);
-            uint64_t Reserved_144 : BITFIELD_RANGE(48, 63);
+            uint64_t Reserved_48 : BITFIELD_RANGE(48, 63);
+            // DWORD 2-3
             uint64_t ImmediateData;
         } Common;
         uint32_t RawData[4];
     } TheStructure;
-
-    inline void init() {
-        memset(&TheStructure, 0, sizeof(TheStructure));
-    }
-
     typedef enum tagADDRESS {
         ADDRESS_BIT_SHIFT = 0x3,
         ADDRESS_ALIGN_SIZE = 0x8,
     } ADDRESS;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+    }
+    static tagL3_CONTROL_POST_SYNC_DATA sInit() {
+        L3_CONTROL_POST_SYNC_DATA state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 4);
+        return TheStructure.RawData[index];
+    }
     inline void setAddress(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xfffffffffff8L);
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
     inline uint64_t getAddress() const {
@@ -5165,37 +5192,27 @@ struct L3_CONTROL_POST_SYNC_DATA {
     inline uint64_t getImmediateData() const {
         return TheStructure.Common.ImmediateData;
     }
-};
+} L3_CONTROL_POST_SYNC_DATA;
 
-struct L3_CONTROL {
+typedef struct tagL3_CONTROL {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             L3_CONTROL_BASE Base;
+            // DWORD 1
             L3_CONTROL_POST_SYNC_DATA PostSyncData;
+            // DWORD 5
             L3_FLUSH_ADDRESS_RANGE L3FlushAddressRange;
         } Common;
         uint32_t RawData[7];
     } TheStructure;
-
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        getBase().init();
-        getPostSyncData().init();
-        getBase().setLength(L3_CONTROL_BASE::LENGTH_POST_SYNC_OPERATION_ENABLED);
+        TheStructure.Common.Base.init();
+        TheStructure.Common.PostSyncData.init();
         TheStructure.Common.L3FlushAddressRange.init();
     }
-
-    inline void setL3FlushAddressRange(const L3_FLUSH_ADDRESS_RANGE &value) {
-        TheStructure.Common.L3FlushAddressRange = value;
-    }
-    inline L3_FLUSH_ADDRESS_RANGE &getL3FlushAddressRange() {
-        return TheStructure.Common.L3FlushAddressRange;
-    }
-    inline const L3_FLUSH_ADDRESS_RANGE &getL3FlushAddressRange() const {
-        return TheStructure.Common.L3FlushAddressRange;
-    }
-
-    static L3_CONTROL sInit() {
+    static tagL3_CONTROL sInit() {
         L3_CONTROL state;
         state.init();
         return state;
@@ -5204,42 +5221,26 @@ struct L3_CONTROL {
         UNRECOVERABLE_IF(index >= 7);
         return TheStructure.RawData[index];
     }
-
-    L3_CONTROL_BASE &getBase() {
+    inline void setBase(const L3_CONTROL_BASE &value) {
+        TheStructure.Common.Base = value;
+    }
+    inline L3_CONTROL_BASE &getBase() {
         return TheStructure.Common.Base;
     }
-
-    const L3_CONTROL_BASE &getBase() const {
-        return TheStructure.Common.Base;
+    inline void setPostSyncData(const L3_CONTROL_POST_SYNC_DATA &value) {
+        TheStructure.Common.PostSyncData = value;
     }
-
-    L3_CONTROL_POST_SYNC_DATA &getPostSyncData() {
+    inline L3_CONTROL_POST_SYNC_DATA &getPostSyncData() {
         return TheStructure.Common.PostSyncData;
     }
-
-    const L3_CONTROL_POST_SYNC_DATA &getPostSyncData() const {
-        return TheStructure.Common.PostSyncData;
+    inline void setL3FlushAddressRange(const L3_FLUSH_ADDRESS_RANGE &value) {
+        TheStructure.Common.L3FlushAddressRange = value;
     }
-
-    inline void setPostSyncAddress(const uint64_t value) {
-        getPostSyncData().setAddress(value);
+    inline L3_FLUSH_ADDRESS_RANGE &getL3FlushAddressRange() {
+        return TheStructure.Common.L3FlushAddressRange;
     }
-
-    inline uint64_t getPostSyncAddress() const {
-        return getPostSyncData().getAddress();
-    }
-
-    inline void setPostSyncImmediateData(const uint64_t value) {
-        getPostSyncData().setImmediateData(value);
-    }
-
-    inline uint64_t getPostSyncImmediateData() const {
-        return getPostSyncData().getImmediateData();
-    }
-};
-
+} L3_CONTROL;
 STATIC_ASSERT(28 == sizeof(L3_CONTROL));
-STATIC_ASSERT(NEO::TypeTraits::isPodV<L3_CONTROL>);
 
 typedef struct tagXY_BLOCK_COPY_BLT {
     union tagTheStructure {

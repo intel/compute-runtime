@@ -63,6 +63,12 @@ template <typename GfxFamily>
 struct StateBaseAddressHelper {
     using STATE_BASE_ADDRESS = typename StateBaseAddressTypeHelper<GfxFamily>::type;
 
+    static constexpr uint32_t generalStateBaseAddressByteOffset = 0x4;
+    static constexpr uint32_t surfaceStateBaseAddressByteOffset = 0x10;
+    static constexpr uint32_t dynamicStateBaseAddressByteOffset = 0x18;
+    static constexpr uint32_t indirectObjectBaseAddressByteOffset = 0x20;
+    static constexpr uint32_t unknownStatelessMocsIndex = 0x3f;
+
     static STATE_BASE_ADDRESS *getSpaceForSbaCmd(LinearStream &cmdStream);
 
     static void programStateBaseAddress(StateBaseAddressHelperArgs<GfxFamily> &args);

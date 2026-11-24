@@ -40,25 +40,54 @@ XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenStateBaseAddressWhenProgrammingMocsTh
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     stateBaseAddress.setGeneralStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.GeneralStateMemoryObjectControlState_IndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.GeneralStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setStatelessDataPortAccessMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setSurfaceStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.SurfaceStateMemoryObjectControlState_IndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.SurfaceStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setDynamicStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.DynamicStateMemoryObjectControlState_IndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.DynamicStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setInstructionMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.InstructionMemoryObjectControlState_IndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.InstructionMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setBindlessSurfaceStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlState_IndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateIndexToMOCSTables);
 
     stateBaseAddress.setBindlessSamplerStateMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateIndexToMOCSTables);
+}
+
+XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenOddMocsWhenProgrammingStateBaseAddressMocsThenEncryptedDataBitIsSet) {
+    auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
+    constexpr uint32_t mocs = 5u;
+    stateBaseAddress.setGeneralStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.GeneralStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getGeneralStateMemoryObjectControlState());
+    stateBaseAddress.setStatelessDataPortAccessMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getStatelessDataPortAccessMemoryObjectControlState());
+    stateBaseAddress.setSurfaceStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.SurfaceStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getSurfaceStateMemoryObjectControlState());
+    stateBaseAddress.setDynamicStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.DynamicStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getDynamicStateMemoryObjectControlState());
+    stateBaseAddress.setIndirectObjectMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.IndirectObjectMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getIndirectObjectMemoryObjectControlState());
+    stateBaseAddress.setInstructionMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.InstructionMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getInstructionMemoryObjectControlState());
+    stateBaseAddress.setBindlessSurfaceStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.BindlessSurfaceStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getBindlessSurfaceStateMemoryObjectControlState());
+    stateBaseAddress.setBindlessSamplerStateMemoryObjectControlState(mocs);
+    EXPECT_EQ(1u, stateBaseAddress.TheStructure.Common.BindlessSamplerStateMemoryObjectControlStateEncryptedData);
+    EXPECT_EQ(mocs, stateBaseAddress.getBindlessSamplerStateMemoryObjectControlState());
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenPostSyncDataWhenProgrammingMocsThenMocsIndexIsSetProperly) {
@@ -93,7 +122,7 @@ XE_HPG_CORETEST_F(XeHpgSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenPr
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControl());
 }
 
 XE_HPG_CORETEST_F(XeHpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
@@ -108,19 +137,31 @@ XE_HPG_CORETEST_F(XeHpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProg
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(0u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(0u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(2u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(2u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceAllResourcesUncached.set(true);
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(1u, sbaCmd.getL1CacheControl());
+}
+
+XE_HPG_CORETEST_F(XeHpgSbaTest, givenMemoryCompressionEnabledWhenAppendingSbaThenEnableStatelessCompressionForAllStatelessAccesses) {
+    for (auto memoryCompressionState : {MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled}) {
+        auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+        StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
+        args.setGeneralStateBaseAddress = true;
+        args.memoryCompressionState = memoryCompressionState;
+
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
+        EXPECT_EQ(memoryCompressionState == MemoryCompressionState::enabled, sbaCmd.getEnableMemoryCompressionForAllStatelessAccesses());
+    }
 }

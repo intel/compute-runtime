@@ -182,7 +182,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSel
     EXPECT_EQ(mask, pipelineSelectCmd->getMaskBits());
     EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, pipelineSelectCmd->getPipelineSelection());
     EXPECT_EQ(true, pipelineSelectCmd->getMediaSamplerDopClockGateEnable());
-    EXPECT_EQ(false, pipelineSelectCmd->getSpecialModeEnable());
+    EXPECT_EQ(false, pipelineSelectCmd->getSystolicModeEnable());
 
     cmdContainer->systolicModeSupportRef() = true;
     sizeUsed = cmdStream.getUsed();
@@ -197,7 +197,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSel
     EXPECT_EQ(mask, pipelineSelectCmd->getMaskBits());
     EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, pipelineSelectCmd->getPipelineSelection());
     EXPECT_EQ(true, pipelineSelectCmd->getMediaSamplerDopClockGateEnable());
-    EXPECT_EQ(true, pipelineSelectCmd->getSpecialModeEnable());
+    EXPECT_EQ(true, pipelineSelectCmd->getSystolicModeEnable());
 
     descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = false;
     sizeUsed = cmdStream.getUsed();
@@ -210,5 +210,5 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSel
     EXPECT_EQ(mask, pipelineSelectCmd->getMaskBits());
     EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, pipelineSelectCmd->getPipelineSelection());
     EXPECT_EQ(true, pipelineSelectCmd->getMediaSamplerDopClockGateEnable());
-    EXPECT_EQ(false, pipelineSelectCmd->getSpecialModeEnable());
+    EXPECT_EQ(false, pipelineSelectCmd->getSystolicModeEnable());
 }

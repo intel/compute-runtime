@@ -562,7 +562,7 @@ XE3_CORETEST_F(Xe3SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgram
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(2, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(2, sbaCmd.getL1CacheControl());
 }
 
 XE3_CORETEST_F(Xe3SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
@@ -576,11 +576,11 @@ XE3_CORETEST_F(Xe3SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgramme
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(0u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(0u, sbaCmd.getL1CacheControl());
 
     debugManager.flags.ForceStatelessL1CachingPolicy.set(1u);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
+    EXPECT_EQ(1u, sbaCmd.getL1CacheControl());
 }

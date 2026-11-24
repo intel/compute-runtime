@@ -211,7 +211,7 @@ bool UnitTestHelperWithHeap<Family>::getDisableFusionStateFromFrontEndCommand(co
 
 template <>
 bool UnitTestHelper<Family>::getSystolicFlagValueFromPipelineSelectCommand(const typename Family::PIPELINE_SELECT &pipelineSelectCmd) {
-    return pipelineSelectCmd.getSpecialModeEnable();
+    return pipelineSelectCmd.getSystolicModeEnable();
 }
 
 template <>

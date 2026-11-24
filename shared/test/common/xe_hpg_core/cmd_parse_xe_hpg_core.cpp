@@ -30,7 +30,7 @@ size_t CmdParse<GenGfxFamily>::getAdditionalCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<L3_CONTROL *>(cmd);
         if (pCmd) {
-            return pCmd->TheStructure.Common.Length + 2;
+            return pCmd->TheStructure.Common.DwordLength + 2;
         }
     }
 
