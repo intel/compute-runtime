@@ -91,13 +91,7 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
                  $<TARGET_OBJECTS:mock_gmm>
                  $<TARGET_OBJECTS:${TARGET_NAME_L0}_fixtures>
                  $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
-                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
   )
-  if(TARGET ${BUILTINS_SPIRV_LIB_NAME})
-    target_sources(${TARGET_NAME} PRIVATE
-                   $<TARGET_OBJECTS:${BUILTINS_SPIRV_LIB_NAME}>
-    )
-  endif()
 
   create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)
 endif()

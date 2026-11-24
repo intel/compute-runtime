@@ -24,6 +24,7 @@
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/ult_main_helpers.h"
 #include "shared/test/common/libult/signal_utils.h"
+#include "shared/test/common/mocks/mock_builtin_binaries.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_os_thread.h"
@@ -504,6 +505,10 @@ int main(int argc, char **argv) {
                 }
                 populateApiSpecificVirtualFileList(hwInfoForTests);
             }
+        }
+
+        if (!isAubTestMode(testMode)) {
+            MockBuiltinBinaries::registerForDevice(hwInfoForTests);
         }
 
         retVal = RUN_ALL_TESTS();

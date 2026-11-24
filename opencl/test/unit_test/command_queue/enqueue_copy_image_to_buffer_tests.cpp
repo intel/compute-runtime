@@ -104,6 +104,41 @@ HWTEST_F(EnqueueCopyImageToBufferTest, WhenCopyingImageToBufferThenIndirectDataG
     EXPECT_NE(sshBefore, pSSH->getUsed());
 }
 
+HWTEST2_F(EnqueueCopyImageToBufferTest, givenHeaplessModeWhenBindlessSurfaceStatesArePatchedIntoCopyImageToBufferKernelThenOtherArgumentsAreNotOverwritten, HeaplessSupport) {
+    BuiltIn::OpParams dc;
+    dc.srcMemObj = srcImage;
+    dc.dstMemObj = dstBuffer;
+    dc.size = {1, 1, 1};
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, pCmdQ->getDefaultBuiltInMode(), pCmdQ->getClDevice());
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    const auto &explicitArgs = kernel->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs;
+    ASSERT_TRUE(explicitArgs[0].is<ArgDescriptor::argTImage>());
+    ASSERT_TRUE(isValidOffset(explicitArgs[0].as<ArgDescImage>().bindless));
+
+    auto crossThreadData = reinterpret_cast<const uint8_t *>(kernel->getCrossThreadData());
+    std::vector<std::pair<CrossThreadDataOffset, std::vector<uint8_t>>> argValues;
+    for (const auto &arg : explicitArgs) {
+        if (arg.is<ArgDescriptor::argTPointer>() && isValidOffset(arg.as<ArgDescPointer>().stateless)) {
+            const auto &pointer = arg.as<ArgDescPointer>();
+            argValues.emplace_back(pointer.stateless, std::vector<uint8_t>(crossThreadData + pointer.stateless, crossThreadData + pointer.stateless + pointer.pointerSize));
+        } else if (arg.is<ArgDescriptor::argTValue>()) {
+            for (const auto &element : arg.as<ArgDescValue>().elements) {
+                argValues.emplace_back(element.offset, std::vector<uint8_t>(crossThreadData + element.offset, crossThreadData + element.offset + element.size));
+            }
+        }
+    }
+    ASSERT_FALSE(argValues.empty());
+
+    kernel->patchBindlessSurfaceStatesInCrossThreadData<true>(0xabcdef0012345000ull);
+
+    for (const auto &[offset, value] : argValues) {
+        EXPECT_EQ(value, std::vector<uint8_t>(crossThreadData + offset, crossThreadData + offset + value.size())) << "argument at offset " << offset;
+    }
+}
+
 HWTEST_F(EnqueueCopyImageToBufferTest, WhenCopyingImageToBufferThenL3ProgrammingIsCorrect) {
     enqueueCopyImageToBuffer<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);

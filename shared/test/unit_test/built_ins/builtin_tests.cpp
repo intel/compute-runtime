@@ -233,7 +233,7 @@ HWTEST_F(BuiltInSharedTest, WhenGettingResourceNameThenResourceNamesAreCorrect) 
         {BuiltIn::BaseKernel::fillImage1dBuffer, "fill_image1d_buffer.builtin_kernel"}};
 
     for (auto &[builtinType, expectedName] : testCases) {
-        auto resourceNames = BuiltIn::getResourceNames(builtinType, defaultBuiltInMode, BuiltIn::CodeType::binary, *pDevice);
+        auto resourceNames = BuiltIn::getResourceNames(builtinType, defaultBuiltInMode, BuiltIn::CodeType::binary, pDevice->getHardwareInfo());
 
         std::string expectedAddressingModePrefix = defaultBuiltInMode.toString();
         std::string expectedResourceNameGeneric = expectedAddressingModePrefix + expectedName + ".bin";
@@ -267,7 +267,7 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNames
 
     for (auto &[builtinType, expectedName] : testCases) {
 
-        auto resourceNames = BuiltIn::getResourceNames(builtinType, defaultBuiltInMode, BuiltIn::CodeType::intermediate, *pDevice);
+        auto resourceNames = BuiltIn::getResourceNames(builtinType, defaultBuiltInMode, BuiltIn::CodeType::intermediate, pDevice->getHardwareInfo());
 
         std::string expectedAddressingModePrefix = defaultBuiltInMode.toString();
         std::string expectedResourceNameGeneric = expectedAddressingModePrefix + expectedName + ".spv";
@@ -300,7 +300,7 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeSourceWhenGettingResourceNamesThenRe
         {BuiltIn::BaseKernel::fillImage1dBuffer, "fill_image1d_buffer.builtin_kernel"}};
 
     for (auto &[builtinType, expectedName] : testCases) {
-        auto resourceNames = BuiltIn::getResourceNames(builtinType, defaultBuiltInMode, BuiltIn::CodeType::source, *pDevice);
+        auto resourceNames = BuiltIn::getResourceNames(builtinType, defaultBuiltInMode, BuiltIn::CodeType::source, pDevice->getHardwareInfo());
 
         std::string expectedResourceNameGeneric = expectedName;
         expectedResourceNameGeneric += ".cl";
@@ -346,7 +346,7 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeWhenGettingResourceNamesThenReturnRe
     };
 
     for (const auto &[baseKernel, addressingMode, filename] : wideCases) {
-        auto resourceNames = BuiltIn::getResourceNames(baseKernel, addressingMode, BuiltIn::CodeType::binary, *pDevice);
+        auto resourceNames = BuiltIn::getResourceNames(baseKernel, addressingMode, BuiltIn::CodeType::binary, pDevice->getHardwareInfo());
 
         std::string expectedGeneric = filename;
         std::string expectedForRelease = deviceIpString + "_" + expectedGeneric;
@@ -360,7 +360,7 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingWideStateless
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageStatelessBufferWide, BuiltIn::CodeType::intermediate, *pDevice);
+    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageStatelessBufferWide, BuiltIn::CodeType::intermediate, pDevice->getHardwareInfo());
 
     std::string expectedResourceNameGeneric = "bindful_image_stateless_buffer_wide_copy_buffer_to_buffer.builtin_kernel.spv";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
@@ -434,7 +434,7 @@ TEST_F(BuiltInSharedTest, GivenRequestedTypeSourceWhenGettingWideStatelessBuilti
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
 
-    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageStatelessBufferWide, BuiltIn::CodeType::source, *pDevice);
+    auto resourceNames = BuiltIn::getResourceNames(BuiltIn::BaseKernel::copyBufferToBuffer, BuiltIn::bindfulImageStatelessBufferWide, BuiltIn::CodeType::source, pDevice->getHardwareInfo());
 
     std::string expectedResourceNameGeneric = "copy_buffer_to_buffer.builtin_kernel.cl";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;

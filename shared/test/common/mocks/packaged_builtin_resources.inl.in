@@ -1,0 +1,20 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include "shared/source/utilities/const_stringref.h"
+
+#include <array>
+#include <string_view>
+
+namespace NEO::MockBuiltinBinaries {
+inline constexpr std::array<std::string_view, @PACKAGED_BUILTIN_RESOURCES_COUNT@> packagedBuiltinResources = {
+@PACKAGED_BUILTIN_RESOURCES@};
+inline constexpr ConstStringRef packagedKernelTypes = "@KERNEL_TYPES@";
+inline constexpr ConstStringRef packagedWideStatelessTypes = "@WIDE_STATELESS_TYPES@";
+} // namespace NEO::MockBuiltinBinaries

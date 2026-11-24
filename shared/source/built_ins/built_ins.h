@@ -30,6 +30,7 @@ namespace NEO {
 
 class Device;
 class SipKernel;
+struct HardwareInfo;
 class MemoryManager;
 class OsContext;
 
@@ -67,7 +68,7 @@ struct Code {
 
 namespace BuiltIn {
 
-StackVec<std::string, 3> getResourceNames(BaseKernel kernel, const AddressingMode &mode, CodeType type, const Device &device);
+StackVec<std::string, 3> getResourceNames(BaseKernel kernel, const AddressingMode &mode, CodeType type, const HardwareInfo &hwInfo);
 
 template <BaseKernel kernel, CodeType codeType>
 constexpr auto makeResourceName() {

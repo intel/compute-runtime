@@ -35,9 +35,7 @@ BuiltIn::Resource BuiltIn::createResource(const BuiltIn::Resource &r) {
     return BuiltIn::Resource(r);
 }
 
-StackVec<std::string, 3> BuiltIn::getResourceNames(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType type, const Device &device) {
-    auto &hwInfo = device.getHardwareInfo();
-
+StackVec<std::string, 3> BuiltIn::getResourceNames(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType type, const HardwareInfo &hwInfo) {
     const auto deviceIp = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
     const auto extension = BuiltIn::Code::getExtension(type);
 
@@ -157,7 +155,7 @@ BuiltIn::Code BuiltIn::ResourceLoader::getBuiltinCode(BuiltIn::BaseKernel kernel
 
 BuiltIn::Resource BuiltIn::ResourceLoader::getBuiltinResource(BuiltIn::BaseKernel kernel, const BuiltIn::AddressingMode &mode, BuiltIn::CodeType requestedCodeType, Device &device) {
     BuiltIn::Resource builtinResource;
-    auto resourcesToLookup = BuiltIn::getResourceNames(kernel, mode, requestedCodeType, device);
+    auto resourcesToLookup = BuiltIn::getResourceNames(kernel, mode, requestedCodeType, device.getHardwareInfo());
     for (auto &resourceName : resourcesToLookup) {
         for (auto &storage : allStorages) {
             builtinResource = storage->load(resourceName);

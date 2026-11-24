@@ -12,6 +12,7 @@
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_builtin_binaries.h"
 #include "shared/test/common/tests_configuration.h"
 
 #include "level_zero/core/source/driver/kernel_dispatch_stats_reporter.h"
@@ -47,6 +48,9 @@ void applyWorkarounds() {
     L0::globalDriverHandles->reserve(1);
     L0::kernelDispatchStatsReporter();
     debugManager.flags.EnableUsmPoolLazyInit.set(1);
+    if (!isAubTestMode(testMode)) {
+        MockBuiltinBinaries::registerIntermediateRepresentations();
+    }
 }
 
 void setupTestFiles(std::string testBinaryFiles, int32_t revId) {

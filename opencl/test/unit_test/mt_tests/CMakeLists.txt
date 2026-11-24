@@ -22,7 +22,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
                  $<TARGET_OBJECTS:mock_aubstream>
                  $<TARGET_OBJECTS:mock_gmm>
                  $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
-                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
   )
 
   target_include_directories(igdrcl_mt_tests PRIVATE

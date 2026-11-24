@@ -21,6 +21,9 @@ file(READ "${BUILTINS_KERNELS_DIR}/aux_translation.builtin_kernel" AUX_TRANSLATI
 file(READ "${BUILTINS_KERNELS_DIR}/copy_kernel_timestamps.builtin_kernel" COPY_KERNEL_TIMESTAMPS_SRC)
 file(READ "${BUILTINS_KERNELS_DIR}/fill_image1d_buffer.builtin_kernel" FILL_IMAGE1D_BUFFER_SRC)
 
+file(GLOB BUILTINS_KERNELS_SOURCES "${BUILTINS_KERNELS_DIR}/*.builtin_kernel")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BUILTINS_KERNELS_SOURCES})
+
 configure_file(
                "${CMAKE_CURRENT_SOURCE_DIR}/register_copy_kernels_source.cpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/register_copy_kernels_source.cpp"

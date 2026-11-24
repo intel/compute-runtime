@@ -74,7 +74,7 @@ add_subdirectories()
 
 target_sources(neo_shared_tests PRIVATE
                $<TARGET_OBJECTS:neo_unit_tests_config>
-               $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
+               $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
 )
 add_dependencies(unit_tests neo_shared_tests)
 

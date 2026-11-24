@@ -78,6 +78,8 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_operations_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_migration_sync_data.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtin_binaries.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtin_binaries.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_modules_zebin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_modules_zebin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_multi_graphics_allocation.h
@@ -163,6 +165,30 @@ if(TESTS_XEHP_AND_LATER)
 endif()
 
 add_subdirectories()
+
+set(PACKAGED_BUILTIN_RESOURCES "")
+set(PACKAGED_BUILTIN_RESOURCES_COUNT 0)
+foreach(type BINARY SPIRV)
+  get_property(groups GLOBAL PROPERTY BUILTINS_${type}_GROUPS)
+  foreach(group ${groups})
+    set(device_prefix "")
+    if("${type}" STREQUAL "BINARY")
+      set(device_prefix "${group}_")
+    endif()
+    get_property(inputs GLOBAL PROPERTY BUILTINS_GROUP_${group}_INPUTS)
+    foreach(input ${inputs})
+      get_filename_component(stem ${input} NAME_WE)
+      get_filename_component(extension ${input} EXT)
+      string(APPEND PACKAGED_BUILTIN_RESOURCES "    \"${device_prefix}${stem}.builtin_kernel${extension}\",\n")
+      math(EXPR PACKAGED_BUILTIN_RESOURCES_COUNT "${PACKAGED_BUILTIN_RESOURCES_COUNT} + 1")
+    endforeach()
+  endforeach()
+endforeach()
+configure_file(packaged_builtin_resources.inl.in ${NEO_BUILD_DIR}/shared/test/common/mocks/packaged_builtin_resources.inl @ONLY)
+
+list(APPEND NEO_CORE_tests_mocks
+     ${CMAKE_CURRENT_SOURCE_DIR}/packaged_builtin_resources.inl.in
+)
 
 add_library(neo_shared_mocks OBJECT EXCLUDE_FROM_ALL ${NEO_CORE_tests_mocks})
 
