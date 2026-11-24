@@ -54,6 +54,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
         this->allocId = svmAllocData.allocId;
         this->pageSizeForAlignment = svmAllocData.pageSizeForAlignment;
         this->isImportedAllocation = svmAllocData.isImportedAllocation;
+        this->remoteReadDenied = svmAllocData.remoteReadDenied;
         this->isExportedAllocation = svmAllocData.isExportedAllocation.load();
         this->isInternalAllocation = svmAllocData.isInternalAllocation;
         this->isExternalMemmapAllocation = svmAllocData.isExternalMemmapAllocation;
@@ -81,6 +82,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     MemoryProperties allocationFlagsProperty;
     Device *device = nullptr;
     bool isImportedAllocation = false;
+    bool remoteReadDenied = false;
     std::atomic<bool> isExportedAllocation = false;
     bool isExternalMemmapAllocation = false;
     bool isAtomicAccessSet = false;

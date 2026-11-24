@@ -1147,7 +1147,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     uint64_t bufferSize = 0;
     resolveImagePitchesAndBufferSize(image, pDstRegion, srcRowPitch, srcSlicePitchCalculated, bufferSize);
 
-    auto allocationStruct = resolveAlignedAllocation(this->device, srcPtr, bufferSize, nullptr, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true});
+    auto allocationStruct = resolveAlignedAllocation(this->device, srcPtr, bufferSize, nullptr, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true, .checkRemoteRead = true});
+    if (isRemoteReadDenied(allocationStruct.svmAllocData)) [[unlikely]] {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
     if (allocationStruct.alloc == nullptr && sharedSystemEnabled == false) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -2596,7 +2599,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     auto allocSize = NEO::getIfValid(memoryCopyParams.bcsSplitTotalDstSize, size);
     auto dstAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstptr), allocSize, dstAllocInfo, {.sharedSystemEnabled = sharedSystemEnabled, .copyOffload = isCopyOffloadEnabled()});
-    auto srcAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcptr), allocSize, srcAllocInfo, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true, .copyOffload = isCopyOffloadEnabled()});
+    auto srcAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcptr), allocSize, srcAllocInfo, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true, .copyOffload = isCopyOffloadEnabled(), .checkRemoteRead = true});
+
+    if (isRemoteReadDenied(srcAllocationStruct.svmAllocData)) [[unlikely]] {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     memoryCopyParams.isDstSystemOrRemote = isDstSystemOrRemoteAlloc(dstAllocationStruct.svmAllocData);
     bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || isRemoteAlloc(dstAllocationStruct.svmAllocData);
@@ -2878,7 +2885,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     size_t srcAllocSize = NEO::getIfValid(memoryCopyParams.bcsSplitTotalSrcSize, srcSize);
 
     auto dstAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseDstPtr, dstPtr), dstAllocSize, nullptr, {.sharedSystemEnabled = sharedSystemEnabled, .copyOffload = isCopyOffloadEnabled()});
-    auto srcAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcPtr), srcAllocSize, nullptr, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true, .copyOffload = isCopyOffloadEnabled()});
+    auto srcAllocationStruct = resolveAlignedAllocation(this->device, NEO::getIfValid(memoryCopyParams.bcsSplitBaseSrcPtr, srcPtr), srcAllocSize, nullptr, {.sharedSystemEnabled = sharedSystemEnabled, .hostCopyAllowed = true, .copyOffload = isCopyOffloadEnabled(), .checkRemoteRead = true});
+
+    if (isRemoteReadDenied(srcAllocationStruct.svmAllocData)) [[unlikely]] {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     bool remoteCopy = isRemoteAlloc(srcAllocationStruct.svmAllocData) || isRemoteAlloc(dstAllocationStruct.svmAllocData);
 
@@ -3780,6 +3791,9 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::resolveAligne
     }
 
     if (svmAllocFound) {
+        if (flags.checkRemoteRead && isRemoteReadDenied(svmAlloc)) [[unlikely]] {
+            return {.svmAllocData = svmAlloc};
+        }
         return alignSvmAllocationData(device, svmAlloc, buffer, bufferSize, sourcePtr, sshAlignmentOffset);
     }
 
@@ -5052,6 +5066,11 @@ bool CommandListCoreFamily<gfxCoreFamily>::isRemoteAlloc(NEO::SvmAllocationData 
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+inline bool CommandListCoreFamily<gfxCoreFamily>::isRemoteReadDenied(const NEO::SvmAllocationData *allocData) {
+    return allocData && allocData->remoteReadDenied;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isDstSystemOrRemoteAlloc(NEO::SvmAllocationData *allocData) const {
     const bool isHostUsm = allocData && allocData->memoryType == InternalMemoryType::hostUnifiedMemory;
     return isHostUsm || isRemoteAlloc(allocData);
@@ -5075,6 +5094,10 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
     NEO::SvmAllocationData *dstAllocData = nullptr;
     bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcPtr), size, srcAllocData);
     bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, size, dstAllocData);
+
+    if (isRemoteReadDenied(srcAllocData)) [[unlikely]] {
+        return false;
+    }
 
     auto srcMemoryPool = getMemoryPoolFromAllocDataForSplit(srcAllocFound, srcAllocData);
     auto dstMemoryPool = getMemoryPoolFromAllocDataForSplit(dstAllocFound, dstAllocData);

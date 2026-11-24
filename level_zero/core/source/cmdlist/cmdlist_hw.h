@@ -52,6 +52,7 @@ struct ResolveAlignedAllocationFlags {
     bool sharedSystemEnabled = false;
     bool hostCopyAllowed = false;
     bool copyOffload = false;
+    bool checkRemoteRead = false;
 };
 
 struct AlignedAllocationData {
@@ -427,6 +428,7 @@ struct CommandListCoreFamily : public CommandList {
     bool isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut, bool remoteCopy);
     bool isRemoteAlloc(NEO::SvmAllocationData *allocData) const;
     bool isDstSystemOrRemoteAlloc(NEO::SvmAllocationData *allocData) const;
+    static bool isRemoteReadDenied(const NEO::SvmAllocationData *allocData);
     bool isCopyOffloadWriteOutsideOfDevice(const NEO::GraphicsAllocation *explicitDstAlloc, NEO::SvmAllocationData *dstAllocData) const;
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,

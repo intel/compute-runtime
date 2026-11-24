@@ -1339,3 +1339,13 @@ TEST_F(SvmHostAllocationNumaTest, givenHostAllocationCacheWhenRootDeviceClosestT
     svmManager.freeSVMAlloc(ptrOwnedByRootDevice2);
     svmManager.cleanupUSMAllocCaches();
 }
+
+TEST(SvmAllocationDataTest, givenRemoteReadDeniedSetWhenSvmAllocationDataIsCopiedThenFlagIsCopied) {
+    SvmAllocationData defaultData(1u);
+    EXPECT_FALSE(defaultData.remoteReadDenied);
+
+    SvmAllocationData sourceData(1u);
+    sourceData.remoteReadDenied = true;
+    SvmAllocationData copiedData(sourceData);
+    EXPECT_TRUE(copiedData.remoteReadDenied);
+}

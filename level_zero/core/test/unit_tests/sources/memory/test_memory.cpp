@@ -5343,6 +5343,38 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenBufferOwnedByOtherRootAndImportF
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr0));
 }
 
+HWTEST_F(MultipleDevicePeerAllocationTest, givenRemoteReadDeniedSourceOwnedByOtherRootWhenAppendingMemoryCopiesThenErrorIsReturnedAndPeerAllocationIsNotImported) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    const size_t size = 1024;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device0->toHandle(), &deviceDesc, size, 1, &srcPtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 1, &dstPtr));
+    auto srcAllocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(srcPtr);
+    ASSERT_NE(nullptr, srcAllocData);
+    srcAllocData->remoteReadDenied = true;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device1, NEO::EngineGroupType::copy, 0u));
+
+    CmdListMemoryCopyParams copyParams = {};
+    ze_copy_region_t region = {0, 0, 0, static_cast<uint32_t>(size), 1, 1};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendMemoryCopyRegion(dstPtr, &region, size, 0, srcPtr, &region, size, 0, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(0u, device1->peerAllocations.allocations.size());
+
+    srcAllocData->remoteReadDenied = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(1u, device1->peerAllocations.allocations.size());
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+}
+
 HWTEST_F(MultipleDevicePeerAllocationTest, givenCallToMakeIndirectAllocationsResidentThenOnlyValidAllocationsAreMadeResident) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);

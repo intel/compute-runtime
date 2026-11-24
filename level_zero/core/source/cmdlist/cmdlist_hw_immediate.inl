@@ -1067,6 +1067,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
     if (!hasExplicitAllocs) {
         this->obtainAllocData(cpuMemCopyInfo, isCopyOffloadEnabled(), copyOffloadQueueSelectionScope.getDstSvmAlloc());
+        if (this->isRemoteReadDenied(cpuMemCopyInfo.srcAllocInfo.svmAlloc)) [[unlikely]] {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
         if (preferCopyThroughLockedPtr(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents)) {
             ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
             if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {

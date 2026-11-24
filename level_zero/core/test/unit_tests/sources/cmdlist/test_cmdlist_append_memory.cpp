@@ -7,10 +7,12 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/helpers/append_operations.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -3334,6 +3336,170 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
     EXPECT_TRUE(copyOffloadUltCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
 
     cmdList.cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = nullptr;
+}
+
+struct RemoteReadDeniedCopyFixture : public AppendMemoryCopyFixture {
+    void setUp() {
+        NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        NEO::debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        AppendMemoryCopyFixture::setUp();
+
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, allocSize, 0u, &deniedBuffer));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, allocSize, 0u, &regularBuffer));
+        ze_host_mem_alloc_desc_t hostDesc = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, allocSize, 0u, &hostBuffer));
+
+        driverHandle->getSvmAllocsManager()->getSVMAlloc(static_cast<const void *>(deniedBuffer))->remoteReadDenied = true;
+    }
+
+    void tearDown() {
+        context->freeMem(hostBuffer);
+        context->freeMem(regularBuffer);
+        context->freeMem(deniedBuffer);
+        AppendMemoryCopyFixture::tearDown();
+    }
+
+    std::unique_ptr<L0::CommandList> createRegularCmdList(NEO::EngineGroupType engineGroupType) {
+        ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
+        std::unique_ptr<L0::CommandList> cmdList(CommandList::create(device, engineGroupType, 0u, returnValue, false));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        return cmdList;
+    }
+
+    std::unique_ptr<L0::CommandList> createImmediateCmdList(NEO::EngineGroupType engineGroupType) {
+        ze_command_queue_desc_t queueDesc = {};
+        ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
+        std::unique_ptr<L0::CommandList> cmdList(CommandList::createImmediate(device, &queueDesc, false, engineGroupType, returnValue));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->ensureImmediateResourcesInitialized());
+        return cmdList;
+    }
+
+    static size_t getUsedCmdBufferSize(L0::CommandList &cmdList) {
+        return cmdList.getCmdContainer().getCommandStream()->getUsed();
+    }
+
+    ze_result_t appendRegionCopy(L0::CommandList &cmdList, void *dstPtr, const void *srcPtr) {
+        const ze_copy_region_t region = {0, 0, 0, 8, 4, 1};
+        return cmdList.appendMemoryCopyRegion(dstPtr, &region, 8, 0, srcPtr, &region, 8, 0, nullptr, 0, nullptr, copyParams);
+    }
+
+    static constexpr size_t allocSize = MemoryConstants::pageSize;
+    static constexpr size_t copySize = 64u;
+    DebugManagerStateRestore restorer;
+    void *deniedBuffer = nullptr;
+    void *regularBuffer = nullptr;
+    void *hostBuffer = nullptr;
+};
+using RemoteReadDeniedCopyTest = Test<RemoteReadDeniedCopyFixture>;
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenRegularCmdListAndRemoteReadDeniedSourceWhenAppendingMemoryCopyThenErrorIsReturnedAndNothingIsProgrammed) {
+    for (auto engineGroupType : {NEO::EngineGroupType::compute, NEO::EngineGroupType::copy}) {
+        auto cmdList = createRegularCmdList(engineGroupType);
+        const auto usedBefore = getUsedCmdBufferSize(*cmdList);
+
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList->appendMemoryCopy(regularBuffer, deniedBuffer, copySize, nullptr, 0, nullptr, copyParams));
+        EXPECT_EQ(usedBefore, getUsedCmdBufferSize(*cmdList));
+    }
+}
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenRegularCmdListAndRemoteReadDeniedSourceWhenAppendingMemoryCopyRegionThenErrorIsReturnedAndNothingIsProgrammed) {
+    for (auto engineGroupType : {NEO::EngineGroupType::compute, NEO::EngineGroupType::copy}) {
+        auto cmdList = createRegularCmdList(engineGroupType);
+        const auto usedBefore = getUsedCmdBufferSize(*cmdList);
+
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, appendRegionCopy(*cmdList, regularBuffer, deniedBuffer));
+        EXPECT_EQ(usedBefore, getUsedCmdBufferSize(*cmdList));
+    }
+}
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenRegularCmdListAndRemoteReadDeniedSourceWhenAppendingMemoryCopyFromContextThenErrorIsReturnedAndNothingIsProgrammed) {
+    auto cmdList = createRegularCmdList(NEO::EngineGroupType::compute);
+    const auto usedBefore = getUsedCmdBufferSize(*cmdList);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList->appendMemoryCopyFromContext(regularBuffer, context->toHandle(), deniedBuffer, copySize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(usedBefore, getUsedCmdBufferSize(*cmdList));
+}
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenImmediateCmdListAndRemoteReadDeniedSourceWhenAppendingMemoryCopyThenErrorIsReturnedAndNothingIsProgrammed) {
+    for (auto engineGroupType : {NEO::EngineGroupType::renderCompute, NEO::EngineGroupType::copy}) {
+        auto cmdList = createImmediateCmdList(engineGroupType);
+        const auto usedBefore = getUsedCmdBufferSize(*cmdList);
+
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList->appendMemoryCopy(regularBuffer, deniedBuffer, copySize, nullptr, 0, nullptr, copyParams));
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList->appendMemoryCopy(hostBuffer, deniedBuffer, copySize, nullptr, 0, nullptr, copyParams));
+        EXPECT_EQ(usedBefore, getUsedCmdBufferSize(*cmdList));
+    }
+}
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenImmediateCmdListAndRemoteReadDeniedSourceWhenAppendingMemoryCopyRegionThenErrorIsReturnedAndNothingIsProgrammed) {
+    for (auto engineGroupType : {NEO::EngineGroupType::renderCompute, NEO::EngineGroupType::copy}) {
+        auto cmdList = createImmediateCmdList(engineGroupType);
+        const auto usedBefore = getUsedCmdBufferSize(*cmdList);
+
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, appendRegionCopy(*cmdList, regularBuffer, deniedBuffer));
+        EXPECT_EQ(usedBefore, getUsedCmdBufferSize(*cmdList));
+    }
+}
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenImmediateCmdListAndRemoteReadDeniedSourceWhenAppendingMemoryCopyFromContextThenErrorIsReturnedAndNothingIsProgrammed) {
+    auto cmdList = createImmediateCmdList(NEO::EngineGroupType::renderCompute);
+    const auto usedBefore = getUsedCmdBufferSize(*cmdList);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList->appendMemoryCopyFromContext(regularBuffer, context->toHandle(), deniedBuffer, copySize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(usedBefore, getUsedCmdBufferSize(*cmdList));
+}
+
+HWTEST2_F(RemoteReadDeniedCopyTest, givenRemoteReadDeniedSourceWhenAppendingImageCopyFromMemoryThenErrorIsReturnedAndNothingIsProgrammed, ImageSupport) {
+    ze_image_desc_t imgDesc = {};
+    imgDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    imgDesc.type = ZE_IMAGE_TYPE_2D;
+    imgDesc.width = 8;
+    imgDesc.height = 4;
+    imgDesc.depth = 1;
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, image->initialize(device, &imgDesc));
+    const ze_image_region_t region = {0, 0, 0, 8, 4, 1};
+
+    for (auto engineGroupType : {NEO::EngineGroupType::compute, NEO::EngineGroupType::copy}) {
+        std::unique_ptr<L0::CommandList> cmdLists[] = {createRegularCmdList(engineGroupType), createImmediateCmdList(engineGroupType)};
+        for (auto &cmdList : cmdLists) {
+            const auto usedBefore = getUsedCmdBufferSize(*cmdList);
+
+            EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList->appendImageCopyFromMemory(image->toHandle(), deniedBuffer, &region, nullptr, 0, nullptr, copyParams));
+            EXPECT_EQ(usedBefore, getUsedCmdBufferSize(*cmdList));
+        }
+    }
+}
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenRegularCmdListAndRemoteReadDeniedDestinationWhenAppendingCopiesFromUnmarkedSourceThenSuccessIsReturned) {
+    auto cmdList = createRegularCmdList(NEO::EngineGroupType::compute);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(deniedBuffer, regularBuffer, copySize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendRegionCopy(*cmdList, deniedBuffer, regularBuffer));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopyFromContext(deniedBuffer, context->toHandle(), regularBuffer, copySize, nullptr, 0, nullptr, copyParams));
+}
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenImmediateCmdListAndRemoteReadDeniedDestinationWhenAppendingCopiesFromUnmarkedSourceThenSuccessIsReturned) {
+    auto cmdList = createImmediateCmdList(NEO::EngineGroupType::renderCompute);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(deniedBuffer, regularBuffer, copySize, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendRegionCopy(*cmdList, deniedBuffer, regularBuffer));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopyFromContext(deniedBuffer, context->toHandle(), regularBuffer, copySize, nullptr, 0, nullptr, copyParams));
+}
+
+HWTEST_F(RemoteReadDeniedCopyTest, givenBcsSplitEnabledWhenSourceIsRemoteReadDeniedThenSplitIsNotNeededAndMarkedDestinationDoesNotChangeSplit) {
+    auto cmdList = std::make_unique<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->initialize(device, NEO::EngineGroupType::copy, 0u));
+    cmdList->bcsSplitMode = BcsSplitParams::BcsSplitMode::recorded;
+    cmdList->minimalSizeForBcsSplit = copySize;
+
+    NEO::TransferDirection direction = NEO::TransferDirection::localToLocal;
+    EXPECT_FALSE(cmdList->isAppendSplitNeeded(hostBuffer, deniedBuffer, copySize, direction));
+    EXPECT_EQ(cmdList->isAppendSplitNeeded(regularBuffer, hostBuffer, copySize, direction), cmdList->isAppendSplitNeeded(deniedBuffer, hostBuffer, copySize, direction));
+
+    cmdList->bcsSplitMode = BcsSplitParams::BcsSplitMode::disabled;
 }
 
 } // namespace ult
