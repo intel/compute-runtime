@@ -22,7 +22,6 @@ set(IGDRCL_SRCS_LIB_ULT
     ${NEO_SOURCE_DIR}/opencl/source/helpers/implicit_scaling_ocl.cpp
     ${NEO_SOURCE_DIR}/opencl/source/memory_manager/compression_selector_ocl.cpp
     ${NEO_SOURCE_DIR}/opencl/source/memory_manager/cpu_page_fault_manager_memory_sync.cpp
-    ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
     ${NEO_SOURCE_DIR}/shared/source/compiler_interface/default_cache_config.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/cl_execution_environment_helper.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/cl_execution_environment_helper.h

@@ -20,10 +20,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
   ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 
   add_executable(${TARGET_NAME} EXCLUDE_FROM_ALL
-                 ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
-  )
-
-  target_sources(${TARGET_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                  ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h

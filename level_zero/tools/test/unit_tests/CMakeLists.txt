@@ -19,10 +19,6 @@ endfunction()
 ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 
 add_executable(${TARGET_NAME}
-               ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
-)
-
-target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_specific_config_l0.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_config_listener_l0.cpp

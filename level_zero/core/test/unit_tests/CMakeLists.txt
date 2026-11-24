@@ -19,7 +19,6 @@ endfunction()
 ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 
 add_executable(${TARGET_NAME}
-               ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
                ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
 )
 

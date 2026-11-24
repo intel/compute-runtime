@@ -15,7 +15,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
   add_executable(neo_shared_mt_tests EXCLUDE_FROM_ALL
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
-                 ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_sip_listener.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h

@@ -59,6 +59,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/constants.h
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_bitfield.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_reader.h
