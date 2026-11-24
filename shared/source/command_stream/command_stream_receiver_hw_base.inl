@@ -397,7 +397,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
         if (flushData.stateCacheFlushRequired) {
             device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
-            MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(csrCommandStream, device.getRootDeviceEnvironment(), this->isTlbFlushRequiredForStateCacheFlush());
+            MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(csrCommandStream, device.getRootDeviceEnvironment());
         }
 
         if (requiresInstructionCacheFlush) {
@@ -598,7 +598,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
 
     if (stateCacheFlushRequired) {
         device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
-        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment(), this->isTlbFlushRequiredForStateCacheFlush());
+        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment());
     }
 
     addPipeControlFlushTaskIfNeeded(commandStreamCSR, taskLevel);

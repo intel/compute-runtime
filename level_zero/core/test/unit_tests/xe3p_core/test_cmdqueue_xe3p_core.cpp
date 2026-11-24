@@ -308,12 +308,13 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheWhenExecuteComma
     commandQueue->destroy();
 }
 
-XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheDirtyAndTlbFlushRequiredForStateCacheFlushWhenExecuteCommandListsRegularHeaplessThenStateCacheFlushAlsoInvalidatesTlb) {
+XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheDirtyAndDcFlushAllowedWhenExecuteCommandListsRegularHeaplessThenStateCacheFlushAlsoFlushesDataCache) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowDcFlush.set(1);
 
     ze_command_queue_desc_t desc = {};
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
-    csr->isTlbFlushRequiredForStateCacheFlushReturnValue = true;
     auto contextId = csr->getOsContext().getContextId();
     auto bindlessHeapHelper = new MockBindlesHeapsHelper(neoDevice, false);
     bindlessHeapHelper->stateCacheDirtyForContext.at(contextId) = true;
@@ -348,15 +349,15 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheDirtyAndTlbFlush
     FamilyType::Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
-    bool stateCacheFlushWithTlbInvalidationFound = false;
+    bool stateCacheFlushWithDcFlushFound = false;
     for (auto &cmd : pipeControls) {
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*cmd);
-        if (pipeControl->getStateCacheInvalidationEnable() && pipeControl->getTlbInvalidate()) {
-            stateCacheFlushWithTlbInvalidationFound = true;
+        if (pipeControl->getStateCacheInvalidationEnable() && pipeControl->getDcFlushEnable()) {
+            stateCacheFlushWithDcFlushFound = true;
         }
     }
 
-    EXPECT_TRUE(stateCacheFlushWithTlbInvalidationFound);
+    EXPECT_TRUE(stateCacheFlushWithDcFlushFound);
     EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(contextId));
     commandQueue->destroy();
 }
@@ -673,8 +674,10 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirty
     EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(contextId));
 }
 
-XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirtyAndTlbFlushRequiredForStateCacheFlushWhenExecutingCommandListImmediateWithFlushTaskThenStateCacheFlushAlsoInvalidatesTlb) {
+XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirtyAndDcFlushAllowedWhenExecutingCommandListImmediateWithFlushTaskThenStateCacheFlushAlsoFlushesDataCache) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowDcFlush.set(1);
 
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
@@ -683,7 +686,6 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirty
     auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate.getCsr(false));
-    csr->isTlbFlushRequiredForStateCacheFlushReturnValue = true;
     auto contextId = csr->getOsContext().getContextId();
     auto bindlessHeapHelper = new MockBindlesHeapsHelper(neoDevice, false);
     bindlessHeapHelper->stateCacheDirtyForContext.at(contextId) = true;
@@ -696,15 +698,15 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirty
     FamilyType::Parse::parseCommandBuffer(cmdList, commandStream.getCpuBase(), commandStream.getUsed());
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
-    bool stateCacheFlushWithTlbInvalidationFound = false;
+    bool stateCacheFlushWithDcFlushFound = false;
     for (auto &cmd : pipeControls) {
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*cmd);
-        if (pipeControl->getStateCacheInvalidationEnable() && pipeControl->getTlbInvalidate()) {
-            stateCacheFlushWithTlbInvalidationFound = true;
+        if (pipeControl->getStateCacheInvalidationEnable() && pipeControl->getDcFlushEnable()) {
+            stateCacheFlushWithDcFlushFound = true;
         }
     }
 
-    EXPECT_TRUE(stateCacheFlushWithTlbInvalidationFound);
+    EXPECT_TRUE(stateCacheFlushWithDcFlushFound);
     EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(contextId));
 }
 

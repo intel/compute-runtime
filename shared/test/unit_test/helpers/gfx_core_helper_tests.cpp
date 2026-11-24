@@ -924,22 +924,24 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingInstructionCacheFlushThenExpectI
     EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
 }
 
-HWTEST_F(PipeControlHelperTests, givenTlbInvalidationRequestedWhenProgrammingStateCacheFlushThenTlbIsInvalidatedTogetherWithStateCache) {
+HWTEST_F(PipeControlHelperTests, givenDcFlushAllowedOrNotWhenProgrammingStateCacheFlushThenDataCacheIsFlushedTogetherWithStateCacheWhenAllowed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto buffer = std::make_unique<uint8_t[]>(128);
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
-    for (const bool tlbInvalidation : {false, true}) {
+    DebugManagerStateRestore restorer;
+    for (const bool dcFlushAllowed : {false, true}) {
+        debugManager.flags.AllowDcFlush.set(dcFlushAllowed);
         LinearStream stream(buffer.get(), 128);
-        MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(stream, rootDeviceEnvironment, tlbInvalidation);
+        MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(stream, rootDeviceEnvironment);
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
         ASSERT_NE(nullptr, pipeControl);
 
         EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
         EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
         EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-        EXPECT_EQ(tlbInvalidation, pipeControl->getTlbInvalidate());
+        EXPECT_EQ(dcFlushAllowed, pipeControl->getDcFlushEnable());
     }
 }
 

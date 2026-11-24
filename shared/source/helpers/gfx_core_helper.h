@@ -493,7 +493,7 @@ struct MemorySynchronizationCommands {
     static bool getDcFlushEnable(bool isFlushPreferred, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
-    static void addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidation);
+    static void addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void addInstructionCacheFlush(LinearStream &commandStream);
 
     static size_t getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, NEO::PostSyncMode postSyncMode);

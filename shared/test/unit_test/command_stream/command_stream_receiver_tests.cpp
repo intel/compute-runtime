@@ -6593,7 +6593,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperW
 }
 
 template <typename FamilyType>
-bool findStateCacheInvalidationWithTlbInvalidation(LinearStream &commandStream, size_t startOffset, bool tlbInvalidation) {
+bool findStateCacheInvalidationWithDcFlush(LinearStream &commandStream, size_t startOffset, bool dcFlush) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     HardwareParse hwParser;
@@ -6603,14 +6603,14 @@ bool findStateCacheInvalidationWithTlbInvalidation(LinearStream &commandStream, 
         if (pipeControl != nullptr &&
             pipeControl->getStateCacheInvalidationEnable() &&
             pipeControl->getTextureCacheInvalidationEnable() &&
-            pipeControl->getTlbInvalidate() == tlbInvalidation) {
+            pipeControl->getDcFlushEnable() == dcFlush) {
             return true;
         }
     }
     return false;
 }
 
-HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperAndTlbFlushRequiredForStateCacheFlushWhenFlushTaskCalledThenStateCacheInvalidationAlsoInvalidatesTlb, IsHeapfulRequired) {
+HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperAndDcFlushAllowedOrNotWhenFlushTaskCalledThenStateCacheInvalidationFlushesDataCacheWhenAllowed, IsHeapfulRequired) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessPrologProgrammed) {
         GTEST_SKIP();
@@ -6621,19 +6621,20 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperA
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     flushTaskFlags.implicitFlush = true;
 
-    for (const bool tlbFlushRequired : {false, true}) {
-        commandStreamReceiver.isTlbFlushRequiredForStateCacheFlushReturnValue = tlbFlushRequired;
+    DebugManagerStateRestore restorer;
+    for (const bool dcFlushAllowed : {false, true}) {
+        debugManager.flags.AllowDcFlush.set(dcFlushAllowed);
         bindlessHeapsHelperPtr->stateCacheDirtyForContext.at(commandStreamReceiver.getOsContext().getContextId()) = true;
         auto usedBefore = commandStreamReceiver.commandStream.getUsed();
 
         commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
 
-        EXPECT_TRUE(findStateCacheInvalidationWithTlbInvalidation<FamilyType>(commandStreamReceiver.commandStream, usedBefore, tlbFlushRequired));
+        EXPECT_TRUE(findStateCacheInvalidationWithDcFlush<FamilyType>(commandStreamReceiver.commandStream, usedBefore, dcFlushAllowed));
         EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
     }
 }
 
-HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperAndTlbFlushRequiredForStateCacheFlushWhenHeaplessFlushTaskCalledThenStateCacheInvalidationAlsoInvalidatesTlb, IsHeaplessRequired) {
+HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperAndDcFlushAllowedOrNotWhenHeaplessFlushTaskCalledThenStateCacheInvalidationFlushesDataCacheWhenAllowed, IsHeaplessRequired) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice, pDevice->getNumGenericSubDevices() > 1);
@@ -6643,33 +6644,35 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperA
 
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
 
-    for (const bool tlbFlushRequired : {false, true}) {
-        commandStreamReceiver.isTlbFlushRequiredForStateCacheFlushReturnValue = tlbFlushRequired;
+    DebugManagerStateRestore restorer;
+    for (const bool dcFlushAllowed : {false, true}) {
+        debugManager.flags.AllowDcFlush.set(dcFlushAllowed);
         bindlessHeapsHelperPtr->stateCacheDirtyForContext.at(commandStreamReceiver.getOsContext().getContextId()) = true;
         auto usedBefore = commandStreamReceiver.commandStream.getUsed();
 
         commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
 
-        EXPECT_TRUE(findStateCacheInvalidationWithTlbInvalidation<FamilyType>(commandStreamReceiver.commandStream, usedBefore, tlbFlushRequired));
+        EXPECT_TRUE(findStateCacheInvalidationWithDcFlush<FamilyType>(commandStreamReceiver.commandStream, usedBefore, dcFlushAllowed));
         EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
     }
 }
 
-HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperAndTlbFlushRequiredForStateCacheFlushWhenFlushImmediateTaskCalledThenStateCacheInvalidationAlsoInvalidatesTlb, IsHeapfulRequired) {
+HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperAndDcFlushAllowedOrNotWhenFlushImmediateTaskCalledThenStateCacheInvalidationFlushesDataCacheWhenAllowed, IsHeapfulRequired) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice, pDevice->getNumGenericSubDevices() > 1);
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
 
-    for (const bool tlbFlushRequired : {false, true}) {
-        commandStreamReceiver.isTlbFlushRequiredForStateCacheFlushReturnValue = tlbFlushRequired;
+    DebugManagerStateRestore restorer;
+    for (const bool dcFlushAllowed : {false, true}) {
+        debugManager.flags.AllowDcFlush.set(dcFlushAllowed);
         bindlessHeapsHelperPtr->stateCacheDirtyForContext.at(commandStreamReceiver.getOsContext().getContextId()) = true;
         auto usedBefore = commandStreamReceiver.commandStream.getUsed();
 
         commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
-        EXPECT_TRUE(findStateCacheInvalidationWithTlbInvalidation<FamilyType>(commandStreamReceiver.commandStream, usedBefore, tlbFlushRequired));
+        EXPECT_TRUE(findStateCacheInvalidationWithDcFlush<FamilyType>(commandStreamReceiver.commandStream, usedBefore, dcFlushAllowed));
         EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
     }
 }

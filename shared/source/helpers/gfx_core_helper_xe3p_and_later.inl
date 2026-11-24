@@ -365,7 +365,7 @@ void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(Family
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidation) {
+void MemorySynchronizationCommands<Family>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
     PIPE_CONTROL cmd = Family::cmdInitPipeControl;
@@ -373,7 +373,7 @@ void MemorySynchronizationCommands<Family>::addStateCacheFlush(LinearStream &com
     cmd.setRenderTargetCacheFlushEnable(true);
     cmd.setStateCacheInvalidationEnable(true);
     cmd.setTextureCacheInvalidationEnable(true);
-    cmd.setTlbInvalidate(tlbInvalidation);
+    cmd.setDcFlushEnable(getDcFlushEnable(true, rootDeviceEnvironment));
     cmd.setQueueDrainMode(QueueDrainMode::drainAllQueues);
 
     if (debugManager.flags.DrainAllQueuesOnCacheInvalidation.get() == 0) {
