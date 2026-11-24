@@ -489,6 +489,9 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
         if (parentAllocation) {
             return parentAllocation->getGmm(handleId);
         }
+        if (mappedPhysicalAllocation) {
+            return mappedPhysicalAllocation->getGmm(handleId);
+        }
         return gmms[handleId];
     }
     void setDefaultGmm(Gmm *gmm) {
@@ -517,9 +520,8 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
     bool qualifiesFor2MBPages() const { return allocationInfo.flags.qualifiedFor2MBPages; }
     void setQualifiesFor2MBPages(bool value) { allocationInfo.flags.qualifiedFor2MBPages = value; }
 
-    // Set on a mapping that aliases another allocation's physical memory. Its bytes and GMMs belong to
-    // that physical allocation, so it is left out of the used-memory totals and memory bank usage and
-    // does not free the GMMs.
+    // Set on a mapping that aliases another allocation's physical memory. Its bytes belong to that
+    // physical allocation, so it is left out of the used-memory totals and memory bank usage.
     bool isSharedPhysicalMemoryMapping() const { return allocationInfo.flags.sharedPhysicalMemoryMapping; }
     void setSharedPhysicalMemoryMapping(bool value) { allocationInfo.flags.sharedPhysicalMemoryMapping = value; }
 

@@ -110,7 +110,7 @@ void GraphicsAllocation::setDefaultGmm(std::unique_ptr<Gmm> gmm) {
 
 void GraphicsAllocation::setGmm(std::unique_ptr<Gmm> gmm, uint32_t handleId) {
     UNRECOVERABLE_IF(isView());
-    delete this->getGmm(handleId);
+    delete this->gmms[handleId];
     this->setGmm(gmm.release(), handleId);
 }
 
