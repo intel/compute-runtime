@@ -65,11 +65,8 @@ TEST_F(WddmResidencyControllerMTTest, givenAllocationsToTrimWhenCCSCsrIsLockedTh
     MockWddmAllocation allocation1(rootDeviceEnvironment->getGmmHelper());
 
     allocation1.getResidencyData().updateCompletionData(25, csrCCS->getOsContext().getContextId());
-    allocation1.getResidencyData().resident[csrCCS->getOsContext().getContextId()] = true;
-    wddm->getResidencyController().getEvictionAllocations().push_back(&allocation1);
-
     allocation1.getResidencyData().updateCompletionData(0, csrBCS->getOsContext().getContextId());
-    allocation1.getResidencyData().resident[csrBCS->getOsContext().getContextId()] = true;
+    allocation1.getResidencyData().resident = true;
     wddm->getResidencyController().getEvictionAllocations().push_back(&allocation1);
 
     std::atomic<bool> threadOwnOwnership = false;
@@ -237,7 +234,7 @@ TEST(WddmResidencyControllerMakeResidentMTTest, givenSubmissionTrimmingAnotherSe
     }
 
     MockWddmAllocation allocationOnOtherSecondary(rootDeviceEnvironment->getGmmHelper(), 1);
-    allocationOnOtherSecondary.getResidencyData().resident[2] = true;
+    allocationOnOtherSecondary.getResidencyData().resident = true;
     allocationOnOtherSecondary.getResidencyData().updateCompletionData(1, 2);
     auto &residencyController = wddm->getResidencyController();
     residencyController.getEvictionAllocations().push_back(&allocationOnOtherSecondary);
@@ -265,7 +262,7 @@ TEST(WddmResidencyControllerMakeResidentMTTest, givenSubmissionTrimmingAnotherSe
     submission.join();
     trimCallback.join();
 
-    EXPECT_FALSE(allocationOnOtherSecondary.getResidencyData().resident[2]);
+    EXPECT_FALSE(allocationOnOtherSecondary.getResidencyData().resident);
     residencyController.getEvictionAllocations().clear();
     engines.clear();
 }

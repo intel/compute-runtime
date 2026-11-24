@@ -22,6 +22,54 @@
 
 namespace NEO {
 
+namespace {
+struct TrimContext {
+    OsContextWin *osContext;
+    CommandStreamReceiver *csr;
+    bool csrSkipped;
+};
+using TrimContexts = StackVec<TrimContext, 32>;
+
+TrimContexts getTrimContexts(Wddm &wddm, const StackVec<CommandStreamReceiver *, 5> &skippedCsrs) {
+    TrimContexts trimContexts;
+    wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
+        const bool csrSkipped = std::find(skippedCsrs.begin(), skippedCsrs.end(), engine.commandStreamReceiver) != skippedCsrs.end();
+        trimContexts.push_back({static_cast<OsContextWin *>(engine.osContext), engine.commandStreamReceiver, csrSkipped});
+    });
+    return trimContexts;
+}
+
+bool isAlwaysResidentInAnyContext(const GraphicsAllocation &allocation, const TrimContexts &trimContexts) {
+    return std::any_of(trimContexts.begin(), trimContexts.end(), [&](const TrimContext &trimContext) {
+        return allocation.isAlwaysResident(trimContext.osContext->getContextId());
+    });
+}
+
+bool wasUsedSinceLastTrim(ResidencyData &residencyData, const TrimContexts &trimContexts) {
+    return std::any_of(trimContexts.begin(), trimContexts.end(), [&](const TrimContext &trimContext) {
+        return trimContext.osContext->wasAllocationUsedSinceLastTrim(residencyData.getFenceValueForContextId(trimContext.osContext->getContextId()));
+    });
+}
+
+bool canWaitForLastUsage(ResidencyData &residencyData, const TrimContexts &trimContexts) {
+    return std::all_of(trimContexts.begin(), trimContexts.end(), [&](const TrimContext &trimContext) {
+        const auto lastFence = residencyData.getFenceValueForContextId(trimContext.osContext->getContextId());
+        const auto &monitoredFence = trimContext.osContext->getMonitoredFence();
+        return lastFence <= monitoredFence.lastSubmittedFence && !(trimContext.csrSkipped && lastFence > *monitoredFence.cpuAddress);
+    });
+}
+
+void waitForLastUsage(Wddm &wddm, ResidencyData &residencyData, const TrimContexts &trimContexts) {
+    for (const auto &trimContext : trimContexts) {
+        const auto lastFence = residencyData.getFenceValueForContextId(trimContext.osContext->getContextId());
+        const auto &monitoredFence = trimContext.osContext->getMonitoredFence();
+        if (lastFence > *monitoredFence.cpuAddress) {
+            wddm.waitFromCpu(lastFence, monitoredFence, false);
+        }
+    }
+}
+} // namespace
+
 VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback) {
     if (!hwDeviceId || !this->rootDeviceEnvironment.executionEnvironment.osEnvironment || !getGdi()) {
         return nullptr;
@@ -80,56 +128,46 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
     if (flags.PeriodicTrim) {
         uint64_t sizeToTrim = 0;
         auto lock = this->acquireLock();
-        WddmAllocation *wddmAllocation = nullptr;
         std::vector<D3DKMT_HANDLE> handlesToEvict;
         std::vector<WddmAllocation *> allocationsToRemove;
         allocationsToRemove.reserve(evictionAllocations.size());
         handlesToEvict.reserve(evictionAllocations.size());
+        const auto trimContexts = getTrimContexts(this->wddm, {});
 
-        this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
-            for (auto allocationIter = evictionAllocations.begin(); allocationIter != evictionAllocations.end(); ++allocationIter) {
-                auto &osContext = static_cast<NEO::OsContextWin &>(*engine.osContext);
-                uint32_t osContextId = osContext.getContextId();
+        for (auto allocation : evictionAllocations) {
+            auto wddmAllocation = static_cast<WddmAllocation *>(allocation);
+            auto &residencyData = wddmAllocation->getResidencyData();
 
-                wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
-
-                DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "lastPeriodicTrimFenceValue = ", osContext.getLastTrimFenceValue());
-
-                if (osContext.wasAllocationUsedSinceLastTrim(wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId)) ||
-                    wddmAllocation->isAlwaysResident(osContextId) ||
-                    !wddmAllocation->getResidencyData().resident[osContextId]) {
-                    continue;
-                }
-
-                if (wddmAllocation->getFragmentCount() == 0) {
-                    for (auto i = 0u; i < wddmAllocation->getNumGmms(); i++) {
-                        handlesToEvict.push_back(wddmAllocation->getHandles()[i]);
-                    }
-                } else {
-                    for (uint32_t allocationId = 0; allocationId < wddmAllocation->getFragmentCount(); allocationId++) {
-                        AllocationStorageData &fragmentStorageData = wddmAllocation->fragmentsStorage->fragmentStorageData[allocationId];
-                        if (!osContext.wasAllocationUsedSinceLastTrim(fragmentStorageData.residency->getFenceValueForContextId(osContextId)) && fragmentStorageData.residency->resident[osContextId]) {
-                            auto osHandle = static_cast<OsHandleWin *>(wddmAllocation->fragmentsStorage->fragmentStorageData[allocationId].osHandleStorage);
-                            DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict fragment: handle =", osHandle->handle, "lastFence =",
-                                    wddmAllocation->fragmentsStorage->fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId));
-
-                            handlesToEvict.push_back(static_cast<OsHandleWin *>(fragmentStorageData.osHandleStorage)->handle);
-                            fragmentStorageData.residency->resident[osContextId] = false;
-                        }
-                    }
-                }
-
-                DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
-                wddmAllocation->getResidencyData().resident[osContextId] = false;
-
-                allocationsToRemove.push_back(wddmAllocation);
+            if (trimContexts.empty() || !residencyData.resident || isAlwaysResidentInAnyContext(*wddmAllocation, trimContexts) || wasUsedSinceLastTrim(residencyData, trimContexts)) {
+                continue;
             }
 
-            this->wddm.evict(handlesToEvict.data(), static_cast<uint32_t>(handlesToEvict.size()), sizeToTrim, false);
-            handlesToEvict.clear();
-        });
+            if (wddmAllocation->getFragmentCount() == 0) {
+                for (auto i = 0u; i < wddmAllocation->getNumGmms(); i++) {
+                    handlesToEvict.push_back(wddmAllocation->getHandles()[i]);
+                }
+            } else {
+                for (uint32_t allocationId = 0; allocationId < wddmAllocation->getFragmentCount(); allocationId++) {
+                    AllocationStorageData &fragmentStorageData = wddmAllocation->fragmentsStorage->fragmentStorageData[allocationId];
+                    if (fragmentStorageData.residency->resident && !wasUsedSinceLastTrim(*fragmentStorageData.residency, trimContexts)) {
+                        auto osHandle = static_cast<OsHandleWin *>(fragmentStorageData.osHandleStorage);
+                        DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict fragment: handle =", osHandle->handle);
 
-        removeNonResidentFromEvictionAllocations(allocationsToRemove);
+                        handlesToEvict.push_back(osHandle->handle);
+                        fragmentStorageData.residency->resident = false;
+                    }
+                }
+            }
+
+            DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress());
+            residencyData.resident = false;
+
+            allocationsToRemove.push_back(wddmAllocation);
+        }
+
+        this->wddm.evict(handlesToEvict.data(), static_cast<uint32_t>(handlesToEvict.size()), sizeToTrim, false);
+
+        std::for_each(allocationsToRemove.begin(), allocationsToRemove.end(), [this](GraphicsAllocation *allocationToRemove) { removeFromEvictionAllocations(allocationToRemove); });
     }
 
     if (flags.TrimToBudget) {
@@ -172,15 +210,6 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
     perfLogResidencyTrimCallbackEnd(wddm.getResidencyLogger(), flags.Value, this, callbackStart);
 }
 
-void WddmResidencyController::removeNonResidentFromEvictionAllocations(const std::vector<WddmAllocation *> &allocations) {
-    for (auto allocation : allocations) {
-        const auto &resident = allocation->getResidencyData().resident;
-        if (std::find(resident.begin(), resident.end(), true) == resident.end()) {
-            removeFromEvictionAllocations(allocation);
-        }
-    }
-}
-
 bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     return trimResidencyToBudget(bytes, {});
 }
@@ -188,7 +217,6 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
 bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, const StackVec<CommandStreamReceiver *, 5> &skippedCsrs) {
     uint64_t sizeToTrim = 0;
     uint64_t numberOfBytesToTrim = bytes;
-    WddmAllocation *wddmAllocation = nullptr;
     perfLogResidencyTrimToBudget(wddm.getResidencyLogger(), bytes, this);
 
     std::vector<D3DKMT_HANDLE> handlesToEvict;
@@ -196,68 +224,55 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, const StackV
     std::vector<WddmAllocation *> allocationsToRemove;
     allocationsToRemove.reserve(evictionAllocations.size());
 
-    this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
-        auto csr = engine.commandStreamReceiver;
-        if (std::find(skippedCsrs.begin(), skippedCsrs.end(), csr) != skippedCsrs.end()) {
-            return;
+    const auto trimContexts = getTrimContexts(this->wddm, skippedCsrs);
+    if (trimContexts.empty()) {
+        return numberOfBytesToTrim == 0;
+    }
+    for (const auto &trimContext : trimContexts) {
+        if (!trimContext.csrSkipped) {
+            trimContext.csr->drainPagingFenceQueue();
         }
-        csr->drainPagingFenceQueue();
-        auto &osContext = static_cast<NEO::OsContextWin &>(csr->getOsContext());
-        uint32_t osContextId = osContext.getContextId();
+    }
 
-        auto allocationIter = evictionAllocations.begin();
-        while (numberOfBytesToTrim > 0 && allocationIter != evictionAllocations.end()) {
-            wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
-            uint64_t lastFence = wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId);
-            auto &monitoredFence = osContext.getMonitoredFence();
+    for (auto allocationIter = evictionAllocations.begin(); numberOfBytesToTrim > 0 && allocationIter != evictionAllocations.end(); ++allocationIter) {
+        auto wddmAllocation = static_cast<WddmAllocation *>(*allocationIter);
+        auto &residencyData = wddmAllocation->getResidencyData();
 
-            if (lastFence > monitoredFence.lastSubmittedFence ||
-                wddmAllocation->isAlwaysResident(osContextId) ||
-                !wddmAllocation->getResidencyData().resident[osContextId]) {
-                ++allocationIter;
-                continue;
-            }
-
-            uint64_t sizeEvicted = 0;
-
-            if (lastFence > *monitoredFence.cpuAddress) {
-                this->wddm.waitFromCpu(lastFence, osContext.getMonitoredFence(), false);
-            }
-
-            if (wddmAllocation->getFragmentCount() == 0) {
-                for (auto i = 0u; i < wddmAllocation->getNumGmms(); i++) {
-                    handlesToEvict.push_back(wddmAllocation->getHandles()[i]);
-                }
-                sizeEvicted = wddmAllocation->getAlignedSize();
-            } else {
-                auto &fragmentStorageData = wddmAllocation->fragmentsStorage->fragmentStorageData;
-                for (uint32_t allocationId = 0; allocationId < wddmAllocation->getFragmentCount(); allocationId++) {
-                    if (fragmentStorageData[allocationId].residency->getFenceValueForContextId(osContextId) <= monitoredFence.lastSubmittedFence && fragmentStorageData[allocationId].residency->resident[osContextId]) {
-                        handlesToEvict.push_back(static_cast<OsHandleWin *>(fragmentStorageData[allocationId].osHandleStorage)->handle);
-                        fragmentStorageData[allocationId].residency->resident[osContextId] = false;
-                        sizeEvicted += fragmentStorageData[allocationId].fragmentSize;
-                    }
-                }
-            }
-            DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
-
-            if (sizeEvicted >= numberOfBytesToTrim) {
-                numberOfBytesToTrim = 0;
-            } else {
-                numberOfBytesToTrim -= sizeEvicted;
-            }
-
-            wddmAllocation->getResidencyData().resident[osContextId] = false;
-            allocationsToRemove.push_back(wddmAllocation);
-
-            ++allocationIter;
+        if (!residencyData.resident || isAlwaysResidentInAnyContext(*wddmAllocation, trimContexts) || !canWaitForLastUsage(residencyData, trimContexts)) {
+            continue;
         }
 
-        this->wddm.evict(handlesToEvict.data(), static_cast<uint32_t>(handlesToEvict.size()), sizeToTrim, true);
-        handlesToEvict.clear();
-    });
+        waitForLastUsage(this->wddm, residencyData, trimContexts);
 
-    removeNonResidentFromEvictionAllocations(allocationsToRemove);
+        uint64_t sizeEvicted = 0;
+        if (wddmAllocation->getFragmentCount() == 0) {
+            for (auto i = 0u; i < wddmAllocation->getNumGmms(); i++) {
+                handlesToEvict.push_back(wddmAllocation->getHandles()[i]);
+            }
+            sizeEvicted = wddmAllocation->getAlignedSize();
+        } else {
+            auto &fragmentStorageData = wddmAllocation->fragmentsStorage->fragmentStorageData;
+            for (uint32_t allocationId = 0; allocationId < wddmAllocation->getFragmentCount(); allocationId++) {
+                auto &fragmentResidency = *fragmentStorageData[allocationId].residency;
+                if (fragmentResidency.resident && canWaitForLastUsage(fragmentResidency, trimContexts)) {
+                    waitForLastUsage(this->wddm, fragmentResidency, trimContexts);
+                    handlesToEvict.push_back(static_cast<OsHandleWin *>(fragmentStorageData[allocationId].osHandleStorage)->handle);
+                    fragmentResidency.resident = false;
+                    sizeEvicted += fragmentStorageData[allocationId].fragmentSize;
+                }
+            }
+        }
+        DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress());
+
+        numberOfBytesToTrim -= std::min(sizeEvicted, numberOfBytesToTrim);
+
+        residencyData.resident = false;
+        allocationsToRemove.push_back(wddmAllocation);
+    }
+
+    this->wddm.evict(handlesToEvict.data(), static_cast<uint32_t>(handlesToEvict.size()), sizeToTrim, true);
+
+    std::for_each(allocationsToRemove.begin(), allocationsToRemove.end(), [this](GraphicsAllocation *allocationToRemove) { removeFromEvictionAllocations(allocationToRemove); });
 
     return numberOfBytesToTrim == 0;
 }
