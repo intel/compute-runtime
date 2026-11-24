@@ -64,7 +64,7 @@ std::string SysmanKmdInterfaceXe::getBasePathForFreqDomain(uint32_t subDeviceId,
  *         BurstPowerLimitInterval      = "power1_cap_interval"
  *         SustainedPowerLimit          = "power1_max";
  *         SustainedPowerLimitInterval  = "power1_max_interval";
- *         DefaultPowerLimit            = "power1_rated_max";
+ *         DefaultPowerLimit            = "power1_cap_max";
  *         EnergyCounterNode            = "energy1_input";
  *         CriticalPowerLimit           = "power1_crit"
  *     2. PACKAGE
@@ -72,7 +72,7 @@ std::string SysmanKmdInterfaceXe::getBasePathForFreqDomain(uint32_t subDeviceId,
  *         BurstPowerLimitInterval      = "power2_cap_interval"
  *         SustainedPowerLimit          = "power2_max";
  *         SustainedPowerLimitInterval  = "power2_max_interval";
- *         DefaultPowerLimit            = "power2_rated_max";
+ *         DefaultPowerLimit            = "power2_cap_max";
  *         EnergyCounterNode            = "energy2_input";
  *         CriticalPowerLimit           = "power2_crit"
  */
@@ -96,14 +96,14 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(SysmanProductHelper *pSysmanPr
     sysfsNameToFileMap[SysfsName::sysfsNameCardBurstPowerLimitInterval] = std::make_pair("", "power1_cap_interval");
     sysfsNameToFileMap[SysfsName::sysfsNameCardSustainedPowerLimit] = std::make_pair("", "power1_max");
     sysfsNameToFileMap[SysfsName::sysfsNameCardSustainedPowerLimitInterval] = std::make_pair("", "power1_max_interval");
-    sysfsNameToFileMap[SysfsName::sysfsNameCardDefaultPowerLimit] = std::make_pair("", "power1_rated_max");
+    sysfsNameToFileMap[SysfsName::sysfsNameCardDefaultPowerLimit] = std::make_pair("", "power1_cap_max");
     sysfsNameToFileMap[SysfsName::sysfsNameCardCriticalPowerLimit] = std::make_pair("", "power1_crit");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageEnergyCounterNode] = std::make_pair("", "energy2_input");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageBurstPowerLimit] = std::make_pair("", "power2_cap");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageBurstPowerLimitInterval] = std::make_pair("", "power2_cap_interval");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageSustainedPowerLimit] = std::make_pair("", "power2_max");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageSustainedPowerLimitInterval] = std::make_pair("", "power2_max_interval");
-    sysfsNameToFileMap[SysfsName::sysfsNamePackageDefaultPowerLimit] = std::make_pair("", "power2_rated_max");
+    sysfsNameToFileMap[SysfsName::sysfsNamePackageDefaultPowerLimit] = std::make_pair("", "power2_cap_max");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageCriticalPowerLimit] = std::make_pair("", "power2_crit");
     sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("physical_vram_size_bytes", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("freq_vram_rp0", "");

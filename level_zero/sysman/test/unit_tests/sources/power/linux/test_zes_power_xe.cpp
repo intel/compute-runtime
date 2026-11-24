@@ -20,10 +20,10 @@ TEST_F(SysmanDevicePowerFixtureXe, GivenKmdInterfaceWhenGettingSysFsFilenamesFor
     EXPECT_STREQ("energy1_input", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardEnergyCounterNode, 0, false).c_str());
     EXPECT_STREQ("energy2_input", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageEnergyCounterNode, 0, false).c_str());
     EXPECT_STREQ("power1_max", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardSustainedPowerLimit, 0, false).c_str());
-    EXPECT_STREQ("power1_rated_max", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardDefaultPowerLimit, 0, false).c_str());
+    EXPECT_STREQ("power1_cap_max", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardDefaultPowerLimit, 0, false).c_str());
     EXPECT_STREQ("power1_max_interval", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCardSustainedPowerLimitInterval, 0, false).c_str());
     EXPECT_STREQ("power2_max", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimit, 0, false).c_str());
-    EXPECT_STREQ("power2_rated_max", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageDefaultPowerLimit, 0, false).c_str());
+    EXPECT_STREQ("power2_cap_max", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageDefaultPowerLimit, 0, false).c_str());
     EXPECT_STREQ("power2_max_interval", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimitInterval, 0, false).c_str());
 }
 
