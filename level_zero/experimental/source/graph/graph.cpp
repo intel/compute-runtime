@@ -659,11 +659,8 @@ ze_result_t GraphInternalEvents::addInternalEvent(L0::Event *originalEvent, ze_c
     if (false == isInternalEventDependency(originalEvent)) {
         return ZE_RESULT_SUCCESS;
     }
-    {
-        std::lock_guard lock(entriesMutex);
-        if (nullptr != getInternal(originalEvent)) {
-            return ZE_RESULT_SUCCESS;
-        }
+    if (nullptr != getInternal(originalEvent)) {
+        return ZE_RESULT_SUCCESS;
     }
 
     auto *device = originalEvent->getDevice();

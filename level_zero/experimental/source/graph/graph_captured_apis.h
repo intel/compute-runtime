@@ -362,6 +362,7 @@ class GraphInternalEvents {
     }
 
     L0::Event *getInternal(L0::Event *originalEvent) const {
+        std::lock_guard lock(entriesMutex);
         auto it = entries.find(originalEvent);
         if (it == entries.end()) {
             return nullptr;

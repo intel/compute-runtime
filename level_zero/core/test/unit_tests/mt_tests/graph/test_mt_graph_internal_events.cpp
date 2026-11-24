@@ -5,10 +5,10 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
-
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
+
+#include "gtest/gtest.h"
 
 #include <atomic>
 #include <cstdint>
@@ -23,19 +23,16 @@ struct WhiteBoxGraphInternalEvents : public GraphInternalEvents {
     using GraphInternalEvents::entriesMutex;
 };
 
-TEST(GraphInternalEventsMtTest, givenEntriesMutexHeldWhenGettingInternalEventByHandleThenLookupWaitsForMutexRelease) {
-    Mock<Event> internalEvent;
-    WhiteBoxGraphInternalEvents internalEvents;
-    const auto hOriginalEvent = reinterpret_cast<ze_event_handle_t>(0x1234u);
+template <typename LookupT>
+void lookupWhileEntriesMutexHeldThenInsertEntry(WhiteBoxGraphInternalEvents &internalEvents, ze_event_handle_t hOriginalEvent, L0::Event *internalEvent, LookupT lookup) {
     constexpr uint32_t yieldsBeforeInsertion = 1000u;
     std::atomic_bool lookupStarted = false;
     std::atomic_bool lookupFinished = false;
-    ze_event_handle_t lookupResult = nullptr;
 
     std::unique_lock entriesLock(internalEvents.entriesMutex);
-    std::thread lookup([&]() {
+    std::thread lookupThread([&]() {
         lookupStarted = true;
-        lookupResult = internalEvents.getInternal(hOriginalEvent);
+        lookup();
         lookupFinished = true;
     });
     while (!lookupStarted) {
@@ -46,11 +43,35 @@ TEST(GraphInternalEventsMtTest, givenEntriesMutexHeldWhenGettingInternalEventByH
     }
     EXPECT_FALSE(lookupFinished);
 
-    internalEvents.entries[hOriginalEvent].internalEvent = &internalEvent;
+    internalEvents.entries[hOriginalEvent].internalEvent = internalEvent;
     entriesLock.unlock();
-    lookup.join();
+    lookupThread.join();
+}
+
+TEST(GraphInternalEventsMtTest, givenEntriesMutexHeldWhenGettingInternalEventByHandleThenLookupWaitsForMutexRelease) {
+    Mock<Event> internalEvent;
+    WhiteBoxGraphInternalEvents internalEvents;
+    const auto hOriginalEvent = reinterpret_cast<ze_event_handle_t>(0x1234u);
+    ze_event_handle_t lookupResult = nullptr;
+
+    lookupWhileEntriesMutexHeldThenInsertEntry(internalEvents, hOriginalEvent, &internalEvent, [&]() {
+        lookupResult = internalEvents.getInternal(hOriginalEvent);
+    });
 
     EXPECT_EQ(internalEvent.toHandle(), lookupResult);
+}
+
+TEST(GraphInternalEventsMtTest, givenEntriesMutexHeldWhenGettingInternalEventByEventThenLookupWaitsForMutexRelease) {
+    Mock<Event> originalEvent;
+    Mock<Event> internalEvent;
+    WhiteBoxGraphInternalEvents internalEvents;
+    L0::Event *lookupResult = nullptr;
+
+    lookupWhileEntriesMutexHeldThenInsertEntry(internalEvents, originalEvent.toHandle(), &internalEvent, [&]() {
+        lookupResult = internalEvents.getInternal(&originalEvent);
+    });
+
+    EXPECT_EQ(&internalEvent, lookupResult);
 }
 
 } // namespace ult
