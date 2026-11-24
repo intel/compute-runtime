@@ -1588,19 +1588,30 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysm
     }
 
     double gpuMaxTemperature = 0;
-    result = readGpuMaxTemperature(keyOffsetMap, keyTelemInfoMap, &gpuMaxTemperature);
+    result = readHwmonTemperatureFromSysfs(pLinuxSysmanImp, NodeName::gpuTemperature, subdeviceId, &gpuMaxTemperature);
+    if (result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+        result = readGpuMaxTemperature(keyOffsetMap, keyTelemInfoMap, &gpuMaxTemperature);
+    }
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
     double memoryMaxTemperature = 0;
-    result = readMemoryMaxTemperature(keyOffsetMap, keyTelemInfoMap, &memoryMaxTemperature);
+    result = readHwmonTemperatureFromSysfs(pLinuxSysmanImp, NodeName::memoryTemperature, subdeviceId, &memoryMaxTemperature);
+    if (result == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+        result = readMemoryMaxTemperature(keyOffsetMap, keyTelemInfoMap, &memoryMaxTemperature);
+    }
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
     double vrMaxTemperature = 0;
     result = readVoltageRegulatorMaxTemperature(keyOffsetMap, keyTelemInfoMap, &vrMaxTemperature);
+    if (result == ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s(): No permission to read voltage regulator temperature, reporting max of GPU and memory temperatures \n", NEO_FUNCTION_NAME);
+        *pTemperature = std::max(gpuMaxTemperature, memoryMaxTemperature);
+        return ZE_RESULT_SUCCESS;
+    }
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }

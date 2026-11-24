@@ -772,6 +772,39 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTempe
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, globalTemperatureImp.getSensorTemperature(&temperature));
 }
 
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenHwmonGpuAndMemoryTemperatureNodesAndTelemetryReadIsDeniedWhenGettingGlobalTemperatureThenMaxOfHwmonGpuAndMemoryTemperatureIsReturned, IsBmgOrCri) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        if (std::string(pathname) == telem1TelemFileName) {
+            errno = EACCES;
+            return -1;
+        }
+        return mockOpenSuccess(pathname, flags);
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const uint64_t telemOffset = 0;
+        const std::string guid = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) ? "0x1e2fa030" : "0x5e2f8211";
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, std::min(count, sizeof(telemOffset)));
+        } else if (fd == 5) {
+            memcpy(buf, guid.c_str(), std::min(count, guid.size() + 1));
+        }
+        return count;
+    });
+    VariableBackup<int> mockErrno(&errno);
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->gpuTemperatureExists = true;
+    pFsAccess->memoryTemperatureExists = true;
+    pFsAccess->memoryTemperatureValue = 50000;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GLOBAL);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_DOUBLE_EQ(50.0, temperature);
+}
+
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
