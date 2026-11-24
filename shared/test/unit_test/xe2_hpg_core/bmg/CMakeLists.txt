@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ if(TESTS_BMG)
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_tests_bmg.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_bmg.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_bmg.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_bmg.cpp
   )
 
   add_subdirectories()

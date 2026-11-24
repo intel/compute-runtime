@@ -1080,6 +1080,11 @@ void EncodeDispatchKernel<Family>::overrideDefaultValues(WalkerType &walkerCmd, 
 }
 
 template <typename Family>
+bool EncodeDispatchKernel<Family>::isDispatchAllWalkerCandidate(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t threadCount, uint32_t maxFrontEndThreads) {
+    return rootDeviceEnvironment.getProductHelper().adjustDispatchAllRequired(rootDeviceEnvironment) && threadCount < maxFrontEndThreads;
+}
+
+template <typename Family>
 template <typename WalkerType, typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo,
                                                              const uint32_t *threadGroupDimensions, const uint32_t threadGroupCount, const uint32_t requiredThreadGroupDispatchSize,
@@ -1182,6 +1187,10 @@ void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptor
                     interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
                 }
             }
+        }
+
+        if (isDispatchAllWalkerCandidate(device.getRootDeviceEnvironment(), threadsPerThreadGroup * threadGroupCount, device.getDeviceInfo().maxFrontEndThreads)) {
+            interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
         }
     }
 

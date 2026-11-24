@@ -316,6 +316,7 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
     static uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, const ReleaseHelper &releaseHelper);
 
     static bool singleTileExecImplicitScalingRequired(bool cooperativeKernel);
+    static bool isDispatchAllWalkerCandidate(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t threadCount, uint32_t maxFrontEndThreads);
 
     template <typename WalkerType, typename InterfaceDescriptorType>
     static void overrideDefaultValues(WalkerType &walkerCmd, InterfaceDescriptorType &interfaceDescriptor);
