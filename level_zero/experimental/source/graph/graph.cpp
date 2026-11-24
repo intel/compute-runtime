@@ -2206,6 +2206,13 @@ auto ExecutableGraph::updateNodes(uint32_t numNodes, ze_graph_node_handle_t *phN
         }
     }
 
+    if (this->implicitSyncMutation) {
+        const auto waitResult = this->waitForLastExecution();
+        if (ZE_RESULT_SUCCESS != waitResult) {
+            return waitResult;
+        }
+    }
+
     for (uint32_t i = 0U; i < numNodes; ++i) {
         const auto graphNode = GraphNode::fromHandle(phNodes[i]);
         const auto &nodeCommand = (*this->nodeCommands)[graphNode->getIndex()];
@@ -2236,7 +2243,7 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
     const auto result = this->executeOnTarget(executionTarget, hSignalEvent, numWaitEvents, phWaitEvents);
     if ((ZE_RESULT_SUCCESS == result) && this->implicitSyncMutation) {
         this->lastExecutionCsr = executionTarget->getCsr(false);
-        this->lastExecutionTaskCount = this->lastExecutionCsr->peekTaskCount();
+        this->lastExecutionTaskCount = executionTarget->getTaskCount(false);
     }
     return result;
 }
@@ -2248,6 +2255,9 @@ auto ExecutableGraph::waitForLastExecution() -> ze_result_t {
     const auto waitStatus = this->lastExecutionCsr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, false, NEO::TimeoutControls::maxTimeout}, this->lastExecutionTaskCount);
     if (NEO::WaitStatus::gpuHang == waitStatus) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+    if (NEO::WaitStatus::ready != waitStatus) {
+        return ZE_RESULT_NOT_READY;
     }
     this->lastExecutionCsr = nullptr;
     return ZE_RESULT_SUCCESS;

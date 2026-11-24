@@ -3209,7 +3209,7 @@ HWTEST_F(GraphImplicitSyncMutationTest, GivenExecutableGraphExecutedTwiceWhenWai
     EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
     EXPECT_EQ(ultCsr, execGraph.lastExecutionCsr);
-    EXPECT_EQ(ultCsr->peekTaskCount(), execGraph.lastExecutionTaskCount);
+    EXPECT_EQ(immCmdList->getTaskCount(false), execGraph.lastExecutionTaskCount);
 
     const auto waitCallsBefore = ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
     EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.waitForLastExecution());
@@ -3219,6 +3219,31 @@ HWTEST_F(GraphImplicitSyncMutationTest, GivenExecutableGraphExecutedTwiceWhenWai
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.waitForLastExecution());
     EXPECT_EQ(waitCallsBefore + 1, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, GraphImplicitSyncMutationTest, GivenOtherSubmissionOnSharedCsrAfterGraphFlushWhenExecutingExecutableGraphThenTaskCountOfExecutionTargetIsRecorded) {
+    GraphsCleanupGuard graphCleanup;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    constexpr TaskCountType otherSubmissionsCount = 3u;
+    ultCsr->onFlushImmediateTask = [ultCsr]() { ultCsr->taskCount += otherSubmissionsCount; };
+
+    ze_event_pool_desc_t poolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, 1};
+    ze_event_pool_handle_t hPool = nullptr;
+    auto devHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &poolDesc, 1, &devHandle, &hPool));
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, 0, 0, 0};
+    ze_event_handle_t waitEventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventDesc, &waitEventHandle));
+
+    MockExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 1, &waitEventHandle));
+    ultCsr->onFlushImmediateTask = nullptr;
+
+    EXPECT_EQ(immCmdList->getTaskCount(false), execGraph.lastExecutionTaskCount);
+    EXPECT_EQ(execGraph.lastExecutionTaskCount + otherSubmissionsCount, ultCsr->peekTaskCount());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(waitEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(hPool));
 }
 
 HWTEST_F(GraphImplicitSyncMutationTest, GivenGpuHangWhenWaitingForLastExecutionThenDeviceLostIsReturnedAndNextWaitWaitsAgain) {
@@ -3232,6 +3257,25 @@ HWTEST_F(GraphImplicitSyncMutationTest, GivenGpuHangWhenWaitingForLastExecutionT
     ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
     const auto waitCallsBefore = ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, execGraph.waitForLastExecution());
+    EXPECT_EQ(ultCsr, execGraph.lastExecutionCsr);
+
+    ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.waitForLastExecution());
+    EXPECT_EQ(waitCallsBefore + 2, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(nullptr, execGraph.lastExecutionCsr);
+}
+
+HWTEST_F(GraphImplicitSyncMutationTest, GivenWaitNotReadyWhenWaitingForLastExecutionThenNotReadyIsReturnedAndNextWaitWaitsAgain) {
+    GraphsCleanupGuard graphCleanup;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+
+    MockExecutableGraph execGraph;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, execGraph.execute(immCmdList, nullptr, nullptr, 0, nullptr));
+
+    ultCsr->callBaseWaitForCompletionWithTimeout = false;
+    ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::notReady;
+    const auto waitCallsBefore = ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, execGraph.waitForLastExecution());
     EXPECT_EQ(ultCsr, execGraph.lastExecutionCsr);
 
     ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
@@ -6987,6 +7031,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             EXPECT_EQ(countersBefore[1 - i], commands.getValue(commands.semWaitsBeforePreamble[0]));
         }
     }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            GraphTestInstantiationTest,
+            GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenImmediateResourcesOfForkExecutorFailToInitializeThenGraphExecutionReturnsError) {
+    GraphsCleanupGuard graphCleanup;
+
+    ForkedGraphForBarrierTest graph(device, context, 1);
+    CommandList::whiteboxCast(graph.forks[0].get())->immediateResourcesInitializationResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::zeCommandListAppendGraphExp(graph.root->toHandle(), graph.execGraph.toHandle(), nullptr, nullptr, 0, nullptr));
 }
 
 HWTEST2_F(GraphPatchPreambleBarrierTest,

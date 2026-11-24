@@ -536,6 +536,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     NEO::CommandStreamReceiver *getCsr(bool copyOffload) const;
     NEO::CommandStreamReceiver *getCsr(bool copyOffload, ze_result_t &returnValue);
+    TaskCountType getTaskCount(bool copyOffload) const;
 
     ze_result_t ensureImmediateResourcesInitialized() {
         if (!isImmediateType() || (this->cmdQImmediate != nullptr) || (this->immediateResourcesInitializationResult != ZE_RESULT_SUCCESS)) {
@@ -803,6 +804,7 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
   protected:
+    CommandQueue *getImmediateQueue(bool copyOffload) const;
     bool isCopyOffloadWriteEngineAllowed(uint32_t copyEngineOrdinal) const;
     CommandQueue *createCopyOffloadCmdQImmediate(NEO::CommandStreamReceiver *copyCsr, uint32_t ordinal, bool queueOwnershipTaken);
     void initializeFlatCapture();

@@ -440,9 +440,15 @@ NEO::CommandStreamReceiver *CommandList::getCsr(bool copyOffload, ze_result_t &r
 }
 
 NEO::CommandStreamReceiver *CommandList::getCsr(bool copyOffload) const {
-    auto queue = isDualStreamCopyOffloadOperation(copyOffload) ? this->cmdQImmediateCopyOffload[this->activeCopyOffloadQueueIndex] : this->cmdQImmediate;
+    return this->getImmediateQueue(copyOffload)->getCsr();
+}
 
-    return queue->getCsr();
+TaskCountType CommandList::getTaskCount(bool copyOffload) const {
+    return this->getImmediateQueue(copyOffload)->getTaskCount();
+}
+
+CommandQueue *CommandList::getImmediateQueue(bool copyOffload) const {
+    return this->isDualStreamCopyOffloadOperation(copyOffload) ? this->cmdQImmediateCopyOffload[this->activeCopyOffloadQueueIndex] : this->cmdQImmediate;
 }
 
 void CommandList::registerWalkerWithProfilingEnqueued(Event *event) {

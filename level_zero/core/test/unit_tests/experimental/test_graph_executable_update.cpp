@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
+
 #include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/core/test/unit_tests/experimental/test_graph.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -46,6 +49,16 @@ struct ExecutableGraphNodesUpdateFixture : public DeviceFixture {
         return executableGraph.updateNodes(1u, &nodeHandle, &pUpdateDesc);
     }
 
+    template <typename FamilyType>
+    auto recordLastExecution(bool implicitSyncMutation) -> UltCommandStreamReceiver<FamilyType> & {
+        auto &ultCsr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
+        ultCsr.callBaseWaitForCompletionWithTimeout = false;
+        this->executableGraph.implicitSyncMutation = implicitSyncMutation;
+        this->executableGraph.lastExecutionCsr = &ultCsr;
+        this->executableGraph.lastExecutionTaskCount = this->lastExecutionTaskCount;
+        return ultCsr;
+    }
+
     std::unique_ptr<Mock<Module>> module;
     Mock<KernelImp> kernel;
     ContextStubMock context;
@@ -54,6 +67,7 @@ struct ExecutableGraphNodesUpdateFixture : public DeviceFixture {
     const size_t kernelArgumentSize = sizeof(uint32_t);
     const uint32_t kernelArgumentValue = 1u;
     const void *kernelArgumentValues = &kernelArgumentValue;
+    const TaskCountType lastExecutionTaskCount = 5u;
 };
 
 using ExecutableGraphNodesUpdateTest = Test<ExecutableGraphNodesUpdateFixture>;
@@ -331,6 +345,70 @@ TEST_F(ExecutableGraphNodesUpdateTest, givenNullArgumentsOrZeroNodesWhenUpdating
 
     ze_graph_node_handle_t instantiatedNodeHandle = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, nullptr)->toHandle();
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeExecutableGraphNodesUpdateExp(executableGraph.toHandle(), 1u, &instantiatedNodeHandle, nullptr, nullptr));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMutationAndExecutedGraphWhenUpdatingNodesThenLastExecutionIsWaitedForBeforeNodesAreUpdated) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+    auto &ultCsr = recordLastExecution<FamilyType>(true);
+    const auto waitCallsBefore = ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load();
+    bool nodesUpdatedBeforeWait = true;
+    ultCsr.onWaitForCompletionWithTimeout = [&]() { nodesUpdatedBeforeWait = !commandList.mutableCommandList.recordedGraphNodeUpdates.empty(); };
+
+    const ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, updateNode(*node, &groupCountDesc));
+
+    EXPECT_EQ(waitCallsBefore + 1u, ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(lastExecutionTaskCount, ultCsr.latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_FALSE(nodesUpdatedBeforeWait);
+    EXPECT_EQ(1u, commandList.mutableCommandList.recordedGraphNodeUpdates.size());
+    EXPECT_EQ(nullptr, executableGraph.lastExecutionCsr);
+    ultCsr.onWaitForCompletionWithTimeout = nullptr;
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMutationAndGpuHangWhenUpdatingNodesThenDeviceLostIsReturnedAndNodesAreNotUpdated) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+    auto &ultCsr = recordLastExecution<FamilyType>(true);
+    ultCsr.returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
+
+    const ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, updateNode(*node, &groupCountDesc));
+
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+    EXPECT_TRUE(executableGraph.updatedNodeCommandLists.empty());
+    EXPECT_EQ(&ultCsr, executableGraph.lastExecutionCsr);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMutationAndDescriptorNotAllowedForSecondNodeWhenUpdatingNodesThenLastExecutionIsNotWaitedFor) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto allowedNode = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+    auto notAllowedNode = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE, 2u, &commandList);
+    auto &ultCsr = recordLastExecution<FamilyType>(true);
+    const auto waitCallsBefore = ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load();
+
+    const ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    std::array<ze_graph_node_handle_t, 2> nodes = {allowedNode->toHandle(), notAllowedNode->toHandle()};
+    std::array<const void *, 2> updateDescs = {&groupCountDesc, &groupCountDesc};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, executableGraph.updateNodes(2u, nodes.data(), updateDescs.data()));
+
+    EXPECT_EQ(waitCallsBefore, ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+    EXPECT_EQ(&ultCsr, executableGraph.lastExecutionCsr);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMutationDisabledAndExecutedGraphWhenUpdatingNodesThenLastExecutionIsNotWaitedForAndNodesAreUpdated) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, 1u, &commandList);
+    auto &ultCsr = recordLastExecution<FamilyType>(false);
+    const auto waitCallsBefore = ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load();
+
+    const ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, updateNode(*node, &groupCountDesc));
+
+    EXPECT_EQ(waitCallsBefore, ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, commandList.mutableCommandList.recordedGraphNodeUpdates.size());
+    EXPECT_EQ(&ultCsr, executableGraph.lastExecutionCsr);
 }
 
 } // namespace ult
