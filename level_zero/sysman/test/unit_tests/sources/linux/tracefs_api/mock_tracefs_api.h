@@ -101,27 +101,19 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
     }
 
     long long traceFsInstanceGetBufferSize(struct tracefs_instance *instance, int cpu) override {
-        if (traceFsInstanceGetBufferSizeEntry != nullptr) {
+        if (isAvailable()) {
             return MockTraceFsOsLibrary::mockBufferSize;
         }
         return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferSize(instance, cpu);
     }
 
-    long long traceFsInstanceGetBufferSizeBase(struct tracefs_instance *instance, int cpu) {
-        return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferSize(instance, cpu);
-    }
-
     int traceFsInstanceSetBufferSize(struct tracefs_instance *instance, size_t size, int cpu) override {
-        if (traceFsInstanceSetBufferSizeEntry != nullptr) {
+        if (isAvailable()) {
             lastSetBufferSize = size;
             lastSetBufferSizeCpu = cpu;
             setBufferSizeCallCount++;
             return setBufferSizeReturnValue;
         }
-        return L0::Sysman::TraceFsApi::traceFsInstanceSetBufferSize(instance, size, cpu);
-    }
-
-    int traceFsInstanceSetBufferSizeBase(struct tracefs_instance *instance, size_t size, int cpu) {
         return L0::Sysman::TraceFsApi::traceFsInstanceSetBufferSize(instance, size, cpu);
     }
 
@@ -170,18 +162,14 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
     }
 
     int traceFsInstanceGetBufferPercent(struct tracefs_instance *instance) override {
-        if (traceFsInstanceGetBufferPercentEntry != nullptr) {
+        if (isAvailable()) {
             return getBufferPercentReturnValue;
         }
         return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferPercent(instance);
     }
 
-    int traceFsInstanceGetBufferPercentBase(struct tracefs_instance *instance) {
-        return L0::Sysman::TraceFsApi::traceFsInstanceGetBufferPercent(instance);
-    }
-
     int traceFsInstanceSetBufferPercent(struct tracefs_instance *instance, int val) override {
-        if (traceFsInstanceSetBufferPercentEntry != nullptr) {
+        if (isAvailable()) {
             lastSetBufferPercent = val;
             lastSetBufferPercentInstance = instance;
             setBufferPercentCallCount++;
@@ -190,10 +178,6 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
             }
             return setBufferPercentReturnValue;
         }
-        return L0::Sysman::TraceFsApi::traceFsInstanceSetBufferPercent(instance, val);
-    }
-
-    int traceFsInstanceSetBufferPercentBase(struct tracefs_instance *instance, int val) {
         return L0::Sysman::TraceFsApi::traceFsInstanceSetBufferPercent(instance, val);
     }
 
@@ -213,10 +197,6 @@ class PublicTraceFsApi : public L0::Sysman::TraceFsApi {
                traceFsEventEnableEntry != nullptr &&
                traceFsEventDisableEntry != nullptr &&
                traceFsLocalEventsEntry != nullptr &&
-               traceFsInstanceGetBufferPercentEntry != nullptr &&
-               traceFsInstanceSetBufferPercentEntry != nullptr &&
-               traceFsInstanceGetBufferSizeEntry != nullptr &&
-               traceFsInstanceSetBufferSizeEntry != nullptr &&
                traceFsInstanceGetFileEntry != nullptr &&
                traceFsGetTracingFileEntry != nullptr;
     }

@@ -39,10 +39,6 @@ typedef int (*pTraceFsTraceOff)(struct tracefs_instance *);
 typedef int (*pTraceFsEventEnable)(struct tracefs_instance *, const char *, const char *);
 typedef int (*pTraceFsEventDisable)(struct tracefs_instance *, const char *, const char *);
 typedef struct tep_handle *(*pTraceFsLocalEvents)(const char *);
-typedef int (*pTraceFsInstanceGetBufferPercent)(struct tracefs_instance *);
-typedef int (*pTraceFsInstanceSetBufferPercent)(struct tracefs_instance *, int);
-typedef long long (*pTraceFsInstanceGetBufferSize)(struct tracefs_instance *, int);
-typedef int (*pTraceFsInstanceSetBufferSize)(struct tracefs_instance *, size_t, int);
 typedef char *(*pTraceFsInstanceGetFile)(struct tracefs_instance *, const char *);
 typedef char *(*pTraceFsGetTracingFile)(const char *);
 typedef void (*pTraceFsPutTracingFile)(char *);
@@ -106,13 +102,13 @@ class TraceFsApi : public NEO::NonCopyableAndNonMovableClass {
     pTraceFsEventEnable traceFsEventEnableEntry = nullptr;
     pTraceFsEventDisable traceFsEventDisableEntry = nullptr;
     pTraceFsLocalEvents traceFsLocalEventsEntry = nullptr;
-    pTraceFsInstanceGetBufferPercent traceFsInstanceGetBufferPercentEntry = nullptr;
-    pTraceFsInstanceSetBufferPercent traceFsInstanceSetBufferPercentEntry = nullptr;
-    pTraceFsInstanceGetBufferSize traceFsInstanceGetBufferSizeEntry = nullptr;
-    pTraceFsInstanceSetBufferSize traceFsInstanceSetBufferSizeEntry = nullptr;
     pTraceFsInstanceGetFile traceFsInstanceGetFileEntry = nullptr;
     pTraceFsGetTracingFile traceFsGetTracingFileEntry = nullptr;
     pTraceFsPutTracingFile traceFsPutTracingFileEntry = nullptr;
+
+  private:
+    bool readInstanceFileValue(struct tracefs_instance *instance, const char *file, long long &value);
+    bool writeInstanceFileValue(struct tracefs_instance *instance, const char *file, long long value);
 };
 
 } // namespace Sysman

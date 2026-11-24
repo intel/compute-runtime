@@ -65,10 +65,6 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenMissingLibraryEntryPointThenV
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_event_enable"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_event_disable"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_local_events"));
-    EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_get_buffer_percent"));
-    EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_set_buffer_percent"));
-    EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_get_buffer_size"));
-    EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_set_buffer_size"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_instance_get_file"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_get_tracing_file"));
     EXPECT_FALSE(testLoadEntryPointsWithMissingFunction("tracefs_put_tracing_file"));
@@ -250,22 +246,9 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferPercentCalledThenVer
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, percent);
 }
 
-TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferPercentCalledWithLoadedEntryPointThenEntryPointIsCalledAndValidValueReturned) {
-    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
-    int result = testTraceFsApi.traceFsInstanceGetBufferPercentBase(&MockTraceFsOsLibrary::mockTraceFsInstance);
-    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, result);
-}
-
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferPercentCalledThenVerifyReturnValue) {
     int result = testTraceFsApi.traceFsInstanceSetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance,
                                                                 MockTraceFsOsLibrary::mockBufferPercent);
-    EXPECT_EQ(0, result);
-}
-
-TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferPercentCalledWithLoadedEntryPointThenEntryPointIsCalledAndValidValueReturned) {
-    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
-    int result = testTraceFsApi.traceFsInstanceSetBufferPercentBase(&MockTraceFsOsLibrary::mockTraceFsInstance,
-                                                                    MockTraceFsOsLibrary::mockBufferPercent);
     EXPECT_EQ(0, result);
 }
 
@@ -275,13 +258,6 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferSizeCalledThenVerify
     EXPECT_EQ(MockTraceFsOsLibrary::mockBufferSize, size);
 }
 
-TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetBufferSizeCalledWithLoadedEntryPointThenEntryPointIsCalledAndValidValueReturned) {
-    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
-    long long result = testTraceFsApi.traceFsInstanceGetBufferSizeBase(&MockTraceFsOsLibrary::mockTraceFsInstance,
-                                                                       MockTraceFsOsLibrary::mockCpu);
-    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferSize, result);
-}
-
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferSizeCalledThenVerifyReturnValue) {
     int result = testTraceFsApi.traceFsInstanceSetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance,
                                                              MockTraceFsOsLibrary::mockSize,
@@ -289,14 +265,6 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferSizeCalledThenVerify
     EXPECT_EQ(0, result);
     EXPECT_EQ(MockTraceFsOsLibrary::mockSize, PublicTraceFsApi::lastSetBufferSize);
     EXPECT_EQ(MockTraceFsOsLibrary::mockCpu, PublicTraceFsApi::lastSetBufferSizeCpu);
-}
-
-TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenSetBufferSizeCalledWithLoadedEntryPointThenEntryPointIsCalledAndValidValueReturned) {
-    EXPECT_TRUE(testTraceFsApi.allEntryPointsLoaded());
-    int result = testTraceFsApi.traceFsInstanceSetBufferSizeBase(&MockTraceFsOsLibrary::mockTraceFsInstance,
-                                                                 MockTraceFsOsLibrary::mockSize,
-                                                                 MockTraceFsOsLibrary::mockCpu);
-    EXPECT_EQ(0, result);
 }
 
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenGetFileCalledThenVerifyReturnValue) {
@@ -327,6 +295,106 @@ TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenLibraryAvailableThenIsAvailab
 TEST_F(SysmanTraceFsApiFixture, GivenTraceFsApiWhenLibraryNotAvailableThenIsAvailableReturnsFalse) {
     testTraceFsApi.traceFsLibraryHandle.reset();
     EXPECT_FALSE(testTraceFsApi.isAvailable());
+}
+
+class TraceFsApiWithFileAccessBehavior : public L0::Sysman::TraceFsApi {
+  public:
+    const char *fileContent = nullptr;
+    int fileWriteResult = 0;
+    std::string lastFileRead;
+    std::string lastFileWritten;
+    std::string lastValueWritten;
+
+    char *traceFsInstanceFileRead(struct tracefs_instance *instance, const char *file, int *psize) override {
+        lastFileRead = file;
+        if (fileContent == nullptr) {
+            return nullptr;
+        }
+        if (psize != nullptr) {
+            *psize = static_cast<int>(strlen(fileContent));
+        }
+        return strdup(fileContent);
+    }
+
+    int traceFsInstanceFileWrite(struct tracefs_instance *instance, const char *file, const char *str) override {
+        lastFileWritten = file;
+        lastValueWritten = str;
+        return fileWriteResult;
+    }
+};
+
+class SysmanTraceFsApiFileAccessFixture : public ::testing::Test {
+  protected:
+    TraceFsApiWithFileAccessBehavior testTraceFsApi;
+};
+
+TEST_F(SysmanTraceFsApiFileAccessFixture, GivenTraceFsApiWhenGetBufferPercentCalledThenTheBufferPercentFileIsRead) {
+    testTraceFsApi.fileContent = "40";
+
+    EXPECT_EQ(40, testTraceFsApi.traceFsInstanceGetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance));
+    EXPECT_EQ("buffer_percent", testTraceFsApi.lastFileRead);
+}
+
+TEST_F(SysmanTraceFsApiFileAccessFixture, GivenTraceFsApiWhenSetBufferPercentCalledThenTheValueIsWrittenToTheBufferPercentFile) {
+    testTraceFsApi.fileWriteResult = 1;
+
+    EXPECT_EQ(0, testTraceFsApi.traceFsInstanceSetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance, 0));
+    EXPECT_EQ("buffer_percent", testTraceFsApi.lastFileWritten);
+    EXPECT_EQ("0", testTraceFsApi.lastValueWritten);
+}
+
+TEST_F(SysmanTraceFsApiFileAccessFixture, GivenTraceFsApiWhenGetBufferSizeCalledThenTheRequestedCpuSelectsTheFileRead) {
+    testTraceFsApi.fileContent = "4096";
+
+    EXPECT_EQ(4096LL, testTraceFsApi.traceFsInstanceGetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, -1));
+    EXPECT_EQ("buffer_total_size_kb", testTraceFsApi.lastFileRead);
+
+    EXPECT_EQ(4096LL, testTraceFsApi.traceFsInstanceGetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, 3));
+    EXPECT_EQ("per_cpu/cpu3/buffer_size_kb", testTraceFsApi.lastFileRead);
+}
+
+TEST_F(SysmanTraceFsApiFileAccessFixture, GivenTraceFsApiWhenSetBufferSizeCalledThenTheRequestedCpuSelectsTheFileWritten) {
+    testTraceFsApi.fileWriteResult = 3;
+
+    EXPECT_EQ(0, testTraceFsApi.traceFsInstanceSetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, 512, -1));
+    EXPECT_EQ("buffer_size_kb", testTraceFsApi.lastFileWritten);
+    EXPECT_EQ("512", testTraceFsApi.lastValueWritten);
+
+    EXPECT_EQ(0, testTraceFsApi.traceFsInstanceSetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, 512, 2));
+    EXPECT_EQ("per_cpu/cpu2/buffer_size_kb", testTraceFsApi.lastFileWritten);
+}
+
+TEST_F(SysmanTraceFsApiFileAccessFixture, GivenTraceFsFileCannotBeReadWhenGettingBufferPercentAndBufferSizeThenErrorIsReturned) {
+    testTraceFsApi.fileContent = nullptr;
+
+    EXPECT_EQ(-1, testTraceFsApi.traceFsInstanceGetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance));
+    EXPECT_EQ(-1LL, testTraceFsApi.traceFsInstanceGetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, -1));
+}
+
+TEST_F(SysmanTraceFsApiFileAccessFixture, GivenTraceFsFileDoesNotHoldANumberWhenGettingBufferPercentAndBufferSizeThenErrorIsReturned) {
+    testTraceFsApi.fileContent = "not a number";
+
+    EXPECT_EQ(-1, testTraceFsApi.traceFsInstanceGetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance));
+    EXPECT_EQ(-1LL, testTraceFsApi.traceFsInstanceGetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, -1));
+
+    testTraceFsApi.fileContent = "";
+
+    EXPECT_EQ(-1, testTraceFsApi.traceFsInstanceGetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance));
+    EXPECT_EQ(-1LL, testTraceFsApi.traceFsInstanceGetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, -1));
+}
+
+TEST_F(SysmanTraceFsApiFileAccessFixture, GivenTraceFsFileHoldsANumberOutOfRangeWhenGettingBufferPercentAndBufferSizeThenErrorIsReturned) {
+    testTraceFsApi.fileContent = "-99999999999999999999999999";
+
+    EXPECT_EQ(-1, testTraceFsApi.traceFsInstanceGetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance));
+    EXPECT_EQ(-1LL, testTraceFsApi.traceFsInstanceGetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, -1));
+}
+
+TEST_F(SysmanTraceFsApiFileAccessFixture, GivenNothingIsWrittenToTheTraceFsFileWhenSettingBufferPercentAndBufferSizeThenErrorIsReturned) {
+    testTraceFsApi.fileWriteResult = 0;
+
+    EXPECT_EQ(-1, testTraceFsApi.traceFsInstanceSetBufferPercent(&MockTraceFsOsLibrary::mockTraceFsInstance, 0));
+    EXPECT_EQ(-1, testTraceFsApi.traceFsInstanceSetBufferSize(&MockTraceFsOsLibrary::mockTraceFsInstance, 512, -1));
 }
 
 class SysmanTraceFsApiNullEntryFixture : public ::testing::Test {

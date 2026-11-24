@@ -552,9 +552,6 @@ uint32_t LinuxInfoLogInstanceImp::readTotalBufferSize() {
     return static_cast<uint32_t>(totalSizeKb);
 }
 
-// Resizes the collection buffer of this instance to the total size the caller asked for. libtracefs
-// takes the size in kilobytes and programs it as the size of every per-CPU buffer, so the requested
-// total is first split evenly across those buffers.
 ze_result_t LinuxInfoLogInstanceImp::applyBufferSize(uint32_t *pBufferSize) {
     if (pBufferSize == nullptr) {
         return ZE_RESULT_SUCCESS;

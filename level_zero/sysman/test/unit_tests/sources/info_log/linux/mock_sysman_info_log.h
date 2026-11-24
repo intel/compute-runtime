@@ -756,9 +756,6 @@ class MockTraceFsApiWithConfigurableBehavior : public MockTraceFsApiWithData {
     bool failSetBufferPercent = false;
     bool failGetFile = false;
     bool failTraceFileRead = false;
-    // When set, the buffer size query mirrors libtracefs: cpu -1 reports the sum across all CPUs
-    // ('buffer_total_size_kb') while cpu >= 0 reports a single per-CPU buffer
-    // ('per_cpu/cpuN/buffer_size_kb'), so tests can tell the two queries apart.
     bool reportDistinctPerCpuAndTotalBufferSize = false;
     static constexpr long long mockCpuCountForBufferSize = 8;
     static constexpr long long mockPerCpuBufferSizeKb = 512;

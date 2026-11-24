@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 
 #include <cstring>
+#include <string>
 #include <string_view>
 
 namespace L0 {
@@ -17,6 +18,8 @@ namespace Sysman {
 namespace ult {
 
 static constexpr const char *mockTraceFsAbsolutePath = "/tmp/neo_sysman_mock_trace";
+
+static constexpr std::string_view perCpuPrefix = "per_cpu/";
 
 struct tracefs_instance MockTraceFsOsLibrary::mockTraceFsInstance;
 struct tep_handle MockTraceFsOsLibrary::mockTepHandle;
@@ -79,11 +82,12 @@ int mockTraceFsInstanceFileOpen(struct tracefs_instance *instance, const char *f
 }
 
 char *mockTraceFsInstanceFileRead(struct tracefs_instance *instance, const char *file, int *psize) {
+    const std::string_view fileName((file != nullptr) ? file : "");
+
     // The per-CPU 'stats' files are not modelled here: a caller counting dropped records reads one
     // per CPU of whichever buffer it collects from, so neither the instance nor the file name is
     // fixed. Reporting them as unreadable leaves that caller on its best effort path.
-    constexpr std::string_view perCpuPrefix = "per_cpu/";
-    if (file != nullptr && std::string_view(file).starts_with(perCpuPrefix)) {
+    if (fileName.starts_with(perCpuPrefix)) {
         return nullptr;
     }
 
@@ -97,8 +101,8 @@ char *mockTraceFsInstanceFileRead(struct tracefs_instance *instance, const char 
 
 int mockTraceFsInstanceFileWrite(struct tracefs_instance *instance, const char *file, const char *str) {
     EXPECT_EQ(&MockTraceFsOsLibrary::mockTraceFsInstance, instance);
-    EXPECT_STREQ(MockTraceFsOsLibrary::mockFileName, file);
     EXPECT_NE(nullptr, str);
+    EXPECT_STREQ(MockTraceFsOsLibrary::mockFileName, file);
     return 0;
 }
 
@@ -136,26 +140,6 @@ int mockTraceFsEventDisable(struct tracefs_instance *instance, const char *syste
 struct tep_handle *mockTraceFsLocalEvents(const char *tracingDir) {
     EXPECT_STREQ(MockTraceFsOsLibrary::mockTraceDir, tracingDir);
     return &MockTraceFsOsLibrary::mockTepHandle;
-}
-
-int mockTraceFsInstanceGetBufferPercent(struct tracefs_instance *instance) {
-    return MockTraceFsOsLibrary::mockBufferPercent;
-}
-
-int mockTraceFsInstanceSetBufferPercent(struct tracefs_instance *instance, int val) {
-    EXPECT_EQ(MockTraceFsOsLibrary::mockBufferPercent, val);
-    return 0;
-}
-
-long long mockTraceFsInstanceGetBufferSize(struct tracefs_instance *instance, int cpu) {
-    EXPECT_EQ(MockTraceFsOsLibrary::mockCpu, cpu);
-    return MockTraceFsOsLibrary::mockBufferSize;
-}
-
-int mockTraceFsInstanceSetBufferSize(struct tracefs_instance *instance, size_t size, int cpu) {
-    EXPECT_EQ(MockTraceFsOsLibrary::mockSize, size);
-    EXPECT_EQ(MockTraceFsOsLibrary::mockCpu, cpu);
-    return 0;
 }
 
 char *mockTraceFsInstanceGetFile(struct tracefs_instance *instance, const char *file) {
@@ -197,10 +181,6 @@ MockTraceFsOsLibrary::MockTraceFsOsLibrary() {
     funcMap["tracefs_event_enable"] = reinterpret_cast<void *>(mockTraceFsEventEnable);
     funcMap["tracefs_event_disable"] = reinterpret_cast<void *>(mockTraceFsEventDisable);
     funcMap["tracefs_local_events"] = reinterpret_cast<void *>(mockTraceFsLocalEvents);
-    funcMap["tracefs_instance_get_buffer_percent"] = reinterpret_cast<void *>(mockTraceFsInstanceGetBufferPercent);
-    funcMap["tracefs_instance_set_buffer_percent"] = reinterpret_cast<void *>(mockTraceFsInstanceSetBufferPercent);
-    funcMap["tracefs_instance_get_buffer_size"] = reinterpret_cast<void *>(mockTraceFsInstanceGetBufferSize);
-    funcMap["tracefs_instance_set_buffer_size"] = reinterpret_cast<void *>(mockTraceFsInstanceSetBufferSize);
     funcMap["tracefs_instance_get_file"] = reinterpret_cast<void *>(mockTraceFsInstanceGetFile);
     funcMap["tracefs_get_tracing_file"] = reinterpret_cast<void *>(mockTraceFsGetTracingFile);
     funcMap["tracefs_put_tracing_file"] = reinterpret_cast<void *>(mockTraceFsPutTracingFile);

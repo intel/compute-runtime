@@ -12,12 +12,17 @@
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/os_library.h"
 
+#include <cerrno>
+#include <cstdlib>
+#include <memory>
+#include <string>
+
 namespace L0 {
 namespace Sysman {
 
 static constexpr std::string_view libTraceFsFile = "libtracefs.so.1";
 
-static constexpr std::string_view minimumLibTraceFsVersion = "1.8.0";
+static constexpr std::string_view minimumLibTraceFsVersion = "1.2.0";
 
 static constexpr std::string_view traceFsInstanceCreateRoutine = "tracefs_instance_create";
 static constexpr std::string_view traceFsInstanceIsNewRoutine = "tracefs_instance_is_new";
@@ -34,13 +39,17 @@ static constexpr std::string_view traceFsTraceOffRoutine = "tracefs_trace_off";
 static constexpr std::string_view traceFsEventEnableRoutine = "tracefs_event_enable";
 static constexpr std::string_view traceFsEventDisableRoutine = "tracefs_event_disable";
 static constexpr std::string_view traceFsLocalEventsRoutine = "tracefs_local_events";
-static constexpr std::string_view traceFsInstanceGetBufferPercentRoutine = "tracefs_instance_get_buffer_percent";
-static constexpr std::string_view traceFsInstanceSetBufferPercentRoutine = "tracefs_instance_set_buffer_percent";
-static constexpr std::string_view traceFsInstanceGetBufferSizeRoutine = "tracefs_instance_get_buffer_size";
-static constexpr std::string_view traceFsInstanceSetBufferSizeRoutine = "tracefs_instance_set_buffer_size";
 static constexpr std::string_view traceFsInstanceGetFileRoutine = "tracefs_instance_get_file";
 static constexpr std::string_view traceFsGetTracingFileRoutine = "tracefs_get_tracing_file";
 static constexpr std::string_view traceFsPutTracingFileRoutine = "tracefs_put_tracing_file";
+
+static constexpr const char *bufferPercentFile = "buffer_percent";
+static constexpr const char *bufferSizeKbFile = "buffer_size_kb";
+static constexpr const char *bufferTotalSizeKbFile = "buffer_total_size_kb";
+
+static std::string perCpuBufferSizeKbFile(int cpu) {
+    return "per_cpu/cpu" + std::to_string(cpu) + "/" + bufferSizeKbFile;
+}
 
 template <class T>
 bool TraceFsApi::getSymbolAddr(std::string_view name, T &sym) {
@@ -81,10 +90,6 @@ bool TraceFsApi::loadEntryPoints() {
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsEventEnableRoutine, traceFsEventEnableEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsEventDisableRoutine, traceFsEventDisableEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsLocalEventsRoutine, traceFsLocalEventsEntry);
-    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetBufferPercentRoutine, traceFsInstanceGetBufferPercentEntry);
-    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceSetBufferPercentRoutine, traceFsInstanceSetBufferPercentEntry);
-    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetBufferSizeRoutine, traceFsInstanceGetBufferSizeEntry);
-    allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceSetBufferSizeRoutine, traceFsInstanceSetBufferSizeEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsInstanceGetFileRoutine, traceFsInstanceGetFileEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsGetTracingFileRoutine, traceFsGetTracingFileEntry);
     allEntryPointsLoaded = allEntryPointsLoaded && getSymbolAddr(traceFsPutTracingFileRoutine, traceFsPutTracingFileEntry);
@@ -197,32 +202,53 @@ struct tep_handle *TraceFsApi::traceFsLocalEvents(const char *tracingDir) {
     return (*traceFsLocalEventsEntry)(tracingDir);
 }
 
+bool TraceFsApi::readInstanceFileValue(struct tracefs_instance *instance, const char *file, long long &value) {
+    int size = 0;
+    auto content = std::unique_ptr<char, decltype(&free)>(this->traceFsInstanceFileRead(instance, file, &size), free);
+    if (nullptr == content || size <= 0) {
+        return false;
+    }
+
+    char *endPtr = nullptr;
+    errno = 0;
+    const long long number = std::strtoll(content.get(), &endPtr, 10);
+    if (errno != 0 || endPtr == content.get()) {
+        return false;
+    }
+
+    value = number;
+    return true;
+}
+
+bool TraceFsApi::writeInstanceFileValue(struct tracefs_instance *instance, const char *file, long long value) {
+    const std::string valueString = std::to_string(value);
+    return this->traceFsInstanceFileWrite(instance, file, valueString.c_str()) > 0;
+}
+
 int TraceFsApi::traceFsInstanceGetBufferPercent(struct tracefs_instance *instance) {
-    if (nullptr == traceFsInstanceGetBufferPercentEntry) {
+    long long percent = 0;
+    if (!this->readInstanceFileValue(instance, bufferPercentFile, percent)) {
         return -1;
     }
-    return (*traceFsInstanceGetBufferPercentEntry)(instance);
+    return static_cast<int>(percent);
 }
 
 int TraceFsApi::traceFsInstanceSetBufferPercent(struct tracefs_instance *instance, int val) {
-    if (nullptr == traceFsInstanceSetBufferPercentEntry) {
-        return -1;
-    }
-    return (*traceFsInstanceSetBufferPercentEntry)(instance, val);
+    return this->writeInstanceFileValue(instance, bufferPercentFile, val) ? 0 : -1;
 }
 
 long long TraceFsApi::traceFsInstanceGetBufferSize(struct tracefs_instance *instance, int cpu) {
-    if (nullptr == traceFsInstanceGetBufferSizeEntry) {
+    const std::string file = (cpu < 0) ? std::string(bufferTotalSizeKbFile) : perCpuBufferSizeKbFile(cpu);
+    long long sizeKb = 0;
+    if (!this->readInstanceFileValue(instance, file.c_str(), sizeKb)) {
         return -1;
     }
-    return (*traceFsInstanceGetBufferSizeEntry)(instance, cpu);
+    return sizeKb;
 }
 
 int TraceFsApi::traceFsInstanceSetBufferSize(struct tracefs_instance *instance, size_t size, int cpu) {
-    if (nullptr == traceFsInstanceSetBufferSizeEntry) {
-        return -1;
-    }
-    return (*traceFsInstanceSetBufferSizeEntry)(instance, size, cpu);
+    const std::string file = (cpu < 0) ? std::string(bufferSizeKbFile) : perCpuBufferSizeKbFile(cpu);
+    return this->writeInstanceFileValue(instance, file.c_str(), static_cast<long long>(size)) ? 0 : -1;
 }
 
 char *TraceFsApi::traceFsInstanceGetFile(struct tracefs_instance *instance, const char *file) {
