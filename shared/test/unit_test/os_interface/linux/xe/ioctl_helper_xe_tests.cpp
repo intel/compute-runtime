@@ -2504,7 +2504,7 @@ TEST_F(IoctlHelperXeTest, whenGemVmBindFailsThenErrorIsPropagated) {
     EXPECT_EQ(0u, drm->waitUserFenceInputs.size());
 }
 
-TEST_F(IoctlHelperXeTest, whenUserFenceFailsThenErrorIsPropagated) {
+TEST_F(IoctlHelperXeTest, whenUserFenceFailsThenBindReturnsErrorAndUnbindReturnsSuccess) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -2527,7 +2527,8 @@ TEST_F(IoctlHelperXeTest, whenUserFenceFailsThenErrorIsPropagated) {
     drm->waitUserFenceReturn = errorValue;
 
     EXPECT_EQ(errorValue, xeIoctlHelper->vmBind(vmBindParams));
-    EXPECT_EQ(errorValue, xeIoctlHelper->vmUnbind(vmBindParams));
+    EXPECT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+    EXPECT_EQ(2u, drm->waitUserFenceInputs.size());
 }
 
 TEST_F(IoctlHelperXeTest, WhenQueryHwIpVersionAndSetupIpVersionAreCalledThenIpVersionIsCorrect) {

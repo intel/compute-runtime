@@ -1930,10 +1930,15 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     if (debugManager.flags.VmBindWaitUserFenceTimeout.get() != -1) {
         timeout = debugManager.flags.VmBindWaitUserFenceTimeout.get();
     }
-    return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
-                           sync[0].addr,
-                           sync[0].timeline_value, timeout,
-                           false, NEO::InterruptId::notUsed, nullptr);
+    ret = xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
+                          sync[0].addr,
+                          sync[0].timeline_value, timeout,
+                          false, NEO::InterruptId::notUsed, nullptr);
+    if (ret != 0 && !isBind) {
+        XELOG("error: %s user fence wait ret=%d ignored, UNMAP already committed by the ioctl\n", operation, ret);
+        return 0;
+    }
+    return ret;
 }
 
 std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
