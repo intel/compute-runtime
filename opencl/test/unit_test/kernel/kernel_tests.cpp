@@ -4373,6 +4373,45 @@ TEST_F(KernelAllocationsInfoTest, givenKernelWithArgsSetAndGetAllocationsInfoCal
     svmAllocsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
 }
 
+TEST_F(KernelAllocationsInfoTest, givenSvmAllocArgWhoseAllocationWasReplacedThenAllocationsInfoReportsAllocationBehindArgPointer) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    pKernelInfo->setCrossThreadDataSize(64);
+    pKernelInfo->addArgBuffer(0, 0x10);
+
+    MockContext context(pClDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+    auto kernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+    EXPECT_EQ(CL_SUCCESS, kernel->initialize());
+
+    auto svmAllocsManager = context.getSVMAllocsManager();
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[512] = {};
+    auto argPtr = ptrOffset(memory, 320);
+
+    MockGraphicsAllocation releasedAllocation(rootDeviceIndex, ptrOffset(memory, 256), 256);
+    MockGraphicsAllocation replacementAllocation(rootDeviceIndex, memory, sizeof(memory));
+    kernel->kernelArguments[0] = {0, &releasedAllocation, argPtr, sizeof(uintptr_t), nullptr, Kernel::KernelArgType::SVM_ALLOC_OBJ};
+
+    SvmAllocationData replacementData(rootDeviceIndex);
+    replacementData.gpuAllocations.addAllocation(&replacementAllocation);
+    replacementData.size = sizeof(memory);
+    replacementData.memoryType = InternalMemoryType::hostUnifiedMemory;
+    svmAllocsManager->insertSVMAlloc(replacementData);
+
+    std::vector<cl_kernel_allocation_info_intel> allocsInfo;
+    kernel->getAllocationsInfo(allocsInfo);
+    ASSERT_EQ(1u, allocsInfo.size());
+    EXPECT_EQ(replacementAllocation.getGpuAddress(), reinterpret_cast<uint64_t>(allocsInfo[0].base));
+    EXPECT_EQ(sizeof(memory), allocsInfo[0].size);
+    EXPECT_EQ(0, allocsInfo[0].arg_index);
+
+    svmAllocsManager->removeSVMAlloc(replacementData);
+    allocsInfo.clear();
+    kernel->getAllocationsInfo(allocsInfo);
+    EXPECT_EQ(0u, allocsInfo.size());
+}
+
 TEST_F(KernelAllocationsInfoTest, givenKernelAllocationsInfoRequestedAndRetSizeSmallerOrBiggerThenCorrectAllocationsInfoIsReturnedAndCorrectRetSizeIsSet) {
 
     struct MockKernelWithAllocationsInfo : public MockKernel {

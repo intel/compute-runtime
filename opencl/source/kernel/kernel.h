@@ -44,6 +44,7 @@ class MultiDeviceKernel;
 class LocalIdsCache;
 class ExecutionEnvironment;
 class GfxCoreHelper;
+class SVMAllocsManager;
 struct HardwareInfo;
 
 class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMovableClass {
@@ -71,10 +72,13 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         KernelArgType type;
         uint32_t allocId;
         uint32_t allocIdMemoryManagerCounter;
+        uint32_t freedAllocationsCounter = 0;
+        uint32_t allocationsCounterAtRelease = 0;
         bool isPatched = false;
         bool isStatelessUncacheable = false;
         bool isSetToNullptr = false;
         bool isImageFromBuffer = false;
+        bool isSvmAllocReleased = false;
     };
 
     typedef int32_t (Kernel::*KernelArgHandler)(uint32_t argIndex,
@@ -268,6 +272,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
     MOCKABLE_VIRTUAL void getResidency(std::vector<Surface *> &dst);
     void resetSharedObjectsPatchAddresses();
+    void revalidateSvmAllocArgs();
     bool isUsingSharedObjArgs() const { return usingSharedObjArgs; }
     bool hasUncacheableStatelessArgs() const { return statelessUncacheableArgsCount > 0; }
     bool hasImageFromBufferArgs() const { return imageFromBufferArgsCount > 0; }
@@ -386,6 +391,9 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     Kernel(Program *programArg, const KernelInfo &kernelInfo, ClDevice &clDevice);
 
     void makeArgsResident(CommandStreamReceiver &commandStreamReceiver);
+    SVMAllocsManager *getSvmAllocsManagerIfAvailable() const;
+    static bool isSvmAllocArgOutdated(const SimpleKernelArgInfo &argInfo, const SVMAllocsManager &svmAllocsManager);
+    void bindSvmAllocArgToCurrentAllocation(uint32_t argIndex, const void *svmPtr, SVMAllocsManager &svmAllocsManager);
 
     void *patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, GraphicsAllocation *svmAlloc);
 
@@ -445,6 +453,8 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     uint32_t sshLocalSize = 0u;
     uint32_t crossThreadDataSize = 0u;
     uint32_t implicitArgsVersion = 0;
+    uint32_t allocationsCounterAtSvmAllocArgsCheck = 0;
+    uint32_t freedAllocationsCounterAtSvmAllocArgsCheck = 0;
 
     bool containsStatelessWrites = true;
     bool usingSharedObjArgs = false;

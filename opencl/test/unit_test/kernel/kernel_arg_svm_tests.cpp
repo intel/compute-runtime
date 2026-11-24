@@ -7,7 +7,10 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/context/context.h"
@@ -778,4 +781,311 @@ TEST_F(KernelArgSvmTest, GivenGpuSvmPtrAndKernelIsAlreadySetToUseSystemWhenSetti
     EXPECT_TRUE(pKernel->isAnyKernelArgumentUsingSystemMemory());
 
     pContext->getSVMAllocsManager()->freeSVMAlloc(alloc);
+}
+
+namespace {
+struct TrackedSvmAllocation {
+    TrackedSvmAllocation(SVMAllocsManager &svmManager, uint32_t rootDeviceIndex, void *base, size_t size)
+        : svmManager(svmManager), allocation(rootDeviceIndex, base, size), data(rootDeviceIndex) {
+        data.gpuAllocations.addAllocation(&allocation);
+        data.size = size;
+        data.memoryType = InternalMemoryType::hostUnifiedMemory;
+        data.setAllocId(++svmManager.allocationsCounter);
+        svmManager.insertSVMAlloc(data);
+    }
+    ~TrackedSvmAllocation() {
+        release();
+    }
+    void release() {
+        if (tracked) {
+            svmManager.removeSVMAlloc(data);
+            tracked = false;
+        }
+    }
+    SVMAllocsManager &svmManager;
+    MockGraphicsAllocation allocation;
+    SvmAllocationData data;
+    bool tracked = true;
+};
+} // namespace
+
+TEST_F(KernelArgSvmTest, givenSvmAllocArgWhenItsAllocationIsReleasedAndReplacedAtSameAddressThenRevalidateRebindsArgToReplacement) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    alignas(MemoryConstants::cacheLineSize) uint8_t memory[256] = {};
+    auto argPtr = ptrOffset(memory, 64);
+
+    TrackedSvmAllocation released(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, argPtr, &released.allocation, released.data.getAllocId()));
+    const auto setArgCalls = pKernel->setArgSvmAllocCalls;
+
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls, pKernel->setArgSvmAllocCalls);
+    EXPECT_EQ(&released.allocation, pKernel->getKernelArg(0));
+
+    released.release();
+    TrackedSvmAllocation replacement(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls + 1, pKernel->setArgSvmAllocCalls);
+    EXPECT_EQ(&replacement.allocation, pKernel->getKernelArg(0));
+    EXPECT_EQ(replacement.data.getAllocId(), pKernel->getKernelArgInfo(0).allocId);
+    EXPECT_EQ(argPtr, pKernel->getKernelArgInfo(0).value);
+    auto patchedPtr = *reinterpret_cast<void **>(pKernel->getCrossThreadData() + pKernelInfo->argAsPtr(0).stateless);
+    EXPECT_EQ(argPtr, patchedPtr);
+
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls + 1, pKernel->setArgSvmAllocCalls);
+}
+
+TEST_F(KernelArgSvmTest, givenSvmAllocArgWhenAnotherAllocationIsReleasedThenRevalidateKeepsArgWithoutRebinding) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+    uint8_t otherMemory[256] = {};
+
+    TrackedSvmAllocation argAllocation(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    TrackedSvmAllocation other(*svmManager, rootDeviceIndex, otherMemory, sizeof(otherMemory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, &argAllocation.allocation, argAllocation.data.getAllocId()));
+    const auto setArgCalls = pKernel->setArgSvmAllocCalls;
+
+    other.release();
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls, pKernel->setArgSvmAllocCalls);
+    EXPECT_EQ(&argAllocation.allocation, pKernel->getKernelArg(0));
+    EXPECT_EQ(svmManager->freedAllocationsCounter.load(), pKernel->getKernelArgInfo(0).freedAllocationsCounter);
+}
+
+HWTEST_F(KernelArgSvmTest, givenSvmAllocArgsCheckedBeforeWhenArgAllocationIsReleasedWithoutReplacementThenRevalidateDropsItFromResidency) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+
+    TrackedSvmAllocation released(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, &released.allocation, released.data.getAllocId()));
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(&released.allocation, pKernel->getKernelArg(0));
+    released.release();
+
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(nullptr, pKernel->getKernelArg(0));
+    EXPECT_EQ(memory, pKernel->getKernelArgInfo(0).value);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+    pKernel->makeResident(csr);
+    EXPECT_FALSE(csr.isMadeResident(&released.allocation));
+}
+
+TEST_F(KernelArgSvmTest, givenClonedKernelWithStaleSvmAllocArgWhenCloningThenCloneIsBoundToCurrentAllocationOnly) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+
+    TrackedSvmAllocation released(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, &released.allocation, released.data.getAllocId()));
+    released.release();
+    TrackedSvmAllocation replacement(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+
+    char clonedCrossThreadData[64] = {};
+    MockKernel clonedKernel(pProgram, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, clonedKernel.initialize());
+    clonedKernel.setCrossThreadData(clonedCrossThreadData, sizeof(clonedCrossThreadData));
+    ASSERT_EQ(CL_SUCCESS, clonedKernel.cloneKernel(pKernel));
+
+    EXPECT_EQ(1u, clonedKernel.setArgSvmAllocCalls);
+    EXPECT_EQ(&replacement.allocation, clonedKernel.getKernelArg(0));
+    EXPECT_EQ(replacement.data.getAllocId(), clonedKernel.getKernelArgInfo(0).allocId);
+    EXPECT_EQ(&released.allocation, pKernel->getKernelArg(0));
+}
+
+TEST_F(KernelArgSvmTest, givenSvmAllocArgDroppedAfterReleaseWhenAllocationLaterAppearsAtSameAddressThenRevalidateRebindsArg) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+
+    TrackedSvmAllocation released(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, &released.allocation, released.data.getAllocId()));
+    released.release();
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(nullptr, pKernel->getKernelArg(0));
+    const auto setArgCalls = pKernel->setArgSvmAllocCalls;
+
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls, pKernel->setArgSvmAllocCalls);
+
+    TrackedSvmAllocation replacement(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls + 1, pKernel->setArgSvmAllocCalls);
+    EXPECT_EQ(&replacement.allocation, pKernel->getKernelArg(0));
+    EXPECT_EQ(replacement.data.getAllocId(), pKernel->getKernelArgInfo(0).allocId);
+}
+
+TEST_F(KernelArgSvmTest, givenSvmAllocArgDroppedAfterReleaseWhenSetArgCacheRefreshesItsCounterThenArgIsStillRebound) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+
+    TrackedSvmAllocation released(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, &released.allocation, released.data.getAllocId()));
+    released.release();
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(nullptr, pKernel->getKernelArg(0));
+
+    TrackedSvmAllocation replacement(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    pKernel->storeKernelArgAllocIdMemoryManagerCounter(0, svmManager->allocationsCounter.load());
+
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(&replacement.allocation, pKernel->getKernelArg(0));
+}
+
+TEST_F(KernelArgSvmTest, givenNoAllocationCreatedOrReleasedSinceLastRevalidationWhenRevalidatingThenSvmAllocArgsAreNotLookedUpAgain) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+    uint8_t otherMemory[256] = {};
+
+    TrackedSvmAllocation argAllocation(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, &argAllocation.allocation, argAllocation.data.getAllocId()));
+    pKernel->revalidateSvmAllocArgs();
+    const auto setArgCalls = pKernel->setArgSvmAllocCalls;
+
+    pKernel->kernelArguments[0].allocId = 0u;
+    pKernel->kernelArguments[0].freedAllocationsCounter = svmManager->freedAllocationsCounter.load() + 1;
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls, pKernel->setArgSvmAllocCalls);
+
+    TrackedSvmAllocation other(*svmManager, rootDeviceIndex, otherMemory, sizeof(otherMemory));
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls + 1, pKernel->setArgSvmAllocCalls);
+    EXPECT_EQ(&argAllocation.allocation, pKernel->getKernelArg(0));
+    EXPECT_EQ(argAllocation.data.getAllocId(), pKernel->getKernelArgInfo(0).allocId);
+}
+
+TEST_F(KernelArgSvmTest, givenSvmAllocArgWhoseAllocationWasReusedWithNewAllocIdWhenRevalidatingAfterReleaseThenArgAllocIdIsUpdated) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+    uint8_t otherMemory[256] = {};
+
+    TrackedSvmAllocation argAllocation(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    TrackedSvmAllocation other(*svmManager, rootDeviceIndex, otherMemory, sizeof(otherMemory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, &argAllocation.allocation, argAllocation.data.getAllocId()));
+    const auto setArgCalls = pKernel->setArgSvmAllocCalls;
+
+    const auto newAllocId = ++svmManager->allocationsCounter;
+    svmManager->getSVMAlloc(static_cast<const void *>(memory))->setAllocId(newAllocId);
+    other.release();
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls + 1, pKernel->setArgSvmAllocCalls);
+    EXPECT_EQ(&argAllocation.allocation, pKernel->getKernelArg(0));
+    EXPECT_EQ(newAllocId, pKernel->getKernelArgInfo(0).allocId);
+}
+
+TEST_F(KernelArgSvmTest, givenKernelFromProgramWithoutContextWhenRevalidatingSvmAllocArgsThenArgsAreLeftUnchanged) {
+    MockProgram programWithoutContext(toClDeviceVector(*pClDevice));
+    MockKernel kernel(&programWithoutContext, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+    char crossThreadData[64] = {};
+    kernel.setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+    uint8_t memory[256] = {};
+    MockGraphicsAllocation allocation(pClDevice->getRootDeviceIndex(), memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, kernel.setArgSvmAlloc(0, memory, &allocation, 0u));
+    const auto setArgCalls = kernel.setArgSvmAllocCalls;
+
+    kernel.revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls, kernel.setArgSvmAllocCalls);
+    EXPECT_EQ(&allocation, kernel.getKernelArg(0));
+}
+
+TEST_F(KernelArgSvmTest, givenKernelFromProgramWithoutContextWhenCloningSvmAllocArgThenArgIsCopied) {
+    MockProgram programWithoutContext(toClDeviceVector(*pClDevice));
+    MockKernel kernel(&programWithoutContext, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+    char crossThreadData[64] = {};
+    kernel.setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+    uint8_t memory[256] = {};
+    MockGraphicsAllocation allocation(pClDevice->getRootDeviceIndex(), memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, kernel.setArgSvmAlloc(0, memory, &allocation, 0u));
+
+    MockKernel clonedKernel(&programWithoutContext, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, clonedKernel.initialize());
+    char clonedCrossThreadData[64] = {};
+    clonedKernel.setCrossThreadData(clonedCrossThreadData, sizeof(clonedCrossThreadData));
+    ASSERT_EQ(CL_SUCCESS, clonedKernel.cloneKernel(&kernel));
+    EXPECT_EQ(&allocation, clonedKernel.getKernelArg(0));
+    EXPECT_EQ(memory, clonedKernel.getKernelArgInfo(0).value);
+}
+
+TEST_F(KernelArgSvmTest, givenSvmAllocArgWithPointerNotBackedBySvmAllocationWhenSvmAllocationsChangeThenRevalidateLeavesArgUnbound) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+    uint8_t otherMemory[256] = {};
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, nullptr, 0u));
+    const auto setArgCalls = pKernel->setArgSvmAllocCalls;
+
+    TrackedSvmAllocation other(*svmManager, rootDeviceIndex, otherMemory, sizeof(otherMemory));
+    other.release();
+    pKernel->revalidateSvmAllocArgs();
+    TrackedSvmAllocation later(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(setArgCalls, pKernel->setArgSvmAllocCalls);
+    EXPECT_EQ(nullptr, pKernel->getKernelArg(0));
+    EXPECT_EQ(memory, pKernel->getKernelArgInfo(0).value);
+}
+
+TEST_F(KernelArgSvmTest, givenSvmAllocArgDroppedAfterReleaseWhenKernelIsClonedThenCloneRebindsArgOnceAllocationAppearsAtSameAddress) {
+    auto svmManager = pContext->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    uint8_t memory[256] = {};
+
+    TrackedSvmAllocation released(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    EXPECT_EQ(CL_SUCCESS, pKernel->setArgSvmAlloc(0, memory, &released.allocation, released.data.getAllocId()));
+    released.release();
+    pKernel->revalidateSvmAllocArgs();
+    EXPECT_EQ(nullptr, pKernel->getKernelArg(0));
+
+    char clonedCrossThreadData[64] = {};
+    MockKernel clonedKernel(pProgram, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, clonedKernel.initialize());
+    clonedKernel.setCrossThreadData(clonedCrossThreadData, sizeof(clonedCrossThreadData));
+    ASSERT_EQ(CL_SUCCESS, clonedKernel.cloneKernel(pKernel));
+    EXPECT_EQ(nullptr, clonedKernel.getKernelArg(0));
+    EXPECT_EQ(memory, clonedKernel.getKernelArgInfo(0).value);
+
+    TrackedSvmAllocation replacement(*svmManager, rootDeviceIndex, memory, sizeof(memory));
+    clonedKernel.revalidateSvmAllocArgs();
+    EXPECT_EQ(&replacement.allocation, clonedKernel.getKernelArg(0));
+    EXPECT_EQ(replacement.data.getAllocId(), clonedKernel.getKernelArgInfo(0).allocId);
 }

@@ -250,6 +250,7 @@ class SVMAllocsManager {
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
     std::atomic<uint32_t> allocationsCounter = 0;
+    std::atomic<uint32_t> freedAllocationsCounter = 0;
     std::atomic<uint32_t> maxLatestResidentObjectId = 0;
     bool isAllocIdScannedForIndirectAccess(uint32_t allocId) const { return allocId <= maxLatestResidentObjectId.load(); }
     MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount);

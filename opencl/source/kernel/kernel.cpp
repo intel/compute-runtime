@@ -418,11 +418,20 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
             setArgSvm(i, pSourceKernel->getKernelArgInfo(i).size, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
                       pSourceKernel->getKernelArgInfo(i).svmAllocation, pSourceKernel->getKernelArgInfo(i).svmFlags);
             break;
-        case SVM_ALLOC_OBJ:
-            setArgSvmAlloc(i, const_cast<void *>(pSourceKernel->getKernelArgInfo(i).value),
-                           reinterpret_cast<GraphicsAllocation *>(pSourceKernel->getKernelArgInfo(i).object),
-                           pSourceKernel->getKernelArgInfo(i).allocId);
+        case SVM_ALLOC_OBJ: {
+            const auto &sourceArgInfo = pSourceKernel->getKernelArgInfo(i);
+            auto *const svmAllocsManager = this->getSvmAllocsManagerIfAvailable();
+            if (svmAllocsManager && isSvmAllocArgOutdated(sourceArgInfo, *svmAllocsManager)) {
+                this->bindSvmAllocArgToCurrentAllocation(i, sourceArgInfo.value, *svmAllocsManager);
+            } else {
+                this->setArgSvmAlloc(i, const_cast<void *>(sourceArgInfo.value), reinterpret_cast<GraphicsAllocation *>(sourceArgInfo.object), sourceArgInfo.allocId);
+                if (sourceArgInfo.isSvmAllocReleased) {
+                    this->kernelArguments[i].isSvmAllocReleased = true;
+                    this->kernelArguments[i].allocationsCounterAtRelease = sourceArgInfo.allocationsCounterAtRelease;
+                }
+            }
             break;
+        }
         case BUFFER_OBJ:
         case IMAGE_OBJ:
         case SAMPLER_OBJ:
@@ -998,6 +1007,8 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     storeKernelArg(argIndex, SVM_ALLOC_OBJ, svmAlloc, svmPtr, sizeof(uintptr_t));
     kernelArgInfo.allocId = allocId;
     kernelArgInfo.allocIdMemoryManagerCounter = allocId ? this->getContext().getSVMAllocsManager()->allocationsCounter.load() : 0u;
+    kernelArgInfo.freedAllocationsCounter = allocId ? this->getContext().getSVMAllocsManager()->freedAllocationsCounter.load() : 0u;
+    kernelArgInfo.isSvmAllocReleased = false;
     kernelArgInfo.isSetToNullptr = nullptr == svmPtr;
     if (!kernelArgInfo.isPatched) {
         patchedArgumentsNum++;
@@ -1439,9 +1450,9 @@ void Kernel::getAllocationsInfo(std::vector<cl_kernel_allocation_info_intel> &al
     for (auto argIndex = 0; argIndex < numArgs; argIndex++) {
         if (kernelArguments[argIndex].object) {
             if (kernelArguments[argIndex].type == SVM_ALLOC_OBJ) {
-                auto pSVMAlloc = reinterpret_cast<GraphicsAllocation *>(kernelArguments[argIndex].object);
-                auto svmAlloc = svmAllocsManager->getSVMAlloc(reinterpret_cast<const void *>(pSVMAlloc->getGpuAddress()));
-                if (svmAlloc) {
+                const auto svmAlloc = svmAllocsManager->getSVMAlloc(this->kernelArguments[argIndex].value);
+                const auto pSVMAlloc = svmAlloc ? svmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex) : nullptr;
+                if (pSVMAlloc) {
                     allocationsInfo.push_back({.base = reinterpret_cast<void *>(pSVMAlloc->getGpuAddress()),
                                                .size = svmAlloc->size,
                                                .type = internalMemoryTypeToClMemTypeINTEL(svmAlloc->memoryType),
@@ -1834,6 +1845,57 @@ void Kernel::resetSharedObjectsPatchAddresses() {
             setArg(static_cast<uint32_t>(i), sizeof(cl_mem), &clMem);
         }
     }
+}
+
+SVMAllocsManager *Kernel::getSvmAllocsManagerIfAvailable() const {
+    const auto context = this->program->getContextPtr();
+    return context ? context->getSVMAllocsManager() : nullptr;
+}
+
+bool Kernel::isSvmAllocArgOutdated(const SimpleKernelArgInfo &argInfo, const SVMAllocsManager &svmAllocsManager) {
+    if (SVM_ALLOC_OBJ != argInfo.type) {
+        return false;
+    }
+    if (argInfo.object) {
+        return argInfo.freedAllocationsCounter != svmAllocsManager.freedAllocationsCounter.load();
+    }
+    return argInfo.isSvmAllocReleased && argInfo.allocationsCounterAtRelease != svmAllocsManager.allocationsCounter.load();
+}
+
+void Kernel::bindSvmAllocArgToCurrentAllocation(uint32_t argIndex, const void *svmPtr, SVMAllocsManager &svmAllocsManager) {
+    // counters are read before the lookup, so anything released or allocated meanwhile is caught next time
+    const auto allocationsCounter = svmAllocsManager.allocationsCounter.load();
+    const auto freedAllocationsCounter = svmAllocsManager.freedAllocationsCounter.load();
+    const auto svmData = svmAllocsManager.getSVMAlloc(svmPtr);
+    const auto svmAlloc = svmData ? svmData->gpuAllocations.getGraphicsAllocation(this->getDevice().getRootDeviceIndex()) : nullptr;
+    const auto allocId = svmAlloc ? svmData->getAllocId() : 0u;
+
+    auto &argInfo = this->kernelArguments[argIndex];
+    if (SVM_ALLOC_OBJ != argInfo.type || svmAlloc != argInfo.object || allocId != argInfo.allocId) {
+        this->setArgSvmAlloc(argIndex, const_cast<void *>(svmPtr), svmAlloc, allocId);
+    }
+    argInfo.freedAllocationsCounter = freedAllocationsCounter;
+    argInfo.allocationsCounterAtRelease = allocationsCounter;
+    argInfo.isSvmAllocReleased = (nullptr == svmAlloc);
+}
+
+void Kernel::revalidateSvmAllocArgs() {
+    auto *const svmAllocsManager = this->getSvmAllocsManagerIfAvailable();
+    if (nullptr == svmAllocsManager) {
+        return;
+    }
+    const auto allocationsCounter = svmAllocsManager->allocationsCounter.load();
+    const auto freedAllocationsCounter = svmAllocsManager->freedAllocationsCounter.load();
+    if (allocationsCounter == this->allocationsCounterAtSvmAllocArgsCheck && freedAllocationsCounter == this->freedAllocationsCounterAtSvmAllocArgsCheck) {
+        return;
+    }
+    for (uint32_t argIndex = 0; argIndex < static_cast<uint32_t>(this->kernelArguments.size()); argIndex++) {
+        if (isSvmAllocArgOutdated(this->kernelArguments[argIndex], *svmAllocsManager)) {
+            this->bindSvmAllocArgToCurrentAllocation(argIndex, this->kernelArguments[argIndex].value, *svmAllocsManager);
+        }
+    }
+    this->allocationsCounterAtSvmAllocArgsCheck = allocationsCounter;
+    this->freedAllocationsCounterAtSvmAllocArgsCheck = freedAllocationsCounter;
 }
 
 void Kernel::provideInitializationHints() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     if (kernel.isUsingSharedObjArgs()) {
         kernel.resetSharedObjectsPatchAddresses();
     }
+
+    kernel.revalidateSvmAllocArgs();
 
     bool haveRequiredWorkGroupSize = false;
 

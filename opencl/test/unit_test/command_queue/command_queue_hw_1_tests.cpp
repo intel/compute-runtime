@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -13,6 +14,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -1093,6 +1095,49 @@ HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenNoBlockedThenKern
     cl_int status = pCmdQ->enqueueKernel(mockKernel, 1, &offset, &gws, &lws, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_EQ(1u, mockKernel->makeResidentCalls);
+}
+
+HWTEST_F(CommandQueueHwTest, givenSvmAllocArgWhoseAllocationWasReplacedAtSameAddressWhenEnqueueKernelWithoutSettingArgAgainThenReplacementIsMadeResident) {
+    auto svmManager = context->getSVMAllocsManager();
+    if (nullptr == svmManager) {
+        GTEST_SKIP();
+    }
+    MockKernelWithInternalsConfig config{};
+    config.addDefaultArgs = true;
+    MockKernelWithInternals mockKernelWithInternals(*context, config);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+
+    alignas(MemoryConstants::cacheLineSize) uint8_t memory[256] = {};
+    MockGraphicsAllocation releasedAllocation(rootDeviceIndex, memory, sizeof(memory));
+    MockGraphicsAllocation replacementAllocation(rootDeviceIndex, memory, sizeof(memory));
+
+    SvmAllocationData releasedData(rootDeviceIndex);
+    releasedData.gpuAllocations.addAllocation(&releasedAllocation);
+    releasedData.size = sizeof(memory);
+    releasedData.setAllocId(++svmManager->allocationsCounter);
+    svmManager->insertSVMAlloc(releasedData);
+    EXPECT_EQ(CL_SUCCESS, mockKernel->setArgSvmAlloc(0, memory, &releasedAllocation, releasedData.getAllocId()));
+    EXPECT_EQ(CL_SUCCESS, mockKernel->setArgSvmAlloc(1, ptrOffset(memory, 128), &releasedAllocation, releasedData.getAllocId()));
+
+    svmManager->removeSVMAlloc(releasedData);
+    SvmAllocationData replacementData(rootDeviceIndex);
+    replacementData.gpuAllocations.addAllocation(&replacementAllocation);
+    replacementData.size = sizeof(memory);
+    replacementData.setAllocId(++svmManager->allocationsCounter);
+    svmManager->insertSVMAlloc(replacementData);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+    size_t gws = 1;
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(mockKernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
+    EXPECT_TRUE(csr.isMadeResident(&replacementAllocation));
+    EXPECT_FALSE(csr.isMadeResident(&releasedAllocation));
+    EXPECT_EQ(&replacementAllocation, mockKernel->getKernelArg(0));
+    EXPECT_EQ(&replacementAllocation, mockKernel->getKernelArg(1));
+
+    pCmdQ->finish(false);
+    svmManager->removeSVMAlloc(replacementData);
 }
 
 HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenBlockedThenKernelGetResidencyCalledOnce) {
