@@ -518,6 +518,56 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     }
 }
 
+// PUNIT rev 1 reports XTAL_COUNT_DIV1000: punitMockXtalCount * 1000 ticks, & 0x3 = 3 selects 25 MHz, truncated to microseconds
+constexpr uint64_t punitRev1MockTimestampInMicroSeconds = 3127723437400u;
+
+static ssize_t mockPreadPunitRev1EnergyCounters(int fd, void *buf, size_t count, off_t offset) {
+    constexpr uint64_t telemOffset = 0;
+    constexpr std::string_view validOobmsmGuid = "0x5e2fa230";
+    constexpr std::string_view validPunitRev1Guid = "0x1e2fa031";
+
+    if (fd == 4) {
+        memcpy(buf, &telemOffset, count);
+    } else if (fd == 5) {
+        memcpy(buf, validOobmsmGuid.data(), count);
+    } else if (fd == 6) {
+        memcpy(buf, validPunitRev1Guid.data(), count);
+    } else if (fd == 8) {
+        switch (offset) {
+        case 4:
+            memcpy(buf, &punitMockXtalFrequency, count);
+            break;
+        case 848:
+            memcpy(buf, &punitMockXtalCount, count);
+            break;
+        case 44:
+        case 48:
+        case 52:
+            memcpy(buf, &punitMockRawEnergyCounter, count);
+            break;
+        default:
+            break;
+        }
+    }
+    return count;
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenPunitRev1WhenGettingPowerEnergyCounterThenTimestampIsCalculatedFromXtalCountDiv1000, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadPunitRev1EnergyCounters);
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    for (auto powerDomain : {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE}) {
+        zes_power_energy_counter_t energyCounter = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getPowerEnergyCounter(&energyCounter, pLinuxSysmanImp, powerDomain, 0u));
+        EXPECT_EQ(punitMockEnergyCounterInMicroJoules, energyCounter.energy);
+        EXPECT_EQ(punitRev1MockTimestampInMicroSeconds, energyCounter.timestamp);
+    }
+}
+
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenTelemetryAvailableWhenCreatingPowerHandleForCardAndPackageDomainsThenPmtBasedPowerIsSupportedOnlyIfHwmonEnergyCounterIsNotReadable, IsBmgOrCri) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);

@@ -79,6 +79,24 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"VCCDDRQ_VID", 60},
       {"XTAL_COUNT", 512},
       {"XTAL_CLK_FREQUENCY", 4}}},
+    {"0x1e2fa031", // CRI PUNIT rev 1
+     {{"ACCUM_PACKAGE_ENERGY", 48},
+      {"ACCUM_PSYS_ENERGY", 52},
+      {"AMB_TEMPERATURE", 176},
+      {"COMPOSITE_TEMPERATURE", 272},
+      {"INSTANTANEOUS_POWER_CONTAINER", 128},
+      {"VCCGT_ENERGY_ACCUMULATOR", 44},
+      {"VR_TEMPERATURE_0", 224},
+      {"VR_TEMPERATURE_1", 228},
+      {"VR_TEMPERATURE_2", 232},
+      {"VR_TEMPERATURE_3", 236},
+      {"VRAM_BANDWIDTH", 56},
+      {"VRAM_ENERGY_ACCUM_CONTAINER", 200},
+      {"VRAM_FREQUENCY", 56},
+      {"VCCDDRQX_VID", 60},
+      {"VCCDDRQ_VID", 60},
+      {"XTAL_COUNT_DIV1000", 848},
+      {"XTAL_CLK_FREQUENCY", 4}}},
     {"0x5e2fa230", // CRI OOBMSM Rev 0
      {{"SOC_TOPDIE_TEMPERATURE", 128},
       {"VRAM_TEMPERATURE", 132},
@@ -467,24 +485,28 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_e
     pEnergy->energy = static_cast<uint64_t>(energyInJoules * microFactor);
 
     // Timestamp calculation
-    uint64_t timestampValue = 0;
-    std::string key = "XTAL_COUNT";
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestampValue);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
-
     uint32_t frequency = 0;
-    key = "XTAL_CLK_FREQUENCY";
+    std::string key = "XTAL_CLK_FREQUENCY";
     result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, frequency);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock frequency from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
         return result;
     }
 
+    bool isXtalCountDiv1000 = keyOffsetMap.contains("XTAL_COUNT_DIV1000");
+    uint64_t timestampValue = 0;
+    key = isXtalCountDiv1000 ? "XTAL_COUNT_DIV1000" : "XTAL_COUNT";
+
+    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestampValue);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Xtal clock from Telemetry, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    double xtalCount = isXtalCountDiv1000 ? static_cast<double>(timestampValue) * 1000 : static_cast<double>(timestampValue);
+
     // 0x3 masks the 2-bit XTAL_CLK_FREQUENCY field (register bits [1:0]).
-    double timestamp = timestampValue / indexToXtalClockFrequencyMap[frequency & 0x3];
+    double timestamp = xtalCount / indexToXtalClockFrequencyMap[frequency & 0x3];
     pEnergy->timestamp = static_cast<uint64_t>(timestamp);
 
     return ZE_RESULT_SUCCESS;
