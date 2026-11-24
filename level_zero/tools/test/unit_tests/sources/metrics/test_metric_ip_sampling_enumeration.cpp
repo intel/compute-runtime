@@ -228,37 +228,6 @@ HWTEST2_PRODUCT_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhe
     }
 }
 
-HWTEST2_F(MetricIpSamplingEnumerationTest, GivenIpSamplingMetricsThenCalculablePropertyIsAlwaysTrue, HasIPSamplingSupport) {
-
-    for (auto device : rootOneSubDev) {
-        zet_metric_group_handle_t hMetricGroup = MetricIpSamplingMultiDevFixture::getMetricGroupForDevice(device);
-
-        uint32_t metricCount = 0;
-        EXPECT_EQ(zetMetricGet(hMetricGroup, &metricCount, nullptr), ZE_RESULT_SUCCESS);
-        std::vector<zet_metric_handle_t> metricHandles(metricCount);
-        EXPECT_EQ(zetMetricGet(hMetricGroup, &metricCount, metricHandles.data()), ZE_RESULT_SUCCESS);
-
-        zet_metric_properties_t metricProperties = {};
-        metricProperties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
-        metricProperties.pNext = nullptr;
-
-        zet_intel_metric_calculable_properties_exp_t calculableProperties{};
-        calculableProperties.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULABLE_PROPERTIES_EXP;
-        calculableProperties.pNext = nullptr;
-        metricProperties.pNext = &calculableProperties;
-
-        for (auto &metricHandle : metricHandles) {
-            EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
-            EXPECT_TRUE(calculableProperties.isCalculable);
-        }
-
-        // Check that invalid structure is handled gracefully
-        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-        metricProperties.pNext = &metricGroupProperties;
-        EXPECT_EQ(zetMetricGetProperties(metricHandles[0], &metricProperties), ZE_RESULT_SUCCESS);
-    }
-}
-
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummyActivationAndDeActivationHappens, HasIPSamplingSupport) {
 
     for (auto device : rootOneSubDev) {

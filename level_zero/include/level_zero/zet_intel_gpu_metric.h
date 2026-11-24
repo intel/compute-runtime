@@ -106,16 +106,6 @@ typedef struct _zet_intel_metric_group_calculation_properties_exp_t {
 } zet_intel_metric_group_calculation_properties_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Query a metric calculable property
-/// This structure can be passed in the 'pNext' of zet_metric_properties_t
-typedef struct _zet_intel_metric_calculable_properties_exp_t {
-    zet_structure_type_ext_t stype; ///< [in] type of this structure
-    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
-                                    ///< structure (i.e. contains stype and pNext).
-    bool isCalculable;              ///< [out] Flag to indicate if the metric supports calculation.
-} zet_intel_metric_calculable_properties_exp_t;
-
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Handle of metric calculation operation
 struct _zet_intel_metric_calculation_operation_exp_handle_t {};
 typedef struct _zet_intel_metric_calculation_operation_exp_handle_t *zet_intel_metric_calculation_operation_exp_handle_t;
