@@ -1627,6 +1627,17 @@ TEST_F(LeoCommandBufferKernelTest, givenLocalSizeNotDividingGlobalSizeWhenRecord
     EXPECT_EQ(refCount, kernel->getRefInternalCount());
 }
 
+TEST_F(LeoCommandBufferKernelTest, givenZeroLocalWorkSizeDimensionWhenRecordingNDRangeKernelThenInvalidWorkGroupSizeIsReturned) {
+    const size_t zeroLocalWorkSizes[][3] = {{0u, 2u, 1u}, {16u, 0u, 1u}, {0u, 0u, 1u}};
+    const auto refCount = kernel->getRefInternalCount();
+
+    for (const auto &zeroLocalWorkSize : zeroLocalWorkSizes) {
+        EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, recordKernel(globalWorkSize, zeroLocalWorkSize, nullptr));
+    }
+    EXPECT_EQ(0u, recordedCmdList.totalCalls());
+    EXPECT_EQ(refCount, kernel->getRefInternalCount());
+}
+
 TEST_F(LeoCommandBufferKernelTest, givenInvalidWorkDimWhenRecordingNDRangeKernelThenInvalidWorkDimensionIsReturned) {
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, clCommandNDRangeKernelKHR(commandBuffer, nullptr, nullptr, kernel.get(), 0u, nullptr, globalWorkSize, localWorkSize, 0u, nullptr, nullptr, nullptr));
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, clCommandNDRangeKernelKHR(commandBuffer, nullptr, nullptr, kernel.get(), 4u, nullptr, globalWorkSize, localWorkSize, 0u, nullptr, nullptr, nullptr));

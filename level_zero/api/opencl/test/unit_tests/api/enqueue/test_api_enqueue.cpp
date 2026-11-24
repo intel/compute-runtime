@@ -257,6 +257,18 @@ TEST_F(EnqueueKernelEventFixture, givenGroupCountAboveUint32WhenEnqueueNDRangeKe
     EXPECT_EQ(CL_SUCCESS, clReleaseEvent(waitEvent));
 }
 
+TEST_F(EnqueueKernelEventFixture, givenZeroLocalWorkSizeDimensionWhenEnqueueNDRangeKernelThenInvalidWorkGroupSizeIsReturnedAndNothingIsAppended) {
+    size_t globalWorkSize[3] = {1, 1, 1};
+    const size_t zeroLocalWorkSizes[][3] = {{0, 1, 1}, {1, 0, 1}, {1, 1, 0}, {0, 0, 0}};
+
+    for (const auto &zeroLocalWorkSize : zeroLocalWorkSizes) {
+        EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 3, nullptr, globalWorkSize, zeroLocalWorkSize, 0, nullptr, nullptr));
+    }
+    size_t oneDimZeroLocalWorkSize[1] = {0};
+    EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 1, nullptr, globalWorkSize, oneDimZeroLocalWorkSize, 0, nullptr, nullptr));
+    EXPECT_EQ(0u, capturingCmdList.totalCalls());
+}
+
 struct WhiteBoxNonUniformProgram : public Program {
     using Program::allowNonUniform;
     using Program::Program;

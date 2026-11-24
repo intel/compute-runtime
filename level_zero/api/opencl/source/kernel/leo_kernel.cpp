@@ -429,6 +429,11 @@ cl_int Kernel::setupDispatch(const ClDevice &clDevice, cl_uint workDim, const si
     uint32_t lws[3] = {1, 1, 1};
 
     if (localWorkSize) {
+        for (cl_uint i = 0; i < workDim; ++i) {
+            if (localWorkSize[i] == 0) [[unlikely]] {
+                return CL_INVALID_WORK_GROUP_SIZE;
+            }
+        }
         lws[0] = static_cast<uint32_t>(localWorkSize[0]);
         if (workDim > 1) {
             lws[1] = static_cast<uint32_t>(localWorkSize[1]);
