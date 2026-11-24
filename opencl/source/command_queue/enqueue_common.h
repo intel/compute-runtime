@@ -920,11 +920,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     ioh = &getIndirectHeap(IndirectHeap::Type::indirectObject, 0u);
 
     auto dcFlush = shouldFlushDC(commandType, printfHandler) || containsImageFromBuffer;
-    if (!device->isFullRangeSvm()) {
-        if (std::any_of(csr.getResidencyAllocations().begin(), csr.getResidencyAllocations().end(), [](const auto allocation) { return allocation->isFlushL3Required(); })) {
-            dcFlush |= true;
-        }
-    }
 
     auto memoryCompressionState = csr.getMemoryCompressionState(auxTranslationRequired);
     bool hasStallingCmds = enqueueProperties.hasStallingCmds || (!relaxedOrderingEnabled && (eventsRequest.numEventsInWaitList > 0 || timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0));

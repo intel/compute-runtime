@@ -81,9 +81,6 @@ struct EnqueueBufferWindowsTest : public ClHardwareParse,
 };
 
 HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCalledThenStateBaseAddressAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
-    if (executionEnvironment->memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     initializeFixture<FamilyType>();
     const auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {

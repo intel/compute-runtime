@@ -243,15 +243,6 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
      *
      *
      *
-     *   3) Limited Range gfx layout (no SVM):
-     *
-     *     H0   H1   H2   H3        STANDARD          STANDARD64K
-     *   |____|____|____|____|____________________|__________________|
-     *   |    |    |    |    |                    |                  |
-     * gfxBase                                                    gfxTop
-     *  0x0                                                    0xFFF...FFF < 47 bit
-     *
-     *
      * II. 32-bit builds:
      *
      *   1) 32-bit Full Range SVM gfx layout:
@@ -290,9 +281,6 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRangeForNonSvmHeaps.alignedPtr);
             gfxTop = gfxBase + cpuAddressRangeSizeToReserve;
             heapInit(HeapIndex::heapSvm, 0ull, gpuAddressSpace + 1);
-        } else if (gpuAddressSpace < maxNBitValue(47)) {
-            gfxBase = 0ull;
-            heapInit(HeapIndex::heapSvm, 0ull, 0ull);
         } else {
             if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, systemMemorySize, numRootDevices, productHelper)) {
                 return false;

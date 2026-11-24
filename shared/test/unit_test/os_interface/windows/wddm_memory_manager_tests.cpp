@@ -357,11 +357,7 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMa
         allocData.type = NEO::AllocationType::externalHostPtr;
         auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
 
-        if (executionEnvironment->rootDeviceEnvironments[allocData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) {
-            EXPECT_TRUE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
-        } else {
-            EXPECT_FALSE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
-        }
+        EXPECT_TRUE(memoryManager->mapGpuVirtualAddressWithCpuPtr);
 
         memoryManager->freeGraphicsMemory(graphicsAllocation);
     }
@@ -876,9 +872,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     EXPECT_NE(nullptr, allocation);
@@ -1010,22 +1003,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithStorageInfoWhenAlloca
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithFlagsWhenAllocateGraphicsMemory64kbThenAllocationFlagFlushL3RequiredIsSetCorrectly) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
-    class MockGraphicsAllocation : public GraphicsAllocation {
-      public:
-        using GraphicsAllocation::allocationInfo;
-    };
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    AllocationData allocationData;
-    allocationData.flags.flushL3 = true;
-    auto allocation = static_cast<MockGraphicsAllocation *>(memoryManager->allocateGraphicsMemory64kb(allocationData));
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(allocationData.flags.flushL3, allocation->allocationInfo.flags.flushL3Required);
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWhenCallingSetLockedMemoryThenFlagIsSetCorrectly) {
     class MockGraphicsAllocation : public GraphicsAllocation {
       public:
@@ -1045,9 +1022,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWhenCallingSetLockedMemoryThe
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
@@ -1080,9 +1054,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenA
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     auto size = MemoryConstants::pageSize;
 
     auto svmAllocation = memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), size, AllocationType::svmZeroCopy, mockDeviceBitfield});
@@ -1096,9 +1067,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenA
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMThenMemoryPoolIsSystem64KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(true, false, executionEnvironment));
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     auto size = MemoryConstants::pageSize;
 
     auto svmAllocation = memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), size, AllocationType::svmZeroCopy, mockDeviceBitfield});
@@ -1334,7 +1302,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenReservingCpuRangeOrMappingFailsWhenAllo
     if constexpr (is64bit) {
         GTEST_SKIP();
     }
-    VariableBackup<uint64_t> gpuAddressSpaceBackup(&rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace, maxNBitValue(48));
     VariableBackup<bool> failReserveBackup(&wddm->failReserveValidAddressRange);
     gdi->lock2 = failingLock2;
     wddm->callBaseMapGpuVa = false;
@@ -1401,9 +1368,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAppTransientCoherentPatRequiredWhenImportedMisalignedHostPtrSpansMoreThanTwoPagesThenOnlyFirstAndLastPageAreUncachedAndGpuVaIsInStandardHeap) {
-    if (rootDeviceEnvironment->getHardwareInfo()->caps.overrideGfxPartitionLayoutForWsl) {
-        GTEST_SKIP();
-    }
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
     releaseHelper->isAppTransientCoherentPatRequiredResult = true;
     rootDeviceEnvironment->releaseHelper = std::move(releaseHelper);
@@ -2439,9 +2403,6 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInSvmRange
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
     const auto gfxPartition = memoryManager->getGfxPartition(0u);
-    if (gfxPartition->isLimitedRange()) {
-        GTEST_SKIP();
-    }
     AllocationData allocationData;
     allocationData.size = 2ULL * MemoryConstants::pageSize64k;
     MemoryManager::AllocationStatus status;
@@ -2503,9 +2464,6 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInSvmRange
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
     const auto gfxPartition = memoryManager->getGfxPartition(0u);
-    if (gfxPartition->isLimitedRange()) {
-        GTEST_SKIP();
-    }
     AllocationData allocationData;
     allocationData.size = 2ULL * MemoryConstants::pageSize64k;
     MemoryManager::AllocationStatus status;
@@ -2598,9 +2556,6 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenReservingWouldFailWhenUpdatingAccessOfM
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalHostMemoryAndVirtualMemoryThenMapSucceeds) {
-    if (rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily == IGFX_DG1) {
-        GTEST_SKIP();
-    }
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     AllocationData allocationData;
     allocationData.allFlags = 0;
@@ -2654,9 +2609,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenLockResourceFailureWhenAllocatingPhysic
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeAboveHeapLimitWhenMapThenMapFails) {
-    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
-
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = MemoryConstants::pageSize64k;
@@ -2679,13 +2631,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeAboveHeapL
     EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u, true));
 
     memoryManager->freeGraphicsMemory(allocation);
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeBelowHeapMinimumWhenMapThenMapFails) {
-    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
-
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = MemoryConstants::pageSize64k;
@@ -2695,7 +2643,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeBelowHeapM
 
     auto heapBase = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB);
     if (heapBase <= MemoryConstants::pageSize64k) {
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
         GTEST_SKIP();
     }
     auto outOfRangeGpuAddress = heapBase - MemoryConstants::pageSize64k;
@@ -2712,50 +2659,12 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeBelowHeapM
     EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u, true));
 
     memoryManager->freeGraphicsMemory(allocation);
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeAboveHeapLimitOnNonFullRangeSvmWhenMapThenMapFails) {
-    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(40);
-    if (rootDeviceEnvironment->isFullRangeSvm()) {
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
-        GTEST_SKIP();
-    }
-
-    AllocationData allocationData;
-    allocationData.allFlags = 0;
-    allocationData.size = MemoryConstants::pageSize64k;
-    allocationData.flags.allocateMemory = true;
-    allocationData.flags.useSystemMemory = true;
-    allocationData.flags.isUSMHostAllocation = true;
-
-    auto heapLimit = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
-    auto outOfRangeGpuAddress = heapLimit + MemoryConstants::pageSize64k;
-    auto gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(outOfRangeGpuAddress);
-
-    MemoryManager::AllocationStatus status;
-    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
-    ASSERT_NE(nullptr, allocation);
-    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
-
-    RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.pushUnique(0);
-    MultiGraphicsAllocation multiGraphicsAllocations{1};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u, true));
-
-    memoryManager->freeGraphicsMemory(allocation);
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeInsideHeapOnFullRangeSvmWhenMapThenBaseAddressIsNotForcedToZero) {
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeInsideHeapWhenMapThenBaseAddressMatchesRequestedAddress) {
     if (is32bit) {
         GTEST_SKIP();
     }
-
-    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
-    ASSERT_TRUE(rootDeviceEnvironment->isFullRangeSvm());
 
     AllocationData allocationData;
     allocationData.allFlags = 0;
@@ -2767,7 +2676,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeInsideHeap
     auto heapBase = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB);
     auto heapLimit = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
     if (heapLimit <= heapBase || (heapLimit - heapBase) < MemoryConstants::pageSize64k) {
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
         GTEST_SKIP();
     }
 
@@ -2792,57 +2700,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeInsideHeap
     EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size, true));
 
     memoryManager->freeGraphicsMemory(allocation);
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeInsideHeapOnNonFullRangeSvmWhenMapThenBaseAddressMatchesRequestedAddress) {
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-
-    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(40);
-    if (rootDeviceEnvironment->isFullRangeSvm()) {
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
-        GTEST_SKIP();
-    }
-
-    AllocationData allocationData;
-    allocationData.allFlags = 0;
-    allocationData.size = MemoryConstants::pageSize64k;
-    allocationData.flags.allocateMemory = true;
-    allocationData.flags.useSystemMemory = true;
-    allocationData.flags.isUSMHostAllocation = true;
-
-    auto heapBase = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB);
-    auto heapLimit = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
-    if (heapLimit <= heapBase || (heapLimit - heapBase) < MemoryConstants::pageSize64k) {
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
-        GTEST_SKIP();
-    }
-
-    auto inRangeGpuAddress = heapBase + MemoryConstants::pageSize64k;
-    auto gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(inRangeGpuAddress);
-
-    MemoryManager::AllocationStatus status;
-    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
-    ASSERT_NE(nullptr, allocation);
-    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
-
-    RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.pushUnique(0);
-    MultiGraphicsAllocation multiGraphicsAllocations{1};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u, true));
-
-    auto mapGpuVaArg = getLastCallMapGpuVaArg();
-    ASSERT_NE(nullptr, mapGpuVaArg);
-    EXPECT_EQ(inRangeGpuAddress, mapGpuVaArg->BaseAddress);
-    EXPECT_NE(0u, mapGpuVaArg->BaseAddress);
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size, true));
-
-    memoryManager->freeGraphicsMemory(allocation);
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
 }
 
 using MapGpuVirtualAddressFunc = NTSTATUS(APIENTRY *)(D3DDDI_MAPGPUVIRTUALADDRESS *);
@@ -2859,9 +2716,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryMappedAtDifferentAddr
         GTEST_SKIP();
     }
 
-    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
-
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = MemoryConstants::pageSize64k;
@@ -2872,7 +2726,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryMappedAtDifferentAddr
     auto heapBase = memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard64KB);
     auto heapLimit = memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapStandard64KB);
     if (heapLimit <= heapBase || (heapLimit - heapBase) < 2 * MemoryConstants::pageSize64k) {
-        rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
         GTEST_SKIP();
     }
 
@@ -2900,7 +2753,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryMappedAtDifferentAddr
     EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
 
     memoryManager->freeGraphicsMemory(allocation);
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenHostUsmWithHostPtrWhenFragmentIsMappedAtDifferentGpuVaThanHostPtrThenAllocationFailsAndFragmentIsReleased) {
@@ -2926,9 +2778,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenHostUsmWithHostPtrWhenFragmentIsMappedA
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndVirtualMemoryWhenUnmapReserveFailsThenUnmapFails) {
-    if (rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily == IGFX_DG1) {
-        GTEST_SKIP();
-    }
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = MemoryConstants::pageSize64k;
@@ -2955,9 +2804,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndVirtualMemoryWhenU
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenReservedAddressDifferentThanRequestedWhenUnmappingPhysicalHostMemoryThenUnmapFails) {
-    if (rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily == IGFX_DG1) {
-        GTEST_SKIP();
-    }
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = MemoryConstants::pageSize64k;
@@ -2983,9 +2829,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenReservedAddressDifferentThanRequestedWh
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndVirtualMemoryWhenUnmapFreeFailsThenUnmapFails) {
-    if (rootDeviceEnvironment->getHardwareInfo()->platform.eProductFamily == IGFX_DG1) {
-        GTEST_SKIP();
-    }
     AllocationData allocationData;
     allocationData.allFlags = 0;
     allocationData.size = MemoryConstants::pageSize64k;
@@ -3372,10 +3215,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithReservedGpuVirtualAddress
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaIsSpecifiedWhenCreateAllocationIsCalledThenAllocationHasProperGpuAddressAndHeapSvmIsUsed) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
     uint32_t numGmms = 10;
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
     allocation.setAllocationType(AllocationType::buffer);
@@ -3399,10 +3238,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaI
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysicalAllocationIsCalledThenAllocationSuccess) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
     uint32_t numGmms = 10;
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
     allocation.setAllocationType(AllocationType::buffer);
@@ -3417,10 +3252,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysical
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysicalAllocationIsCalledThenFailureReturned) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
     uint32_t numGmms = 10;
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
     allocation.setAllocationType(AllocationType::buffer);
@@ -3434,10 +3265,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysical
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedThenAllocateMemoryReserveGpuVa) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
-
     size_t size = 2 * MemoryConstants::megaByte;
     MockAllocationProperties properties{csr->getRootDeviceIndex(), true, size, AllocationType::svmCpu, mockDeviceBitfield};
     properties.alignment = size;
@@ -3446,10 +3273,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentPro
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getDriverAllocatedCpuPtr());
-    // limited platforms will not use heap HeapIndex::heapSvm
-    if (executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm()) {
-        EXPECT_EQ(alignUp(allocation->getReservedAddressPtr(), size), reinterpret_cast<void *>(allocation->getGpuAddress()));
-    }
+    EXPECT_EQ(alignUp(allocation->getReservedAddressPtr(), size), reinterpret_cast<void *>(allocation->getGpuAddress()));
     EXPECT_EQ((2 * size), allocation->getReservedAddressSize());
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -3467,18 +3291,12 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWriteCombinedAllocationThenCpuAddressIs
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_NE(nullptr, reinterpret_cast<void *>(allocation->getGpuAddress()));
 
-    if (executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm()) {
-        EXPECT_EQ(allocation->getUnderlyingBuffer(), reinterpret_cast<void *>(allocation->getGpuAddress()));
-    }
+    EXPECT_EQ(allocation->getUnderlyingBuffer(), reinterpret_cast<void *>(allocation->getGpuAddress()));
 
     memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithMultipleGmmsAndNotMultiStorageWhenMapGpuVirtualAddressThenSingleHandlePathIsUsed) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
     wddm->callBaseMapGpuVa = false;
 
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 2u);
@@ -3492,10 +3310,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithMultipleGmmsAndNotMultiSt
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiStorageAllocationWhenMappingPhysicalDeviceMemoryWithNonZeroOffsetThenMappingIsRejected) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
     wddm->callBaseMapGpuVa = false;
 
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 2u);
@@ -3534,10 +3348,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSingleHandleAllocationWhenMapGpuVirtual
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenMapGpuVirtualAddressFailsThenHandlesAreDestroyedOnlyIfNotSharedWithPhysicalAllocation) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
     wddm->callBaseMapGpuVa = false;
     wddm->mapGpuVaStatus = false;
     uint64_t gpuRange = 0x10000;
@@ -3561,10 +3371,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenMapGpuVirtualA
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandlePhysicalAllocationWhenMappingSecondHandleFailsThenCallerReservationIsKeptWithoutDestroyingHandles) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
     wddm->callBaseMapGpuVa = false;
     placeEveryAddressOutsideSvmHeap(0u);
     const uint64_t gpuRange = 0x10000;
@@ -3593,10 +3399,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandlePhysicalAllocationWhenMappin
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalAllocationWithMultipleHandlesWhenMappingToVirtualMemoryThenMappingAllocationTakesOverEveryPhysicalHandle) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
     wddm->callBaseMapGpuVa = false;
 
     constexpr uint32_t numGmms = 2u;
@@ -3624,56 +3426,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalAllocationWithMultipleHandlesWh
     delete mappedAllocation;
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenNonFullRangeSvmAndNot32BitWhenMapGpuVaForOneHandleAllocationThenAddressToMapIsZero) {
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(40);
-    ASSERT_FALSE(rootDeviceEnvironment->isFullRangeSvm());
-
-    wddm->callBaseMapGpuVa = false;
-
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 1u);
-    allocation.setAllocationType(AllocationType::buffer);
-
-    void *preferredPtr = reinterpret_cast<void *>(0x10000);
-    bool created = memoryManager->createWddmAllocation(&allocation, preferredPtr);
-    EXPECT_EQ(0u, wddm->mapGpuVirtualAddressResult.uint64ParamPassed);
-    if (created) {
-        wddm->destroyAllocation(&allocation, nullptr);
-    }
-
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenFullRangeSvmWhenMapGpuVaForOneHandleAllocationThenAddressToMapIsNotForcedToZero) {
-    if (is32bit) {
-        GTEST_SKIP();
-    }
-    auto origGpuAddressSpace = rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = maxNBitValue(48);
-    ASSERT_TRUE(rootDeviceEnvironment->isFullRangeSvm());
-
-    wddm->callBaseMapGpuVa = false;
-
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 1u);
-    allocation.setAllocationType(AllocationType::buffer);
-
-    // Full-range SVM makes the (!isFullRangeSvm() && !is32bit) decision false (short-circuit),
-    // so the branch that forces addressToMap to zero is skipped. A null preferred address keeps
-    // addressToMap at zero on its own, so this exercises the false decision without relying on a
-    // specific in-heap address.
-    uint32_t calledBefore = wddm->mapGpuVirtualAddressResult.called;
-    bool created = memoryManager->createWddmAllocation(&allocation, nullptr);
-    EXPECT_EQ(calledBefore + 1u, wddm->mapGpuVirtualAddressResult.called);
-    if (created) {
-        wddm->destroyAllocation(&allocation, nullptr);
-    }
-
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace = origGpuAddressSpace;
-}
-
 TEST_F(WddmMemoryManagerSimpleTest, givenDebugVariableWhenCreatingWddmMemoryManagerThenSetSupportForMultiStorageResources) {
     DebugManagerStateRestore restore;
     EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
@@ -3689,28 +3441,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenDebugVariableWhenCreatingWddmMemoryMana
         MockWddmMemoryManager memoryManager(true, true, executionEnvironment);
         EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
     }
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRangeAnd32BitThenAllocationGoesToExternalHeap) {
-    if (executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm() || !is32bit) {
-        GTEST_SKIP();
-    }
-
-    memoryManager.reset(new MockWddmMemoryManager(true, true, executionEnvironment));
-    size_t size = 2 * MemoryConstants::megaByte;
-    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({0, size, AllocationType::bufferHostMemory, mockDeviceBitfield}));
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
-    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
-    uint64_t gpuAddress = allocation->getGpuAddress();
-    EXPECT_NE(0ULL, gpuAddress);
-    EXPECT_EQ(0ULL, gpuAddress & 0xffFFffF000000000);
-
-    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
-    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapExternal)), gpuAddress);
-    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExternal)), gpuAddress);
-
-    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenIsaTypeAnd32BitFrontWindowWhenFrontWindowMemoryAllocatedAndFreedThenFrontWindowHeapAllocatorIsUsed) {
@@ -3869,9 +3599,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingMemoryI
 
     EXPECT_NE(0u, buffer->getGpuAddress());
 
-    const auto &rootHwInfo = *rootDeviceEnvironment->getHardwareInfo();
-
-    if (!rootHwInfo.caps.overrideGfxPartitionLayoutForWsl && is64bit) {
+    if constexpr (is64bit) {
         EXPECT_LE(heapBase, buffer->getGpuAddress());
         EXPECT_GT(heapLimit, buffer->getGpuAddress());
     }
@@ -4289,10 +4017,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAtLeast2MbAllocationWhenAllocationInDev
 }
 
 HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIsInLocalMemoryHasCpuPointerAndHasStandardHeap64kbAsGpuAddress) {
-    const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
-    if (hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
-        GTEST_SKIP();
-    }
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 4096u, AllocationType::linearStream, mockDeviceBitfield});
@@ -4307,21 +4031,14 @@ HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIs
 
     if (is64bit) {
         auto gmmHelper = memoryManager->getGmmHelper(graphicsAllocation->getRootDeviceIndex());
-        if (executionEnvironment.rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->isFullRangeSvm()) {
-            EXPECT_GE(gpuAddress, gmmHelper->canonize(partition.Standard64KB.Base));
-            EXPECT_LE(gpuAddressEnd, gmmHelper->canonize(partition.Standard64KB.Limit));
-        } else {
-            EXPECT_GE(gpuAddress, gmmHelper->canonize(partition.Standard.Base));
-            EXPECT_LE(gpuAddressEnd, gmmHelper->canonize(partition.Standard.Limit));
-        }
+        EXPECT_GE(gpuAddress, gmmHelper->canonize(partition.Standard64KB.Base));
+        EXPECT_LE(gpuAddressEnd, gmmHelper->canonize(partition.Standard64KB.Limit));
     } else {
-        if (executionEnvironment.rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->isFullRangeSvm()) {
-            EXPECT_GE(gpuAddress, 0ull);
-            EXPECT_LE(gpuAddress, UINT32_MAX);
+        EXPECT_GE(gpuAddress, 0ull);
+        EXPECT_LE(gpuAddress, UINT32_MAX);
 
-            EXPECT_GE(gpuAddressEnd, 0ull);
-            EXPECT_LE(gpuAddressEnd, UINT32_MAX);
-        }
+        EXPECT_GE(gpuAddressEnd, 0ull);
+        EXPECT_LE(gpuAddressEnd, UINT32_MAX);
     }
 
     EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::linearStream);
@@ -4329,7 +4046,7 @@ HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIs
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenLocalMemoryAllocationHasCorrectStorageInfoAndFlushL3IsSet) {
+TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenLocalMemoryAllocationHasCorrectStorageInfo) {
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -4339,7 +4056,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAlloca
     allocData.storageInfo.memoryBanks = 0x1;
     allocData.storageInfo.pageTablesVisibility = 0x2;
     allocData.storageInfo.cloningOfPageTables = false;
-    allocData.flags.flushL3 = true;
 
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
@@ -4347,7 +4063,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNotSetUseSystemMemoryWhenGraphicsAlloca
     EXPECT_EQ(allocData.storageInfo.memoryBanks, allocation->storageInfo.memoryBanks);
     EXPECT_EQ(allocData.storageInfo.pageTablesVisibility, allocation->storageInfo.pageTablesVisibility);
     EXPECT_FALSE(allocation->storageInfo.cloningOfPageTables);
-    EXPECT_TRUE(allocation->isFlushL3Required());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -4592,9 +4307,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocateGra
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenResourceTagInStorageInfoWhenAllocateGraphicsMemoryWithHostPtrThenResourceTagIsPropagated) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore restore;
     debugManager.flags.EnableResourceTags.set(1);
 
@@ -4762,10 +4474,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmGpuAllocationWhenHostPtrProvidedThen
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(nullptr, allocation->getDriverAllocatedCpuPtr());
-    // limited platforms will not use heap HeapIndex::heapSvm
-    if (executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
-        EXPECT_EQ(svmPtr, reinterpret_cast<void *>(allocation->getGpuAddress()));
-    }
+    EXPECT_EQ(svmPtr, reinterpret_cast<void *>(allocation->getGpuAddress()));
     EXPECT_EQ(nullptr, allocation->getReservedAddressPtr());
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -4882,9 +4591,6 @@ HWTEST2_F(WddmMemoryManagerSimpleTest, givenPreferCompressionFlagWhenAllocating6
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
 
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     csr->pageTableManager = std::make_unique<MockGmmPageTableMngr>();
     auto nonCompressedAllocation = memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, 1u, AllocationType::buffer, mockDeviceBitfield});
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(nonCompressedAllocation->getDefaultGmm()->resourceParamsData.data());
@@ -5419,9 +5125,6 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     rootDeviceEnvironment->setHwInfoAndInitHelpers(&hwInfo);
 
     auto memoryManager = std::make_unique<MockWddmMemoryManager>(true, false, executionEnvironment);
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     rootDeviceEnvironment->executionEnvironment.initializeMemoryManager();
     memoryManager->allocateGraphicsMemoryInNonDevicePool = true;
 
@@ -5433,8 +5136,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     ASSERT_NE(nullptr, allocation);
     EXPECT_TRUE(memoryManager->allocationGraphicsMemory64kbCreated);
     EXPECT_TRUE(allocation->getDefaultGmm()->isCompressionEnabled());
-    if ((is32bit && rootDeviceEnvironment->isFullRangeSvm()) &&
-        allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
+    if (is32bit && allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
         auto gmmHelper = memoryManager->getGmmHelper(0);
 
         EXPECT_LE(gmmHelper->decanonize(allocation->getGpuAddress()), MemoryConstants::max32BitAddress);
@@ -5472,10 +5174,6 @@ HWTEST_F(WddmMemoryManagerTest, givenInternalHeapOrLinearStreamTypeWhenAllocatin
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemoryWithSetAllocattionPropertisWithAllocationTypeBufferIsCalledThenIsRendeCompressedFalseAndCorrectAddressRange) {
-    const auto &rootHwInfo = *rootDeviceEnvironment->getHardwareInfo();
-    if (rootHwInfo.caps.overrideGfxPartitionLayoutForWsl) {
-        GTEST_SKIP();
-    }
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -5493,12 +5191,9 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
     ASSERT_NE(nullptr, allocation);
     EXPECT_FALSE(memoryManager->allocationGraphicsMemory64kbCreated);
     EXPECT_FALSE(allocation->getDefaultGmm()->isCompressionEnabled());
-    if (is32bit || rootDeviceEnvironment->isFullRangeSvm()) {
-        auto gmmHelper = memoryManager->getGmmHelper(0);
-
-        EXPECT_GE(gmmHelper->decanonize(allocation->getGpuAddress()), svmRangeMinimumAddress);
-        EXPECT_LE(gmmHelper->decanonize(allocation->getGpuAddress()), svmRangeMaximumAddress);
-    }
+    auto gmmHelper = memoryManager->getGmmHelper(0);
+    EXPECT_GE(gmmHelper->decanonize(allocation->getGpuAddress()), svmRangeMinimumAddress);
+    EXPECT_LE(gmmHelper->decanonize(allocation->getGpuAddress()), svmRangeMaximumAddress);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -5521,9 +5216,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFa
 }
 
 TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedOnlyIfInBounds) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     MockWddmAllocation alloc(rootDeviceEnvironment->getGmmHelper()), allocOffset(rootDeviceEnvironment->getGmmHelper());
     // three pages
     void *ptr = reinterpret_cast<void *>(0x200000);
@@ -5574,9 +5266,6 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
 }
 
 TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulatedCorrectly) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
     // three pages
     void *ptr = reinterpret_cast<void *>(0x200000);
@@ -5753,9 +5442,6 @@ TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForAlignedMa
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestrictionsThenReserveMemRangeForMap) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     void *cpuPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     size_t size = 0x1000;
 
@@ -5831,10 +5517,6 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 }
 
 TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeapInternal) {
-    const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
-    if (hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, MemoryConstants::pageSize, nullptr, AllocationType::internalHeap));
@@ -5856,10 +5538,6 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
 }
 
 TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeapInternal) {
-    const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
-    if (hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto ptr = reinterpret_cast<void *>(0x1000000);
@@ -5955,7 +5633,7 @@ TEST_F(WddmMemoryManagerTest, givenLocalMemoryAllocationWhenCpuPointerNotMeetRes
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
-    if (is32bit && this->executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm()) {
+    if (is32bit) {
         EXPECT_NE(nullptr, allocation->getReservedAddressPtr());
         EXPECT_EQ(alignUp(size, MemoryConstants::pageSize64k) + 2 * MemoryConstants::megaByte, allocation->getReservedAddressSize());
         EXPECT_EQ(allocation->getGpuAddress(), castToUint64(allocation->getReservedAddressPtr()));
@@ -6074,9 +5752,6 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
     wddm->init();
     debugManager.flags.Enable64kbpages.set(true);
     MemoryManagerCreate<WddmMemoryManager> memoryManager64k(true, false, executionEnvironment);
-    if (memoryManager64k.isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     EXPECT_EQ(0U, wddm->createAllocationResult.called);
 
     GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::bufferHostMemory, mockDeviceBitfield});
@@ -6125,11 +5800,7 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
     EXPECT_EQ(lockCount + 1, wddm->lockResult.called);
     EXPECT_EQ(mapGpuVirtualAddressResult + 1, wddm->mapGpuVirtualAddressResult.called);
 
-    if (is32bit || executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
-        EXPECT_NE(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
-    } else {
-        EXPECT_EQ(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
-    }
+    EXPECT_NE(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
     memoryManager64k.freeGraphicsMemory(galloc);
 }
 
@@ -6186,9 +5857,6 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
         wddm->createAllocationResult.called = 0U;
         debugManager.flags.Enable64kbpages.set(enable64KBpages);
         MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, executionEnvironment);
-        if (memoryManager.isLimitedGPU(0)) {
-            GTEST_SKIP();
-        }
         EXPECT_EQ(0u, wddm->createAllocationResult.called);
 
         memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;
@@ -6231,9 +5899,6 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndReq
 
     debugManager.flags.Enable64kbpages.set(true);
     MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, executionEnvironment);
-    if (memoryManager.isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
 
     memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;

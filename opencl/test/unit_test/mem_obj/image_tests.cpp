@@ -625,9 +625,6 @@ TEST_F(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProp
 
         auto isImageWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
         EXPECT_EQ(isImageWritable, allocation->isMemObjectsAllocationWithWritableFlags());
-
-        auto isReadOnly = isValueSet(flags, CL_MEM_READ_ONLY);
-        EXPECT_NE(isReadOnly, allocation->isFlushL3Required());
     }
 }
 

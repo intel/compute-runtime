@@ -229,7 +229,7 @@ struct EnqueueSvmMemFillHw : public ::testing::Test {
     void SetUp() override {
 
         device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        if (is32bit || !device->isFullRangeSvm()) {
+        if (is32bit) {
             GTEST_SKIP();
         }
 
@@ -239,7 +239,7 @@ struct EnqueueSvmMemFillHw : public ::testing::Test {
     }
 
     void TearDown() override {
-        if (is32bit || !device->isFullRangeSvm()) {
+        if (is32bit) {
             return;
         }
         context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);

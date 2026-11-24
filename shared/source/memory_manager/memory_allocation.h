@@ -27,13 +27,12 @@ class MemoryAllocation : public GraphicsAllocation {
           id(0), uncacheable(false) {}
 
     MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t canonizedGpuAddress, size_t memSize,
-                     uint64_t count, MemoryPool pool, bool uncacheable, bool flushL3Required, size_t maxOsContextCount)
+                     uint64_t count, MemoryPool pool, bool uncacheable, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, pMem, canonizedGpuAddress, 0u, memSize, pool, maxOsContextCount),
           id(count), uncacheable(uncacheable) {
 
         this->driverAllocatedCpuPointer = driverAllocatedCpuPointer;
         overrideMemoryPool(pool);
-        allocationInfo.flags.flushL3Required = flushL3Required;
     }
 
     void overrideMemoryPool(MemoryPool pool);

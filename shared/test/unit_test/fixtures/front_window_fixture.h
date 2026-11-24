@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,15 +17,10 @@ class CommandContainer;
 
 class MemManagerFixture : public DeviceFixture {
   public:
-    struct FrontWindowMemManagerMock : public MockMemoryManager {
-        FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment);
-        void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range);
-    };
-
     void setUp();
     void tearDown();
 
-    std::unique_ptr<FrontWindowMemManagerMock> memManager;
+    std::unique_ptr<MockMemoryManager> memManager;
 };
 
 struct BindlessCommandEncodeStatesFixture : public MemManagerFixture {

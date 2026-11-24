@@ -335,7 +335,6 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCreateMultiHostDebugSurfaceAllocati
     EXPECT_EQ(AllocationType::debugContextSaveArea, allocation->getAllocationType());
     EXPECT_EQ(MemoryConstants::pageSize, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-    EXPECT_TRUE(allocation->isFlushL3Required());
     EXPECT_TRUE(allocation->isUncacheable());
 
     memoryManager->freeGraphicsMemory(allocation);

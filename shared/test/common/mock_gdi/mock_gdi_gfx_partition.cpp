@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,21 +45,5 @@ void initGfxPartition() {
         gAdapterInfo.GfxPartition.Heap32[2].Limit = 0x000005ccffffefff;
         gAdapterInfo.GfxPartition.Heap32[3].Base = 0x000005cd00000000;
         gAdapterInfo.GfxPartition.Heap32[3].Limit = 0x000005cdffffefff;
-    } else {
-        // Limited range
-        gAdapterInfo.GfxPartition.Standard.Base = 0x0000000100000000;
-        gAdapterInfo.GfxPartition.Standard.Limit = 0x0000000FFFFFFFFF;
-        gAdapterInfo.GfxPartition.Standard64KB.Base = 0x0000000100000000;
-        gAdapterInfo.GfxPartition.Standard64KB.Limit = 0x0000000FFFFFFFFF;
-        gAdapterInfo.GfxPartition.SVM.Base = 0x0;
-        gAdapterInfo.GfxPartition.SVM.Limit = 0x0;
-        gAdapterInfo.GfxPartition.Heap32[0].Base = 0x00001000;
-        gAdapterInfo.GfxPartition.Heap32[0].Limit = 0xFFFFEFFF;
-        gAdapterInfo.GfxPartition.Heap32[1].Base = 0x00001000;
-        gAdapterInfo.GfxPartition.Heap32[1].Limit = 0xFFFFEFFF;
-        gAdapterInfo.GfxPartition.Heap32[2].Base = 0x00001000;
-        gAdapterInfo.GfxPartition.Heap32[2].Limit = 0xFFFFEFFF;
-        gAdapterInfo.GfxPartition.Heap32[3].Base = 0x00001000;
-        gAdapterInfo.GfxPartition.Heap32[3].Limit = 0xFFFFEFFF;
     }
 }

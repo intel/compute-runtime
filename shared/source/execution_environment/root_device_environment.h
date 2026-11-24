@@ -64,7 +64,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
     uint32_t getRootDeviceIndex() const;
     void setHwInfoAndInitHelpers(const HardwareInfo *hwInfo);
     void setHwInfo(const HardwareInfo *hwInfo);
-    bool isFullRangeSvm() const;
     bool isWddmOnLinux() const;
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);

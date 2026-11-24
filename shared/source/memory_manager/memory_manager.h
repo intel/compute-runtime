@@ -234,11 +234,6 @@ class MemoryManager {
 
     void *lockResource(GraphicsAllocation *graphicsAllocation);
     void unlockResource(GraphicsAllocation *graphicsAllocation);
-    MOCKABLE_VIRTUAL bool peek32bit() {
-        return is32bit;
-    }
-    MOCKABLE_VIRTUAL bool isLimitedGPU(uint32_t rootDeviceIndex);
-    MOCKABLE_VIRTUAL bool isLimitedGPUOnType(uint32_t rootDeviceIndex, AllocationType type);
 
     void cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *);
 
@@ -273,8 +268,6 @@ class MemoryManager {
     uint64_t getMaxApplicationAddress() { return is64bit ? MemoryConstants::max64BitAppAddress : MemoryConstants::max32BitAppAddress; };
     MOCKABLE_VIRTUAL uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory);
     uint64_t getExternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory);
-
-    MOCKABLE_VIRTUAL bool isLimitedRange(uint32_t rootDeviceIndex);
 
     bool peek64kbPagesEnabled(uint32_t rootDeviceIndex) const;
 
@@ -347,7 +340,7 @@ class MemoryManager {
     virtual bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask);
     virtual bool memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet);
     virtual bool memsetAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet, DeviceBitfield handleMask);
-    HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useFrontWindow);
+    HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool useFrontWindow);
     static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel);
     virtual void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) { return nullptr; };
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) {};

@@ -496,7 +496,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
                                                         CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, *hwInfo),
                                                         storageInfo,
                                                         gmmRequirements));
-    wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
     wddmAllocation->storageInfo = storageInfo;
 
     if (!createGpuAllocationsWithRetry(wddmAllocation.get())) {
@@ -508,7 +507,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
     auto status = true;
 
-    if ((!(alignGpuAddressTo64KB) && executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) || is32bit) {
+    if (!alignGpuAddressTo64KB || is32bit) {
         void *requiredGpuVa = cpuPtr;
         if (!cpuPtr) {
             if (!adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa)) {
@@ -521,11 +520,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     } else {
         status = mapGpuVirtualAddress(wddmAllocation.get(), nullptr, nullptr, 0u);
 
-        if (alignGpuAddressTo64KB) {
-            void *tempCPUPtr = cpuPtr;
-            cpuPtr = alignUp(cpuPtr, std::max(allocationData.alignment, MemoryConstants::pageSize64k));
-            wddmAllocation->setGpuAddress(wddmAllocation->getGpuAddress() + ptrDiff(cpuPtr, tempCPUPtr));
-        }
+        void *tempCPUPtr = cpuPtr;
+        cpuPtr = alignUp(cpuPtr, std::max(allocationData.alignment, MemoryConstants::pageSize64k));
+        wddmAllocation->setGpuAddress(wddmAllocation->getGpuAddress() + ptrDiff(cpuPtr, tempCPUPtr));
     }
     if (!status) {
         if (wddmAllocation->getReservedAddressPtr()) {
@@ -685,7 +682,6 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
         mapPtr = alignUp(mapPtr, newAlignment);
     }
 
-    mapPtr = isLimitedGPU(allocationData.rootDeviceIndex) ? nullptr : mapPtr;
     if (!createWddmAllocation(wddmAllocation.get(), mapPtr)) {
         wddmAllocation->setDefaultGmm(std::unique_ptr<Gmm>{});
         freeSystemMemory(pSysMem);
@@ -1170,7 +1166,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     }
 
     if (input->isAllocInFrontWindowPool()) {
-        auto heapIndex = selectHeap(input, false, is32bit || executionEnvironment.rootDeviceEnvironments[input->getRootDeviceIndex()]->isFullRangeSvm(), input->isAllocInFrontWindowPool());
+        auto heapIndex = selectHeap(input, false, input->isAllocInFrontWindowPool());
         auto alignedSize = input->getAlignedSize();
         auto gfxPartition = getGfxPartition(input->getRootDeviceIndex());
         gfxPartition->heapFree(heapIndex, input->getGpuAddress(), alignedSize);
@@ -1430,10 +1426,7 @@ void WddmMemoryManager::destroyAllocationHandles(WddmAllocation &allocation) {
 
 bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocation, const void *preferredGpuVirtualAddress, const MemoryFlags *flags, size_t offset) {
     D3DGPU_VIRTUAL_ADDRESS addressToMap = castToUint64(preferredGpuVirtualAddress);
-    auto heapIndex = selectHeap(allocation, preferredGpuVirtualAddress != nullptr, is32bit || executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm(), allocation->isAllocInFrontWindowPool());
-    if (!executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm() && !is32bit) {
-        addressToMap = 0u;
-    }
+    auto heapIndex = selectHeap(allocation, preferredGpuVirtualAddress != nullptr, allocation->isAllocInFrontWindowPool());
     if (allocation->getReservedGpuVirtualAddress()) {
         addressToMap = allocation->getReservedGpuVirtualAddress();
     }
@@ -1825,7 +1818,6 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
         fillGmmsInAllocation(gmmHelper, wddmAllocation.get(), allocationData.storageInfo, allocationData.flags.preferCompressed);
     }
     wddmAllocation->storageInfo = allocationData.storageInfo;
-    wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
     wddmAllocation->setMakeResidentBeforeLockRequired(true);
 
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
@@ -1960,7 +1952,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         fillGmmsInAllocation(gmmHelper, wddmAllocation.get(), allocationData.storageInfo, allocationData.flags.preferCompressed);
     }
     wddmAllocation->storageInfo = allocationData.storageInfo;
-    wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
     wddmAllocation->setMakeResidentBeforeLockRequired(true);
     if (heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type)) {
         wddmAllocation->setAllocInFrontWindowPool(allocationData.flags.use32BitFrontWindow);
@@ -2058,22 +2049,19 @@ bool WddmMemoryManager::isStatelessAccessRequired(AllocationType type) {
 template <bool is32Bit>
 bool WddmMemoryManager::adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAllocation, void *&requiredGpuVa) {
     if constexpr (is32Bit) {
-        auto rootDeviceIndex = wddmAllocation.getRootDeviceIndex();
-        if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm()) {
-            if (isStatelessAccessRequired(wddmAllocation.getAllocationType())) {
-                size_t reserveSizeAligned = wddmAllocation.getUnderlyingBufferSize();
-                auto isLocalMemory = wddmAllocation.getMemoryPool() == MemoryPool::localMemory;
-                if (isLocalMemory) {
-                    // add 2MB padding to make sure there are no overlaps between system and local memory
-                    reserveSizeAligned += 2 * MemoryConstants::megaByte;
-                }
-                auto &wddm = getWddm(rootDeviceIndex);
-                if (!wddm.reserveValidAddressRange(reserveSizeAligned, requiredGpuVa)) {
-                    return false;
-                }
-                wddmAllocation.setReservedAddressRange(requiredGpuVa, reserveSizeAligned);
-                requiredGpuVa = isLocalMemory ? alignUp(requiredGpuVa, 2 * MemoryConstants::megaByte) : requiredGpuVa;
+        if (isStatelessAccessRequired(wddmAllocation.getAllocationType())) {
+            size_t reserveSizeAligned = wddmAllocation.getUnderlyingBufferSize();
+            auto isLocalMemory = wddmAllocation.getMemoryPool() == MemoryPool::localMemory;
+            if (isLocalMemory) {
+                // add 2MB padding to make sure there are no overlaps between system and local memory
+                reserveSizeAligned += 2 * MemoryConstants::megaByte;
             }
+            auto &wddm = getWddm(wddmAllocation.getRootDeviceIndex());
+            if (!wddm.reserveValidAddressRange(reserveSizeAligned, requiredGpuVa)) {
+                return false;
+            }
+            wddmAllocation.setReservedAddressRange(requiredGpuVa, reserveSizeAligned);
+            requiredGpuVa = isLocalMemory ? alignUp(requiredGpuVa, 2 * MemoryConstants::megaByte) : requiredGpuVa;
         }
     }
     return true;

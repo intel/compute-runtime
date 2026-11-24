@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/windows/wddm/gfx_synch_partition_info_escape.h"
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/os_interface/windows/ult_adapter_luid.h"
@@ -57,6 +58,13 @@ std::optional<KMTQUERYADAPTERINFOTYPE> failingEnumeratedAdapterQueryType;
 LUID mockOtherDriverStoreAdapterLuid = {};
 
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
+    auto partitionEscape = static_cast<NEO::GfxSynchPartitionInfoEscapeHeader *>(pData->pPrivateDriverData);
+    if (partitionEscape->base.EscapeCode == NEO::GfxSynchPartitionInfoEscapeHeader::gmmEscapeCode) {
+        if (partitionEscape->action == NEO::GfxSynchPartitionInfoEscapeHeader::actionGet) {
+            memcpy_s(partitionEscape + 1, pData->PrivateDriverDataSize - sizeof(NEO::GfxSynchPartitionInfoEscapeHeader), &gAdapterInfo.GfxPartition, sizeof(gAdapterInfo.GfxPartition));
+        }
+        return STATUS_SUCCESS;
+    }
     static int perfTicks = 0;
     ++perfTicks;
     auto &getGpuCpuOut = reinterpret_cast<NEO::TimeStampDataHeader *>(pData->pPrivateDriverData)->data.out;

@@ -328,11 +328,6 @@ TEST(ClOsAgnosticMemoryManager, givenUseExternalAllocatorForSshAndDshWhenMemoryM
 using ClMemoryManagerMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(ClMemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHasCorrectRootDeviceIndex) {
-    if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
-        delete context->svmAllocsManager;
-        context->svmAllocsManager = nullptr;
-    }
-
     deviceFactory->cleanupPlatformOnDestruction = false;
 
     std::vector<unsigned char> initData(1024, 0x5B);
@@ -351,11 +346,7 @@ TEST_F(ClMemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHas
         usmPool && usmPool->isInPoolRange(gpuAddress)) {
         usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
     } else {
-        if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
-            device1->getMemoryManager()->freeGraphicsMemory(allocation);
-        } else {
-            context->getSVMAllocsManager()->freeSVMAlloc(gpuAddress);
-        }
+        context->getSVMAllocsManager()->freeSVMAlloc(gpuAddress);
     }
 }
 

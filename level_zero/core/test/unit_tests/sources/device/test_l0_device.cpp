@@ -918,7 +918,6 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateMemoryFromHostPtrThenVal
 
     EXPECT_EQ(allocation->getAllocationOffset(), offsetInPage);
     EXPECT_EQ(allocation->getUnderlyingBufferSize(), allocationSize);
-    EXPECT_EQ(allocation->isFlushL3Required(), true);
 
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
@@ -1028,7 +1027,6 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelThenNewAllocati
     EXPECT_NE(allocation->getUnderlyingBuffer(), reinterpret_cast<void *>(buffer));
     EXPECT_EQ(alignUp(size, MemoryConstants::pageSize), allocation->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(buffer, allocation->getUnderlyingBuffer(), size));
-    EXPECT_FALSE(allocation->isFlushL3Required());
 
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
     delete[] buffer;

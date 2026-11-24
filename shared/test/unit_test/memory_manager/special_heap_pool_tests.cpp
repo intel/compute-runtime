@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,20 +64,20 @@ TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorF
 TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshDisabledThenMinimalAddressEqualBeginingOfExternalHeap) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
-    memManager.reset(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));
+    memManager = std::make_unique<MockMemoryManager>(*pDevice->getExecutionEnvironment());
     EXPECT_EQ(memManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapExternal), memManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapExternal) + GfxPartition::heapGranularity);
 }
 
 TEST_F(FrontWindowAllocatorTests, givenInitializedHeapsWhenUseExternalAllocatorForSshAndDshDisabledThenExternalHeapDoesntHaveFrontWindowPool) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(false);
-    memManager.reset(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));
+    memManager = std::make_unique<MockMemoryManager>(*pDevice->getExecutionEnvironment());
     EXPECT_EQ(memManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExternalFrontWindow), 0u);
 }
 
 TEST_F(FrontWindowAllocatorTests, givenLinearStreamAllocWhenSelectingHeapWithFrontWindowThenCorrectIndexReturned) {
     GraphicsAllocation allocation{0, 1u /*num gmms*/, AllocationType::linearStream, nullptr, 0, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
-    EXPECT_EQ(HeapIndex::heapExternalFrontWindow, memManager->selectHeap(&allocation, true, true, true));
+    EXPECT_EQ(HeapIndex::heapExternalFrontWindow, memManager->selectHeap(&allocation, true, true));
 }
 
 } // namespace NEO

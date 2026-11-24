@@ -8,25 +8,17 @@
 #include "shared/test/unit_test/fixtures/front_window_fixture.h"
 
 #include "shared/source/command_container/cmdcontainer.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 
-MemManagerFixture::FrontWindowMemManagerMock::FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
-void MemManagerFixture::FrontWindowMemManagerMock::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) {
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
-    getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true, 0u, range + 1, &productHelper);
-}
-
 void MemManagerFixture::setUp() {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     DeviceFixture::setUp();
-    memManager = std::unique_ptr<FrontWindowMemManagerMock>(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));
+    memManager = std::make_unique<MockMemoryManager>(*pDevice->getExecutionEnvironment());
 }
 
 void MemManagerFixture::tearDown() {

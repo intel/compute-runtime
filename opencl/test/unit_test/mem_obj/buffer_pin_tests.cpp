@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,9 +61,6 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
 TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new MemoryManagerCreate<TestedMemoryManager>(false, false, executionEnvironment));
-    if (mm->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     {
         MockContext context;
         auto size = MemoryConstants::pageSize * 32;
@@ -87,9 +84,6 @@ TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
 TEST(BufferTests, GivenHostPtrWhenBufferIsCreatedThenPinIsSet) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
-    if (mm->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
 
     {
         MockContext context;

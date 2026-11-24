@@ -293,7 +293,7 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
     EXPECT_EQ(1u, this->mock->setTilingHandle);
 }
 
-HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThenUnmapSizeCorrectlySetWhenLimitedRangeAllocationUsedOrNotUsed) {
+HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenImageWithHostPtrIsCreatedThenImageHasGraphicsAllocation) {
     mock->ioctlExpected.gemUserptr = 2;
     mock->ioctlExpected.gemWait = 2;
     mock->ioctlExpected.gemClose = 2;

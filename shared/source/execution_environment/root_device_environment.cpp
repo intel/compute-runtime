@@ -106,10 +106,6 @@ void RootDeviceEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
     }
 }
 
-bool RootDeviceEnvironment::isFullRangeSvm() const {
-    return hwInfo->capabilityTable.gpuAddressSpace >= maxNBitValue(47);
-}
-
 GmmHelper *RootDeviceEnvironment::getGmmHelper() const {
     return gmmHelper.get();
 }

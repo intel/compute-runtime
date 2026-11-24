@@ -31,7 +31,7 @@ class MemoryManagerGlExtNTHandleMock : public NEO::OsAgnosticMemoryManager {
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
         auto graphicsAllocation = createMemoryAllocation(AllocationType::internalHostMemory, nullptr, reinterpret_cast<void *>(1), 1,
                                                          4096u, osHandleData.handle, MemoryPool::systemCpuInaccessible,
-                                                         properties.rootDeviceIndex, false, false, false);
+                                                         properties.rootDeviceIndex, false);
         graphicsAllocation->setSharedHandle(osHandleData.handle);
         graphicsAllocation->set32BitAllocation(false);
         GmmRequirements gmmRequirements{};

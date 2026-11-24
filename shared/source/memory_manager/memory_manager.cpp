@@ -205,16 +205,6 @@ MemoryManager::~MemoryManager() {
     allRegisteredEngines.clear();
 }
 
-bool MemoryManager::isLimitedGPU(uint32_t rootDeviceIndex) {
-    return peek32bit() && !peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm();
-}
-
-bool MemoryManager::isLimitedGPUOnType(uint32_t rootDeviceIndex, AllocationType type) {
-    return isLimitedGPU(rootDeviceIndex) &&
-           (type != AllocationType::mapAllocation) &&
-           (type != AllocationType::image);
-}
-
 void *MemoryManager::alignedMallocWrapper(size_t bytes, size_t alignment) {
     return ::alignedMalloc(bytes, alignment);
 }
@@ -335,17 +325,12 @@ void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceI
     };
 
     properties.flags.forceSystemMemory = true;
+    properties.flags.isUSMHostAllocation = true;
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         if (multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)) {
             continue;
         }
         properties.rootDeviceIndex = rootDeviceIndex;
-        properties.flags.isUSMHostAllocation = true;
-
-        if (isLimitedRange(properties.rootDeviceIndex)) {
-            properties.flags.isUSMHostAllocation = false;
-            DEBUG_BREAK_IF(rootDeviceIndices.size() > 1);
-        }
 
         if (!ptr) {
             auto graphicsAllocation = allocateGraphicsMemoryWithProperties(properties);
@@ -581,10 +566,6 @@ uint64_t MemoryManager::getInternalHeapBaseAddress(uint32_t rootDeviceIndex, boo
 }
 uint64_t MemoryManager::getExternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) {
     return getGfxPartition(rootDeviceIndex)->getHeapBase(selectExternalHeap(useLocalMemory));
-}
-
-bool MemoryManager::isLimitedRange(uint32_t rootDeviceIndex) {
-    return getGfxPartition(rootDeviceIndex)->isLimitedRange();
 }
 
 void MemoryManager::initPageFaultManager() {
@@ -1100,16 +1081,10 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     }
     if (((false == allocationData.flags.isUSMHostAllocation) || (nullptr == allocationData.hostPtr)) &&
         (useNonSvmHostPtrAlloc(allocationData.type, allocationData.rootDeviceIndex) || isNonSvmBuffer(allocationData.hostPtr, allocationData.type, allocationData.rootDeviceIndex))) {
-        auto allocation = allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
-        if (allocation) {
-            allocation->setFlushL3Required(allocationData.flags.flushL3);
-        }
-        return allocation;
+        return allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
     }
     bool use32Allocator = heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type);
-
-    bool isAllocationOnLimitedGPU = isLimitedGPUOnType(allocationData.rootDeviceIndex, allocationData.type);
-    if (use32Allocator || isAllocationOnLimitedGPU) {
+    if (use32Allocator) {
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }
     if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {
@@ -1259,7 +1234,7 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
     graphicsAllocation->unlock();
 }
 
-HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useFrontWindow) {
+HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool useFrontWindow) {
     if (allocation) {
         if (heapAssigners[allocation->getRootDeviceIndex()]->useInternal32BitHeap(allocation->getAllocationType())) {
             return useFrontWindow ? HeapAssigner::mapInternalWindowIndex(selectInternalHeap(allocation->isAllocatedInLocalMemoryPool())) : selectInternalHeap(allocation->isAllocatedInLocalMemoryPool());
@@ -1269,16 +1244,12 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool h
                                   : selectExternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
     }
-    if (isFullRangeSVM) {
-        if (hasPointer) {
-            return HeapIndex::heapSvm;
-        }
-        if (allocation && allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
-            return HeapIndex::heapStandard64KB;
-        }
-        return HeapIndex::heapStandard;
+    if (hasPointer) {
+        return HeapIndex::heapSvm;
     }
-    // Limited range allocation goes to STANDARD heap
+    if (allocation && allocation->getDefaultGmm()->gmmResourceInfo->is64KBPageSuitable()) {
+        return HeapIndex::heapStandard64KB;
+    }
     return HeapIndex::heapStandard;
 }
 
@@ -1412,9 +1383,11 @@ bool MemoryManager::useNonSvmHostPtrAlloc(AllocationType allocationType, uint32_
         return true;
     }
 
-    bool isNonSvmPtrCapable = ((!peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm() || !isHostPointerTrackingEnabled(rootDeviceIndex)) & !is32bit);
-
-    return isNonSvmPtrCapable && (isExternalHostPtrAlloc || isMapAlloc);
+    if constexpr (is32bit) {
+        return false;
+    } else {
+        return !isHostPointerTrackingEnabled(rootDeviceIndex) && (isExternalHostPtrAlloc || isMapAlloc);
+    }
 }
 
 bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {

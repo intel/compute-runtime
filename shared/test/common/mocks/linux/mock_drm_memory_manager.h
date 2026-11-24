@@ -128,7 +128,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     mutable uint32_t emitPinningRequestForBoContainerCalled = 0u;
 
     DrmGemCloseWorker *getgemCloseWorker();
-    void forceLimitedRangeAllocator(uint64_t range);
+    void reinitGfxPartition(uint64_t gpuAddressSpace);
     void overrideGfxPartition(GfxPartition *newGfxPartition);
 
     BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex) override;
@@ -210,7 +210,6 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         acquireGpuRangeLastHeapIndex = heapIndex;
         return DrmMemoryManager::acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heapIndex, alignment);
     }
-    ADDMETHOD(isLimitedRange, bool, true, false, (uint32_t rootDeviceIndex), (rootDeviceIndex));
     ADDMETHOD(isKmdMigrationAvailable, bool, true, false, (uint32_t rootDeviceIndex), (rootDeviceIndex));
 
     DeviceBitfield computeStorageInfoMemoryBanks(const AllocationProperties &properties, DeviceBitfield preferredBank, DeviceBitfield allBanks) override {

@@ -180,13 +180,7 @@ BufferObject *DrmMemoryManager::createRootDeviceBufferObject(uint32_t rootDevice
     BufferObject *bo = nullptr;
     if (forcePinEnabled || validateHostPtrMemory) {
         bo = allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, AllocationType::externalHostPtr, rootDeviceIndex);
-        if (bo) {
-            if (isLimitedRange(rootDeviceIndex)) {
-                auto boSize = bo->peekSize();
-                bo->setAddress(DrmMemoryManager::acquireGpuRange(boSize, rootDeviceIndex, HeapIndex::heapStandard));
-                UNRECOVERABLE_IF(boSize < bo->peekSize());
-            }
-        } else {
+        if (!bo) {
             alignedFreeWrapper(memoryForPinBBs[rootDeviceIndex]);
             memoryForPinBBs[rootDeviceIndex] = nullptr;
             DEBUG_BREAK_IF(true);
@@ -214,9 +208,6 @@ void DrmMemoryManager::releaseDeviceSpecificMemResources(uint32_t rootDeviceInde
 
 void DrmMemoryManager::releaseBufferObject(uint32_t rootDeviceIndex) {
     if (auto bo = pinBBs[rootDeviceIndex]) {
-        if (isLimitedRange(rootDeviceIndex)) {
-            releaseGpuRange(reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(), rootDeviceIndex);
-        }
         DrmMemoryManager::unreference(bo, true);
         pinBBs[rootDeviceIndex] = nullptr;
     }
@@ -598,17 +589,13 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
         mmapAlignment = MemoryConstants::pageSize2M;
     }
 
-    // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
-    if ((isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) && !allocationData.flags.isUSMHostAllocation) {
+    if (svmCpuAllocation && !allocationData.flags.isUSMHostAllocation) {
         gpuReservationAddress = acquireGpuRange(alignedVirtualAddressRangeSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard);
         if (!gpuReservationAddress) {
             return nullptr;
         }
 
-        alignedGpuAddress = gpuReservationAddress;
-        if (svmCpuAllocation) {
-            alignedGpuAddress = alignUp(gpuReservationAddress, cAlignment);
-        }
+        alignedGpuAddress = alignUp(gpuReservationAddress, cAlignment);
     }
 
     auto drmAllocation = createAllocWithAlignment(allocationData, cSize, mmapAlignment, alignedStorageSize, alignedGpuAddress);
@@ -659,8 +646,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
 }
 
 void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress) {
-    if ((isLimitedRange(allocationData.rootDeviceIndex) || allocationData.type == AllocationType::svmCpu) &&
-        !allocationData.flags.isUSMHostAllocation) {
+    if (allocationData.type == AllocationType::svmCpu && !allocationData.flags.isUSMHostAllocation) {
         bo->setAddress(gpuAddress);
     }
 }
@@ -686,7 +672,7 @@ void setUserPtrPatIndex(const Drm &drm, GmmResourceUsageType usageType, BufferOb
 
 GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationData &allocationData) {
     const bool usmHostPtrFragmentsEnabled = debugManager.flags.EnableUsmHostPtrFragments.get() == 1;
-    const bool gpuAddressEqualsHostPtr = !isLimitedRange(allocationData.rootDeviceIndex) && allocationData.type != AllocationType::svmCpu;
+    const bool gpuAddressEqualsHostPtr = allocationData.type != AllocationType::svmCpu;
     const bool hostPtrRangePageAligned = isAligned<MemoryConstants::pageSize>(allocationData.hostPtr) && isAligned<MemoryConstants::pageSize>(allocationData.size);
     if (usmHostPtrFragmentsEnabled && gpuAddressEqualsHostPtr && !hostPtrRangePageAligned) {
         auto hostPtrManagerLock = hostPtrManager->obtainOwnership();
@@ -725,10 +711,8 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
         setUserPtrPatIndex(getDrm(allocationData.rootDeviceIndex), usageType, *bo);
     }
 
-    // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     uint64_t gpuAddress = 0;
-    auto svmCpuAllocation = allocationData.type == AllocationType::svmCpu;
-    if (isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) {
+    if (allocationData.type == AllocationType::svmCpu) {
         gpuAddress = acquireGpuRange(cSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard);
         if (!gpuAddress) {
             return nullptr;
@@ -898,14 +882,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     auto realAllocationSize = alignedSize;
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
-    uint64_t gpuVirtualAddress = 0;
-    if (this->isLimitedRange(allocationData.rootDeviceIndex)) {
-        gpuVirtualAddress = acquireGpuRange(alignedSize, rootDeviceIndex, HeapIndex::heapStandard);
-    } else {
-        alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2M);
-        gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::heapStandard, MemoryConstants::pageSize2M);
-    }
-
+    alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2M);
+    auto gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::heapStandard, MemoryConstants::pageSize2M);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
@@ -1629,7 +1607,6 @@ GraphicsAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allo
     bo->setAddress(gpuVA);
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
 
-    // softpin to the GPU address, res if it uses limitedRange Allocation
     auto canonizedGpuAddress = gmmHelper->canonize(gpuVA);
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), ptrAlloc,
                                         canonizedGpuAddress, alignedAllocationSize,
@@ -3377,7 +3354,6 @@ inline std::unique_ptr<DrmAllocation> DrmMemoryManager::makeDrmAllocation(const 
         fillGmmsInAllocation(gmmHelper, allocation.get());
     }
 
-    allocation->setFlushL3Required(allocationData.flags.flushL3);
     allocation->setUncacheable(allocationData.flags.uncacheable);
     if (debugManager.flags.EnableHostAllocationMemPolicy.get()) {
         allocation->setUsmHostAllocation(allocationData.flags.isUSMHostAllocation);

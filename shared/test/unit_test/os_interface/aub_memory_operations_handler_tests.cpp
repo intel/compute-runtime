@@ -144,7 +144,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnW
 
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerAndAllocationInLocalMemoryPoolWithoutPageTablesCloningWhenMakeResidentCalledThenWriteMemoryAubIsCalled) {
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocPtr = &allocation;
     allocPtr->storageInfo.cloningOfPageTables = false;
 
@@ -300,7 +300,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenLocalMemoryAndNonLocalMemoryAllocat
     executionEnvironment->initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::system64KBPages, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::system64KBPages, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
 
     DeviceBitfield deviceBitfield(1);
@@ -330,7 +330,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenNonLocalMemoryAllocationWithStorage
     executionEnvironment->initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::system64KBPages, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::system64KBPages, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     MockAubManager aubManager;
     aubManager.storeAllocationParams = true;
@@ -351,7 +351,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenLocalMemoryNoncloneableAllocationWi
     executionEnvironment->initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = false;
 
@@ -384,7 +384,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenLocalMemoryCloneableAllocationWithM
     executionEnvironment->initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = true;
 
@@ -417,7 +417,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenLocalMemoryNoncloneableAllocationWi
     executionEnvironment->initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = false;
 
@@ -450,7 +450,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenGfxAllocationWhenSetAubWritableToTr
     auto memoryOperationsInterface = getMemoryOperationsHandler();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
 
     memoryOperationsInterface->setAubWritable(true, allocation, device->getDeviceBitfield(), false);
     EXPECT_TRUE(memoryOperationsInterface->isAubWritable(allocation, device->getDeviceBitfield(), false));
@@ -465,7 +465,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenGfxAllocationWhenSetAubWritableForN
     auto memoryOperationsInterface = getMemoryOperationsHandler();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
 
     allocation.storageInfo.cloningOfPageTables = false;
 
@@ -526,7 +526,7 @@ HWTEST_F(AubMemoryOperationsHandlerTests, givenNonLocalGfxAllocationWriteableWhe
     csr->setupContext(*osContext);
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::system4KBPages, false, MemoryManager::maxOsContextCount);
     allocPtr = &allocation;
     allocPtr->storageInfo.cloningOfPageTables = false;
 
@@ -558,7 +558,7 @@ HWTEST_F(AubMemoryOperationsHandlerTests, givenLocalGfxAllocationWriteableWhenPr
     csr->localMemoryEnabled = true;
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocPtr = &allocation;
     allocPtr->storageInfo.cloningOfPageTables = false;
 
@@ -626,7 +626,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenRegularAllocationWhenDecompressingA
     auto memoryOperationsInterface = getMemoryOperationsHandler();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
 
     EXPECT_EQ(memoryOperationsInterface->decompress(nullptr, allocation), MemoryOperationsStatus::unsupported);
 }

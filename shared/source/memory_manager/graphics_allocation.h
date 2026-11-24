@@ -106,7 +106,6 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
             struct {
                 uint32_t coherent : 1;
                 uint32_t evictable : 1;
-                uint32_t flushL3Required : 1;
                 uint32_t uncacheable : 1;
                 uint32_t is32BitAllocation : 1;
                 uint32_t lockedMemory : 1;
@@ -116,7 +115,7 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
                 uint32_t isImported : 1;
                 uint32_t qualifiedFor2MBPages : 1;
                 uint32_t sharedPhysicalMemoryMapping : 1;
-                uint32_t reserved : 20;
+                uint32_t reserved : 21;
             } flags;
             uint32_t allFlags = 0u;
         };
@@ -124,7 +123,6 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
         AllocationInfo() {
             flags.coherent = false;
             flags.evictable = true;
-            flags.flushL3Required = true;
             flags.is32BitAllocation = false;
             flags.lockedMemory = false;
             flags.shareableHostMemory = false;
@@ -233,8 +231,6 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
     void setCoherent(bool coherentIn) { allocationInfo.flags.coherent = coherentIn; }
     void setEvictable(bool evictable) { allocationInfo.flags.evictable = evictable; }
     bool peekEvictable() const { return allocationInfo.flags.evictable; }
-    bool isFlushL3Required() const { return allocationInfo.flags.flushL3Required; }
-    void setFlushL3Required(bool flushL3Required) { allocationInfo.flags.flushL3Required = flushL3Required; }
     bool isLockedMemory() const { return allocationInfo.flags.lockedMemory; }
     void setLockedMemory(bool locked) { allocationInfo.flags.lockedMemory = locked; }
 

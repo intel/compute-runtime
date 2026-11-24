@@ -8,7 +8,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_callbacks.h"
 #include "shared/source/gmm_helper/windows/gmm_memory.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
@@ -55,9 +54,7 @@ bool Wddm::configureDeviceAddressSpace() {
     Wddm::getSystemInfo(&sysInfo);
     maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
     minAddress = windowsMinAddress;
-    auto svmSize = hwInfo->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
-                       ? maximumApplicationAddress + 1u
-                       : 0u;
+    auto svmSize = maximumApplicationAddress + 1u;
 
     return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->flags.ftrL3IACoherency);
 }

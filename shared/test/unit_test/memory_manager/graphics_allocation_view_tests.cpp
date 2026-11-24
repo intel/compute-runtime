@@ -194,7 +194,6 @@ TEST_F(GraphicsAllocationViewTest, whenSettingIsImportedOnViewThenParentIsUpdate
 TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewInheritsPropertiesFromParent) {
     parentAllocation->setCoherent(true);
     parentAllocation->setEvictable(false);
-    parentAllocation->setFlushL3Required(false);
     parentAllocation->setUncacheable(true);
     parentAllocation->set32BitAllocation(true);
     parentAllocation->setLockedMemory(true);
@@ -217,7 +216,6 @@ TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewInheritsPropertiesFro
 
     EXPECT_EQ(parentAllocation->isCoherent(), view->isCoherent());
     EXPECT_EQ(parentAllocation->peekEvictable(), view->peekEvictable());
-    EXPECT_EQ(parentAllocation->isFlushL3Required(), view->isFlushL3Required());
     EXPECT_EQ(parentAllocation->isUncacheable(), view->isUncacheable());
     EXPECT_EQ(parentAllocation->is32BitAllocation(), view->is32BitAllocation());
     EXPECT_EQ(parentAllocation->isLockedMemory(), view->isLockedMemory());

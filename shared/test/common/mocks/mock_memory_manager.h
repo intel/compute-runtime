@@ -153,11 +153,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, AllocationType allocationType);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
 
-    bool isLimitedGPU(uint32_t rootDeviceIndex) override {
-        return limitedGPU;
-    }
-    void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range);
-
     bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) override;
 
     bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, Device &callingDevice, Device &targetDevice) override;
@@ -299,7 +294,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool callBaseAllocInUse = false;
     std::function<void()> allocInUseCallback;
     bool isMockEventPoolCreateMemoryManager = false;
-    bool limitedGPU = false;
     bool returnFakeAllocation = false;
     bool callBasePopulateOsHandles = true;
     bool callBaseAllocateGraphicsMemoryForNonSvmHostPtr = true;

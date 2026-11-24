@@ -68,9 +68,9 @@ void TestedDrmMemoryManager::injectPinBB(BufferObject *newPinBB, uint32_t rootDe
 }
 
 DrmGemCloseWorker *TestedDrmMemoryManager::getgemCloseWorker() { return this->gemCloseWorker.get(); }
-void TestedDrmMemoryManager::forceLimitedRangeAllocator(uint64_t range) {
+void TestedDrmMemoryManager::reinitGfxPartition(uint64_t gpuAddressSpace) {
     for (auto &gfxPartition : gfxPartitions) {
-        gfxPartition->init(range, getSizeToReserve(), 0, 1, false, 0u, range + 1, nullptr);
+        gfxPartition->init(gpuAddressSpace, getSizeToReserve(), 0, 1, false, 0u, gpuAddressSpace + 1, nullptr);
     }
 }
 void TestedDrmMemoryManager::overrideGfxPartition(GfxPartition *newGfxPartition) { gfxPartitions[0].reset(newGfxPartition); }

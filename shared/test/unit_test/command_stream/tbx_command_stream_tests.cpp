@@ -2106,7 +2106,7 @@ struct TbxAllocationMemorySharingTests : public TbxCommandStreamTests {
     }
 
     std::unique_ptr<MockGraphicsAllocation> createAllocation(void *driverAllocatedCpuPointer, void *cpuPointer, uint64_t allocationGpuAddress, size_t size, MemoryPool pool) {
-        return std::make_unique<MockGraphicsAllocation>(0u, 1u, AllocationType::buffer, driverAllocatedCpuPointer, cpuPointer, allocationGpuAddress, size, 0u, pool, false, false, MemoryManager::maxOsContextCount);
+        return std::make_unique<MockGraphicsAllocation>(0u, 1u, AllocationType::buffer, driverAllocatedCpuPointer, cpuPointer, allocationGpuAddress, size, 0u, pool, false, MemoryManager::maxOsContextCount);
     }
 
     template <typename FamilyType>

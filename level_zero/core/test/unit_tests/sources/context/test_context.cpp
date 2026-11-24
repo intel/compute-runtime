@@ -3857,15 +3857,10 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     NEO::GraphicsAllocation *allocateMemoryByKMD(const NEO::AllocationData &allocationData) override { return nullptr; };
     void *lockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override { return nullptr; };
     void unlockResourceImpl(NEO::GraphicsAllocation &graphicsAllocation) override {};
-    bool peek32bit() override {
-        return this->is32bit;
-    }
-
     bool failReserveGpuAddress = true;
     bool failReserveCpuAddress = true;
     bool failMapVirtualMemory = true;
     bool failAllocatePhysicalGraphicsMemory = true;
-    bool is32bit = false;
     void *buffer = nullptr;
     size_t size = 0;
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
@@ -5521,51 +5516,6 @@ class MockCpuInfoOverrideVirtualAddressSize {
     uint32_t virtualAddressSizeSave = 0;
     std::string cpuFlagsSave;
 };
-
-HWTEST2_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
-    MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(32);
-
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-
-    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
-
-    void *pStart = addrToPtr(0x1234);
-    size_t size = MemoryConstants::pageSize2M;
-    void *ptr = nullptr;
-
-    auto reserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
-    reserveMemoryManager->is32bit = true;
-    auto memoryManager = driverHandle->getMemoryManager();
-    driverHandle->setMemoryManager(reserveMemoryManager);
-
-    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, res);
-    reserveMemoryManager->failReserveCpuAddress = false;
-    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    res = contextImp->freeVirtualMem(ptr, size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    pStart = addrToPtr(maxNBitValue(32) + 0x1234);
-
-    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
-    reserveMemoryManager->failReserveGpuAddress = false;
-    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    res = contextImp->freeVirtualMem(ptr, size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    driverHandle->setMemoryManager(memoryManager);
-    delete reserveMemoryManager;
-
-    res = contextImp->destroy();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
 
 HWTEST2_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected, IsNotMTL) {
     MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(48);

@@ -450,9 +450,6 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenOneUsedAllocationFromPreviousPer
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocationWithUsedAndUnusedFragmentsSincePreviousTrimWhenTrimResidencyPeriodicTrimIsCalledThenProperFragmentsAreEvictedAndMarked) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore restorer{};
     debugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
 
@@ -821,9 +818,6 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredW
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetThenOnlyDoneFragmentsAreEvicted) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     gdi->setNonZeroNumBytesToTrimInEvict();
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
     auto gmmHelper = memoryManager->getGmmHelper(0);
@@ -1045,9 +1039,6 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentRes
 }
 
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocationsWhenMakingResidentResidencyAllocationsThenAllAllocationsAreMarkedResident) {
-    if (executionEnvironment.memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     MockWddmAllocation allocation1(gmmHelper);
     MockWddmAllocation allocation2(gmmHelper);
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1500);

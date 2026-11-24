@@ -66,7 +66,6 @@ DrmAllocation *DrmMemoryManager::createMultiHostDebugSurfaceAllocation(const All
     };
 
     allocation->storageInfo = allocationData.storageInfo;
-    allocation->setFlushL3Required(true);
     allocation->setUncacheable(true);
     allocation->setMmapPtr(cpuBasePointer);
     allocation->setMmapSize(hostSizeToAllocate);

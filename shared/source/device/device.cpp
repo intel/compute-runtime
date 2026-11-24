@@ -1027,10 +1027,6 @@ RootDeviceEnvironment &Device::getRootDeviceEnvironmentRef() const {
     return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()];
 }
 
-bool Device::isFullRangeSvm() const {
-    return getRootDeviceEnvironment().isFullRangeSvm();
-}
-
 EngineControl &Device::getInternalEngine() {
     if (this->allEngines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::hardware) {
         return this->getDefaultEngine();

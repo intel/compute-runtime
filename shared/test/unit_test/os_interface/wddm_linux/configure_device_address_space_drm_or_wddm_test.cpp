@@ -238,12 +238,7 @@ struct WddmLinuxTest : public ::testing::Test {
     }
 
     size_t getMaxSvmSize() const {
-        auto maximumApplicationAddress = MemoryConstants::max64BitAppAddress;
-        auto productFamily = wddm->gfxPlatform->eProductFamily;
-        auto svmSize = NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
-                           ? maximumApplicationAddress + 1u
-                           : 0u;
-        return svmSize;
+        return MemoryConstants::max64BitAppAddress + 1u;
     }
 
     RestorePoint<GdiMockConfig> gdiRestorePoint{gdiMockConfig};
@@ -285,7 +280,7 @@ using WddmLinuxConfigureDeviceAddressSpaceTest = WddmLinuxTest;
 
 TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenSvmAddressSpaceThenReserveGpuVAForUSM) {
     const auto &hwInfo = *mockExecEnv.rootDeviceEnvironments[0]->getHardwareInfo();
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress || hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
+    if (hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
         GTEST_SKIP();
     }
 
@@ -303,7 +298,7 @@ TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenSvmAddressSpaceThenReserve
 
 TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpaceThenMakeSureWholeGpuVAForUSMIsReservedAndProperlyAligned) {
     const auto &hwInfo = *mockExecEnv.rootDeviceEnvironments[0]->getHardwareInfo();
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace < MemoryConstants::max64BitAppAddress || hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
+    if (hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
         GTEST_SKIP();
     }
 
@@ -326,22 +321,6 @@ TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenPreReservedSvmAddressSpace
     EXPECT_EQ(svmSize, gdiMockConfig.receivedReserveGpuVaArgs.MaximumAddress);
     EXPECT_EQ(MemoryConstants::pageSize64k, gdiMockConfig.receivedReserveGpuVaArgs.Size);
     EXPECT_EQ(wddm->getAdapter(), gdiMockConfig.receivedReserveGpuVaArgs.hAdapter);
-}
-
-TEST_F(WddmLinuxConfigureDeviceAddressSpaceTest, givenNonSvmAddressSpaceThenReserveGpuVAForUSMIsNotCalled) {
-    if (NEO::hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress) {
-        GTEST_SKIP();
-    }
-
-    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
-    bool success = this->wddm->configureDeviceAddressSpace();
-    EXPECT_TRUE(success);
-
-    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.BaseAddress);
-    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.MinimumAddress);
-    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.MaximumAddress);
-    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.Size);
-    EXPECT_EQ(0U, gdiMockConfig.receivedReserveGpuVaArgs.hAdapter);
 }
 
 using WddmLinuxConfigureReduced48bitDeviceAddressSpaceTest = WddmLinuxConfigureDeviceAddressSpaceTest;

@@ -19,24 +19,13 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
-#include "shared/source/os_interface/windows/gfx_escape_wrapper.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
+#include "shared/source/os_interface/windows/wddm/gfx_synch_partition_info_escape.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_temp_storage.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
-
-struct GfxSynchPartitionInfoEscapeHeader {
-    GFX_ESCAPE_HEADER_T base;
-    uint32_t action;
-    uint32_t padding;
-
-    static constexpr uint32_t gmmEscapeCode = 2; // GFX_ESCAPE_GMM_CONTROL
-    static constexpr uint32_t actionGet = 28;    // // GMM_ESCAPE_ACTION_GET_PROCESS_GFX_PARTITION
-    static constexpr uint32_t actionSet = 29;    // // GMM_ESCAPE_ACTION_SET_PROCESS_GFX_PARTITION
-    static constexpr uint32_t escapeDataTailPaddingInBytes = sizeof(uint32_t) * 2;
-};
 
 bool synchronizePartitionLayoutWithinProcess(Wddm &wddm, GMM_GFX_PARTITIONING &partitionLayout, uint32_t action) {
     UmKmDataTempStorage<GMM_GFX_PARTITIONING> escapeDataStorage;
@@ -187,41 +176,35 @@ bool Wddm::configureDeviceAddressSpace() {
     uintptr_t usmBase = std::max(gfxPartition.SVM.Base, windowsMinAddress);
     this->minAddress = usmBase;
 
-    uint64_t maxUsmSize = 0;
-    if (gpuAddressSpace >= maximumApplicationAddress) {
-        maxUsmSize = maximumApplicationAddress + 1u;
+    uint64_t maxUsmSize = maximumApplicationAddress + 1u;
+    if (false == adjustGfxPartitionLayout(this->gfxPartition, gpuAddressSpace, usmBase, *this)) {
+        return false;
     }
+    if (gfxPartition.Standard64KB.Limit <= maxUsmSize) {
+        uintptr_t usmLowPartMax = gfxPartition.Heap32[0].Base;
+        for (const auto &usmMaxAddr : {gfxPartition.Standard.Base, gfxPartition.Standard64KB.Base, gfxPartition.TR.Base}) {
+            if (usmMaxAddr != 0) {
+                usmLowPartMax = std::min(usmLowPartMax, usmMaxAddr);
+            }
+        }
+        // reserved cpu address range splits USM into 2 partitions
+        struct {
+            uint64_t minAddr;
+            uint64_t maxAddr;
+        } usmRanges[] = {{usmBase, usmLowPartMax},
+                         {alignUp(gfxPartition.Standard64KB.Limit, MemoryConstants::pageSize64k), maxUsmSize}};
 
-    if (maxUsmSize > 0) {
-        if (false == adjustGfxPartitionLayout(this->gfxPartition, gpuAddressSpace, usmBase, *this)) {
+        bool usmGpuRangeIsReserved = true;
+        for (const auto &usmRange : usmRanges) {
+            usmGpuRangeIsReserved = usmGpuRangeIsReserved && ensureGpuAddressRangeIsReserved(usmRange.minAddr, usmRange.maxAddr - usmRange.minAddr, this->getAdapter(), *this->getGdi());
+        }
+        if (false == usmGpuRangeIsReserved) {
             return false;
         }
-        if (gfxPartition.Standard64KB.Limit <= maxUsmSize) {
-            uintptr_t usmLowPartMax = gfxPartition.Heap32[0].Base;
-            for (const auto &usmMaxAddr : {gfxPartition.Standard.Base, gfxPartition.Standard64KB.Base, gfxPartition.TR.Base}) {
-                if (usmMaxAddr != 0) {
-                    usmLowPartMax = std::min(usmLowPartMax, usmMaxAddr);
-                }
-            }
-            // reserved cpu address range splits USM into 2 partitions
-            struct {
-                uint64_t minAddr;
-                uint64_t maxAddr;
-            } usmRanges[] = {{usmBase, usmLowPartMax},
-                             {alignUp(gfxPartition.Standard64KB.Limit, MemoryConstants::pageSize64k), maxUsmSize}};
-
-            bool usmGpuRangeIsReserved = true;
-            for (const auto &usmRange : usmRanges) {
-                usmGpuRangeIsReserved = usmGpuRangeIsReserved && ensureGpuAddressRangeIsReserved(usmRange.minAddr, usmRange.maxAddr - usmRange.minAddr, this->getAdapter(), *this->getGdi());
-            }
-            if (false == usmGpuRangeIsReserved) {
-                return false;
-            }
-        } else {
-            auto usmGpuRangeIsReserved = ensureGpuAddressRangeIsReserved(usmBase, maxUsmSize - usmBase, this->getAdapter(), *this->getGdi());
-            if (false == usmGpuRangeIsReserved) {
-                return false;
-            }
+    } else {
+        auto usmGpuRangeIsReserved = ensureGpuAddressRangeIsReserved(usmBase, maxUsmSize - usmBase, this->getAdapter(), *this->getGdi());
+        if (false == usmGpuRangeIsReserved) {
+            return false;
         }
     }
 

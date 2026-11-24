@@ -155,7 +155,6 @@ PreemptionMode ClDevice::getPreemptionMode() const { return device.getPreemption
 Debugger *ClDevice::getDebugger() { return device.getDebugger(); }
 ExecutionEnvironment *ClDevice::getExecutionEnvironment() const { return device.getExecutionEnvironment(); }
 const RootDeviceEnvironment &ClDevice::getRootDeviceEnvironment() const { return device.getRootDeviceEnvironment(); }
-bool ClDevice::isFullRangeSvm() const { return device.isFullRangeSvm(); }
 bool ClDevice::areSharedSystemAllocationsAllowed() const { return device.areSharedSystemAllocationsAllowed(); }
 uint32_t ClDevice::getRootDeviceIndex() const { return device.getRootDeviceIndex(); }
 uint32_t ClDevice::getNumGenericSubDevices() const { return device.getNumGenericSubDevices(); }

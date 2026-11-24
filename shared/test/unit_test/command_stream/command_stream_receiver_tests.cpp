@@ -2630,18 +2630,12 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenPointerOutsideCpuVirtualAddressR
     EXPECT_EQ(nullptr, surface.getAllocation());
 }
 
-struct ReducedAddrSpaceCommandStreamReceiverTest : public CreateAllocationForHostSurfaceTest {
-    void SetUp() override {
-        hwInfo.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
-        CreateAllocationForHostSurfaceTest::SetUp();
-    }
-};
-
-TEST_F(ReducedAddrSpaceCommandStreamReceiverTest,
-       givenReducedGpuAddressSpaceWhenAllocationForHostSurfaceIsCreatedThenAllocateGraphicsMemoryForNonSvmHostPtrIsCalled) {
+TEST_F(CreateAllocationForHostSurfaceTest, givenHostPtrTrackingDisabledWhenAllocationForHostSurfaceIsCreatedThenAllocateGraphicsMemoryForNonSvmHostPtrIsCalled) {
     if (is32bit) {
         GTEST_SKIP();
     }
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHostPtrTracking.set(0);
     mockMemoryManager->callBaseAllocateGraphicsMemoryForNonSvmHostPtr = false;
     mockMemoryManager->callBasePopulateOsHandles = false;
 

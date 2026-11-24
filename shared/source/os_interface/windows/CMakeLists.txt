@@ -100,6 +100,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxcore.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm${BRANCH_DIR_SUFFIX}wddm_additional_adapter_info_options.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/configure_device_address_space_${DRIVER_MODEL}.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/gfx_synch_partition_info_escape.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/set_gmm_input_args_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/max_mem_alloc_size_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/helper_${DRIVER_MODEL}.cpp

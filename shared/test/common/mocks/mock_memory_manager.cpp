@@ -231,11 +231,6 @@ GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     return OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(allocationData);
 }
 
-void MockMemoryManager::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) {
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
-    getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), false, 0u, range + 1, &productHelper);
-}
-
 bool MockMemoryManager::hasPageFaultsEnabled(const Device &neoDevice) {
     if (debugManager.flags.EnableRecoverablePageFaults.get() != -1) {
         return !!debugManager.flags.EnableRecoverablePageFaults.get();

@@ -37,7 +37,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x2u;
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
@@ -56,7 +56,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
 
     executionEnvironment.initializeMemoryManager();
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::system4KBPages, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x2u;
 
     auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(executionEnvironment, 0, 1);
@@ -72,7 +72,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x0u;
 
     DeviceBitfield deviceBitfield(0b100);
@@ -91,7 +91,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::system64KBPages, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::system64KBPages, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
 
     DeviceBitfield deviceBitfield(1);
@@ -110,7 +110,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = false;
 
@@ -134,7 +134,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryCloneableAllocationWithMan
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = true;
 
@@ -158,7 +158,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x3u;
     allocation.storageInfo.cloningOfPageTables = false;
 
@@ -183,7 +183,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
-                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
+                                MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, MemoryManager::maxOsContextCount);
     allocation.storageInfo.memoryBanks = 0x0u;
 
     DeviceBitfield deviceBitfield(0b100);

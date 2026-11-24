@@ -107,10 +107,6 @@ struct WddmResidencyControllerMultiGpuSharedAllocationTest : ::testing::Test {
 };
 
 TEST_F(WddmResidencyControllerMultiGpuSharedAllocationTest, givenSingleFragmentAllocationSharedAcrossGpusThroughMultiGraphicsAllocationThenResidencyTrackedIndependentlyPerContext) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
-
     // Simulate two GPU devices sharing the same allocation
     RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
     const auto size = MemoryConstants::pageSize;

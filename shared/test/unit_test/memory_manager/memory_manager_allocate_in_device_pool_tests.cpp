@@ -143,7 +143,7 @@ TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevice
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenLocalMemoryAllocationHasCorrectStorageInfoAndFlushL3IsSet) {
+TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenLocalMemoryAllocationHasCorrectStorageInfo) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
@@ -154,7 +154,6 @@ TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevice
     allocData.storageInfo.memoryBanks = 0x1;
     allocData.storageInfo.pageTablesVisibility = 0x2;
     allocData.storageInfo.cloningOfPageTables = false;
-    allocData.flags.flushL3 = true;
 
     auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_NE(nullptr, allocation);
@@ -162,7 +161,6 @@ TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevice
     EXPECT_EQ(allocData.storageInfo.memoryBanks, allocation->storageInfo.memoryBanks);
     EXPECT_EQ(allocData.storageInfo.pageTablesVisibility, allocation->storageInfo.pageTablesVisibility);
     EXPECT_FALSE(allocation->storageInfo.cloningOfPageTables);
-    EXPECT_TRUE(allocation->isFlushL3Required());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -766,10 +764,6 @@ TEST(BaseMemoryManagerTest, givenBaseMemoryManagerWhenCallingCreatePhysicalGraph
 TEST(BaseMemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocateSystemMemoryFailsThenReturnNull) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
 
-    if (!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
-        return;
-    }
-
     MockMemoryManagerBaseImplementationOfDevicePool memoryManager(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -789,10 +783,6 @@ TEST(BaseMemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocateSystemMemoryFai
 
 TEST(BaseMemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSucceedThenReturnGpuAddressAsHostPtrAndCpuAllocation) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-
-    if (!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
-        return;
-    }
 
     MockMemoryManagerBaseImplementationOfDevicePool memoryManager(false, true, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
@@ -814,10 +804,6 @@ TEST(BaseMemoryManagerTest, givenSvmGpuAllocationTypeWhenAllocationSucceedThenRe
 
 TEST(BaseMemoryManagerTest, given2MBLocalMemAlignmentEnabledWhenAllocatingSvmGpuInDevicePoolThenSizeIsAlignedUpTo2MB) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-
-    if (!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm()) {
-        return;
-    }
 
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
@@ -890,7 +876,7 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     MemoryAllocation allocation(mockRootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
-                                0x1000, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
+                                0x1000, 0, MemoryPool::system4KBPages, false, MemoryManager::maxOsContextCount);
     EXPECT_EQ(MemoryPool::localMemory, allocation.getMemoryPool());
 }
 
@@ -899,7 +885,7 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
     MemoryAllocation allocation(mockRootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
-                                0x1000, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
+                                0x1000, 0, MemoryPool::system4KBPages, false, MemoryManager::maxOsContextCount);
     allocation.overrideMemoryPool(MemoryPool::system64KBPages);
     EXPECT_EQ(MemoryPool::localMemory, allocation.getMemoryPool());
 }

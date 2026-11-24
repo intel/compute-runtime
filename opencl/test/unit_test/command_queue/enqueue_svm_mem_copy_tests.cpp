@@ -45,10 +45,6 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::setUp();
 
-        if (!pDevice->isFullRangeSvm()) {
-            return;
-        }
-
         CommandQueueFixture::setUp(pClDevice, 0);
         srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
         ASSERT_NE(nullptr, srcSvmPtr);
@@ -69,11 +65,9 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
     }
 
     void TearDown() override {
-        if (pDevice->isFullRangeSvm()) {
-            context->getSVMAllocsManager()->freeSVMAlloc(srcSvmPtr);
-            context->getSVMAllocsManager()->freeSVMAlloc(dstSvmPtr);
-            CommandQueueFixture::tearDown();
-        }
+        context->getSVMAllocsManager()->freeSVMAlloc(srcSvmPtr);
+        context->getSVMAllocsManager()->freeSVMAlloc(dstSvmPtr);
+        CommandQueueFixture::tearDown();
         ClDeviceFixture::tearDown();
     }
 
@@ -90,10 +84,6 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
 };
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
-    if (!pDevice->isFullRangeSvm()) {
-        return;
-    }
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
@@ -164,10 +154,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndSrcHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
-    if (!pDevice->isFullRangeSvm()) {
-        return;
-    }
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
@@ -242,10 +228,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderAndDstHostPtrThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
-    if (!pDevice->isFullRangeSvm()) {
-        return;
-    }
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
@@ -320,10 +302,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThenSetAllocDumpable) {
-    if (!pDevice->isFullRangeSvm()) {
-        return;
-    }
-
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
     debugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.set(true);
@@ -351,10 +329,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThenItCallsNotifyFunction) {
-    if (!pDevice->isFullRangeSvm()) {
-        return;
-    }
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
@@ -383,10 +357,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenCsrSelectionArgsCalledWithRootDeviceIndexGreaterThanNumAllocationsThenNoSourceResourceSet) {
-    if (!pDevice->isFullRangeSvm()) {
-        return;
-    }
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
@@ -414,10 +384,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCsrSelectionArgsCalledWithRootDeviceIndexGr
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenConstHostMemoryAsSourceWhenEnqueueSVMMemcpyThenCpuCopyIsAllowed) {
-    if (!pDevice->isFullRangeSvm()) {
-        GTEST_SKIP();
-    }
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
@@ -447,7 +413,7 @@ struct EnqueueSvmMemCopyHw : public ::testing::Test {
     void SetUp() override {
 
         device = std::make_unique<MockClDevice>(MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        if (is32bit || !device->isFullRangeSvm()) {
+        if (is32bit) {
             GTEST_SKIP();
         }
 
@@ -458,7 +424,7 @@ struct EnqueueSvmMemCopyHw : public ::testing::Test {
     }
 
     void TearDown() override {
-        if (is32bit || !device->isFullRangeSvm()) {
+        if (is32bit) {
             return;
         }
         context->getSVMAllocsManager()->freeSVMAlloc(srcSvmPtr);
@@ -518,10 +484,6 @@ HWTEST2_F(EnqueueSvmMemCopyHwTest, givenEnqueueSVMMemCopyWhenUsingCopyBufferToBu
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinKernelUsesSystemMemory) {
-    if (!pDevice->isFullRangeSvm()) {
-        return;
-    }
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
@@ -593,10 +555,6 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
 }
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernelNotUsesSystemMemory) {
-    if (!pDevice->isFullRangeSvm()) {
-        return;
-    }
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 

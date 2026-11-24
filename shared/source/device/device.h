@@ -168,7 +168,6 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const RootDeviceEnvironment &getRootDeviceEnvironment() const;
     RootDeviceEnvironment &getRootDeviceEnvironmentRef() const;
-    bool isFullRangeSvm() const;
     static bool isBlitSplitEnabled();
     static bool isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType csrType);
     static std::vector<DeviceVector> groupDevices(DeviceVector devices);

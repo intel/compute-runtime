@@ -118,7 +118,7 @@ TEST(MemoryManagerMultiRootDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocate
 
     EXPECT_EQ(rootDeviceIndices.size(), usmHostAllocationFlagPerRootDevice.size());
     for (auto rootDeviceIndex : rootDeviceIndices) {
-        EXPECT_EQ(!mockMemoryManager.isLimitedRange(rootDeviceIndex), usmHostAllocationFlagPerRootDevice[rootDeviceIndex]);
+        EXPECT_TRUE(usmHostAllocationFlagPerRootDevice[rootDeviceIndex]);
     }
 
     for (auto graphicsAllocation : tagsMultiAllocation.getGraphicsAllocations()) {

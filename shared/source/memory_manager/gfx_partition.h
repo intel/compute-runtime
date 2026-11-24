@@ -132,8 +132,6 @@ class GfxPartition {
         return false;
     }
 
-    bool isLimitedRange() { return getHeap(HeapIndex::heapSvm).getSize() == 0ull; }
-
     static bool isAnyHeap32(HeapIndex heapIndex) {
         if ((heapIndex >= HeapIndex::heapInternalDeviceMemory && heapIndex <= HeapIndex::heapExternal) ||
             (heapIndex >= HeapIndex::heapExternalFrontWindow && heapIndex <= HeapIndex::heapInternalDeviceFrontWindow)) {

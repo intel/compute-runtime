@@ -2353,21 +2353,10 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
     size_t reservationTotalSize = 0;
     size_t foldHeadroom = 0;
 
-    bool reserveOnSvmHeap = true;
-    uint64_t maxCpuVa = 0;
-
-    if (this->driverHandle->getMemoryManager()->peek32bit()) {
-        maxCpuVa = maxNBitValue(32);
-    } else {
-        maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
-    }
-
+    const uint64_t maxCpuVa = NEO::CpuInfo::getInstance().getMaxCpuVirtualAddress();
     uint64_t requiredStartAddress = castToUint64(pStart);
 
-    if (requiredStartAddress > maxCpuVa) {
-        reserveOnSvmHeap = false;
-    }
-
+    bool reserveOnSvmHeap = requiredStartAddress <= maxCpuVa;
     reserveOnSvmHeap &= settings.enableSvmHeapReservation;
     reserveOnSvmHeap &= NEO::debugManager.flags.EnableReservingInSvmRange.get();
 

@@ -93,7 +93,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     Debugger *getDebugger();
     ExecutionEnvironment *getExecutionEnvironment() const;
     const RootDeviceEnvironment &getRootDeviceEnvironment() const;
-    bool isFullRangeSvm() const;
     bool areSharedSystemAllocationsAllowed() const;
     uint32_t getRootDeviceIndex() const;
     uint32_t getNumGenericSubDevices() const;

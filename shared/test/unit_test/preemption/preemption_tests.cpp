@@ -442,9 +442,6 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
     };
     ExecutionEnvironment *executionEnvironment = MockDevice::prepareExecutionEnvironment(nullptr, 0u);
     executionEnvironment->memoryManager = std::make_unique<FailingMemoryManager>(*executionEnvironment);
-    if (executionEnvironment->memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::create<MockDevice>(executionEnvironment, 0));
     EXPECT_EQ(nullptr, mockDevice.get());

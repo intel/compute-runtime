@@ -1184,9 +1184,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
 
             auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
             ASSERT_NE(nullptr, bltCmd);
-            if (pDevice->isFullRangeSvm()) {
-                EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(hostPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
-            }
+            EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(hostPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
             EXPECT_EQ(graphicsAllocation1->getGpuAddress() + subBuffer1Offset, bltCmd->getDestinationBaseAddress());
         }
         {
@@ -1209,9 +1207,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
 
             auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
             ASSERT_NE(nullptr, bltCmd);
-            if (pDevice->isFullRangeSvm()) {
-                EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(hostPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
-            }
+            EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(hostPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
             EXPECT_EQ(graphicsAllocation1->getGpuAddress() + subBuffer1Offset, bltCmd->getSourceBaseAddress());
         }
 
@@ -1312,9 +1308,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
 
             auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
             EXPECT_NE(nullptr, bltCmd);
-            if (pDevice->isFullRangeSvm()) {
-                EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
-            }
+            EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
             EXPECT_EQ(bufferGpuVa, bltCmd->getDestinationBaseAddress());
         }
 
@@ -1335,9 +1329,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
 
             auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
             EXPECT_NE(nullptr, bltCmd);
-            if (pDevice->isFullRangeSvm()) {
-                EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
-            }
+            EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
             EXPECT_EQ(bufferGpuVa, bltCmd->getSourceBaseAddress());
         }
 
@@ -1359,9 +1351,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
 
             auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
             EXPECT_NE(nullptr, bltCmd);
-            if (pDevice->isFullRangeSvm()) {
-                EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
-            }
+            EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
             EXPECT_EQ(bufferGpuVa, bltCmd->getSourceBaseAddress());
         }
         {
@@ -1381,9 +1371,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
 
             auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
             EXPECT_NE(nullptr, bltCmd);
-            if (pDevice->isFullRangeSvm()) {
-                EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
-            }
+            EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
             EXPECT_EQ(bufferGpuVa, bltCmd->getDestinationBaseAddress());
         }
     }
@@ -1648,9 +1636,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
 
                 auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
                 EXPECT_NE(nullptr, bltCmd);
-                if (pDevice->isFullRangeSvm()) {
-                    EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getSourceBaseAddress());
-                }
+                EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getSourceBaseAddress());
                 EXPECT_EQ(ptrOffset(graphicsAllocation1->getGpuAddress(), buffer1Offset), bltCmd->getDestinationBaseAddress());
             }
             {
@@ -1672,9 +1658,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
 
                 auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
                 EXPECT_NE(nullptr, bltCmd);
-                if (pDevice->isFullRangeSvm()) {
-                    EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getDestinationBaseAddress());
-                }
+                EXPECT_EQ(reinterpret_cast<uint64_t>(hostPtr), bltCmd->getDestinationBaseAddress());
                 EXPECT_EQ(ptrOffset(graphicsAllocation1->getGpuAddress(), buffer1Offset), bltCmd->getSourceBaseAddress());
             }
             for (auto buffer2Offset : addressOffsets) {
@@ -1749,9 +1733,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
     auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
-    if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
-    }
+    EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 
     srcAddressOffset += maxWidthToCopy;
@@ -1762,9 +1744,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
-    if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
-    }
+    EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 
     srcAddressOffset += (region[0] - maxWidthToCopy);
@@ -1779,9 +1759,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
-    if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
-    }
+    EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 
     srcAddressOffset += maxWidthToCopy;
@@ -1792,9 +1770,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
-    if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
-    }
+    EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 
     srcAddressOffset += (region[0] - maxWidthToCopy);
@@ -1811,9 +1787,7 @@ HWTEST_F(BcsTests, givenBufferWithBigSizesWhenBlitOperationCalledThenProgramCorr
     ASSERT_NE(hwParser.cmdList.end(), cmdIterator);
     bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*cmdIterator);
     EXPECT_NE(nullptr, bltCmd);
-    if (pDevice->isFullRangeSvm()) {
-        EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
-    }
+    EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), srcAddressOffset), bltCmd->getSourceBaseAddress());
     EXPECT_EQ(ptrOffset(graphicsAllocation->getGpuAddress(), dstAddressOffset), bltCmd->getDestinationBaseAddress());
 }
 

@@ -274,10 +274,8 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenSupportedTypeWhenAllocatingInDevice
             auto gmmHelper = device->getGmmHelper();
             auto gfxPartition = memoryManager->getGfxPartition(0);
             if (allocation->getAllocationType() == AllocationType::svmGpu) {
-                if (!memoryManager->isLimitedRange(0)) {
-                    EXPECT_LT(gmmHelper->canonize(gfxPartition->getHeapBase(HeapIndex::heapSvm)), gpuAddress);
-                    EXPECT_GT(gmmHelper->canonize(gfxPartition->getHeapLimit(HeapIndex::heapSvm)), gpuAddress);
-                }
+                EXPECT_LT(gmmHelper->canonize(gfxPartition->getHeapBase(HeapIndex::heapSvm)), gpuAddress);
+                EXPECT_GT(gmmHelper->canonize(gfxPartition->getHeapLimit(HeapIndex::heapSvm)), gpuAddress);
             } else if (memoryManager->heapAssigners[rootDeviceIndex]->useInternal32BitHeap(allocation->getAllocationType())) {
                 EXPECT_LT(gmmHelper->canonize(gfxPartition->getHeapBase(HeapIndex::heapInternalDeviceMemory)), gpuAddress);
                 EXPECT_GT(gmmHelper->canonize(gfxPartition->getHeapLimit(HeapIndex::heapInternalDeviceMemory)), gpuAddress);

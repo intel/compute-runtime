@@ -20,9 +20,7 @@ TEST_F(WddmInstrumentationTest, whenConfiguringDeviceAddressSpaceThenTrueIsRetur
     D3DKMT_HANDLE deviceHandle = DEVICE_HANDLE;
     const HardwareInfo hwInfo = *defaultHwInfo;
     BOOLEAN ftrL3IACoherency = hwInfo.featureTable.flags.ftrL3IACoherency ? 1 : 0;
-    uintptr_t maxAddr = hwInfo.capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
-                            ? reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1
-                            : 0;
+    uintptr_t maxAddr = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1;
 
     wddm->init();
     EXPECT_EQ(1u, gmmMem->configureDeviceAddressSpaceCalled);

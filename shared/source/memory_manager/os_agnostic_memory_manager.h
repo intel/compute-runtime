@@ -78,7 +78,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     MemoryAllocation *createMemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
-                                             uint64_t count, MemoryPool pool, uint32_t rootDeviceIndex, bool uncacheable, bool flushL3Required, bool requireSpecificBitness);
+                                             uint64_t count, MemoryPool pool, uint32_t rootDeviceIndex, bool uncacheable);
     void removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc) override;
     void freeMemoryInAubManager(AubCenter &aubCenter, uint32_t rootDeviceIndex, uint64_t gpuAddress, size_t size);
     size_t getMinimalSystemMemoryAlignment(uint32_t rootDeviceIndex) const;

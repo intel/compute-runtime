@@ -53,16 +53,10 @@ constexpr size_t reservedCpuAddressRangeSize = static_cast<size_t>(is64bit ? (6 
 constexpr uint64_t sizeHeap32 = 4 * MemoryConstants::gigaByte;
 
 void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t gfxTop, uint64_t svmTop) {
-    if (svmTop) {
-        // SVM should be initialized
-        EXPECT_TRUE(gfxPartition.heapInitialized(HeapIndex::heapSvm));
-        EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapSvm), 0ull);
-        EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::heapSvm), svmTop);
-        EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::heapSvm), svmTop - 1);
-    } else {
-        // Limited range
-        EXPECT_FALSE(gfxPartition.heapInitialized(HeapIndex::heapSvm));
-    }
+    EXPECT_TRUE(gfxPartition.heapInitialized(HeapIndex::heapSvm));
+    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::heapSvm), 0ull);
+    EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::heapSvm), svmTop);
+    EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::heapSvm), svmTop - 1);
 
     for (auto heap32 : GfxPartition::heap32Names) {
         EXPECT_TRUE(gfxPartition.heapInitialized(heap32));
@@ -187,25 +181,14 @@ TEST(GfxPartitionTest, GivenFullRange47BitSvmWhenTestingGfxPartitionThenAllExpec
     testGfxPartition(gfxPartition, gfxBase, gfxTop, svmTop);
 }
 
-TEST(GfxPartitionTest, GivenLimitedRangeWhenTestingGfxPartitionThenAllExpectationsAreMet) {
-    MockGfxPartition gfxPartition;
-    uint64_t gfxTop = maxNBitValue(47 - 1) + 1;
-    gfxPartition.init(maxNBitValue(47 - 1), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr);
-
-    uint64_t gfxBase = is32bit ? MemoryConstants::maxSvmAddress + 1 : 0ull;
-    uint64_t svmTop = gfxBase;
-
-    testGfxPartition(gfxPartition, gfxBase, gfxTop, svmTop);
-}
-
 TEST(GfxPartitionTest, GivenUnsupportedGpuRangeThenGfxPartitionIsNotInitialized) {
     if (is32bit) {
         GTEST_SKIP();
     }
 
     MockGfxPartition gfxPartition;
-    uint64_t gfxTop = maxNBitValue(48) + 1;
-    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1, false, 0u, gfxTop, nullptr));
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(46), reservedCpuAddressRangeSize, 0, 1, false, 0u, maxNBitValue(46) + 1, nullptr));
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1, false, 0u, maxNBitValue(48) + 1, nullptr));
 }
 
 TEST(GfxPartitionTest, GivenUnsupportedCpuRangeThenGfxPartitionIsNotInitialize) {

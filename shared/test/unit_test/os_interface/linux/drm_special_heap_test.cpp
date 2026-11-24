@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -21,10 +20,6 @@ class DrmMemManagerFixture {
     struct FrontWindowMemManagerMock : public TestedDrmMemoryManager {
         using MemoryManager::allocate32BitGraphicsMemoryImpl;
         FrontWindowMemManagerMock(NEO::ExecutionEnvironment &executionEnvironment) : TestedDrmMemoryManager(executionEnvironment) {}
-        void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range) {
-            auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
-            getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size(), true, 0u, range + 1, &productHelper);
-        }
     };
 
     void setUp() {

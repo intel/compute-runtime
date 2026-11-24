@@ -609,9 +609,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, WhenMakingResidentAndNonResidentThenAl
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenGraphicsAllocationWhenMakeResidentThenAllocationIsInResidencyContainer) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     void *hostPtr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1234);
     auto size = 1234u;
 
@@ -628,9 +625,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenGraphicsAllocationWhenMakeResiden
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenHostPtrAllocationWhenMapFailsThenFragmentsAreClearedAndNullptrIsReturned) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     this->wddm->callBaseMapGpuVa = false;
     this->wddm->mapGpuVaStatus = false;
     void *hostPtr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1234);
@@ -647,9 +641,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenHostPtrAllocationWhenMapFailsThen
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenAddressWithHighestBitSetWhenItIsMappedThenProperAddressIsPassed) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     uintptr_t address = 0xffff0000;
     void *faultyAddress = reinterpret_cast<void *>(address);
 
@@ -668,9 +659,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenAddressWithHighestBitSetWhenItIsM
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAllocationAndMakeResident) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     void *hostPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     auto size = 0x2000u;
 
@@ -690,9 +678,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThe
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllocationListThenDestoryOnlyCompletedAllocations) {
-    if (memoryManager->isLimitedGPU(0)) {
-        GTEST_SKIP();
-    }
     void *hostPtr = reinterpret_cast<void *>(0x1212341);
     void *hostPtr2 = reinterpret_cast<void *>(0x2212341);
     auto size = 17262u;
