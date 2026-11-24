@@ -714,6 +714,31 @@ TEST(LinuxSysmanDriverImpCleanup, GivenNegativeDescriptorWhenRegisteringACperTra
     EXPECT_EQ(-1, driverImp.getCperTracePipeFd());
 }
 
+TEST(LinuxSysmanDriverImpCleanup, GivenRecordIsRetainedWhenTheTracePipeDescriptorIsUnregisteredThenNothingIsReportedAsRetained) {
+    constexpr int mockRegisteredFd = 7;
+    PublicLinuxSysmanDriverImp driverImp;
+    driverImp.registerCperTracePipeFd(mockRegisteredFd);
+    driverImp.setCperRecordRetained(mockRegisteredFd, true);
+    EXPECT_TRUE(driverImp.hasCperRecordRetained());
+    driverImp.unregisterCperTracePipeFd(mockRegisteredFd);
+    EXPECT_FALSE(driverImp.hasCperRecordRetained());
+}
+
+TEST(LinuxSysmanDriverImpCleanup, GivenTracePipeDescriptorAlreadyMarkedRetainedWhenMarkingItRetainedAgainThenOneClearingCallStillDropsTheRetainedState) {
+    constexpr int mockRegisteredFd = 7;
+    PublicLinuxSysmanDriverImp driverImp;
+    driverImp.registerCperTracePipeFd(mockRegisteredFd);
+
+    driverImp.setCperRecordRetained(mockRegisteredFd, true);
+    driverImp.setCperRecordRetained(mockRegisteredFd, true);
+    ASSERT_TRUE(driverImp.hasCperRecordRetained());
+
+    driverImp.setCperRecordRetained(mockRegisteredFd, false);
+    EXPECT_FALSE(driverImp.hasCperRecordRetained());
+
+    driverImp.unregisterCperTracePipeFd(mockRegisteredFd);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

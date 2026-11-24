@@ -559,6 +559,7 @@ void LinuxSysmanDriverImp::unregisterCperTracePipeFd(int fd) {
     if (it != cperTracePipeFds.end()) {
         cperTracePipeFds.erase(it);
     }
+    std::erase(cperRetainedRecordFds, fd);
 }
 
 std::vector<int> LinuxSysmanDriverImp::getCperTracePipeFds() const {
@@ -580,6 +581,22 @@ void LinuxSysmanDriverImp::clearCperTracePipeFds() {
         SysmanSysCallsWrapper::close(fd, errorNum);
     }
     cperTracePipeFds.clear();
+    cperRetainedRecordFds.clear();
+}
+
+void LinuxSysmanDriverImp::setCperRecordRetained(int fd, bool retained) {
+    std::lock_guard<std::mutex> lock(cperFdsMutex);
+    auto it = std::find(cperRetainedRecordFds.begin(), cperRetainedRecordFds.end(), fd);
+    if (retained && it == cperRetainedRecordFds.end()) {
+        cperRetainedRecordFds.push_back(fd);
+    } else if (!retained && it != cperRetainedRecordFds.end()) {
+        cperRetainedRecordFds.erase(it);
+    }
+}
+
+bool LinuxSysmanDriverImp::hasCperRecordRetained() const {
+    std::lock_guard<std::mutex> lock(cperFdsMutex);
+    return !cperRetainedRecordFds.empty();
 }
 
 OsSysmanDriver *OsSysmanDriver::create() {

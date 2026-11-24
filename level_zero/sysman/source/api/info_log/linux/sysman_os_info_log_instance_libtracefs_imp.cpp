@@ -309,6 +309,10 @@ static bool processCperLine(const std::string &line, CperExtractionState &state,
     return true;
 }
 
+static LinuxSysmanDriverImp *getLinuxSysmanDriverImp() {
+    return (globalSysmanDriver != nullptr) ? static_cast<LinuxSysmanDriverImp *>(globalSysmanDriver->pOsSysmanDriver) : nullptr;
+}
+
 // Helper function to build diagnostic context string for error messages
 static std::string getTraceContext(struct tracefs_instance *instance, const std::string &instanceName) {
     if (instance == nullptr) {
@@ -753,7 +757,7 @@ void LinuxInfoLogInstanceImp::restoreBufferConfiguration() {
 // selects the global tracefs buffer) and registers the descriptor with the sysman driver so that
 // the events path can poll it for CPER notifications.
 ze_result_t LinuxInfoLogInstanceImp::openTracePipe() {
-    auto pLinuxSysmanDriverImp = (globalSysmanDriver != nullptr) ? static_cast<LinuxSysmanDriverImp *>(globalSysmanDriver->pOsSysmanDriver) : nullptr;
+    auto pLinuxSysmanDriverImp = getLinuxSysmanDriverImp();
     if (pLinuxSysmanDriverImp == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Error@ %s(): Os Sysman driver not initialized, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNINITIALIZED);
@@ -800,7 +804,7 @@ void LinuxInfoLogInstanceImp::closeTracePipe() {
         return;
     }
 
-    auto pLinuxSysmanDriverImp = (globalSysmanDriver != nullptr) ? static_cast<LinuxSysmanDriverImp *>(globalSysmanDriver->pOsSysmanDriver) : nullptr;
+    auto pLinuxSysmanDriverImp = getLinuxSysmanDriverImp();
     if (pLinuxSysmanDriverImp != nullptr) {
         pLinuxSysmanDriverImp->unregisterCperTracePipeFd(tracePipeFd);
     }
@@ -808,6 +812,21 @@ void LinuxInfoLogInstanceImp::closeTracePipe() {
     int errorNum = 0;
     SysmanSysCallsWrapper::close(tracePipeFd, errorNum);
     tracePipeFd = -1;
+}
+
+uint32_t LinuxInfoLogInstanceImp::getRetainedRecordSize() const {
+    if (lineBuffer.empty() || lineBuffer.back() != '\n') {
+        return 0;
+    }
+    return static_cast<uint32_t>(std::strtoul(extractFieldValue(lineBuffer, "cper_len").c_str(), nullptr, 0));
+}
+
+void LinuxInfoLogInstanceImp::updateRetainedRecordState() {
+    auto pLinuxSysmanDriverImp = getLinuxSysmanDriverImp();
+    if (pLinuxSysmanDriverImp == nullptr) {
+        return;
+    }
+    pLinuxSysmanDriverImp->setCperRecordRetained(tracePipeFd, getRetainedRecordSize() != 0);
 }
 
 ze_result_t LinuxInfoLogInstanceImp::queryRecords(uint64_t deadlineMs, uint32_t *pSize, uint32_t *pRecordCount, bool &anyFound,
@@ -833,6 +852,12 @@ ze_result_t LinuxInfoLogInstanceImp::queryRecords(uint64_t deadlineMs, uint32_t 
     uint32_t totalSize = 0;
     bool searchedAll = countCperRecordsAndSize(traceData.get(), cperCount, totalSize, deadlineMs);
     stopReason = searchedAll ? StopReason::drained : StopReason::deadline;
+
+    uint32_t retainedSize = getRetainedRecordSize();
+    if (retainedSize != 0) {
+        totalSize += retainedSize;
+        cperCount++;
+    }
     *pSize = totalSize;
     *pRecordCount = cperCount;
     anyFound = (cperCount != 0);
@@ -841,7 +866,7 @@ ze_result_t LinuxInfoLogInstanceImp::queryRecords(uint64_t deadlineMs, uint32_t 
 }
 
 // Reads CPER records from the consuming 'trace_pipe' stream, stopping at the caller's record count,
-// at the caller's buffer size, at 'deadlineMs' or when the stream runs dry.
+// at the caller's buffer size, at 'deadlineMs' (checked between lines) or when the stream runs dry.
 //
 // The stream is opened O_NONBLOCK and read through an unbuffered FILE*, so that fgets() cannot read
 // ahead past the records this call reports. Each completed line that contains "xe_error_cper:" is
@@ -906,9 +931,9 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTracePipe(uint64_t deadlineMs, u
 
     while (state.recordsExtracted < state.maxRecords) {
         if (!endsWithNewline) {
-            if (isDeadlineReached(deadlineMs)) {
+            // Read complete lines, regardless of the deadline. The rest of the line is already outside the kernel ring buffer.
+            if (accumulatedLine.empty() && isDeadlineReached(deadlineMs)) {
                 stopReason = StopReason::deadline;
-                partialLineMayContinue = true;
                 break;
             }
 
@@ -1015,6 +1040,18 @@ ze_result_t LinuxInfoLogInstanceImp::extractFromTraceSnapshot(uint64_t deadlineM
     CperExtractionState state(pBuffer, *pSize, pDescriptors, *pRecordCount);
     stopReason = StopReason::recordLimit;
 
+    if (getRetainedRecordSize() != 0) {
+        consumedDataSize += lineBuffer.size();
+        bool bufferFull = false;
+        processCperLine(lineBuffer, state, bufferFull);
+        if (bufferFull) {
+            stopReason = StopReason::sizeLimit;
+            *pSize = state.aggregatedCperLen;
+            *pRecordCount = state.recordsExtracted;
+            return ZE_RESULT_SUCCESS;
+        }
+    }
+
     std::istringstream iss(traceData.get());
     std::string line;
     while (state.recordsExtracted < state.maxRecords) {
@@ -1088,6 +1125,9 @@ ze_result_t LinuxInfoLogInstanceImp::collect(uint64_t timeout, uint32_t *pSize, 
     ze_result_t result = consuming
                              ? extractFromTracePipe(deadlineMs, pSize, pBuffer, pRecordCount, pDescriptors, stopReason, consumedDataSize)
                              : extractFromTraceSnapshot(deadlineMs, pSize, pBuffer, pRecordCount, pDescriptors, stopReason, consumedDataSize);
+    if (consuming) {
+        updateRetainedRecordState();
+    }
 
     // A record which did not fit is retained rather than dropped, so a size limited stop is a plain
     // success and is reported to the caller through 'hasDataToRead'.

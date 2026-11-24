@@ -771,6 +771,12 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
         }
     };
 
+    if (result == ZE_RESULT_SUCCESS && cperRegistered && pLinuxSysmanDriverImp->hasCperRecordRetained()) {
+        *pDriverEvents |= ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT;
+        eventReceived = true;
+        remainingTimeout = 0;
+    }
+
     syncPfds();
     while (result == ZE_RESULT_SUCCESS && NEO::SysCalls::poll(pfds.data(), static_cast<nfds_t>(pfds.size()), static_cast<int>(remainingTimeout)) > 0) {
         syncRevents();

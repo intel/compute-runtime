@@ -1197,6 +1197,53 @@ TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenNonBlockingReadReportsEagai
     EXPECT_EQ(0x52, buffer[descriptors[0].offset + 3]); // 'R'
 }
 
+TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenTheDeadlineIsReachedThenTheLineIsStillReadToItsEndAndNeverFlaggedAsRetained) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>(false, false, "# tracer: nop\n");
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+    auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+    auto *pLinuxSysmanDriverImp = getLinuxSysmanDriverImp();
+    ASSERT_NE(nullptr, pLinuxSysmanDriverImp);
+
+    const size_t splitBeforeCperLen = mockCperEvent1.find("cper_len=");
+    ASSERT_NE(std::string::npos, splitBeforeCperLen);
+    std::string pipeData = mockCperEvent1.substr(0, splitBeforeCperLen);
+
+    VariableBackup<decltype(MockTraceFsApiWithData::tracePipeDataPtr)> pipeDataBackup(&MockTraceFsApiWithData::tracePipeDataPtr, &pipeData);
+    VariableBackup<decltype(MockTraceFsApiWithData::tracePipeReadPos)> readPosBackup(&MockTraceFsApiWithData::tracePipeReadPos, 0u);
+    VariableBackup<decltype(MockTraceFsApiWithData::drainedErrno)> drainedErrnoBackup(&MockTraceFsApiWithData::drainedErrno, EAGAIN);
+
+    uint32_t size = mockCperLen;
+    uint32_t eventCount = 1;
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(eventCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(0u, eventCount);
+    EXPECT_FALSE(pLinuxSysmanDriverImp->hasCperRecordRetained());
+
+    pipeData += mockCperEvent1.substr(splitBeforeCperLen);
+    size = mockCperLen;
+    eventCount = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, 0u, &size, buffer.data(), &eventCount, descriptors.data(), nullptr));
+    EXPECT_EQ(1u, eventCount);
+    EXPECT_EQ(mockCperLen, size);
+    EXPECT_FALSE(pLinuxSysmanDriverImp->hasCperRecordRetained());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+}
+
 TEST_F(SysmanInfoLogFixture, GivenPartialCperLineWhenTracePipeReadFailsThenErrnoIsReportedAndPartialLineIsDiscarded) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithData>();
@@ -2377,7 +2424,7 @@ TEST_F(SysmanInfoLogFixture, GivenSetBufferSizeFailsWhenCreatingNamedInstanceThe
     EXPECT_EQ(1u, PublicTraceFsApi::setBufferSizeCallCount);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenBufferFullHoldsBackAnOversizedRecordWhenReadingAgainThenItIsReturnedAheadOfTheFollowingRecord) {
+TEST_F(SysmanInfoLogFixture, GivenReadHoldsBackARecordWhenQueryingPeekingAndReadingAgainThenTheHeldRecordIsAccountedFor) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         return std::make_unique<MockTraceFsApiWithBadCperData>(mockSmallCperTraceEvent, false, &mockLargerThenSmallCperTracePipeEvents);
     });
@@ -2389,21 +2436,54 @@ TEST_F(SysmanInfoLogFixture, GivenBufferFullHoldsBackAnOversizedRecordWhenReadin
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
     auto hInstance = createInfoLogInstance(infoLogHandles[0]);
+    auto *pLinuxSysmanDriverImp = getLinuxSysmanDriverImp();
+    ASSERT_NE(nullptr, pLinuxSysmanDriverImp);
+    EXPECT_FALSE(pLinuxSysmanDriverImp->hasCperRecordRetained());
 
     uint32_t size = 2u;
     std::vector<uint8_t> buffer(1024u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
     EXPECT_EQ(0u, size);
+    EXPECT_TRUE(pLinuxSysmanDriverImp->hasCperRecordRetained());
 
-    size = 1024u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, readInfoLogData(hInstance, &size, buffer.data()));
+    size = 0u;
+    uint32_t recordCount = 0u;
+    zes_info_log_read_status_ext_t readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &recordCount, nullptr, &readStatus));
+    EXPECT_EQ(2u, recordCount);
+    EXPECT_EQ(6u, size);
+    EXPECT_TRUE(readStatus.hasDataToRead);
+
+    std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
+    size = 2u;
+    readStatus = {ZES_STRUCTURE_TYPE_INFO_LOG_READ_STATUS_EXT};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), &readStatus));
+    EXPECT_EQ(0u, recordCount);
+    EXPECT_EQ(0u, size);
+    EXPECT_TRUE(readStatus.hasDataToRead);
+
+    size = 6u;
+    recordCount = 2u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstancePeekWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(2u, recordCount);
+    EXPECT_EQ(6u, size);
+    EXPECT_EQ(4u, descriptors[0].lengthOfData);
+    EXPECT_EQ(0xAB, buffer[0]);
+    EXPECT_EQ(0x01, buffer[3]);
+    EXPECT_TRUE(pLinuxSysmanDriverImp->hasCperRecordRetained());
+
+    size = 6u;
+    recordCount = 2u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+    EXPECT_EQ(2u, recordCount);
     EXPECT_EQ(6u, size);
     EXPECT_EQ(0xAB, buffer[0]);
-    EXPECT_EQ(0xCD, buffer[1]);
-    EXPECT_EQ(0xEF, buffer[2]);
     EXPECT_EQ(0x01, buffer[3]);
     EXPECT_EQ(0x12, buffer[4]);
     EXPECT_EQ(0x34, buffer[5]);
+    EXPECT_FALSE(pLinuxSysmanDriverImp->hasCperRecordRetained());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenFirstTraceFsPathFailsWhenCreatingInstanceThenFallsBackToSecondPathAndReadSucceeds) {

@@ -71,6 +71,8 @@ class LinuxInfoLogInstanceImp : public OsInfoLogInstance {
                                  bool queryCall, bool anyRecordFound, uint64_t consumedDataSize);
     ze_result_t openTracePipe();
     void closeTracePipe();
+    uint32_t getRetainedRecordSize() const;
+    void updateRetainedRecordState();
     ze_result_t applyBufferSize(uint32_t *pBufferSize);
     uint32_t readTotalBufferSize();
     uint32_t getPerCpuBufferCount();

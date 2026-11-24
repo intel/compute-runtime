@@ -434,6 +434,40 @@ TEST_F(SysmanEventsInfoLogFixture, GivenLibUdevIsNotAvailableAndCperDataAvailabl
     EXPECT_EQ(-1, getCperTracePipeFd());
 }
 
+TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredAndAnInstanceHoldsARecordWhenListeningForDriverEventsThenEventIsReportedWithoutWaitingInPoll) {
+    static int polledTimeout = 0;
+    polledTimeout = -1;
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, mockSysCallsPipe);
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        recordPollCall(pollFd, numberOfFds);
+        polledTimeout = timeout;
+        return 0;
+    });
+
+    auto hInstance = createInfoLogInstance(getInfoLogHandle());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventRegisterExt(driverHandle->toHandle(), ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT));
+
+    constexpr uint32_t count = 1u;
+    zes_device_handle_t phDevices[count] = {device->toHandle()};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t pDeviceEvents[count] = {};
+    zes_event_type_flags_t driverEvents = 0;
+
+    pLinuxSysmanDriverImp->setCperRecordRetained(MockTraceFsApiWithData::mockTracePipeFd, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenExt(driverHandle->toHandle(), 1000u, count, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(static_cast<zes_event_type_flags_t>(ZES_EVENT_TYPE_FLAG_INFO_LOG_CPER_DATA_AVAILABLE_EXT), driverEvents);
+    EXPECT_EQ(1u, pollCallCount);
+    EXPECT_EQ(0, polledTimeout);
+
+    pLinuxSysmanDriverImp->setCperRecordRetained(MockTraceFsApiWithData::mockTracePipeFd, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenExt(driverHandle->toHandle(), 1000u, count, phDevices, &numDeviceEvents, pDeviceEvents, &driverEvents));
+    EXPECT_EQ(0u, driverEvents);
+    EXPECT_EQ(1000, polledTimeout);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+}
+
 TEST_F(SysmanEventsInfoLogFixture, GivenCperDataAvailableIsRegisteredAndInfoLogCollectionIsNotEnabledWhenListeningForDriverEventsThenNoEventIsReported) {
     VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
         pipeFd[0] = mockInfoLogReadPipeFd;

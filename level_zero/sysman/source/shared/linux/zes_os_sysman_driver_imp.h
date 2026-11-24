@@ -68,6 +68,8 @@ class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovabl
     MOCKABLE_VIRTUAL std::vector<int> getCperTracePipeFds() const;
     MOCKABLE_VIRTUAL int getCperTracePipeFd() const;
     void clearCperTracePipeFds();
+    void setCperRecordRetained(int fd, bool retained);
+    bool hasCperRecordRetained() const;
 
   protected:
     L0::Sysman::UdevLib *pUdevLib = nullptr;
@@ -75,6 +77,7 @@ class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovabl
     L0::Sysman::LinuxEventsUtil *pLinuxEventsUtil = nullptr;
     InfoLogHandleContext *pInfoLogHandleContext = nullptr;
     std::vector<int> cperTracePipeFds;
+    std::vector<int> cperRetainedRecordFds;
     mutable std::mutex cperFdsMutex;
 
   private:
