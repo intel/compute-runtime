@@ -136,12 +136,6 @@ class WddmMock : public Wddm {
         }
         return verifyAdapterLuidReturnValue;
     }
-    bool isNativeFenceAvailable() override {
-        if (callBaseIsNativeFenceAvailable) {
-            return Wddm::isNativeFenceAvailable();
-        }
-        return isNativeFenceAvailableReturnValue;
-    }
     bool waitExternalSemaphoresFromGpu(OsContextWin &osContext, std::span<const ExternalSemaphoreOperation> waits) override {
         waitExternalSemaphoresFromGpuCalled++;
         waitExternalSemaphoresFromGpuOsContext = &osContext;
@@ -265,8 +259,6 @@ class WddmMock : public Wddm {
     bool callBaseWaitFromCpuWithTimeout = true;
     WaitStatus waitFromCpuWithTimeoutReturnValue = WaitStatus::ready;
     bool failFreeGpuVirtualAddress = false;
-    bool callBaseIsNativeFenceAvailable = true;
-    bool isNativeFenceAvailableReturnValue = false;
     uint32_t waitExternalSemaphoresFromGpuCalled = 0;
     OsContextWin *waitExternalSemaphoresFromGpuOsContext = nullptr;
     std::vector<ExternalSemaphoreOperation> waitExternalSemaphoresFromGpuWaits;

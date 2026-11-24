@@ -1273,7 +1273,7 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
             if (csr != nullptr) {
                 // Flush monitor fence to emit KMD interrupt.
                 auto lock = csr->obtainUniqueOwnership();
-                csr->flushMonitorFence(isNativeFenceAvailable());
+                csr->flushMonitorFence(true);
             }
             const auto osContext = csr != nullptr ? static_cast<const OsContextWin *>(&csr->getOsContext()) : nullptr;
             const auto waitObjects = getMonitoredFenceWaitObjects(monitoredFence, osContext, lastFenceValue);
@@ -1336,7 +1336,7 @@ WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, u
             if (eventHandle != nullptr && this->resetMonitoredFenceKmdWaitEvent(eventHandle)) {
                 if (csr != nullptr) {
                     auto csrLock = csr->obtainUniqueOwnership();
-                    csr->flushMonitorFence(isNativeFenceAvailable());
+                    csr->flushMonitorFence(true);
                 }
                 const auto waitObjects = getMonitoredFenceWaitObjects(monitoredFence, &osContext, lastFenceValue);
                 D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
