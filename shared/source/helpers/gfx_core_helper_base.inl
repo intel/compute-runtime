@@ -760,6 +760,7 @@ void GfxCoreHelperHw<GfxFamily>::initializeDefaultHpCopyEngine(const HardwareInf
 template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::initializeFromProductHelper(const ProductHelper &productHelper, bool hwQueuesSupported) {
     secondaryContextsEnabled = productHelper.areSecondaryContextsSupported() && hwQueuesSupported;
+    dedicatedHpCopyEngineSupported = productHelper.isDedicatedHighPriorityCopyEngineSupported();
 }
 
 template <typename GfxFamily>

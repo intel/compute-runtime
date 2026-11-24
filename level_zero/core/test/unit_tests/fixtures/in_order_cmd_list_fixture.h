@@ -117,6 +117,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     void SetUp() override {
         NEO::debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
         NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(0u);
+        NEO::debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(0);
 
         ::Test<ModuleFixture>::SetUp();
         createKernel();
@@ -459,6 +460,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
         debugManager.flags.SplitBcsMask.set(0b11110);
         debugManager.flags.SplitBcsTransferDirectionMask.set(transferDirectionMask);
+        debugManager.flags.SkipHpBcsInitialization.set(0);
 
         createDevice();
         context = Context::fromHandle(driverHandle->getDefaultContext());
@@ -578,6 +580,7 @@ struct CopyOffloadInOrderFixture : public InOrderCmdListFixture {
     void SetUp() override {
         debugManager.flags.EnableLocalMemory.set(1);
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+        debugManager.flags.SkipHpBcsInitialization.set(0);
         backupHwInfo = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         defaultHwInfo->featureTable.ftrBcsInfo = bcsInfoMask;

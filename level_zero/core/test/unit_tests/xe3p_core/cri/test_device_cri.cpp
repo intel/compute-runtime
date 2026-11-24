@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/xe3p_core/hw_cmds_base.h"
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -47,9 +49,7 @@ CRITEST_F(CommandQueueGroupTestCRI, givenBlitterSupportAndCCSThenTwoQueueGroupsA
     bool computeFound = false;
     bool copyFound = false;
 
-    auto &gfxCoreHelper = mockDevice.getGfxCoreHelper();
-    const auto regularBcsCount = static_cast<uint32_t>(gfxCoreHelper.areSecondaryContextsSupported() ? 7   // BCS1-BCS7, BCS8 used as HP
-                                                                                                     : 8); // BCS1-BCS8
+    const auto regularBcsCount = 8u;
 
     for (uint32_t i = 0; i < count; i++) {
         if (engineGroups[i].engineGroupType == NEO::EngineGroupType::renderCompute) {
@@ -123,6 +123,41 @@ CRITEST_F(CommandQueueGroupTestCRI, givenBlitterSupportCCSAndLinkedBcsDisabledTh
     }
     EXPECT_FALSE(renderComputeFound);
     EXPECT_TRUE(computeFound);
+}
+
+CRITEST_F(CommandQueueGroupTestCRI, givenContextGroupWhenGettingHighPriorityCsrForEachCopyEngineIndexThenHighPrioritySecondaryContextOfEngineAtThisIndexIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(8);
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b1111;
+
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0u);
+    MockDeviceImp mockDevice(neoMockDevice);
+
+    EXPECT_EQ(nullptr, neoMockDevice->getHpCopyEngine());
+
+    const auto copyOrdinal = mockDevice.getCopyEngineOrdinal();
+    auto &copyEngines = neoMockDevice->getRegularEngineGroups()[copyOrdinal].engines;
+    ASSERT_EQ(3u, copyEngines.size());
+
+    for (uint32_t index = 0; index < copyEngines.size(); index++) {
+        const auto engineType = copyEngines[index].getEngineType();
+        auto &secondaryEngines = neoMockDevice->secondaryEngines[engineType];
+        EXPECT_EQ(4u, secondaryEngines.regularEnginesTotal);
+        EXPECT_EQ(4u, secondaryEngines.highPriorityEnginesTotal);
+
+        NEO::CommandStreamReceiver *csr = nullptr;
+        bool queueOwnershipTaken = false;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, mockDevice.getCsrForOrdinalAndIndex(&csr, copyOrdinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, std::nullopt, 0u, &queueOwnershipTaken));
+        ASSERT_NE(nullptr, csr);
+        EXPECT_TRUE(queueOwnershipTaken);
+        EXPECT_EQ(engineType, csr->getOsContext().getEngineType());
+        EXPECT_TRUE(csr->getOsContext().isHighPriority());
+        EXPECT_EQ(copyEngines[index].osContext, csr->getOsContext().getPrimaryContext());
+    }
 }
 
 using CriKernelSetupTests = ::testing::Test;

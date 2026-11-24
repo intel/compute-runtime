@@ -225,7 +225,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateCopyBlitCommandsSize(size_t nBlits, size_t sizePerBlit, bool isDstSystemOrRemoteMemory) const {
     auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto nBlitsWithFlush = NEO::BlitCommandsHelper<GfxFamily>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, isDstSystemOrRemoteMemory) ? nBlits : std::min<size_t>(nBlits, 1u);
-    auto estimatedSize = sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush);
+    auto estimatedSize = sizePerBlit * nBlits + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush, rootDeviceEnvironment);
     if (this->arePostBlitWACmdsRequired()) {
         estimatedSize += NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitWaCommandsSize();
     }

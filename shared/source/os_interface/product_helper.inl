@@ -400,6 +400,14 @@ bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDedicatedHighPriorityCopyEngineSupported() const {
+    if (debugManager.flags.SkipHpBcsInitialization.get() != -1) {
+        return debugManager.flags.SkipHpBcsInitialization.get() == 0;
+    }
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPrimaryContextsAggregationSupported() const {
     return false;
 }

@@ -23,6 +23,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -340,7 +341,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         }
 
         // -1: default
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false, false);
 
         EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
@@ -364,7 +365,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miArbCheck);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false, false);
 
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
         arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
@@ -376,7 +377,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::miFlush);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false, false);
 
         CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
         auto miFlush = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
@@ -388,7 +389,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         commands.clear();
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::none);
         waArgs.isWaRequired = true;
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false, false);
 
         EXPECT_EQ(0u, linearStream.getUsed());
 
@@ -398,7 +399,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
         constexpr uint64_t streamGpuBase = 0x10000;
         linearStream.setGpuBase(streamGpuBase);
         debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::semaphore);
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false, false);
 
         EXPECT_EQ(EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), linearStream.getUsed());
         EXPECT_EQ(BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(isFlushBetweenBlitsRequired), linearStream.getUsed());
@@ -426,7 +427,7 @@ HWTEST_F(BlitTests, givenFlushBetweenBlitsRequiredWhenDispatchPostBlitCommandWit
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false, false);
 
         HardwareParse hwParserWithoutAdditionalProps;
         hwParserWithoutAdditionalProps.parseCommands<FamilyType>(linearStream, 0);
@@ -441,7 +442,7 @@ HWTEST_F(BlitTests, givenFlushBetweenBlitsRequiredWhenDispatchPostBlitCommandWit
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true, false, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true, false, false, false);
 
         HardwareParse hwParserWithAdditionalProps;
         hwParserWithAdditionalProps.parseCommands<FamilyType>(linearStream, 0);
@@ -469,7 +470,7 @@ HWTEST_F(BlitTests, givenIsLastCmdTrueWhenDispatchPostBlitCommandThenFlushEmitte
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, true, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, true, false, false);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(linearStream, 0);
@@ -482,7 +483,7 @@ HWTEST_F(BlitTests, givenIsLastCmdTrueWhenDispatchPostBlitCommandThenFlushEmitte
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true, true, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true, true, false, false);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(linearStream, 0);
@@ -495,7 +496,7 @@ HWTEST_F(BlitTests, givenIsLastCmdTrueWhenDispatchPostBlitCommandThenFlushEmitte
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, false, false);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(linearStream, 0);
@@ -544,7 +545,7 @@ HWTEST_F(BlitTests, givenWriteSplitRequiredAndFlushBetweenBlitsNotRequiredWhenDi
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, isDstSystemOrRemoteMemory);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, isDstSystemOrRemoteMemory, false);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(linearStream, 0);
@@ -565,7 +566,7 @@ HWTEST_F(BlitTests, givenWriteSplitNotRequiredAndFlushBetweenBlitsNotRequiredWhe
     uint32_t streamBuffer[100] = {};
     LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, pDevice->getRootDeviceEnvironmentRef(), false, false, true);
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, pDevice->getRootDeviceEnvironmentRef(), false, false, true, false);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(linearStream, 0);
@@ -1681,6 +1682,8 @@ HWTEST2_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlu
 }
 
 HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEstimatingCommandsSizeThenCalculateForAllAttachedProperties) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(0);
     const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const uint32_t numberOfBlts = 3;
     const size_t bltSize = (3 * max2DBlitSize);
@@ -2038,6 +2041,8 @@ HWTEST2_PRODUCT_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWith
 }
 
 HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlitCommandSizeThenBlockCopySizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(0);
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
     Vec3<size_t> copySize{maxBlitWidth - 1, 1, 1};
     NEO::CsrDependencies csrDependencies{};
@@ -2478,4 +2483,165 @@ HWTEST_F(BlitTests, givenMaxValidPitchesAndRegionPreferredWhenDispatchingBufferC
     EXPECT_GT(copyCmdList.size(), 0u);
     EXPECT_EQ(1u, nRegion);
     EXPECT_EQ(copyCmdList.size(), nRegion);
+}
+
+HWTEST2_F(BlitTests, givenNoDedicatedHpCopyEngineAndContextGroupWhenDispatchingPostBlitCommandThenQueueSwitchSemaphoreIsProgrammedBeforeArbCheckOnlyForNonHighPriorityBlits, IsAtLeastXe3pCore) {
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restore{};
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.SkipHpBcsInitialization.set(1);
+    debugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::defaultMode);
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isQueueSwitchPointAfterBlitRequired(rootDeviceEnvironment));
+    EXPECT_EQ(3 * sizeof(MI_SEMAPHORE_WAIT), BlitCommandsHelper<FamilyType>::estimateQueueSwitchPointsAfterBlitsSize(rootDeviceEnvironment, 3));
+
+    for (bool highPriority : {false, true}) {
+        uint32_t streamBuffer[100] = {};
+        LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
+
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, true, false, false, !highPriority);
+
+        GenCmdList commands{};
+        CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
+        auto semaphore = find<MI_SEMAPHORE_WAIT *>(commands.begin(), commands.end());
+        auto arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
+        ASSERT_NE(commands.end(), arbCheck);
+
+        if (highPriority) {
+            EXPECT_EQ(commands.end(), semaphore);
+            EXPECT_EQ(sizeof(MI_ARB_CHECK), linearStream.getUsed());
+        } else {
+            ASSERT_NE(commands.end(), semaphore);
+            EXPECT_EQ(commands.begin(), semaphore);
+            EXPECT_EQ(std::next(semaphore), arbCheck);
+            EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT) + sizeof(MI_ARB_CHECK), linearStream.getUsed());
+        }
+    }
+}
+
+HWTEST2_F(BlitTests, givenContextGroupDedicatedHpCopyEngineAndDebugFlagConfigsWhenCheckingQueueSwitchPointAfterBlitThenExpectedValueIsReturned, IsAtLeastXe3pCore) {
+    struct QueueSwitchPointConfig {
+        int32_t contextGroupSize;
+        int32_t skipHpBcsInitialization;
+        int32_t programQueueSwitchPointAfterBlit;
+        bool expectedRequired;
+    };
+    const QueueSwitchPointConfig configs[] = {
+        {8, 1, -1, true},
+        {8, 0, -1, false},
+        {0, 1, -1, false},
+        {0, 0, 1, true},
+        {8, 1, 0, false},
+    };
+
+    for (const auto &config : configs) {
+        DebugManagerStateRestore restore{};
+        debugManager.flags.ContextGroupSize.set(config.contextGroupSize);
+        debugManager.flags.SkipHpBcsInitialization.set(config.skipHpBcsInitialization);
+        debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(config.programQueueSwitchPointAfterBlit);
+
+        MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+        EXPECT_EQ(config.expectedRequired, BlitCommandsHelper<FamilyType>::isQueueSwitchPointAfterBlitRequired(rootDeviceEnvironment));
+        EXPECT_EQ(config.expectedRequired ? 3 * EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() : 0u,
+                  BlitCommandsHelper<FamilyType>::estimateQueueSwitchPointsAfterBlitsSize(rootDeviceEnvironment, 3));
+    }
+}
+
+HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingMultiBlitFillThenSemaphoreIsProgrammedBetweenBlitsOnlyForNonHighPriorityFill, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restore{};
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(1);
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    uint32_t pattern[4] = {1, 0, 0, 0};
+    const size_t byteFillSize = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitSetWidth(rootDeviceEnvironment)) + 1;
+    const size_t colorFillSize = alignUp(std::max(byteFillSize, (static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment)) + 1) * sizeof(uint32_t)), sizeof(uint32_t));
+
+    for (auto [fillSize, patternSize] : {std::make_pair(byteFillSize, sizeof(uint8_t)), std::make_pair(colorFillSize, sizeof(uint32_t))}) {
+        MockGraphicsAllocation mockAllocation(0, 1u, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234), 0x1000, 0, fillSize,
+                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+        size_t usedSpace[2] = {};
+
+        for (bool highPriority : {false, true}) {
+            uint32_t streamBuffer[256] = {};
+            LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+            auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, fillSize, pattern, patternSize, 0);
+            blitProperties.highPriority = highPriority;
+            BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream, rootDeviceEnvironment);
+            usedSpace[highPriority] = stream.getUsed();
+        }
+
+        const auto semaphoresSpace = usedSpace[false] - usedSpace[true];
+        EXPECT_EQ(0u, semaphoresSpace % sizeof(MI_SEMAPHORE_WAIT)) << patternSize;
+        EXPECT_LE(sizeof(MI_SEMAPHORE_WAIT), semaphoresSpace) << patternSize;
+    }
+}
+
+HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingMultiBlitCopyPerRowThenSemaphoreIsProgrammedAfterEachBlitOnlyForNonHighPriorityCopy, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restore{};
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(1);
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    const size_t copySize = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment)) + 1;
+    MockGraphicsAllocation srcAllocation(reinterpret_cast<void *>(0x1000), copySize);
+    MockGraphicsAllocation dstAllocation(reinterpret_cast<void *>(0x100000), copySize);
+
+    for (bool highPriority : {false, true}) {
+        uint32_t streamBuffer[256] = {};
+        LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAllocation, 0, &srcAllocation, 0, 0, 0, {copySize, 1, 1}, 0, 0, 0, 0, nullptr, false);
+        blitProperties.highPriority = highPriority;
+        const auto numberOfBlits = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory);
+        ASSERT_LT(1u, numberOfBlits);
+
+        BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, rootDeviceEnvironment);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+        const auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(highPriority ? 0u : numberOfBlits, semaphores.size());
+    }
+}
+
+HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingRegionCopiesThenSemaphoreIsProgrammedOnlyForNonHighPriorityCopy, IsAtLeastXe3pCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restore{};
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(1);
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    MockGraphicsAllocation srcAllocation;
+    MockGraphicsAllocation dstAllocation;
+    MockGraphicsAllocation clearColorAllocation;
+    const Vec3<size_t> copySize = {0x100, 0x40, 0x1};
+
+    using DispatchFunction = BlitCommandsResult (*)(const BlitProperties &, LinearStream &, RootDeviceEnvironment &);
+    for (DispatchFunction dispatchRegionCopy : {&BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferRegion, &BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion}) {
+        size_t usedSpace[2] = {};
+        for (bool highPriority : {false, true}) {
+            uint32_t streamBuffer[256] = {};
+            LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+            auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAllocation, 0, &srcAllocation, 0, 0, 0, copySize, copySize.x, copySize.y,
+                                                                             copySize.x, copySize.y, &clearColorAllocation, false);
+            blitProperties.bytesPerPixel = 4;
+            blitProperties.srcSize = copySize;
+            blitProperties.dstSize = copySize;
+            blitProperties.highPriority = highPriority;
+            dispatchRegionCopy(blitProperties, stream, rootDeviceEnvironment);
+            usedSpace[highPriority] = stream.getUsed();
+        }
+        EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), usedSpace[false] - usedSpace[true]);
+    }
 }

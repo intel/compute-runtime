@@ -22,6 +22,7 @@ using namespace NEO;
 struct BcsTests : public Test<ClDeviceFixture> {
     void SetUp() override {
         debugManager.flags.ForceDummyBlitWa.set(-1);
+        debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(0);
 
         Test<ClDeviceFixture>::SetUp();
         context = std::make_unique<MockContext>(pClDevice);

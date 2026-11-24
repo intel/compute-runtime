@@ -91,7 +91,32 @@ bool BlitCommandsHelper<GfxFamily>::isFlushBetweenBlitsRequired(const RootDevice
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd, bool isDstSystemOrRemoteMemory) {
+bool BlitCommandsHelper<GfxFamily>::isQueueSwitchPointAfterBlitRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (debugManager.flags.ProgramQueueSwitchPointAfterBlit.get() != -1) {
+        return debugManager.flags.ProgramQueueSwitchPointAfterBlit.get() == 1;
+    }
+    const auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    return gfxCoreHelper.areSecondaryContextsSupported() && !productHelper.isDedicatedHighPriorityCopyEngineSupported();
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::estimateQueueSwitchPointsAfterBlitsSize(const RootDeviceEnvironment &rootDeviceEnvironment, size_t nBlits) {
+    if (isQueueSwitchPointAfterBlitRequired(rootDeviceEnvironment)) {
+        return EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * nBlits;
+    }
+    return 0u;
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchQueueSwitchPointSemaphore(LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    const bool useSemaphore64bCmd = rootDeviceEnvironment.getHelper<CompilerProductHelper>().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
+    EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(linearStream, linearStream.getCurrentGpuAddressPosition(), 0u, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd, bool isDstSystemOrRemoteMemory, bool programQueueSwitchPoint) {
     EncodeDummyBlitWaArgs waArgs{false, &rootDeviceEnvironment};
     MiFlushArgs args{waArgs};
     if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
@@ -102,12 +127,9 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         case BlitterConstants::PostBlitMode::miFlush:
             EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
             return;
-        case BlitterConstants::PostBlitMode::semaphore: {
-            using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-            const bool useSemaphore64bCmd = rootDeviceEnvironment.getHelper<CompilerProductHelper>().isAvailableSemaphore64(*rootDeviceEnvironment.getHardwareInfo());
-            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(linearStream, linearStream.getCurrentGpuAddressPosition(), 0u, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, false, useSemaphore64bCmd, nullptr);
+        case BlitterConstants::PostBlitMode::semaphore:
+            dispatchQueueSwitchPointSemaphore(linearStream, rootDeviceEnvironment);
             return;
-        }
         default:
             return;
         }
@@ -118,6 +140,10 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
                                ((productHelper.isFlushBetweenBlitsRequired() || isLastCmd) && !hasAdditionalBlitProperties);
     if (flushRequired) {
         EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
+    }
+
+    if (programQueueSwitchPoint) {
+        dispatchQueueSwitchPointSemaphore(linearStream, rootDeviceEnvironment);
     }
 
     EncodeMiArbCheck<GfxFamily>::program(linearStream, std::nullopt);
@@ -148,10 +174,11 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(bool withFlush
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(size_t nBlitsWithFlushes, size_t nBlitsWithoutFlushes) {
+size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(size_t nBlitsWithFlushes, size_t nBlitsWithoutFlushes, const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto sizePerBlitWithFlush = NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(true);
     const auto sizePerBlitWithoutFlush = NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(false);
-    return sizePerBlitWithFlush * nBlitsWithFlushes + sizePerBlitWithoutFlush * nBlitsWithoutFlushes;
+    return sizePerBlitWithFlush * nBlitsWithFlushes + sizePerBlitWithoutFlush * nBlitsWithoutFlushes +
+           estimateQueueSwitchPointsAfterBlitsSize(rootDeviceEnvironment, nBlitsWithFlushes + nBlitsWithoutFlushes);
 }
 
 template <typename GfxFamily>
@@ -182,7 +209,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
         sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
     }
     auto nBlitsWithFlush = isFlushBetweenBlitsRequired(rootDeviceEnvironment, isDstSystemOrRemoteMemory) ? nBlits : 1u;
-    auto postBlitsCmdsSize = nBlits ? NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush) : 0u;
+    auto postBlitsCmdsSize = nBlits ? NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitsCommandsSize(nBlitsWithFlush, nBlits - nBlitsWithFlush, rootDeviceEnvironment) : 0u;
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies, relaxedOrderingEnabled) +
            TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDependencies) +
            (sizePerBlit * nBlits) +
@@ -272,6 +299,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
     appendColorDepth(blitProperties, bltCmd);
 
     const bool hasAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties(blitProperties);
+    const bool programQueueSwitchPoint = !blitProperties.highPriority && isQueueSwitchPointAfterBlitRequired(rootDeviceEnvironment);
 
     BlitCommandsResult result{};
     bool firstCommand = true;
@@ -319,7 +347,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferP
                 if (lastCommand) {
                     result.lastBlitCommand = bltStream;
                 }
-                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, blitProperties.isDstSystemOrRemoteMemory);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, blitProperties.isDstSystemOrRemoteMemory, programQueueSwitchPoint);
 
                 sizeToBlit -= blitSize;
                 offset += blitSize;
@@ -359,6 +387,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
 
     dispatchPreBlitCommand(linearStream, rootDeviceEnvironment);
     const bool hasAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties(blitProperties);
+    const bool programQueueSwitchPoint = !blitProperties.highPriority && isQueueSwitchPointAfterBlitRequired(rootDeviceEnvironment);
 
     BlitCommandsResult result{};
     for (uint32_t i = 0; i < blitProperties.copySize.z; i++) {
@@ -378,7 +407,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRe
         if (lastCommand) {
             result.lastBlitCommand = cmd;
         }
-        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, false);
+        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, false, programQueueSwitchPoint);
     }
     return result;
 }
@@ -485,6 +514,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
     appendColorDepth(blitProperties, bltCmd);
 
     const bool hasAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties(blitProperties);
+    const bool programQueueSwitchPoint = !blitProperties.highPriority && isQueueSwitchPointAfterBlitRequired(rootDeviceEnvironment);
 
     BlitCommandsResult result{};
     bool firstCommand = true;
@@ -522,7 +552,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferR
                 if (lastCommand) {
                     result.lastBlitCommand = cmd;
                 }
-                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, blitProperties.isDstSystemOrRemoteMemory);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, hasAdditionalBlitProperties, lastCommand, blitProperties.isDstSystemOrRemoteMemory, programQueueSwitchPoint);
 
                 srcAddress += width;
                 dstAddress += width;

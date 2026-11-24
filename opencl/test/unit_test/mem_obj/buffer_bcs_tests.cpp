@@ -88,6 +88,7 @@ struct BcsBufferTests : public ::testing::Test {
         debugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
         debugManager.flags.EnableHostUsmAllocationPool.set(0);
         debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(0);
         auto hwInfo = *defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
         {

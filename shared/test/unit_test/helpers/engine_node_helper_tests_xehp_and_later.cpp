@@ -132,6 +132,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenLessThanFourCopyEnginesWhenGet
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineWhenSelectLinkCopyEngineThenHpEngineIsNotSelected, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.SkipHpBcsInitialization.set(0);
     DeviceBitfield deviceBitfield = 0b1;
     hardwareInfo.featureTable.ftrBcsInfo = 0b10010;
 
@@ -155,6 +156,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineWhenSelectLinkCopy
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineAndBcs0And1And2RegularEnginesWhenDefaultCopyIsNotBcs1ThenHpEngineIsNotSelectedAndDifferentEnginesAreReturned, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.SkipHpBcsInitialization.set(0);
     DeviceBitfield deviceBitfield = 0b1;
 
     hardwareInfo.featureTable.ftrBcsInfo = 0b10111;
@@ -188,6 +190,7 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineAndBcs0And1And2Reg
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenBcs2HpCopyEngineAndBcs0And1RegularEnginesWhenSelectingLinkCopyEngineThenBcs1IsSelected, IsAtLeastXeCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.SkipHpBcsInitialization.set(0);
     DeviceBitfield deviceBitfield = 0b1;
     hardwareInfo.featureTable.ftrBcsInfo = 0b00111;
 

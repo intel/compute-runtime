@@ -630,6 +630,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
 
     auto blitProperties = ClBlitProperties::constructProperties(blitDirection, blitCommandStreamReceiver,
                                                                 multiDispatchInfo.peekBuiltinOpParams());
+    blitProperties.highPriority = blitCommandStreamReceiver.getOsContext().isHighPriority();
     if (!queueBlocked) {
         eventsRequest.fillCsrDependenciesForTimestampPacketContainer(blitProperties.csrDependencies, blitCommandStreamReceiver,
                                                                      CsrDependencies::DependenciesType::all);

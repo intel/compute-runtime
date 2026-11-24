@@ -1204,6 +1204,8 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToImageCo
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenWaitWhenWhenAppendBlitCalledThenProgramSemaphore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(0);
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);

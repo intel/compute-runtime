@@ -132,6 +132,7 @@ HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenAtLeastXe3pWhenEncodeAdditionalTi
 HWTEST2_F(GfxCoreHelperXe3pAndLaterTestsWithEnginesCheck, givenGroupContextWhenCreatingDeviceThenCreateBcsLpContextForEachRegularBcs, IsAtLeastXe3pCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(2);
+    debugManager.flags.SkipHpBcsInitialization.set(0);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;

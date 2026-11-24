@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/heapless_matchers.h"
@@ -346,6 +347,39 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
     }
     EXPECT_EQ(L3CachingSettings::notApplicable, mockCsr->passedDispatchFlags.l3CacheSettings);
     EXPECT_EQ(GrfConfig::notApplicable, mockCsr->passedDispatchFlags.numGrfRequired);
+}
+
+HWTEST_F(DispatchFlagsBlitTests, givenBcsCsrWithHighOrRegularPriorityContextWhenProcessingDispatchForBlitEnqueueThenBlitPropertiesHighPriorityMatchesContext) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    setUpImpl<CsrType>();
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    cl_int retVal = CL_SUCCESS;
+    auto srcBuffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), 0, 1, nullptr, retVal));
+    auto dstBuffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), 0, 1, nullptr, retVal));
+    BuiltIn::OpParams builtinOpParams;
+    builtinOpParams.srcMemObj = srcBuffer.get();
+    builtinOpParams.dstMemObj = dstBuffer.get();
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setBuiltinOpParams(builtinOpParams);
+    auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;
+
+    TimestampPacketDependencies timestampPacketDependencies;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    mockCmdQ->obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, true, bcsCsr);
+
+    for (auto engineUsage : {EngineUsage::regular, EngineUsage::highPriority}) {
+        std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, device->getRootDeviceIndex(), 0,
+                                                               EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, engineUsage},
+                                                                                                            PreemptionMode::Disabled, device->getDeviceBitfield())));
+        bcsCsr.setupContext(*osContext);
+
+        BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
+                                                                                eventsRequest, nullptr, CL_COMMAND_COPY_BUFFER, true, false, nullptr);
+        EXPECT_EQ(engineUsage == EngineUsage::highPriority, blitProperties.highPriority);
+    }
+    bcsCsr.setupContext(*mockCmdQ->bcsEngines[0]->osContext);
 }
 
 HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKernelThenDispatchFlagStateCacheInvalidationInFlushTaskIsSetCorrectly) {

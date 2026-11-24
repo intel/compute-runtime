@@ -66,6 +66,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
     }
 
     const bool useAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties(blitProperties);
+    const bool programQueueSwitchPoint = !blitProperties.highPriority && isQueueSwitchPointAfterBlitRequired(rootDeviceEnvironment);
 
     uint64_t sizeToFill = blitProperties.copySize.x;
     uint64_t offset = blitProperties.dstOffset.x;
@@ -105,6 +106,8 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
         *cmd = tmpCmd;
         if (lastCommand) {
             result.lastBlitCommand = cmd;
+        } else if (programQueueSwitchPoint) {
+            dispatchQueueSwitchPointSemaphore(linearStream, rootDeviceEnvironment);
         }
         offset += blitSize;
         sizeToFill -= blitSize;

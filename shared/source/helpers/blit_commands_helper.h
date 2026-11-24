@@ -40,9 +40,12 @@ struct BlitCommandsHelper {
     static void dispatchPreBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimatePreBlitCommandSize();
     static bool isFlushBetweenBlitsRequired(const RootDeviceEnvironment &rootDeviceEnvironment, bool isDstSystemOrRemoteMemory);
-    static void dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd, bool isDstSystemOrRemoteMemory);
+    static void dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd, bool isDstSystemOrRemoteMemory, bool programQueueSwitchPoint);
+    static bool isQueueSwitchPointAfterBlitRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void dispatchQueueSwitchPointSemaphore(LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t estimateQueueSwitchPointsAfterBlitsSize(const RootDeviceEnvironment &rootDeviceEnvironment, size_t nBlits);
     static size_t estimatePostBlitCommandSize(bool withFlush);
-    static size_t estimatePostBlitsCommandsSize(size_t nBlitsWithFlushes, size_t nBlitsWithoutFlushes);
+    static size_t estimatePostBlitsCommandsSize(size_t nBlitsWithFlushes, size_t nBlitsWithoutFlushes, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimatePostBlitWaCommandsSize();
     static void dispatchPostBlitWaCommands(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,

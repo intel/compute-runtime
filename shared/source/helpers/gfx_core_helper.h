@@ -453,6 +453,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
   protected:
     aub_stream::EngineType hpCopyEngineType = aub_stream::EngineType::NUM_ENGINES;
     bool secondaryContextsEnabled = false;
+    bool dedicatedHpCopyEngineSupported = false;
 
     static const AuxTranslationMode defaultAuxTranslationMode;
 };

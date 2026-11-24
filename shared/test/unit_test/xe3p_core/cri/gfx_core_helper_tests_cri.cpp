@@ -120,12 +120,36 @@ CRITEST_F(GfxCoreHelperTestsCri, givenDebugFlagDisablingContextGroupWhenQuerying
     }
 }
 
-CRITEST_F(GfxCoreHelperTestsCri, givenContextGroupWhenQueryingEnginesThenLowPriorityHighPriorityAndInternalEngineIsReturned) {
-    constexpr size_t numEngines = 7;
+CRITEST_F(GfxCoreHelperTestsCri, givenContextGroupWhenQueryingEnginesThenLowPriorityAndInternalEnginesAreReturnedAndHighPriorityEngineIsReturnedOnlyWhenDedicatedHpCopyEngineIsEnabled) {
+    struct EnginePropertiesMap {
+        aub_stream::EngineType engineType;
+        bool isRegular;
+        bool isLowPriority;
+        bool isInternal;
+        bool isHighPriority;
+    };
 
-    DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
-    debugManager.flags.ContextGroupSize.set(4);
+    const std::vector<EnginePropertiesMap> enginesWithoutDedicatedHpCopyEngine = {
+        {aub_stream::ENGINE_CCS, true, false, false, false},
+        {aub_stream::ENGINE_CCS, false, true, false, false},
+        {aub_stream::ENGINE_CCS, false, false, true, false},
+        {aub_stream::ENGINE_BCS1, true, false, false, false},
+        {aub_stream::ENGINE_BCS1, false, false, true, false},
+        {aub_stream::ENGINE_BCS1, false, true, false, false},
+        {aub_stream::ENGINE_BCS2, true, false, false, false},
+        {aub_stream::ENGINE_BCS2, false, true, false, false},
+        {aub_stream::ENGINE_BCS2, false, false, true, false},
+    };
+
+    const std::vector<EnginePropertiesMap> enginesWithDedicatedHpCopyEngine = {
+        {aub_stream::ENGINE_CCS, true, false, false, false},
+        {aub_stream::ENGINE_CCS, false, true, false, false},
+        {aub_stream::ENGINE_CCS, false, false, true, false},
+        {aub_stream::ENGINE_BCS1, true, false, false, false},
+        {aub_stream::ENGINE_BCS1, false, false, true, false},
+        {aub_stream::ENGINE_BCS1, false, true, false, false},
+        {aub_stream::ENGINE_BCS2, false, false, false, true},
+    };
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.caps.rcsExposureDisabled = true;
@@ -135,36 +159,28 @@ CRITEST_F(GfxCoreHelperTestsCri, givenContextGroupWhenQueryingEnginesThenLowPrio
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_EQ(numEngines, device->allEngines.size());
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
-    EXPECT_EQ(numEngines, engines.size());
+    for (auto skipHpBcsInitialization : {-1, 0}) {
+        DebugManagerStateRestore restore;
+        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+        debugManager.flags.ContextGroupSize.set(4);
+        debugManager.flags.SkipHpBcsInitialization.set(skipHpBcsInitialization);
 
-    struct EnginePropertiesMap {
-        aub_stream::EngineType engineType;
-        bool isRegular;
-        bool isLowPriority;
-        bool isInternal;
-        bool isHighPriority;
-    };
+        const auto &enginePropertiesMap = (skipHpBcsInitialization == 0) ? enginesWithDedicatedHpCopyEngine : enginesWithoutDedicatedHpCopyEngine;
 
-    const std::array<EnginePropertiesMap, numEngines> enginePropertiesMap = {{
-        {aub_stream::ENGINE_CCS, true, false, false, false},
-        {aub_stream::ENGINE_CCS, false, true, false, false},
-        {aub_stream::ENGINE_CCS, false, false, true, false},
-        {aub_stream::ENGINE_BCS1, true, false, false, false},
-        {aub_stream::ENGINE_BCS1, false, false, true, false},
-        {aub_stream::ENGINE_BCS1, false, true, false, false},
-        {aub_stream::ENGINE_BCS2, false, false, false, true},
-    }};
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        EXPECT_EQ(enginePropertiesMap.size(), device->allEngines.size());
+        auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+        ASSERT_EQ(enginePropertiesMap.size(), engines.size());
 
-    for (size_t i = 0; i < numEngines; i++) {
-        const auto &engine = engines[i];
-        EXPECT_EQ(enginePropertiesMap[i].engineType, engine.first);
-        EXPECT_EQ(enginePropertiesMap[i].isRegular, engine.second == EngineUsage::regular);
-        EXPECT_EQ(enginePropertiesMap[i].isLowPriority, engine.second == EngineUsage::lowPriority);
-        EXPECT_EQ(enginePropertiesMap[i].isInternal, engine.second == EngineUsage::internal);
+        for (size_t i = 0; i < enginePropertiesMap.size(); i++) {
+            const auto &engine = engines[i];
+            EXPECT_EQ(enginePropertiesMap[i].engineType, engine.first) << i;
+            EXPECT_EQ(enginePropertiesMap[i].isRegular, engine.second == EngineUsage::regular) << i;
+            EXPECT_EQ(enginePropertiesMap[i].isLowPriority, engine.second == EngineUsage::lowPriority) << i;
+            EXPECT_EQ(enginePropertiesMap[i].isInternal, engine.second == EngineUsage::internal) << i;
+            EXPECT_EQ(enginePropertiesMap[i].isHighPriority, engine.second == EngineUsage::highPriority) << i;
+        }
     }
 }
 
@@ -277,14 +293,23 @@ struct GfxCoreHelperTestsCriWithEnginesCheck : public GfxCoreHelperTestWithEngin
     }
 
     void SetUp() override {}
+
+    void verifyGpgpuEngines(bool dedicatedHpCopyEngineEnabled);
 };
 
 CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+    for (auto skipHpBcsInitialization : {-1, 0}) {
+        DebugManagerStateRestore restore;
+        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+        debugManager.flags.SkipHpBcsInitialization.set(skipHpBcsInitialization);
+        verifyGpgpuEngines(skipHpBcsInitialization == 0);
+    }
+}
 
-    const size_t numEnginesWithCccs = 24;
-    const size_t numEnginesWithoutCccs = 26;
+void GfxCoreHelperTestsCriWithEnginesCheck::verifyGpgpuEngines(bool dedicatedHpCopyEngineEnabled) {
+    const size_t additionalEnginesWithoutHpCopyEngine = dedicatedHpCopyEngineEnabled ? 0u : 1u;
+    const size_t numEnginesWithCccs = 24 + additionalEnginesWithoutHpCopyEngine;
+    const size_t numEnginesWithoutCccs = 26 + additionalEnginesWithoutHpCopyEngine;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -334,7 +359,7 @@ CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTw
         }
 
         for (uint32_t idx = 1u; idx < hwInfo.featureTable.ftrBcsInfo.size(); idx++) {
-            if (idx == 8 && gfxCoreHelper.areSecondaryContextsSupported()) {
+            if (idx == 8 && dedicatedHpCopyEngineEnabled && gfxCoreHelper.areSecondaryContextsSupported()) {
                 EXPECT_EQ(1u, getEngineCount(EngineHelpers::getBcsEngineAtIdx(idx), EngineUsage::highPriority));
             } else {
                 EXPECT_EQ(1u, getEngineCount(EngineHelpers::getBcsEngineAtIdx(idx), EngineUsage::regular));

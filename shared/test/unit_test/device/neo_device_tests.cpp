@@ -4848,6 +4848,75 @@ HWTEST2_F(DeviceTests, givenSkipHpBcsInitializationWhenDeviceCreatedThenHpCopyEn
     EXPECT_EQ(nullptr, device->getHpCopyEngine());
 }
 
+HWTEST2_F(DeviceTests, givenCriWhenDeviceCreatedThenHpCopyEngineIsNotCreatedAndEachCopyEngineHasRegularAndHighPriorityContexts, IsCRI) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(64);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b1111;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, device->getGfxCoreHelper().getDefaultHpCopyEngine(hwInfo));
+    EXPECT_EQ(nullptr, device->getHpCopyEngine());
+
+    auto copyEngineGroup = device->tryGetRegularEngineGroup(EngineGroupType::copy);
+    ASSERT_NE(nullptr, copyEngineGroup);
+    ASSERT_EQ(3u, copyEngineGroup->engines.size());
+
+    for (auto &engine : copyEngineGroup->engines) {
+        EXPECT_FALSE(engine.osContext->isHighPriority());
+        auto &secondaryEngines = device->secondaryEngines[engine.getEngineType()];
+        EXPECT_EQ(64u, secondaryEngines.engines.size());
+        EXPECT_EQ(60u, secondaryEngines.regularEnginesTotal);
+        EXPECT_EQ(4u, secondaryEngines.highPriorityEnginesTotal);
+    }
+}
+
+HWTEST2_F(DeviceTests, givenNoDedicatedHpCopyEngineAndTwoCopyEnginesWhenDeviceCreatedThenEachCopyEngineUsesWholeContextGroupWithRegularAndHighPriorityContexts, IsAtLeastXe3pCore) {
+    struct ContextGroupConfig {
+        int32_t contextGroupSize;
+        uint32_t expectedContextCount;
+        uint32_t expectedRegularContextCount;
+        uint32_t expectedHighPriorityContextCount;
+    };
+    const ContextGroupConfig configs[] = {
+        {8, 8u, 4u, 4u},
+        {2, 2u, 1u, 1u},
+    };
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b110;
+
+    for (const auto &config : configs) {
+        DebugManagerStateRestore dbgRestorer;
+        debugManager.flags.ContextGroupSize.set(config.contextGroupSize);
+        debugManager.flags.SkipHpBcsInitialization.set(1);
+
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+        EXPECT_EQ(nullptr, device->getHpCopyEngine());
+
+        for (auto engineType : {aub_stream::ENGINE_BCS1, aub_stream::ENGINE_BCS2}) {
+            auto secondaryEnginesIt = device->secondaryEngines.find(engineType);
+            ASSERT_NE(device->secondaryEngines.end(), secondaryEnginesIt);
+            auto &secondaryEngines = secondaryEnginesIt->second;
+            EXPECT_EQ(config.expectedContextCount, secondaryEngines.engines.size());
+            EXPECT_EQ(config.expectedRegularContextCount, secondaryEngines.regularEnginesTotal);
+            EXPECT_EQ(config.expectedHighPriorityContextCount, secondaryEngines.highPriorityEnginesTotal);
+        }
+    }
+}
+
 namespace {
 class MockMemoryManagerWithUsage : public MockMemoryManager {
   public:

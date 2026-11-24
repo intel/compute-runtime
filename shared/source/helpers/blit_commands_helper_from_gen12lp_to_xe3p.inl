@@ -51,6 +51,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(co
     blitCmd.setFillColor(blitProperties.fillPattern);
     blitCmd.setColorDepth(colorDepth);
     const bool hasAdditionalBlitProperties = rootDeviceEnvironment.getHelper<ProductHelper>().useAdditionalBlitProperties();
+    const bool programQueueSwitchPoint = !blitProperties.highPriority && isQueueSwitchPointAfterBlitRequired(rootDeviceEnvironment);
 
     BlitCommandsResult result{};
     bool firstCommand = true;
@@ -90,6 +91,8 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(co
         *cmd = tmpCmd;
         if (lastCommand) {
             result.lastBlitCommand = cmd;
+        } else if (programQueueSwitchPoint) {
+            dispatchQueueSwitchPointSemaphore(linearStream, rootDeviceEnvironment);
         }
         offset += (blitSize * patternSize);
         sizeToFill -= blitSize;
