@@ -1911,7 +1911,7 @@ std::string formatBandwidthValue(double value, int precision = bandwidthPrecisio
 // Bandwidth is calculated here from two snapshots, as described by the zes_mem_bandwidth_t spec:
 // bw = 10^6 * ((s2.readCounter - s1.readCounter) + (s2.writeCounter - s1.writeCounter))
 //      / (s2.maxBandwidth * (s2.timestamp - s1.timestamp))
-void printMemoryBandwidthSamples(const zes_mem_handle_t &handle, uint32_t iterations, uint32_t intervalMs) {
+void printMemoryBandwidthSamplesFromCounters(const zes_mem_handle_t &handle, uint32_t iterations, uint32_t intervalMs) {
     constexpr double microSecondsPerSecond = 1000000.0;
     constexpr double bytesPerMegaByte = 1000.0 * 1000.0;
 
@@ -1925,7 +1925,7 @@ void printMemoryBandwidthSamples(const zes_mem_handle_t &handle, uint32_t iterat
     const uint64_t maxBandwidth = previousSample.maxBandwidth;
     const bool maxBandwidthKnown = (maxBandwidth != 0);
 
-    std::cout << " --- Memory bandwidth over " << iterations << " samples, " << intervalMs << " ms apart --- " << std::endl;
+    std::cout << " --- Memory bandwidth (zesMemoryGetBandwidth counters) over " << iterations << " samples, " << intervalMs << " ms apart --- " << std::endl;
     std::cout << "note: no workload is submitted by this test, run one alongside it for the numbers below to be meaningful" << std::endl;
     if (maxBandwidthKnown) {
         std::cout << "maxBandwidth = " << formatBandwidthValue(maxBandwidth / bytesPerMegaByte) << " MB/sec" << std::endl;
@@ -2017,6 +2017,127 @@ void printMemoryBandwidthSamples(const zes_mem_handle_t &handle, uint32_t iterat
     }
 }
 
+typedef ze_result_t(ZE_APICALL *zesIntelMemoryBandwidthSampleGetExp_pfn)(
+    zes_mem_handle_t hMemory, size_t sampleSize, void *pSample);
+typedef ze_result_t(ZE_APICALL *zesIntelMemoryBandwidthSampleCalculateExp_pfn)(
+    zes_mem_handle_t hMemory, size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth);
+
+zesIntelMemoryBandwidthSampleGetExp_pfn zesIntelMemoryBandwidthSampleGetExpPtr = nullptr;
+zesIntelMemoryBandwidthSampleCalculateExp_pfn zesIntelMemoryBandwidthSampleCalculateExpPtr = nullptr;
+
+void getMemoryBandwidthSampleExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    if (zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelMemoryBandwidthSampleGetExp", reinterpret_cast<void **>(&zesIntelMemoryBandwidthSampleGetExpPtr)) != ZE_RESULT_SUCCESS ||
+        zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelMemoryBandwidthSampleCalculateExp", reinterpret_cast<void **>(&zesIntelMemoryBandwidthSampleCalculateExpPtr)) != ZE_RESULT_SUCCESS) {
+        zesIntelMemoryBandwidthSampleGetExpPtr = nullptr;
+        zesIntelMemoryBandwidthSampleCalculateExpPtr = nullptr;
+    }
+}
+
+void printMemoryBandwidthSamplesFromSampleExp(const zes_mem_handle_t &handle, uint32_t iterations, uint32_t intervalMs) {
+    constexpr double bytesPerMegaByte = 1000.0 * 1000.0;
+
+    if (zesIntelMemoryBandwidthSampleGetExpPtr == nullptr || zesIntelMemoryBandwidthSampleCalculateExpPtr == nullptr) {
+        std::cout << "zesIntelMemoryBandwidthSample*Exp is not available, skipping bandwidth calculation for this memory module" << std::endl;
+        return;
+    }
+
+    zes_mem_properties_t memoryProperties = {};
+    zes_intel_mem_bandwidth_sample_properties_exp_t sampleProperties = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP};
+    memoryProperties.pNext = &sampleProperties;
+    ze_result_t result = zesMemoryGetProperties(handle, &memoryProperties);
+    if (result != ZE_RESULT_SUCCESS || sampleProperties.sampleSize == 0) {
+        std::cout << "memory bandwidth samples are not supported by this memory module, skipping bandwidth calculation" << std::endl;
+        return;
+    }
+
+    zes_mem_bandwidth_t maxBandwidthReading = {};
+    const bool maxBandwidthKnown = (zesMemoryGetBandwidth(handle, &maxBandwidthReading) == ZE_RESULT_SUCCESS) && (maxBandwidthReading.maxBandwidth != 0);
+    const uint64_t maxBandwidth = maxBandwidthReading.maxBandwidth;
+
+    std::cout << " --- Memory bandwidth (zesIntelMemoryBandwidthSample*Exp) over " << iterations << " samples, " << intervalMs << " ms apart --- " << std::endl;
+    std::cout << "note: no workload is submitted by this test, run one alongside it for the numbers below to be meaningful" << std::endl;
+    if (maxBandwidthKnown) {
+        std::cout << "maxBandwidth = " << formatBandwidthValue(maxBandwidth / bytesPerMegaByte) << " MB/sec" << std::endl;
+    } else {
+        std::cout << "maxBandwidth = not available" << std::endl;
+    }
+    constexpr double milliSecondsPerSecond = 1000.0;
+    if (intervalMs / milliSecondsPerSecond > sampleProperties.maxSampleInterval) {
+        std::cout << "WARNING: the interval is longer than maxSampleInterval = " << sampleProperties.maxSampleInterval << " s, zesIntelMemoryBandwidthSampleCalculateExp will reject the samples" << std::endl;
+    }
+
+    std::vector<uint8_t> previousSample(sampleProperties.sampleSize);
+    std::vector<uint8_t> currentSample(sampleProperties.sampleSize);
+    result = zesIntelMemoryBandwidthSampleGetExpPtr(handle, previousSample.size(), previousSample.data());
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << getErrorString(result) << " returned by zesIntelMemoryBandwidthSampleGetExp, skipping bandwidth calculation for this memory module" << std::endl;
+        return;
+    }
+
+    uint32_t validSamples = 0;
+    double sumTotalBytesPerSec = 0.0;
+
+    for (uint32_t sample = 0; sample < iterations; sample++) {
+        const uint32_t sampleNumber = sample + 1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(intervalMs));
+
+        result = zesIntelMemoryBandwidthSampleGetExpPtr(handle, currentSample.size(), currentSample.data());
+        if (result != ZE_RESULT_SUCCESS) {
+            std::cout << getErrorString(result) << " returned by zesIntelMemoryBandwidthSampleGetExp, abandoning bandwidth calculation for this memory module" << std::endl;
+            return;
+        }
+
+        zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+        result = zesIntelMemoryBandwidthSampleCalculateExpPtr(handle, currentSample.size(), previousSample.data(), currentSample.data(), &bandwidth);
+        previousSample.swap(currentSample);
+        if (result != ZE_RESULT_SUCCESS) {
+            std::cout << "sample " << sampleNumber << "/" << iterations << " skipped: " << getErrorString(result) << " returned by zesIntelMemoryBandwidthSampleCalculateExp" << std::endl;
+            continue;
+        }
+
+        const double readBytesPerSec = static_cast<double>(bandwidth.readBandwidth);
+        const double writeBytesPerSec = static_cast<double>(bandwidth.writeBandwidth);
+        const double totalBytesPerSec = readBytesPerSec + writeBytesPerSec;
+
+        double percentOfMax = 0.0;
+        if (maxBandwidthKnown) {
+            percentOfMax = 100.0 * totalBytesPerSec / maxBandwidth;
+        }
+
+        std::cout << "sample " << sampleNumber << "/" << iterations
+                  << "   read = " << formatBandwidthValue(readBytesPerSec / bytesPerMegaByte) << " MB/sec"
+                  << "   write = " << formatBandwidthValue(writeBytesPerSec / bytesPerMegaByte) << " MB/sec"
+                  << "   total = " << formatBandwidthValue(totalBytesPerSec / bytesPerMegaByte) << " MB/sec";
+        if (maxBandwidthKnown) {
+            std::cout << "   (" << formatBandwidthValue(percentOfMax, percentPrecision) << " % of max)";
+        }
+        std::cout << std::endl;
+
+        if (verbose) {
+            std::cout << "         readBandwidth = " << bandwidth.readBandwidth
+                      << " bytes/sec, writeBandwidth = " << bandwidth.writeBandwidth
+                      << " bytes/sec, deltaTime = " << bandwidth.intervalUs << " us" << std::endl;
+        }
+
+        if (maxBandwidthKnown && (percentOfMax > 100.0)) {
+            std::cout << "         WARNING: computed bandwidth exceeds reported maxBandwidth" << std::endl;
+        }
+
+        sumTotalBytesPerSec += totalBytesPerSec;
+        validSamples++;
+    }
+
+    std::cout << "summary: " << validSamples << " samples" << std::endl;
+    if (validSamples != 0) {
+        const double averageBytesPerSec = sumTotalBytesPerSec / validSamples;
+        std::cout << "         average total bandwidth = " << formatBandwidthValue(averageBytesPerSec / bytesPerMegaByte) << " MB/sec";
+        if (maxBandwidthKnown) {
+            std::cout << " (" << formatBandwidthValue(100.0 * averageBytesPerSec / maxBandwidth, percentPrecision) << " % of max)";
+        }
+        std::cout << std::endl;
+    }
+}
+
 void testSysmanMemory(ze_device_handle_t &device, uint32_t bandwidthIterations, uint32_t bandwidthIntervalMs) {
     std::cout << std::endl
               << " ----  Memory tests ---- " << std::endl;
@@ -2080,7 +2201,8 @@ void testSysmanMemory(ze_device_handle_t &device, uint32_t bandwidthIterations, 
             }
         }
 
-        printMemoryBandwidthSamples(handle, bandwidthIterations, bandwidthIntervalMs);
+        printMemoryBandwidthSamplesFromCounters(handle, bandwidthIterations, bandwidthIntervalMs);
+        printMemoryBandwidthSamplesFromSampleExp(handle, bandwidthIterations, bandwidthIntervalMs);
     }
 }
 
@@ -2933,6 +3055,7 @@ void testSysmanDriverRescan(zes_driver_handle_t driver, std::vector<ze_device_ha
     // telemetry still responds on the original handles, not to measure bandwidth
     constexpr uint32_t rescanBandwidthIterations = 1;
     constexpr uint32_t rescanBandwidthIntervalMs = 100;
+    getMemoryBandwidthSampleExpFunctionPointers(driver);
     std::for_each(devices.begin(), devices.end(), [&](auto device) {
         testSysmanPci(device, emptyBuf, pciDeviceIndex);
         testSysmanFrequency(device);
@@ -4126,7 +4249,7 @@ int main(int argc, char *argv[]) {
     }
     if (isParamEnabled(argc, argv, "-m", "--memory", &optind)) {
         constexpr uint32_t defaultMemoryBandwidthIterations = 5;
-        constexpr uint32_t defaultMemoryBandwidthIntervalMs = 1000;
+        constexpr uint32_t defaultMemoryBandwidthIntervalMs = 500;
         uint32_t bandwidthIterations = defaultMemoryBandwidthIterations;
         uint32_t bandwidthIntervalMs = defaultMemoryBandwidthIntervalMs;
 
@@ -4162,6 +4285,7 @@ int main(int argc, char *argv[]) {
             optind = optind + 2;
         }
 
+        getMemoryBandwidthSampleExpFunctionPointers(driver);
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanMemory(device, bandwidthIterations, bandwidthIntervalMs);
         });

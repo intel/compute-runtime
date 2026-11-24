@@ -1325,6 +1325,254 @@ HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceAndRe
     EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
+constexpr uint64_t mockCriTransactionSize = 64;
+constexpr uint64_t mockCriCounterUpperBits = 0x12345678ull << 32;
+constexpr off_t mockCriMsu0Mb0WriteOffset = 680;
+constexpr off_t mockCriMsu0Mb0ReadOffset = 688;
+constexpr off_t mockCriMsu1Mb1WriteOffset = 800;
+constexpr off_t mockCriMsu1Mb1ReadOffset = 808;
+constexpr off_t mockCriDisabledMsu3Mb0WriteOffset = 920;
+constexpr off_t mockCriDisabledMsu3Mb0ReadOffset = 928;
+constexpr uint64_t mockCriExpectedReadRequests = 0x200 + 0x300;
+constexpr uint64_t mockCriExpectedWriteRequests = 0x200 + 0x100;
+
+static uint32_t mockBandwidthSampleIndex = 0;
+static uint32_t mockBandwidthSampleMsuBitmask = mockCriMsuBitmask;
+static bool mockBandwidthSampleCounterReadFails = false;
+
+static uint64_t getMockCriBandwidthCounterValue(off_t offset) {
+    const bool isEndSample = mockBandwidthSampleIndex > 0;
+    switch (offset) {
+    case mockCriMsu0Mb0ReadOffset:
+        return mockCriCounterUpperBits | (isEndSample ? 0x100u : 0xFFFFFF00u);
+    case mockCriMsu0Mb0WriteOffset:
+        return isEndSample ? 0x100u : 0x7FFFFF00u;
+    case mockCriMsu1Mb1ReadOffset:
+        return isEndSample ? 1000u + 0x300u : 1000u;
+    case mockCriMsu1Mb1WriteOffset:
+        return isEndSample ? 2000u + 0x100u : 2000u;
+    case mockCriDisabledMsu3Mb0ReadOffset:
+    case mockCriDisabledMsu3Mb0WriteOffset:
+        return isEndSample ? 0x70000000u : 0u;
+    default:
+        return 0u;
+    }
+}
+
+static ssize_t mockCriBandwidthSamplePread(int fd, void *buf, size_t count, off_t offset) {
+    const std::string oobmsmGuid = "0x5e2fa230";
+    if (fd == 4) {
+        uint64_t telemOffset = 0;
+        memcpy(buf, &telemOffset, count);
+    } else if (fd == 5) {
+        memcpy(buf, oobmsmGuid.data(), count);
+    } else if (fd == 6) {
+        if (mockBandwidthSampleCounterReadFails) {
+            return -1;
+        }
+        uint64_t counterValue = getMockCriBandwidthCounterValue(offset);
+        memcpy(buf, &counterValue, count);
+    } else if (fd == 11) {
+        memcpy(buf, mockGfspGuid.data(), count);
+    } else if (fd == 12 && offset == mockCriOffsetMsuBitmask) {
+        memcpy(buf, &mockBandwidthSampleMsuBitmask, count);
+    }
+    return count;
+}
+
+class SysmanProductHelperMemoryBandwidthSampleTest : public SysmanProductHelperMemoryXeTest {
+  protected:
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink{&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen{&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread{&NEO::SysCalls::sysCallsPread, &mockCriBandwidthSamplePread};
+    VariableBackup<uint32_t> backupSampleIndex{&mockBandwidthSampleIndex, 0u};
+    VariableBackup<uint32_t> backupMsuBitmask{&mockBandwidthSampleMsuBitmask, uint32_t{mockCriMsuBitmask}};
+    VariableBackup<bool> backupCounterReadFails{&mockBandwidthSampleCounterReadFails, false};
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    const uint32_t subdeviceId = 0;
+
+    static constexpr size_t sampleMagicOffset = 0;
+    static constexpr size_t sampleLayoutVersionOffset = sampleMagicOffset + sizeof(uint32_t);
+    static constexpr size_t sampleSourceIdOffset = sampleLayoutVersionOffset + sizeof(uint32_t);
+    static constexpr size_t sampleSubdeviceIdOffset = sampleSourceIdOffset + sizeof(uint64_t);
+    static constexpr size_t sampleMsuBitmaskOffset = sampleSubdeviceIdOffset + sizeof(uint32_t);
+    static constexpr size_t sampleTimestampOffset = sampleMsuBitmaskOffset + sizeof(uint32_t);
+    static constexpr double microSecondsPerSecond = 1000000.0;
+    static constexpr uint64_t sampleIntervalUs = 1000000;
+
+    size_t getSampleSize() {
+        zes_intel_mem_bandwidth_sample_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidthSampleProperties(&properties));
+        return properties.sampleSize;
+    }
+
+    uint64_t getMaxSampleIntervalUs() {
+        zes_intel_mem_bandwidth_sample_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidthSampleProperties(&properties));
+        return static_cast<uint64_t>(properties.maxSampleInterval * microSecondsPerSecond);
+    }
+
+    static uint64_t getSampleTimestamp(const std::vector<uint8_t> &sample) {
+        uint64_t timestamp = 0;
+        memcpy(&timestamp, sample.data() + sampleTimestampOffset, sizeof(timestamp));
+        return timestamp;
+    }
+
+    static void setSampleTimestamp(std::vector<uint8_t> &sample, uint64_t timestamp) {
+        memcpy(sample.data() + sampleTimestampOffset, &timestamp, sizeof(timestamp));
+    }
+
+    void takeStartAndEndSamples(std::vector<uint8_t> &startSample, std::vector<uint8_t> &endSample) {
+        mockBandwidthSampleIndex = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data()));
+        mockBandwidthSampleIndex = 1;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, endSample.size(), endSample.data()));
+        setSampleTimestamp(endSample, getSampleTimestamp(startSample) + sampleIntervalUs);
+    }
+};
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenMemoryBandwidthSamplePropertiesWhenGettingThemThenSampleSizeAndMaxSampleIntervalAreReturned, IsCRI) {
+    zes_intel_mem_bandwidth_sample_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidthSampleProperties(&properties));
+    EXPECT_GT(properties.sampleSize, 0u);
+    EXPECT_DOUBLE_EQ(properties.maxSampleInterval, 2.5);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenTwoSamplesWithWrappedCountersWhenCalculatingMemoryBandwidthThenBandwidthOfEnabledMsusIsReturned, IsCRI) {
+    std::vector<uint8_t> startSample(getSampleSize());
+    std::vector<uint8_t> endSample(getSampleSize());
+    takeStartAndEndSamples(startSample, endSample);
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data(), endSample.data(), &bandwidth));
+    EXPECT_EQ(bandwidth.stype, ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP);
+    EXPECT_EQ(bandwidth.intervalUs, sampleIntervalUs);
+    EXPECT_EQ(bandwidth.readBandwidth, mockCriExpectedReadRequests * mockCriTransactionSize);
+    EXPECT_EQ(bandwidth.writeBandwidth, mockCriExpectedWriteRequests * mockCriTransactionSize);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenSampleSizeSmallerThanRequiredWhenGettingOrCalculatingMemoryBandwidthSampleThenInvalidSizeIsReturned, IsCRI) {
+    std::vector<uint8_t> sample(getSampleSize());
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, sample.size() - 1, sample.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, sample.size() - 1, sample.data(), sample.data(), &bandwidth));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenNoTelemNodesAvailableWhenGettingMemoryBandwidthSampleThenUnsupportedFeatureIsReturned, IsCRI) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLinkFails(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+        return -1;
+    });
+    std::vector<uint8_t> sample(getSampleSize());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, sample.size(), sample.data()));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenMsuBitmaskIsZeroWhenGettingMemoryBandwidthSampleThenNotAvailableIsReturned, IsCRI) {
+    mockBandwidthSampleMsuBitmask = 0;
+    std::vector<uint8_t> sample(getSampleSize());
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, sample.size(), sample.data()));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenCounterReadFailsWhenGettingMemoryBandwidthSampleThenNotAvailableIsReturned, IsCRI) {
+    mockBandwidthSampleCounterReadFails = true;
+    std::vector<uint8_t> sample(getSampleSize());
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, sample.size(), sample.data()));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenSamplesNotTakenWithGetMemoryBandwidthSampleWhenCalculatingMemoryBandwidthThenInvalidArgumentIsReturned, IsCRI) {
+    std::vector<uint8_t> validSample(getSampleSize());
+    std::vector<uint8_t> zeroSample(getSampleSize(), 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, validSample.size(), validSample.data()));
+    const uint64_t validTimestamp = getSampleTimestamp(validSample);
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    setSampleTimestamp(zeroSample, validTimestamp - 1);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, zeroSample.size(), zeroSample.data(), validSample.data(), &bandwidth));
+    setSampleTimestamp(zeroSample, validTimestamp + 1);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, zeroSample.size(), validSample.data(), zeroSample.data(), &bandwidth));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenSamplesOfAnotherSubdeviceWhenCalculatingMemoryBandwidthThenInvalidArgumentIsReturned, IsCRI) {
+    std::vector<uint8_t> startSample(getSampleSize());
+    std::vector<uint8_t> endSample(getSampleSize());
+    takeStartAndEndSamples(startSample, endSample);
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId + 1, startSample.size(), startSample.data(), endSample.data(), &bandwidth));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenSampleWithSingleCorruptedHeaderFieldWhenCalculatingMemoryBandwidthThenInvalidArgumentIsReturned, IsCRI) {
+    std::vector<uint8_t> startSample(getSampleSize());
+    std::vector<uint8_t> endSample(getSampleSize());
+    takeStartAndEndSamples(startSample, endSample);
+
+    constexpr size_t headerFieldOffsets[] = {sampleMagicOffset, sampleLayoutVersionOffset, sampleSourceIdOffset, sampleSubdeviceIdOffset};
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data(), endSample.data(), &bandwidth));
+
+    for (const auto offset : headerFieldOffsets) {
+        for (auto *pCorruptedSample : {&startSample, &endSample}) {
+            (*pCorruptedSample)[offset] ^= 0xFF;
+            EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data(), endSample.data(), &bandwidth));
+            (*pCorruptedSample)[offset] ^= 0xFF;
+        }
+    }
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenEndSampleTakenBeforeStartSampleWhenCalculatingMemoryBandwidthThenInvalidArgumentIsReturned, IsCRI) {
+    std::vector<uint8_t> startSample(getSampleSize());
+    std::vector<uint8_t> endSample(getSampleSize());
+    takeStartAndEndSamples(startSample, endSample);
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, startSample.size(), endSample.data(), startSample.data(), &bandwidth));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data(), startSample.data(), &bandwidth));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenSamplesTakenExactlyMaxSampleIntervalApartWhenCalculatingMemoryBandwidthThenSuccessIsReturned, IsCRI) {
+    std::vector<uint8_t> startSample(getSampleSize());
+    std::vector<uint8_t> endSample(getSampleSize());
+    takeStartAndEndSamples(startSample, endSample);
+    const uint64_t maxSampleIntervalUs = getMaxSampleIntervalUs();
+    setSampleTimestamp(endSample, getSampleTimestamp(startSample) + maxSampleIntervalUs);
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data(), endSample.data(), &bandwidth));
+    EXPECT_EQ(bandwidth.intervalUs, maxSampleIntervalUs);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenSamplesTakenMoreThanMaxSampleIntervalApartWhenCalculatingMemoryBandwidthThenInvalidArgumentIsReturned, IsCRI) {
+    std::vector<uint8_t> startSample(getSampleSize());
+    std::vector<uint8_t> endSample(getSampleSize());
+    takeStartAndEndSamples(startSample, endSample);
+    setSampleTimestamp(endSample, getSampleTimestamp(startSample) + getMaxSampleIntervalUs() + 1);
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data(), endSample.data(), &bandwidth));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryBandwidthSampleTest, GivenSamplesWithDifferentMsuBitmaskWhenCalculatingMemoryBandwidthThenInvalidArgumentIsReturned, IsCRI) {
+    std::vector<uint8_t> startSample(getSampleSize());
+    std::vector<uint8_t> endSample(getSampleSize());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data()));
+    mockBandwidthSampleMsuBitmask = mockCriMsuBitmask & ~1u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, endSample.size(), endSample.data()));
+    setSampleTimestamp(endSample, getSampleTimestamp(startSample) + sampleIntervalUs);
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, startSample.size(), startSample.data(), endSample.data(), &bandwidth));
+}
+
+HWTEST2_F(SysmanProductHelperMemoryXeTest, GivenSysmanProductHelperInstanceWhenCallingMemoryBandwidthSampleFunctionsThenUnsupportedFeatureIsReturned, IsNotCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_intel_mem_bandwidth_sample_properties_exp_t properties = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP};
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    std::vector<uint8_t> sample(64);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getMemoryBandwidthSampleProperties(&properties));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, 0, sample.size(), sample.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, 0, sample.size(), sample.data(), sample.data(), &bandwidth));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

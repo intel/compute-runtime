@@ -1448,6 +1448,148 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     return ZE_RESULT_SUCCESS;
 }
 
+// The read request counters are 32 bits and the write request counters are 31 bits wide, and both wrap
+// around. The delta of a counter between two samples is right only if it wrapped around at most once.
+constexpr static double memoryBandwidthMaxSampleIntervalSeconds = 2.5;
+constexpr static uint32_t memoryBandwidthWriteCounterMask = 0x7FFFFFFFu;
+constexpr static uint32_t memoryBandwidthSampleMagic = 0x5357424Du;
+constexpr static uint32_t memoryBandwidthSampleLayoutVersion = 1u;
+constexpr static uint32_t memoryBandwidthCountersPerMemoryBridge = 2;
+constexpr static uint32_t memoryBandwidthCountersPerMsu = memoryBridgeCount * memoryBandwidthCountersPerMemoryBridge;
+
+#pragma pack(1)
+struct MemoryBandwidthSample {
+    uint32_t magic;
+    uint32_t layoutVersion;
+    uint64_t sourceId;
+    uint32_t subdeviceId;
+    uint32_t msuBitmask;
+    uint64_t timestampUs;
+    uint32_t counters[maxMemoryMsuCount * memoryBandwidthCountersPerMsu];
+};
+#pragma pack()
+
+static uint64_t getMemoryBandwidthSampleSourceId(LinuxSysmanImp *pLinuxSysmanImp) {
+    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pLinuxSysmanImp));
+}
+
+static ze_result_t readMemoryBandwidthSampleCounters(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
+                                                     uint32_t msuBitmask, uint32_t *pCounters) {
+    uint64_t telemOffset = 0;
+    uint32_t counterIndex = 0;
+    for (uint32_t msu = 0; msu < maxMemoryMsuCount; msu++) {
+        if (!(msuBitmask & (1u << msu))) {
+            continue;
+        }
+        for (uint32_t mb = 0; mb < memoryBridgeCount; mb++) {
+            const std::string keyPrefix = "MEMSS" + std::to_string(msu) + "_PERF_CTR_MB" + std::to_string(mb);
+            for (const auto &key : {keyPrefix + "_CFI_NUM_READ_REQ", keyPrefix + "_CFI_NUM_WRITE_REQ"}) {
+                uint64_t counterValue = 0;
+                ze_result_t result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, telemOffset, counterValue);
+                if (result != ZE_RESULT_SUCCESS) {
+                    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for key: %s, returning error:0x%x \n", NEO_FUNCTION_NAME, key.c_str(), result);
+                    return result;
+                }
+                pCounters[counterIndex++] = static_cast<uint32_t>(counterValue); // only the lower 32 bits of the counter are valid
+            }
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidthSampleProperties(zes_intel_mem_bandwidth_sample_properties_exp_t *pProperties) {
+    pProperties->sampleSize = sizeof(MemoryBandwidthSample);
+    pProperties->maxSampleInterval = memoryBandwidthMaxSampleIntervalSeconds;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidthSample(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, size_t sampleSize, void *pSample) {
+    if (sampleSize < sizeof(MemoryBandwidthSample)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Sample size %zu is smaller than %zu, returning error:0x%x \n", NEO_FUNCTION_NAME, sampleSize, sizeof(MemoryBandwidthSample), ZE_RESULT_ERROR_INVALID_SIZE);
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    MemoryBandwidthSample sample = {};
+    result = getMsuBitmask(keyOffsetMap, keyTelemInfoMap, sample.msuBitmask);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the MSU bitmask, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+        return result;
+    }
+
+    if (ZE_RESULT_SUCCESS != readMemoryBandwidthSampleCounters(keyOffsetMap, keyTelemInfoMap, sample.msuBitmask, sample.counters)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the Read and Write Counter Values, returning error 0x%x>\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    sample.timestampUs = SysmanDevice::getSysmanTimestamp();
+    sample.magic = memoryBandwidthSampleMagic;
+    sample.layoutVersion = memoryBandwidthSampleLayoutVersion;
+    sample.sourceId = getMemoryBandwidthSampleSourceId(pLinuxSysmanImp);
+    sample.subdeviceId = subdeviceId;
+    memcpy(pSample, &sample, sizeof(sample));
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::calculateMemoryBandwidthFromSamples(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) {
+    if (sampleSize < sizeof(MemoryBandwidthSample)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Sample size %zu is smaller than %zu, returning error:0x%x \n", NEO_FUNCTION_NAME, sampleSize, sizeof(MemoryBandwidthSample), ZE_RESULT_ERROR_INVALID_SIZE);
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+
+    MemoryBandwidthSample start = {};
+    MemoryBandwidthSample end = {};
+    memcpy(&start, pSampleStart, sizeof(start));
+    memcpy(&end, pSampleEnd, sizeof(end));
+
+    const int64_t intervalUs = static_cast<int64_t>(end.timestampUs) - static_cast<int64_t>(start.timestampUs);
+    if (intervalUs <= 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The end sample is not after the start sample, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    const double intervalSeconds = static_cast<double>(intervalUs) / microFactor;
+    if (intervalSeconds > memoryBandwidthMaxSampleIntervalSeconds) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Time delta of %f seconds between the samples is more than the maximum of %f seconds, returning error:0x%x \n", NEO_FUNCTION_NAME, intervalSeconds, memoryBandwidthMaxSampleIntervalSeconds, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    const uint64_t sourceId = getMemoryBandwidthSampleSourceId(pLinuxSysmanImp);
+    for (const auto *pSample : {&start, &end}) {
+        if (pSample->magic != memoryBandwidthSampleMagic || pSample->layoutVersion != memoryBandwidthSampleLayoutVersion ||
+            pSample->sourceId != sourceId || pSample->subdeviceId != subdeviceId) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Sample was not taken from this memory module, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+    if (start.msuBitmask != end.msuBitmask) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The MSU bitmask of the samples does not match, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    uint64_t readRequests = 0;
+    uint64_t writeRequests = 0;
+    const uint32_t counterCount = static_cast<uint32_t>(std::popcount(start.msuBitmask & msuBitmaskMask)) * memoryBandwidthCountersPerMsu;
+    for (uint32_t i = 0; i < counterCount; i += memoryBandwidthCountersPerMemoryBridge) {
+        readRequests += static_cast<uint32_t>(end.counters[i] - start.counters[i]);
+        writeRequests += static_cast<uint32_t>(end.counters[i + 1] - start.counters[i + 1]) & memoryBandwidthWriteCounterMask;
+    }
+
+    pBandwidth->readBandwidth = static_cast<uint64_t>(static_cast<double>(readRequests * transactionSize) / intervalSeconds);
+    pBandwidth->writeBandwidth = static_cast<uint64_t>(static_cast<double>(writeRequests * transactionSize) / intervalSeconds);
+    pBandwidth->intervalUs = static_cast<uint64_t>(intervalUs);
+    return ZE_RESULT_SUCCESS;
+}
+
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();

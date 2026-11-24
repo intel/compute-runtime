@@ -8,6 +8,7 @@
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
+#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <memory>
 #include <mutex>
@@ -24,6 +25,8 @@ class Memory : _zes_mem_handle_t {
     virtual ze_result_t memoryGetProperties(zes_mem_properties_t *pProperties) = 0;
     virtual ze_result_t memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) = 0;
     virtual ze_result_t memoryGetState(zes_mem_state_t *pState) = 0;
+    virtual ze_result_t memoryGetBandwidthSample(size_t sampleSize, void *pSample) = 0;
+    virtual ze_result_t memoryCalculateBandwidthFromSamples(size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) = 0;
 
     static Memory *fromHandle(zes_mem_handle_t handle) {
         return static_cast<Memory *>(handle);

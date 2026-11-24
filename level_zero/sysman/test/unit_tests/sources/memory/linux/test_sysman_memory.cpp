@@ -237,6 +237,53 @@ HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionWhenCalling
     }
 }
 
+HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenMemoryHandleOfUnsupportedProductWhenCallingMemoryBandwidthSampleApisThenUnsupportedFeatureIsReturned, IsNotCRI) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    uint8_t sample[64] = {};
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelMemoryBandwidthSampleGetExp(handle, sizeof(sample), sample));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelMemoryBandwidthSampleCalculateExp(handle, sizeof(sample), sample, sample, &bandwidth));
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenMemoryBandwidthSamplePropertiesExtensionWhenCallingZesMemoryGetPropertiesThenSampleSizeAndMaxSampleIntervalAreReturned, IsCRI) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_properties_t properties = {};
+        zes_intel_mem_bandwidth_sample_properties_exp_t sampleProperties = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP};
+        properties.pNext = &sampleProperties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesMemoryGetProperties(handle, &properties));
+        EXPECT_EQ(properties.pNext, &sampleProperties);
+        EXPECT_GT(sampleProperties.sampleSize, 0u);
+        EXPECT_DOUBLE_EQ(sampleProperties.maxSampleInterval, 2.5);
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenMemoryBandwidthSamplePropertiesExtensionAndUnsupportedProductWhenCallingZesMemoryGetPropertiesThenUnsupportedFeatureIsReturned, IsNotCRI) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_properties_t properties = {};
+        zes_intel_mem_bandwidth_sample_properties_exp_t sampleProperties = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP};
+        properties.pNext = &sampleProperties;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesMemoryGetProperties(handle, &properties));
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenMemoryHandleAndTooSmallSampleWhenCallingMemoryBandwidthSampleApisThenInvalidSizeIsReturned, IsCRI) {
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    uint8_t sample[1] = {};
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesIntelMemoryBandwidthSampleGetExp(handle, sizeof(sample), sample));
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesIntelMemoryBandwidthSampleCalculateExp(handle, sizeof(sample), sample, sample, &bandwidth));
+    }
+}
+
 TEST_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionAndVendorIdIsKnownWhenCallingZesMemoryGetPropertiesThenVendorNameIsReturned) {
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 

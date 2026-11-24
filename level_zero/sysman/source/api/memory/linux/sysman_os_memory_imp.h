@@ -33,6 +33,8 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t getState(zes_mem_state_t *pState) override;
     ze_result_t getExtensionProperties(void *pNext) override;
+    ze_result_t getBandwidthSample(size_t sampleSize, void *pSample) override;
+    ze_result_t calculateBandwidthFromSamples(size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) override;
     ze_result_t getVendorId(uint32_t *pVendorId);
     static std::unordered_map<std::string, uint64_t> readMemInfoValues(FsAccessInterface *pFsAccess, const std::unordered_set<std::string> &keys);
     bool isMemoryModuleSupported() override;

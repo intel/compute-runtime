@@ -64,6 +64,9 @@ class SysmanProductHelper {
     // Memory
     virtual ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) = 0;
     virtual ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) = 0;
+    virtual ze_result_t getMemoryBandwidthSampleProperties(zes_intel_mem_bandwidth_sample_properties_exp_t *pProperties) = 0;
+    virtual ze_result_t getMemoryBandwidthSample(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, size_t sampleSize, void *pSample) = 0;
+    virtual ze_result_t calculateMemoryBandwidthFromSamples(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) = 0;
     virtual void getMemoryHealthIndicator(LinuxSysmanImp *pLinuxSysmanImp, zes_mem_health_t *health) = 0;
     virtual ze_result_t getNumberOfMemoryChannels(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pNumChannels) = 0;
     virtual ze_result_t getMemoryVendorId(LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pVendorId) = 0;

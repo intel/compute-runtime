@@ -69,6 +69,8 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(zesIntelEngineStopActivityCollectionExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceRasGetCperOnQueryExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceRasSetCperOnQueryExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelMemoryBandwidthSampleGetExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelMemoryBandwidthSampleCalculateExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 

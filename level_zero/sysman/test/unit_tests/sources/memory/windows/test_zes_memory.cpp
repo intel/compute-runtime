@@ -118,6 +118,25 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidOsMemoryObjectWhenGettingExtensionPr
     EXPECT_EQ(ZE_RESULT_SUCCESS, pWddmMemoryImp->getExtensionProperties(nullptr));
 }
 
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingMemoryBandwidthSampleApisThenUnsupportedFeatureIsReturned) {
+    pKmdSysManager->mockMemoryDomains = 1;
+    clearMemHandleListAndReinit();
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_mem_handle_t> handles(count, nullptr);
+    EXPECT_EQ(zesDeviceEnumMemoryModules(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+
+    zes_intel_mem_bandwidth_exp_t bandwidth = {ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP};
+    uint8_t sample[64] = {};
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelMemoryBandwidthSampleGetExp(handle, sizeof(sample), sample));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelMemoryBandwidthSampleCalculateExp(handle, sizeof(sample), sample, sample, &bandwidth));
+    }
+}
+
 TEST_F(SysmanDeviceMemoryFixture, DISABLED_GivenValidMemoryHandleWhenGettingStateThenCallSucceeds) {
     setLocalSupportedAndReinit(true);
     auto handles = getMemoryHandles(memoryHandleComponentCount);

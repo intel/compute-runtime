@@ -64,6 +64,14 @@ ze_result_t LinuxMemoryImp::getExtensionProperties(void *pNext) {
                 strncpy_s(pVendorIdProps->vendorName, ZES_MEMORY_VENDOR_NAME_EXT_SIZE, vendorName.c_str(), vendorName.size());
                 pVendorIdProps->length = static_cast<uint16_t>(vendorName.length());
             }
+        } else if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP) {
+            auto pSampleProps = reinterpret_cast<zes_intel_mem_bandwidth_sample_properties_exp_t *>(pExtProps);
+            auto result = pLinuxSysmanImp->getSysmanProductHelper()->getMemoryBandwidthSampleProperties(pSampleProps);
+            if (result != ZE_RESULT_SUCCESS) {
+                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                             "Error@ %s(): Memory bandwidth sample properties are not available, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
+                return result;
+            }
         }
         pNext = pExtProps->pNext;
     }
@@ -90,6 +98,16 @@ ze_result_t LinuxMemoryImp::fillCpuVisibleExtensionState(const void *pNext, uint
         pNext = pExtState->pNext;
     }
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxMemoryImp::getBandwidthSample(size_t sampleSize, void *pSample) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getMemoryBandwidthSample(pLinuxSysmanImp, subdeviceId, sampleSize, pSample);
+}
+
+ze_result_t LinuxMemoryImp::calculateBandwidthFromSamples(size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->calculateMemoryBandwidthFromSamples(pLinuxSysmanImp, subdeviceId, sampleSize, pSampleStart, pSampleEnd, pBandwidth);
 }
 
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {

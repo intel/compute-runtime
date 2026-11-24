@@ -30,6 +30,8 @@ class WddmMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t getState(zes_mem_state_t *pState) override;
     ze_result_t getExtensionProperties(void *pNext) override;
+    ze_result_t getBandwidthSample(size_t sampleSize, void *pSample) override;
+    ze_result_t calculateBandwidthFromSamples(size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) override;
     bool isMemoryModuleSupported() override;
     WddmMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     WddmMemoryImp() = default;

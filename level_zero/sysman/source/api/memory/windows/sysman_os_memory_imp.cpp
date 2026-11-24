@@ -199,6 +199,14 @@ ze_result_t WddmMemoryImp::getExtensionProperties(void *pNext) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t WddmMemoryImp::getBandwidthSample(size_t sampleSize, void *pSample) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmMemoryImp::calculateBandwidthFromSamples(size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     bool isIntegratedDevice = pWddmSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice;
     if (isIntegratedDevice) {

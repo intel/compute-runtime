@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
+#include "level_zero/sysman/source/api/memory/sysman_memory.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
@@ -172,6 +173,26 @@ ze_result_t ZE_APICALL zesIntelDeviceRasSetCperOnQueryExp(zes_device_handle_t hD
     }
 }
 
+ze_result_t ZE_APICALL zesIntelMemoryBandwidthSampleGetExp(zes_mem_handle_t hMemory, size_t sampleSize, void *pSample) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetBandwidthSample(sampleSize, pSample);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t ZE_APICALL zesIntelMemoryBandwidthSampleCalculateExp(zes_mem_handle_t hMemory, size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Memory::fromHandle(hMemory)->memoryCalculateBandwidthFromSamples(sampleSize, pSampleStart, pSampleEnd, pBandwidth);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 } // namespace L0
 
 extern "C" {
@@ -283,6 +304,14 @@ ze_result_t ZE_APICALL zesIntelDeviceRasGetCperOnQueryExp(zes_device_handle_t hD
 
 ze_result_t ZE_APICALL zesIntelDeviceRasSetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t enable) {
     return L0::zesIntelDeviceRasSetCperOnQueryExp(hDevice, enable);
+}
+
+ze_result_t ZE_APICALL zesIntelMemoryBandwidthSampleGetExp(zes_mem_handle_t hMemory, size_t sampleSize, void *pSample) {
+    return L0::zesIntelMemoryBandwidthSampleGetExp(hMemory, sampleSize, pSample);
+}
+
+ze_result_t ZE_APICALL zesIntelMemoryBandwidthSampleCalculateExp(zes_mem_handle_t hMemory, size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) {
+    return L0::zesIntelMemoryBandwidthSampleCalculateExp(hMemory, sampleSize, pSampleStart, pSampleEnd, pBandwidth);
 }
 
 } // extern "C"

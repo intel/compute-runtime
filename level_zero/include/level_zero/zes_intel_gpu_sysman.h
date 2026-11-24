@@ -1628,6 +1628,119 @@ typedef struct _zes_intel_mem_cpu_visible_exp_state_t {
     uint64_t cpuVisibleSize;        ///< [out] Size in bytes of the CPU visible portion of the memory module.
     uint64_t cpuVisibleUsed;        ///< [out] Estimate in bytes of the CPU visible memory currently used.
 } zes_intel_mem_cpu_visible_exp_state_t;
+#ifndef ZES_INTEL_MEMORY_BANDWIDTH_SAMPLE_EXP_NAME
+/// @brief Memory bandwidth sample extension name
+#define ZES_INTEL_MEMORY_BANDWIDTH_SAMPLE_EXP_NAME "ZES_intel_experimental_memory_bandwidth_sample"
+#endif // ZES_INTEL_MEMORY_BANDWIDTH_SAMPLE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory bandwidth sample extension Version(s)
+typedef enum _zes_intel_memory_bandwidth_sample_exp_version_t {
+    ZES_INTEL_MEMORY_BANDWIDTH_SAMPLE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                 ///< version 1.0
+    ZES_INTEL_MEMORY_BANDWIDTH_SAMPLE_EXP_VERSION_CURRENT = ZES_INTEL_MEMORY_BANDWIDTH_SAMPLE_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_MEMORY_BANDWIDTH_SAMPLE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_memory_bandwidth_sample_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Properties of the memory bandwidth samples of a memory module
+///
+/// @details
+///     - This structure may be returned from ::zesMemoryGetProperties via the `pNext` member
+///       of ::zes_mem_properties_t.
+///     - The application allocates the buffers which ::zesIntelMemoryBandwidthSampleGetExp fills,
+///       using sampleSize.
+///     - If the memory module does not support memory bandwidth samples, ::zesMemoryGetProperties
+///       returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE when this structure is chained.
+typedef struct _zes_intel_mem_bandwidth_sample_properties_exp_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    size_t sampleSize;              ///< [out] size in bytes of the buffer that the application must allocate
+                                    ///< for each sample passed to ::zesIntelMemoryBandwidthSampleGetExp.
+    double maxSampleInterval;       ///< [out] maximum time in seconds between the two samples passed to
+                                    ///< ::zesIntelMemoryBandwidthSampleCalculateExp for which the result is
+                                    ///< valid. The bandwidth counters of the device wrap around, and a longer
+                                    ///< interval can hide a wrap around and give a wrong result.
+} zes_intel_mem_bandwidth_sample_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory bandwidth computed from two memory bandwidth samples
+///
+/// @details
+///     - This structure is returned from ::zesIntelMemoryBandwidthSampleCalculateExp
+typedef struct _zes_intel_mem_bandwidth_exp_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                    ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    uint64_t readBandwidth;         ///< [out] read bandwidth between the two samples, in bytes per second.
+    uint64_t writeBandwidth;        ///< [out] write bandwidth between the two samples, in bytes per second.
+    uint64_t intervalUs;            ///< [out] time in microseconds between the two samples.
+} zes_intel_mem_bandwidth_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Take a memory bandwidth sample of a memory module
+///
+/// @details
+///     - The sample holds the raw bandwidth counters of the memory module and the time at which
+///       they were read. Its content is opaque to the application.
+///     - Pass two samples to ::zesIntelMemoryBandwidthSampleCalculateExp to get the bandwidth
+///       between them.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The product does not support memory bandwidth samples.
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + The bandwidth counters could not be read.
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hMemory`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pSample`
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + sampleSize is smaller than the sampleSize of
+///           ::zes_intel_mem_bandwidth_sample_properties_exp_t
+ze_result_t ZE_APICALL zesIntelMemoryBandwidthSampleGetExp(
+    zes_mem_handle_t hMemory, ///< [in] handle of the memory module
+    size_t sampleSize,        ///< [in] size in bytes of the buffer pointed to by pSample
+    void *pSample             ///< [in,out] buffer which will contain the sample
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Compute the memory bandwidth between two memory bandwidth samples
+///
+/// @details
+///     - Both samples must be taken with ::zesIntelMemoryBandwidthSampleGetExp from the same
+///       memory module, pSampleStart before pSampleEnd.
+///     - The samples must be taken no more than maxSampleInterval apart, see
+///       ::zes_intel_mem_bandwidth_sample_properties_exp_t.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The product does not support memory bandwidth samples.
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + A sample was not taken with ::zesIntelMemoryBandwidthSampleGetExp for this memory
+///           module, or pSampleEnd was not taken after pSampleStart.
+///         + The samples were taken more than maxSampleInterval apart.
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hMemory`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pSampleStart`
+///         + `nullptr == pSampleEnd`
+///         + `nullptr == pBandwidth`
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + sampleSize is smaller than the sampleSize of
+///           ::zes_intel_mem_bandwidth_sample_properties_exp_t
+ze_result_t ZE_APICALL zesIntelMemoryBandwidthSampleCalculateExp(
+    zes_mem_handle_t hMemory,                 ///< [in] handle of the memory module
+    size_t sampleSize,                        ///< [in] size in bytes of each of the two samples
+    const void *pSampleStart,                 ///< [in] sample taken at the start of the interval
+    const void *pSampleEnd,                   ///< [in] sample taken at the end of the interval
+    zes_intel_mem_bandwidth_exp_t *pBandwidth ///< [in,out] will contain the bandwidth between the samples
+);
 
 #if defined(__cplusplus)
 } // extern "C"

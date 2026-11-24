@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,8 @@ class MemoryImp : public Memory, NEO::NonCopyableAndNonMovableClass {
     ze_result_t memoryGetProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t memoryGetState(zes_mem_state_t *pState) override;
+    ze_result_t memoryGetBandwidthSample(size_t sampleSize, void *pSample) override;
+    ze_result_t memoryCalculateBandwidthFromSamples(size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) override;
 
     MemoryImp(OsSysman *pOsSysman, bool onSubdevice, uint32_t subDeviceId);
     ~MemoryImp() override;

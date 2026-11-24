@@ -149,6 +149,21 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidthSampleProperties(zes_intel_mem_bandwidth_sample_properties_exp_t *pProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidthSample(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, size_t sampleSize, void *pSample) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::calculateMemoryBandwidthFromSamples(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void SysmanProductHelperHw<gfxProduct>::getMemoryHealthIndicator(LinuxSysmanImp *pLinuxSysmanImp, zes_mem_health_t *health) {
     *health = ZES_MEM_HEALTH_UNKNOWN;
 }

@@ -18,6 +18,14 @@ ze_result_t MemoryImp::memoryGetState(zes_mem_state_t *pState) {
     return pOsMemory->getState(pState);
 }
 
+ze_result_t MemoryImp::memoryGetBandwidthSample(size_t sampleSize, void *pSample) {
+    return pOsMemory->getBandwidthSample(sampleSize, pSample);
+}
+
+ze_result_t MemoryImp::memoryCalculateBandwidthFromSamples(size_t sampleSize, const void *pSampleStart, const void *pSampleEnd, zes_intel_mem_bandwidth_exp_t *pBandwidth) {
+    return pOsMemory->calculateBandwidthFromSamples(sampleSize, pSampleStart, pSampleEnd, pBandwidth);
+}
+
 ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
     void *pNext = pProperties->pNext;
     *pProperties = memoryProperties;
