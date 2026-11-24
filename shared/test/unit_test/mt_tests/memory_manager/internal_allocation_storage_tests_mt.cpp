@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/memory_allocator_fixture.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
@@ -100,7 +101,7 @@ TEST_F(InternalAllocationStorageMtTest, givenCompletedGpuTaskWhileCsrIsOwnedWhen
         storage->cleanAllocationList(submissionTaskCount, TEMPORARY_ALLOCATION);
     });
     cleanupThread.join();
-    ASSERT_EQ(allocation, storage->getTemporaryAllocations().peekHead());
+    ASSERT_EQ(allocation, MockAllocationsList::whiteboxCast(storage->getTemporaryAllocations()).peekFront());
 
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
     submissionLock.unlock();
@@ -152,8 +153,8 @@ TEST_F(InternalAllocationStorageMtTest, givenAllocationUsedByTwoCsrsWhenOneIsBus
     });
     cleanupThread.join();
     EXPECT_FALSE(deleted);
-    EXPECT_EQ(allocation, storage->getTemporaryAllocations().peekHead());
-    EXPECT_EQ(allocation, storage->getTemporaryAllocations().peekTail());
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(storage->getTemporaryAllocations()).peekFront());
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(storage->getTemporaryAllocations()).peekBack());
 
     std::thread lockObserver([&] {
         auto firstLock = csr->tryObtainUniqueOwnership();
@@ -165,7 +166,7 @@ TEST_F(InternalAllocationStorageMtTest, givenAllocationUsedByTwoCsrsWhenOneIsBus
     *secondCsr.getTagAddress() = completedTaskCount - 1;
     storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
     EXPECT_FALSE(deleted);
-    EXPECT_EQ(allocation, storage->getTemporaryAllocations().peekHead());
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(storage->getTemporaryAllocations()).peekFront());
 
     *secondCsr.getTagAddress() = completedTaskCount;
     storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);

@@ -11,11 +11,11 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 
 struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
                                        public ::testing::Test {
@@ -37,7 +37,7 @@ TEST_F(InternalAllocationStorageTest, givenDebugFlagThatDisablesAllocationReuseW
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    EXPECT_NE(allocation, csr->getAllocationsForReuse().peekHead());
+    EXPECT_NE(allocation, MockAllocationsList::whiteboxCast(csr->getAllocationsForReuse()).peekFront());
     EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 }
 
@@ -49,23 +49,23 @@ TEST_F(InternalAllocationStorageTest, givenRequiredSizeWhenDetachingThenOnlyTheF
     auto secondPtr = second.get();
     auto thirdPtr = third.get();
     const auto allocationType = first->getAllocationType();
-    AllocationsList allocations;
+    MockAllocationsList allocations;
     allocations.pushTailOne(*first.release());
     allocations.pushTailOne(*second.release());
     allocations.pushTailOne(*third.release());
 
     auto detached = allocations.detachAllocation(MemoryConstants::pageSize64k, nullptr, nullptr, allocationType);
     ASSERT_EQ(secondPtr, detached.get());
-    EXPECT_EQ(firstPtr, allocations.peekHead());
-    EXPECT_EQ(thirdPtr, allocations.peekTail());
-    EXPECT_EQ(thirdPtr, firstPtr->next);
-    EXPECT_EQ(firstPtr, thirdPtr->prev);
-    EXPECT_EQ(nullptr, detached->next);
-    EXPECT_EQ(nullptr, detached->prev);
+    EXPECT_EQ(firstPtr, allocations.peekFront());
+    EXPECT_EQ(thirdPtr, allocations.peekBack());
+    EXPECT_EQ(2u, allocations.peekSize());
+    EXPECT_EQ(firstPtr, allocations.peekAt(0));
+    EXPECT_EQ(thirdPtr, allocations.peekAt(1));
+    EXPECT_FALSE(allocations.peekContains(*detached));
 
     EXPECT_EQ(nullptr, allocations.detachAllocation(MemoryConstants::pageSize64k + 1, nullptr, nullptr, allocationType));
-    EXPECT_EQ(firstPtr, allocations.peekHead());
-    EXPECT_EQ(thirdPtr, allocations.peekTail());
+    EXPECT_EQ(firstPtr, allocations.peekFront());
+    EXPECT_EQ(thirdPtr, allocations.peekBack());
     EXPECT_EQ(firstPtr, allocations.detachAllocation(0, nullptr, nullptr, allocationType).get());
     EXPECT_EQ(thirdPtr, allocations.detachAllocation(0, nullptr, nullptr, allocationType).get());
     EXPECT_TRUE(allocations.peekIsEmpty());
@@ -87,23 +87,28 @@ TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompl
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation3), TEMPORARY_ALLOCATION);
 
     // head point to alloc 2, tail points to alloc3
-    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
-    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation2));
-    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
-    EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation2, allocation3));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation2));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation3));
+    ASSERT_EQ(3u, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekSize());
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekAt(0));
+    EXPECT_EQ(allocation2, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekAt(1));
+    EXPECT_EQ(allocation3, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekAt(2));
 
     // now remove element form the middle
     storage->cleanAllocationList(6, TEMPORARY_ALLOCATION);
-    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
-    EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
-    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
-    EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation3));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation));
+    EXPECT_FALSE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation2));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation3));
+    ASSERT_EQ(2u, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekSize());
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekAt(0));
+    EXPECT_EQ(allocation3, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekAt(1));
 
     // now remove head
     storage->cleanAllocationList(11, TEMPORARY_ALLOCATION);
-    EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation));
-    EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
-    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
+    EXPECT_FALSE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation));
+    EXPECT_FALSE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation2));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekContains(*allocation3));
 
     // now remove tail
     storage->cleanAllocationList(16, TEMPORARY_ALLOCATION);
@@ -202,7 +207,7 @@ HWTEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableA
 }
 
 TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableListThenItIsDetachedFromLinkedList) {
-    auto &reusableAllocations = csr->getAllocationsForReuse();
+    auto &reusableAllocations = MockAllocationsList::whiteboxCast(csr->getAllocationsForReuse());
     EXPECT_TRUE(reusableAllocations.peekIsEmpty());
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, 1, AllocationType::buffer, mockDeviceBitfield});
@@ -210,40 +215,37 @@ TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromMidlleOfReusableLi
     auto allocation3 = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, 1, AllocationType::buffer, mockDeviceBitfield});
 
     EXPECT_TRUE(reusableAllocations.peekIsEmpty());
-    EXPECT_EQ(nullptr, allocation2->next);
-    EXPECT_EQ(nullptr, allocation2->prev);
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation));
     EXPECT_FALSE(reusableAllocations.peekContains(*allocation2));
     EXPECT_FALSE(reusableAllocations.peekContains(*allocation3));
-    EXPECT_EQ(nullptr, allocation2->next);
-    EXPECT_EQ(nullptr, allocation2->prev);
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), REUSABLE_ALLOCATION);
 
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation2));
     EXPECT_FALSE(reusableAllocations.peekContains(*allocation3));
-    EXPECT_EQ(nullptr, allocation2->next);
-    EXPECT_EQ(allocation, allocation2->prev);
+    ASSERT_EQ(2u, reusableAllocations.peekSize());
+    EXPECT_EQ(allocation, reusableAllocations.peekAt(0));
+    EXPECT_EQ(allocation2, reusableAllocations.peekBack());
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation3), REUSABLE_ALLOCATION);
 
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation2));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation3));
-    EXPECT_EQ(allocation3, allocation2->next);
-    EXPECT_EQ(allocation, allocation2->prev);
+    ASSERT_EQ(3u, reusableAllocations.peekSize());
+    EXPECT_EQ(allocation, reusableAllocations.peekAt(0));
+    EXPECT_EQ(allocation2, reusableAllocations.peekAt(1));
+    EXPECT_EQ(allocation3, reusableAllocations.peekAt(2));
 
     auto reusableAllocation = storage->obtainReusableAllocation(10000, AllocationType::buffer).release();
     EXPECT_EQ(reusableAllocation, allocation2);
-    EXPECT_EQ(nullptr, allocation2->next);
-    EXPECT_EQ(nullptr, allocation2->prev);
-
-    EXPECT_EQ(nullptr, reusableAllocation->next);
-    EXPECT_EQ(nullptr, reusableAllocation->prev);
+    ASSERT_EQ(2u, reusableAllocations.peekSize());
+    EXPECT_EQ(allocation, reusableAllocations.peekAt(0));
+    EXPECT_EQ(allocation3, reusableAllocations.peekAt(1));
 
     EXPECT_FALSE(reusableAllocations.peekContains(*reusableAllocation));
     EXPECT_TRUE(reusableAllocations.peekContains(*allocation));
@@ -286,7 +288,7 @@ HWTEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachi
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    EXPECT_EQ(allocation, ultCsr->getAllocationsForReuse().peekHead());
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(ultCsr->getAllocationsForReuse()).peekFront());
     EXPECT_FALSE(ultCsr->getAllocationsForReuse().peekIsEmpty());
     allocation->updateTaskCount(1u, ultCsr->getOsContext().getContextId());
 
@@ -440,7 +442,7 @@ TEST_F(InternalAllocationStorageTwoCsrsTest, givenCompletedExternalHostPtrAlloca
     secondCsr->tryObtainUniqueOwnershipFails = true;
     storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
     EXPECT_EQ(1u, secondCsr->tryObtainUniqueOwnershipCalled);
-    EXPECT_EQ(allocation, csr->getTemporaryAllocations().peekHead());
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekFront());
 
     secondCsr->tryObtainUniqueOwnershipFails = false;
     storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
@@ -454,7 +456,7 @@ TEST_F(InternalAllocationStorageTwoCsrsTest, givenCompletedHostCopyAllocationUse
     secondCsr->tryObtainUniqueOwnershipFails = true;
     storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);
     EXPECT_EQ(1u, secondCsr->tryObtainUniqueOwnershipCalled);
-    EXPECT_EQ(allocation, csr->getTemporaryAllocations().peekHead());
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations()).peekFront());
 
     secondCsr->tryObtainUniqueOwnershipFails = false;
     storage->cleanAllocationList(completedTaskCount, TEMPORARY_ALLOCATION);

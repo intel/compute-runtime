@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -214,13 +215,11 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     GraphicsAllocation *srcSvmAlloc = nullptr;
 
-    auto head = ultCsr.getTemporaryAllocations().peekHead();
-    while (head) {
-        if (ptrOffset(srcHostPtr, hostPtrOffset) == head->getUnderlyingBuffer()) {
-            srcSvmAlloc = head;
-            break;
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(ultCsr.getTemporaryAllocations());
+    for (size_t index = 0; index < temporaryAllocations.peekSize() && srcSvmAlloc == nullptr; index++) {
+        if (ptrOffset(srcHostPtr, hostPtrOffset) == temporaryAllocations.peekAt(index)->getUnderlyingBuffer()) {
+            srcSvmAlloc = temporaryAllocations.peekAt(index);
         }
-        head = head->next;
     }
     EXPECT_NE(nullptr, srcSvmAlloc);
 
@@ -294,13 +293,11 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     GraphicsAllocation *dstSvmAlloc = nullptr;
 
-    auto head = ultCsr.getTemporaryAllocations().peekHead();
-    while (head) {
-        if (ptrOffset(dstHostPtr, hostPtrOffset) == head->getUnderlyingBuffer()) {
-            dstSvmAlloc = head;
-            break;
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(ultCsr.getTemporaryAllocations());
+    for (size_t index = 0; index < temporaryAllocations.peekSize() && dstSvmAlloc == nullptr; index++) {
+        if (ptrOffset(dstHostPtr, hostPtrOffset) == temporaryAllocations.peekAt(index)->getUnderlyingBuffer()) {
+            dstSvmAlloc = temporaryAllocations.peekAt(index);
         }
-        head = head->next;
     }
     EXPECT_NE(nullptr, dstSvmAlloc);
 

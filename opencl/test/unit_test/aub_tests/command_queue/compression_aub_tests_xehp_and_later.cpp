@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -261,9 +262,12 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImageWhenReadingTh
         event);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    allocation = pCmdQ->getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != destMemory) {
-        allocation = allocation->next;
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(pCmdQ->getGpgpuCommandStreamReceiver().getTemporaryAllocations());
+    allocation = nullptr;
+    for (size_t index = 0; index < temporaryAllocations.peekSize() && allocation == nullptr; index++) {
+        if (temporaryAllocations.peekAt(index)->getUnderlyingBuffer() == destMemory) {
+            allocation = temporaryAllocations.peekAt(index);
+        }
     }
     auto pDestGpuAddress = reinterpret_cast<void *>(allocation->getGpuAddress());
 

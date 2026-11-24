@@ -1912,7 +1912,7 @@ NEO::GraphicsAllocation *Device::obtainReusableAllocation(size_t requiredSize, N
 }
 
 void Device::storeReusableAllocation(NEO::GraphicsAllocation &alloc) {
-    allocationsForReuse->pushFrontOne(alloc);
+    allocationsForReuse->pushTailOne(alloc);
 }
 
 bool Device::isQueueGroupOrdinalValid(uint32_t ordinal) {

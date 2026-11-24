@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -97,13 +98,12 @@ HWTEST_F(EnqueueBufferWindowsTest, givenMisalignedHostPtrWhenEnqueueReadBufferCa
     ASSERT_NE(0u, cmdQ->lastEnqueuedKernels.size());
     Kernel *kernel = cmdQ->lastEnqueuedKernels[0];
 
-    auto hostPtrAllocation = cmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage()->getTemporaryAllocations().peekHead();
-
-    while (hostPtrAllocation != nullptr) {
-        if (hostPtrAllocation->getUnderlyingBuffer() == misalignedPtr) {
-            break;
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(cmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage()->getTemporaryAllocations());
+    GraphicsAllocation *hostPtrAllocation = nullptr;
+    for (size_t index = 0; index < temporaryAllocations.peekSize() && hostPtrAllocation == nullptr; index++) {
+        if (temporaryAllocations.peekAt(index)->getUnderlyingBuffer() == misalignedPtr) {
+            hostPtrAllocation = temporaryAllocations.peekAt(index);
         }
-        hostPtrAllocation = hostPtrAllocation->next;
     }
     ASSERT_NE(nullptr, hostPtrAllocation);
 

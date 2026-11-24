@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -115,9 +116,12 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
                                      readMemory.get(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    allocation = pCommandStreamReceiver->getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != readMemory.get()) {
-        allocation = allocation->next;
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(pCommandStreamReceiver->getTemporaryAllocations());
+    allocation = nullptr;
+    for (size_t index = 0; index < temporaryAllocations.peekSize() && allocation == nullptr; index++) {
+        if (temporaryAllocations.peekAt(index)->getUnderlyingBuffer() == readMemory.get()) {
+            allocation = temporaryAllocations.peekAt(index);
+        }
     }
 
     auto destGpuAddress = reinterpret_cast<uint32_t *>(allocation->getGpuAddress());
@@ -198,9 +202,12 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
                                      readMemory.get(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    allocation = pCommandStreamReceiver->getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != readMemory.get()) {
-        allocation = allocation->next;
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(pCommandStreamReceiver->getTemporaryAllocations());
+    allocation = nullptr;
+    for (size_t index = 0; index < temporaryAllocations.peekSize() && allocation == nullptr; index++) {
+        if (temporaryAllocations.peekAt(index)->getUnderlyingBuffer() == readMemory.get()) {
+            allocation = temporaryAllocations.peekAt(index);
+        }
     }
 
     auto destGpuAddress = reinterpret_cast<uint32_t *>(allocation->getGpuAddress());

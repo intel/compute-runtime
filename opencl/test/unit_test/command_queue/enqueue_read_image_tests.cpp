@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -735,7 +736,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenHostPtr
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
-    auto temporaryAllocation = csr.getTemporaryAllocations().peekHead();
+    auto temporaryAllocation = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
     ASSERT_NE(nullptr, temporaryAllocation);
 
     EXPECT_EQ(temporaryAllocation->getUnderlyingBufferSize(), imageSize);
@@ -782,7 +783,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage2DarrayWhenReadImageIsCalledThenHostPtr
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
-    auto temporaryAllocation = csr.getTemporaryAllocations().peekHead();
+    auto temporaryAllocation = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
     ASSERT_NE(nullptr, temporaryAllocation);
 
     EXPECT_EQ(temporaryAllocation->getUnderlyingBufferSize(), imageSize);

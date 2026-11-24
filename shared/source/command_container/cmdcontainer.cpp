@@ -411,7 +411,7 @@ void CommandContainer::createAndAssignNewHeap(HeapType heapType, size_t size) {
 
 void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
     if (immediateReusableAllocationList != nullptr && !immediateReusableAllocationList->peekIsEmpty() && reusableAllocationList != nullptr) {
-        reusableAllocationList->splice(*immediateReusableAllocationList->detachNodes());
+        reusableAllocationList->spliceFrom(*immediateReusableAllocationList);
     }
     auto &poolAllocator = this->device->getCommandBufferPoolAllocator();
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
@@ -424,7 +424,7 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
             if (isHandleFenceCompletionRequired) {
                 this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocation);
             }
-            reusableAllocationList->pushFrontOne(*cmdBufferAllocation);
+            reusableAllocationList->pushTailOne(*cmdBufferAllocation);
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocation);
         }

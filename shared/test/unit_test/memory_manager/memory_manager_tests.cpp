@@ -32,6 +32,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_aub_memory_operations_handler.h"
@@ -3195,7 +3196,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhen
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationAndNotGpuCompleted);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
     EXPECT_FALSE(csr->getDeferredAllocations().peekIsEmpty());
-    EXPECT_EQ(csr->getDeferredAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
+    EXPECT_EQ(MockAllocationsList::whiteboxCast(csr->getDeferredAllocations()).peekFront(), usedAllocationAndNotGpuCompleted);
 
     // change task count so cleanup will not clear alloc in use
     usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
@@ -3316,7 +3317,7 @@ HWTEST_F(GraphicsAllocationDestroyTests, givenAllocationUsedOnlyByNonDefaultCsrW
     graphicsAllocation->updateTaskCount(*nonDefaultCsr->getTagAddress() + 1, nonDefaultOsContext->getContextId());
 
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-    EXPECT_NE(nullptr, nonDefaultCsr->getInternalAllocationStorage()->getDeferredAllocations().peekHead());
+    EXPECT_NE(nullptr, MockAllocationsList::whiteboxCast(nonDefaultCsr->getInternalAllocationStorage()->getDeferredAllocations()).peekFront());
     auto newTag = *nonDefaultCsr->getTagAddress() + 1;
     (*nonDefaultCsr->getTagAddress()) = newTag;
     // no need to call freeGraphicsAllocation
@@ -4743,21 +4744,21 @@ TEST(MemoryManagerTest, givenMemoryAllocationWhenFreedThenFreeCalledOnMemoryOper
 }
 
 TEST(AllocationListTest, givenAllocationInListWhenFreeAllGraphicsAllocationsCalledThenHeadAndTailIsNullptr) {
-    AllocationsList allocList;
-    EXPECT_EQ(nullptr, allocList.peekHead());
-    EXPECT_EQ(nullptr, allocList.peekTail());
+    MockAllocationsList allocList;
+    EXPECT_EQ(nullptr, allocList.peekFront());
+    EXPECT_EQ(nullptr, allocList.peekBack());
     EXPECT_TRUE(allocList.peekIsEmpty());
 
     auto mockGfxAllocation = std::make_unique<MockGraphicsAllocation>();
-    allocList.pushFrontOne(*mockGfxAllocation.release());
-    EXPECT_NE(nullptr, allocList.peekHead());
-    EXPECT_NE(nullptr, allocList.peekTail());
+    allocList.pushTailOne(*mockGfxAllocation.release());
+    EXPECT_NE(nullptr, allocList.peekFront());
+    EXPECT_NE(nullptr, allocList.peekBack());
     EXPECT_FALSE(allocList.peekIsEmpty());
 
     MockDevice mockDevice;
     allocList.freeAllGraphicsAllocations(&mockDevice);
-    EXPECT_EQ(nullptr, allocList.peekHead());
-    EXPECT_EQ(nullptr, allocList.peekTail());
+    EXPECT_EQ(nullptr, allocList.peekFront());
+    EXPECT_EQ(nullptr, allocList.peekBack());
     EXPECT_TRUE(allocList.peekIsEmpty());
 }
 

@@ -18,6 +18,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -8657,7 +8658,7 @@ HWTEST_F(EventTemporaryAllocationCleanupTest,
     // recorded event completion, not this stale live value, so a stale tag must not affect the result.
     *csr->getTagAddress() = eventTaskCount - 1u;
 
-    auto &temporaryAllocations = memoryManager->getTemporaryAllocationsList();
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(memoryManager->getTemporaryAllocationsList());
 
     // Pin whose work is covered by the synchronized event (task count == event's) -> must be freed.
     auto completedAllocation = memoryManager->allocateGraphicsMemoryWithProperties(
@@ -8675,12 +8676,12 @@ HWTEST_F(EventTemporaryAllocationCleanupTest,
     csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(
         std::unique_ptr<NEO::GraphicsAllocation>(laterAllocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION, eventTaskCount + 2u);
 
-    ASSERT_EQ(2u, temporaryAllocations.peekHead()->countThisAndAllConnected());
+    ASSERT_EQ(2u, temporaryAllocations.peekSize());
 
     mockEvent->handleSuccessfulHostSynchronization();
 
-    ASSERT_EQ(1u, temporaryAllocations.peekHead()->countThisAndAllConnected());
-    EXPECT_EQ(laterAllocation, temporaryAllocations.peekHead());
+    ASSERT_EQ(1u, temporaryAllocations.peekSize());
+    EXPECT_EQ(laterAllocation, temporaryAllocations.peekFront());
 
     csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
 }

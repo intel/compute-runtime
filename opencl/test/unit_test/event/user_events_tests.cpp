@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/task_information.h"
@@ -937,7 +938,7 @@ TEST_F(EventTests, WhenWaitingForEventsThenTemporaryAllocationsAreDestroyed) {
     GraphicsAllocation *temporaryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr.getRootDeviceIndex(), MemoryConstants::pageSize});
     csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryAllocation), TEMPORARY_ALLOCATION);
 
-    EXPECT_EQ(temporaryAllocation, csr.getTemporaryAllocations().peekHead());
+    EXPECT_EQ(temporaryAllocation, MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront());
 
     temporaryAllocation->updateTaskCount(10, csr.getOsContext().getContextId());
 

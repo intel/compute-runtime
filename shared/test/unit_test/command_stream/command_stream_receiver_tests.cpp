@@ -46,6 +46,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_debugger.h"
@@ -292,7 +293,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForCommandBuffersWhenCallFil
     EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
 
-    auto allocation = internalAllocationStorage->getAllocationsForReuse().peekHead();
+    auto allocation = MockAllocationsList::whiteboxCast(internalAllocationStorage->getAllocationsForReuse()).peekFront();
     EXPECT_EQ(AllocationType::commandBuffer, allocation->getAllocationType());
 
     commandStreamReceiver->fillReusableAllocationsList();
@@ -313,7 +314,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFlagEnabledForInternalHeapsWhenCallFill
     EXPECT_FALSE(commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
     EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
 
-    auto allocation = internalAllocationStorage->getAllocationsForReuse().peekHead();
+    auto allocation = MockAllocationsList::whiteboxCast(internalAllocationStorage->getAllocationsForReuse()).peekFront();
     EXPECT_EQ(AllocationType::internalHeap, allocation->getAllocationType());
 }
 
@@ -2762,7 +2763,7 @@ HWTEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentAndEarlyPreall
     pDevice->getUltCommandStreamReceiver<FamilyType>().callBaseFillReusableAllocationsList = true;
 
     commandStreamReceiver->fillReusableAllocationsList();
-    auto allocation = internalAllocationStorage->getAllocationsForReuse().peekHead();
+    auto allocation = MockAllocationsList::whiteboxCast(internalAllocationStorage->getAllocationsForReuse()).peekFront();
 
     LinearStream commandStream;
 
@@ -8447,12 +8448,12 @@ HWTEST_F(CommandStreamReceiverTest, givenViewWithNonPoolParentWhenReleaseCommand
 
     csr.releaseCommandBufferAllocation(viewAllocation);
 
-    auto &reuseList = csr.getAllocationsForReuse();
+    auto &reuseList = MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse());
     EXPECT_FALSE(reuseList.peekIsEmpty());
 
     // Remove view from reuse list before teardown to prevent use-after-free -
     // view delegates getTaskCount to parent which would be freed during device destruction
-    auto removedAllocation = reuseList.removeOne(*reuseList.peekHead());
+    auto removedAllocation = reuseList.removeOne(*reuseList.peekFront());
     ASSERT_NE(nullptr, removedAllocation);
     removedAllocation.reset();
 

@@ -34,6 +34,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -3991,7 +3992,7 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledAndAllocationUsedBySeconadryContex
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationAndNotGpuCompleted2);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
     EXPECT_FALSE(csr->getDeferredAllocations().peekIsEmpty());
-    EXPECT_EQ(csr->getDeferredAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
+    EXPECT_EQ(MockAllocationsList::whiteboxCast(csr->getDeferredAllocations()).peekFront(), usedAllocationAndNotGpuCompleted);
 
     usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
     usedAllocationAndNotGpuCompleted2->updateTaskCount(csr2->peekLatestFlushedTaskCount(), csr2->getOsContext().getContextId());

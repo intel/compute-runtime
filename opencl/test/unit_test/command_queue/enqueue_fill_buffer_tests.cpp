@@ -14,10 +14,10 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/utilities/idlist.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -449,16 +449,16 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeCopied) 
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
-    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
-
-    while (allocation != nullptr) {
-        if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
-            (allocation->getUnderlyingBuffer() != nullptr) &&
-            (*(static_cast<float *>(allocation->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
-            (pCmdQ->taskCount == allocation->getTaskCount(csr.getOsContext().getContextId()))) {
-            break;
+    auto &allocationsForReuse = MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse());
+    GraphicsAllocation *allocation = nullptr;
+    for (size_t index = 0; index < allocationsForReuse.peekSize() && allocation == nullptr; index++) {
+        auto candidate = allocationsForReuse.peekAt(index);
+        if ((candidate->getUnderlyingBufferSize() >= sizeof(float)) &&
+            (candidate->getUnderlyingBuffer() != nullptr) &&
+            (*(static_cast<float *>(candidate->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
+            (pCmdQ->taskCount == candidate->getTaskCount(csr.getOsContext().getContextId()))) {
+            allocation = candidate;
         }
-        allocation = allocation->next;
     }
 
     ASSERT_NE(nullptr, allocation);
@@ -470,16 +470,16 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeAligned)
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
-
-    while (allocation != nullptr) {
-        if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
-            (allocation->getUnderlyingBuffer() != nullptr) &&
-            (*(static_cast<float *>(allocation->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
-            (pCmdQ->taskCount == allocation->getTaskCount(csr.getOsContext().getContextId()))) {
-            break;
+    auto &allocationsForReuse = MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse());
+    GraphicsAllocation *allocation = nullptr;
+    for (size_t index = 0; index < allocationsForReuse.peekSize() && allocation == nullptr; index++) {
+        auto candidate = allocationsForReuse.peekAt(index);
+        if ((candidate->getUnderlyingBufferSize() >= sizeof(float)) &&
+            (candidate->getUnderlyingBuffer() != nullptr) &&
+            (*(static_cast<float *>(candidate->getUnderlyingBuffer())) == EnqueueFillBufferHelper<>::Traits::pattern[0]) &&
+            (pCmdQ->taskCount == candidate->getTaskCount(csr.getOsContext().getContextId()))) {
+            allocation = candidate;
         }
-        allocation = allocation->next;
     }
 
     ASSERT_NE(nullptr, allocation);
@@ -497,12 +497,12 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillBufferIsCalledTwiceThenPatternAlloca
     ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
-    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
+    GraphicsAllocation *allocation = MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekFront();
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
-    EXPECT_NE(csr.getAllocationsForReuse().peekHead(), nullptr);
-    EXPECT_EQ(allocation, csr.getAllocationsForReuse().peekHead());
-    EXPECT_EQ(csr.getAllocationsForReuse().peekTail(), allocation);
+    EXPECT_NE(MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekFront(), nullptr);
+    EXPECT_EQ(allocation, MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekFront());
+    EXPECT_EQ(MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekBack(), allocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeOneByteShouldGetPreparedForMiddleKernel) {
@@ -537,7 +537,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeOneByteSho
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
+    GraphicsAllocation *allocation = MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekFront();
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), output, size));
@@ -575,7 +575,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternOfSizeTwoBytesSh
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
     ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *allocation = csr.getAllocationsForReuse().peekHead();
+    GraphicsAllocation *allocation = MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekFront();
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), output, size));
@@ -605,7 +605,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
 
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
 
-    GraphicsAllocation *patternAllocation = pCmdQ->getHeaplessModeEnabled() ? csr.getAllocationsForReuse().peekTail() : csr.getAllocationsForReuse().peekHead();
+    GraphicsAllocation *patternAllocation = pCmdQ->getHeaplessModeEnabled() ? MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekBack() : MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekFront();
     ASSERT_NE(nullptr, patternAllocation);
 
     EXPECT_EQ(AllocationType::fillPattern, patternAllocation->getAllocationType());

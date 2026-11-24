@@ -9,6 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_configuration/aub_tests/aub_tests_configuration.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -79,9 +80,12 @@ HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    allocation = csr->getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != pDestMemory) {
-        allocation = allocation->next;
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations());
+    allocation = nullptr;
+    for (size_t index = 0; index < temporaryAllocations.peekSize() && allocation == nullptr; index++) {
+        if (temporaryAllocations.peekAt(index)->getUnderlyingBuffer() == pDestMemory) {
+            allocation = temporaryAllocations.peekAt(index);
+        }
     }
     retVal = pCmdQ->flush();
     EXPECT_EQ(CL_SUCCESS, retVal);

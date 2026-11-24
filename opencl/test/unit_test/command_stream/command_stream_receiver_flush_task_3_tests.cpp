@@ -26,6 +26,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
@@ -1668,11 +1669,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAl
     commandStreamReceiver.latestFlushedTaskCount = 9;
     commandStreamReceiver.cleanupResources();
 
-    EXPECT_EQ(reusableToHold, commandStreamReceiver.getAllocationsForReuse().peekHead());
-    EXPECT_EQ(reusableToHold, commandStreamReceiver.getAllocationsForReuse().peekTail());
+    EXPECT_EQ(reusableToHold, MockAllocationsList::whiteboxCast(commandStreamReceiver.getAllocationsForReuse()).peekFront());
+    EXPECT_EQ(reusableToHold, MockAllocationsList::whiteboxCast(commandStreamReceiver.getAllocationsForReuse()).peekBack());
 
-    EXPECT_EQ(temporaryToHold, commandStreamReceiver.getTemporaryAllocations().peekHead());
-    EXPECT_EQ(temporaryToHold, commandStreamReceiver.getTemporaryAllocations().peekTail());
+    EXPECT_EQ(temporaryToHold, MockAllocationsList::whiteboxCast(commandStreamReceiver.getTemporaryAllocations()).peekFront());
+    EXPECT_EQ(temporaryToHold, MockAllocationsList::whiteboxCast(commandStreamReceiver.getTemporaryAllocations()).peekBack());
 
     commandStreamReceiver.latestFlushedTaskCount = 11;
     commandStreamReceiver.cleanupResources();

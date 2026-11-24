@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -1982,17 +1983,10 @@ HWTEST2_F(AggregatedBcsSplitTests, givenUserPtrWhenAppendCalledThenCreateOnlyOne
 
     auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
 
-    auto &tempAllocList = device->getNEODevice()->getMemoryManager()->getTemporaryAllocationsList();
+    auto &tempAllocList = MockAllocationsList::whiteboxCast(device->getNEODevice()->getMemoryManager()->getTemporaryAllocationsList());
 
     auto countElements = [&tempAllocList]() {
-        auto current = tempAllocList.peekHead();
-        uint32_t count = 0;
-        while (current) {
-            count++;
-            current = current->next;
-        }
-
-        return count;
+        return static_cast<uint32_t>(tempAllocList.peekSize());
     };
 
     EXPECT_EQ(0u, countElements());

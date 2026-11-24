@@ -19,6 +19,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_context.h"
@@ -1338,12 +1339,11 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
     EXPECT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
 
     bool timestampTempAllocFound = false;
-    auto currentAlloc = csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead();
-    while (currentAlloc != nullptr) {
-        if (currentAlloc->getAllocationType() == NEO::AllocationType::gpuTimestampDeviceBuffer) {
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(csr->getInternalAllocationStorage()->getTemporaryAllocations());
+    for (size_t index = 0; index < temporaryAllocations.peekSize(); index++) {
+        if (temporaryAllocations.peekAt(index)->getAllocationType() == NEO::AllocationType::gpuTimestampDeviceBuffer) {
             timestampTempAllocFound = true;
         }
-        currentAlloc = currentAlloc->next;
     }
     EXPECT_FALSE(timestampTempAllocFound);
 
@@ -1400,7 +1400,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenEven
 
     ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
     EXPECT_NE(firstEventDataAllocation, commandList.queryKernelTimestampsDataAllocations[0]);
-    auto &reusableAllocations = csr->getInternalAllocationStorage()->getAllocationsForReuse();
+    auto &reusableAllocations = MockAllocationsList::whiteboxCast(csr->getInternalAllocationStorage()->getAllocationsForReuse());
     EXPECT_TRUE(reusableAllocations.peekContains(*firstEventDataAllocation));
     EXPECT_EQ(initialTaskCount + 1, firstEventDataAllocation->getTaskCount(csr->getOsContext().getContextId()));
 
@@ -1445,7 +1445,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenCompletedEventDataAllocation
 
     ASSERT_EQ(1u, commandList.queryKernelTimestampsDataAllocations.size());
     EXPECT_EQ(reusedAllocation, commandList.queryKernelTimestampsDataAllocations[0]);
-    EXPECT_FALSE(csr->getInternalAllocationStorage()->getAllocationsForReuse().peekContains(*reusedAllocation));
+    EXPECT_FALSE(MockAllocationsList::whiteboxCast(csr->getInternalAllocationStorage()->getAllocationsForReuse()).peekContains(*reusedAllocation));
 
     context->freeMem(dstPtr);
 }

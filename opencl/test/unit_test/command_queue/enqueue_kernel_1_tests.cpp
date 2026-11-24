@@ -25,6 +25,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
@@ -1662,7 +1663,7 @@ HWTEST_TEMPLATED_F(EnqueueKernelTestWithMockCsrHw2, givenKernelWhenItIsEnqueuedT
 
     auto csrTaskCount = mockCsr->peekTaskCount();
     auto &passedAllocationPack = mockCsr->copyOfAllocations;
-    auto &reusableAllocations = mockCsr->getInternalAllocationStorage()->getAllocationsForReuse();
+    auto &reusableAllocations = MockAllocationsList::whiteboxCast(mockCsr->getInternalAllocationStorage()->getAllocationsForReuse());
     for (auto &allocation : passedAllocationPack) {
         if (reusableAllocations.peekContains(*allocation)) {
             EXPECT_EQ(initialTaskCount, allocation->getTaskCount(mockCsr->getOsContext().getContextId()));

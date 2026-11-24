@@ -10,7 +10,7 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/utilities/idlist.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/user_event.h"
@@ -209,7 +209,7 @@ TEST(KernelOperationDestruction, givenKernelOperationWhenItIsDestructedThenAllAl
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockCommandQueue cmdQ(nullptr, device.get(), nullptr, false);
     InternalAllocationStorage &allocationStorage = *device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage();
-    auto &allocationsForReuse = allocationStorage.getAllocationsForReuse();
+    auto &allocationsForReuse = MockAllocationsList::whiteboxCast(allocationStorage.getAllocationsForReuse());
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
     cmdQ.allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);

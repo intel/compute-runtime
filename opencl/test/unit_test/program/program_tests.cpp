@@ -40,6 +40,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_debugger.h"
@@ -1067,7 +1068,7 @@ HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledBu
     pProgram->cleanCurrentKernelInfo(rootDeviceIndex);
     if (!isIsaPooled) {
         EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
-        EXPECT_EQ(csr.getDeferredAllocations().peekHead(), kernelAllocation);
+        EXPECT_EQ(MockAllocationsList::whiteboxCast(csr.getDeferredAllocations()).peekFront(), kernelAllocation);
     } else {
         EXPECT_TRUE(csr.getDeferredAllocations().peekIsEmpty());
     }

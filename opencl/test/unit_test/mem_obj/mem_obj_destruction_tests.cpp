@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -226,14 +227,14 @@ TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyn
     } else {
         makeMemObjNotReady();
     }
-    auto &allocationList = csr->getDeferredAllocations();
+    auto &allocationList = MockAllocationsList::whiteboxCast(csr->getDeferredAllocations());
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
 
     EXPECT_EQ(!expectedDeferration, allocationList.peekIsEmpty());
     if (expectedDeferration) {
-        EXPECT_EQ(allocation, allocationList.peekHead());
+        EXPECT_EQ(allocation, allocationList.peekFront());
     }
 }
 
@@ -454,7 +455,7 @@ HWTEST_TEMPLATED_P(MemObjSyncDestructionTestWithMyCsr, givenMemObjWithDestructab
     *mockCsr->getTagAddress() = 0;
 
     delete memObj;
-    auto &allocationList = mockCsr->getTemporaryAllocations();
+    auto &allocationList = MockAllocationsList::whiteboxCast(mockCsr->getTemporaryAllocations());
     EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
@@ -519,7 +520,7 @@ HWTEST_TEMPLATED_P(MemObjSyncDestructionTestWithMyCsr, givenMemObjWithMapAllocat
 
     makeMemObjUsed();
 
-    auto &allocationList = mockCsr->getTemporaryAllocations();
+    auto &allocationList = MockAllocationsList::whiteboxCast(mockCsr->getTemporaryAllocations());
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
@@ -549,7 +550,7 @@ HWTEST_TEMPLATED_P(MemObjAsyncDestructionTestWithMyCsr, givenMemObjWithMapAlloca
 
     makeMemObjUsed();
 
-    auto &allocationList = mockCsr->getDeferredAllocations();
+    auto &allocationList = MockAllocationsList::whiteboxCast(mockCsr->getDeferredAllocations());
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
@@ -557,11 +558,11 @@ HWTEST_TEMPLATED_P(MemObjAsyncDestructionTestWithMyCsr, givenMemObjWithMapAlloca
     EXPECT_FALSE(allocationList.peekIsEmpty());
 
     if (hasMapAllocation) {
-        EXPECT_EQ(allocation, allocationList.peekHead());
-        EXPECT_EQ(mapAllocation, allocationList.peekTail());
+        EXPECT_EQ(allocation, allocationList.peekFront());
+        EXPECT_EQ(mapAllocation, allocationList.peekBack());
     } else {
-        EXPECT_EQ(allocation, allocationList.peekHead());
-        EXPECT_EQ(allocation, allocationList.peekTail());
+        EXPECT_EQ(allocation, allocationList.peekFront());
+        EXPECT_EQ(allocation, allocationList.peekBack());
     }
 }
 
@@ -588,7 +589,7 @@ HWTEST_TEMPLATED_P(MemObjAsyncDestructionTestWithMyCsr, givenMemObjWithMapAlloca
 
     makeMemObjUsed();
 
-    auto &allocationList = mockCsr->getDeferredAllocations();
+    auto &allocationList = MockAllocationsList::whiteboxCast(mockCsr->getDeferredAllocations());
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
@@ -596,11 +597,11 @@ HWTEST_TEMPLATED_P(MemObjAsyncDestructionTestWithMyCsr, givenMemObjWithMapAlloca
     EXPECT_FALSE(allocationList.peekIsEmpty());
 
     if (hasMapAllocation) {
-        EXPECT_EQ(allocation, allocationList.peekHead());
-        EXPECT_EQ(allocation, allocationList.peekHead());
+        EXPECT_EQ(allocation, allocationList.peekFront());
+        EXPECT_EQ(allocation, allocationList.peekFront());
     } else {
-        EXPECT_EQ(allocation, allocationList.peekHead());
-        EXPECT_EQ(allocation, allocationList.peekTail());
+        EXPECT_EQ(allocation, allocationList.peekFront());
+        EXPECT_EQ(allocation, allocationList.peekBack());
     }
 
     alignedFree(hostPtr);

@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -2818,7 +2819,7 @@ HWTEST_F(CommandListCsrReassignmentTests, givenCommandListReassignedWhenSwitchin
 }
 
 HWTEST_F(CommandListCsrReassignmentTests, givenTemporaryAllocationsOnPreviousCsrWhenSwitchingCsrThenAllocationsOfCompletedWorkAreReleasedOnlyForNonInOrderCommandList) {
-    auto &temporaryAllocations = neoDevice->getMemoryManager()->getTemporaryAllocationsList();
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(neoDevice->getMemoryManager()->getTemporaryAllocationsList());
     for (const bool inOrder : {false, true}) {
         ze_command_queue_desc_t desc = {};
         desc.flags = inOrder ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;
@@ -2857,7 +2858,7 @@ HWTEST_F(CommandListCsrReassignmentTests, givenTemporaryAllocationsOnPreviousCsr
 HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithTemporaryAllocationsOnPreviousCsrWhenHostSynchronizeSucceedsThenAllocationsOfCompletedWorkOnPreviousCsrAreReleased) {
     auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
     memoryManager->callBaseAllocInUse = true;
-    auto &temporaryAllocations = memoryManager->getTemporaryAllocationsList();
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(memoryManager->getTemporaryAllocationsList());
     ze_command_queue_desc_t desc = {};
     desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     auto commandList = createInitializedImmediateCommandList(desc);
@@ -2890,8 +2891,8 @@ HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithT
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
     EXPECT_TRUE(immediateCommandList->previousCsrsAwaitingCompletion.empty());
-    EXPECT_EQ(pendingAllocation, temporaryAllocations.peekHead());
-    EXPECT_EQ(nullptr, pendingAllocation->next);
+    EXPECT_EQ(pendingAllocation, temporaryAllocations.peekFront());
+    EXPECT_EQ(1u, temporaryAllocations.peekSize());
     EXPECT_FALSE(temporaryAllocations.peekContains(*completedAllocation));
 
     initialUltCsr->callBaseWaitForCompletionWithTimeout = true;
@@ -2903,7 +2904,7 @@ HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithT
 }
 
 HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithTemporaryAllocationsOnPreviousCsrWhenHostSynchronizeDetectsHangThenAllocationsOnPreviousCsrAreKept) {
-    auto &temporaryAllocations = neoDevice->getMemoryManager()->getTemporaryAllocationsList();
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(neoDevice->getMemoryManager()->getTemporaryAllocationsList());
     ze_command_queue_desc_t desc = {};
     desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     auto commandList = createInitializedImmediateCommandList(desc);

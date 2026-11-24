@@ -26,6 +26,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -579,7 +580,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandStreamReceiverWithReusableAllo
     commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
-    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*allocation));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(commandStreamReceiver.getAllocationsForReuse()).peekContains(*allocation));
 
     const auto &indirectHeap = cmdQ.getCS(100);
 
@@ -600,7 +601,7 @@ TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenComm
     // now destroy command queue, heap should go to reusable list
     delete cmdQ;
     EXPECT_FALSE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekContains(*graphicsAllocation));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse()).peekContains(*graphicsAllocation));
 }
 
 TEST_F(CommandQueueCommandStreamTest, WhenAskedForNewCommandStreamThenOldHeapIsStoredForReuse) {
@@ -622,7 +623,7 @@ TEST_F(CommandQueueCommandStreamTest, WhenAskedForNewCommandStreamThenOldHeapIsS
 
     EXPECT_FALSE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekIsEmpty());
 
-    EXPECT_TRUE(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse().peekContains(*graphicsAllocation));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(pDevice->getDefaultEngine().commandStreamReceiver->getAllocationsForReuse()).peekContains(*graphicsAllocation));
 }
 
 TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenGetCSIsCalledThenCommandStreamAllocationTypeShouldBeSetToCommandBuffer) {
@@ -776,7 +777,7 @@ HWTEST_F(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAll
         commandStreamReceiver.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
         EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
-        EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*allocation));
+        EXPECT_TRUE(MockAllocationsList::whiteboxCast(commandStreamReceiver.getAllocationsForReuse()).peekContains(*allocation));
 
         const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
 
@@ -820,7 +821,7 @@ HWTEST_F(CommandQueueIndirectHeapTest, WhenAskedForNewHeapThenOldHeapIsStoredFor
 
         EXPECT_FALSE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
 
-        EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekContains(*graphicsAllocation));
+        EXPECT_TRUE(MockAllocationsList::whiteboxCast(commandStreamReceiver.getAllocationsForReuse()).peekContains(*graphicsAllocation));
         *commandStreamReceiver.getTagAddress() = 2u;
     }
 }

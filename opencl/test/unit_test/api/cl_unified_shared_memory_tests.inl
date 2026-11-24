@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -337,7 +338,7 @@ HWTEST_F(ClUnifiedSharedMemoryTests, givenTemporaryAllocationWhenBlockingFreeCal
     EXPECT_EQ(CL_SUCCESS, clMemBlockingFreeINTEL(mockContext.get(), unifiedMemoryHostAllocation1));
     ASSERT_FALSE(memManager->getTemporaryAllocationsList().peekIsEmpty());
 
-    *tagAlloc = memManager->getTemporaryAllocationsList().peekHead()->getTaskCount(contextId);
+    *tagAlloc = MockAllocationsList::whiteboxCast(memManager->getTemporaryAllocationsList()).peekFront()->getTaskCount(contextId);
 
     EXPECT_EQ(CL_SUCCESS, clMemBlockingFreeINTEL(mockContext.get(), unifiedMemoryHostAllocation2));
     EXPECT_TRUE(memManager->getTemporaryAllocationsList().peekIsEmpty());

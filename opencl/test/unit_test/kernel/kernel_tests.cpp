@@ -27,6 +27,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -1010,7 +1011,7 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
 
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EXPECT_FALSE(csr.getDeferredAllocations().peekIsEmpty());
-    EXPECT_EQ(csr.getDeferredAllocations().peekHead(), privateSurface);
+    EXPECT_EQ(MockAllocationsList::whiteboxCast(csr.getDeferredAllocations()).peekFront(), privateSurface);
 }
 
 TEST_F(KernelPrivateSurfaceTest, WhenPrivateSurfaceAllocationFailsThenOutOfResourcesErrorIsReturned) {

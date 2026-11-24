@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -264,12 +265,12 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenH
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage2.get(), CL_FALSE, origin, region);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-    auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
+    auto temporaryAllocation1 = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
     ASSERT_NE(nullptr, temporaryAllocation1);
     EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, dstImage2.get(), CL_FALSE, origin, region);
-    auto temporaryAllocation2 = temporaryAllocation1->next;
+    auto temporaryAllocation2 = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekAt(1);
 
     ASSERT_NE(nullptr, temporaryAllocation2);
     EXPECT_EQ(temporaryAllocation2->getUnderlyingBufferSize(), imageSize);
@@ -319,12 +320,12 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DarrayWhenReadWriteImageIsCalledThenH
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
-    auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
+    auto temporaryAllocation1 = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
     ASSERT_NE(nullptr, temporaryAllocation1);
     EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, dstImage.get(), CL_FALSE, origin, region);
-    auto temporaryAllocation2 = temporaryAllocation1->next;
+    auto temporaryAllocation2 = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekAt(1);
     ASSERT_NE(nullptr, temporaryAllocation2);
     EXPECT_EQ(temporaryAllocation2->getUnderlyingBufferSize(), imageSize);
 }

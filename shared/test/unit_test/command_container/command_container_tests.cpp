@@ -26,6 +26,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -1453,7 +1454,7 @@ struct CommandBufferReuseFixture : DeviceFixture {
     std::unique_ptr<VariableBackup<uint32_t>> maxContextCount;
     std::unique_ptr<Csr> mainCsr;
     std::unique_ptr<Csr> copyCsr;
-    AllocationsList allocations;
+    MockAllocationsList allocations;
 };
 
 using CommandBufferReuseTests = Test<CommandBufferReuseFixture>;
@@ -2154,8 +2155,8 @@ TEST_F(CommandContainerTest, givenImmediateCmdListCsrSetWhenInitializingCmdConta
 
     auto collectAllocations = [](AllocationsList &allocationsList) {
         std::vector<GraphicsAllocation *> allocations;
-        for (auto allocation = allocationsList.peekHead(); allocation != nullptr; allocation = allocation->next) {
-            allocations.push_back(allocation);
+        for (size_t index = 0; index < MockAllocationsList::whiteboxCast(allocationsList).peekSize(); index++) {
+            allocations.push_back(MockAllocationsList::whiteboxCast(allocationsList).peekAt(index));
         }
         return allocations;
     };
@@ -2230,13 +2231,13 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
     ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
     EXPECT_FALSE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_NE(heapHelper->storageForReuse->getAllocationsForReuse().peekHead()->getResidencyTaskCount(csr->getOsContext().getContextId()), GraphicsAllocation::objectNotResident);
+    EXPECT_NE(MockAllocationsList::whiteboxCast(heapHelper->storageForReuse->getAllocationsForReuse()).peekFront()->getResidencyTaskCount(csr->getOsContext().getContextId()), GraphicsAllocation::objectNotResident);
     EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize);
-    auto *heapNode = heapHelper->storageForReuse->getAllocationsForReuse().peekHead();
+    auto &heapsForReuse = MockAllocationsList::whiteboxCast(heapHelper->storageForReuse->getAllocationsForReuse());
     const auto &csrResidency = csr->getResidencyAllocations();
-    while (heapNode) {
+    for (size_t index = 0; index < heapsForReuse.peekSize(); index++) {
+        auto *heapNode = heapsForReuse.peekAt(index);
         EXPECT_NE(std::find(csrResidency.begin(), csrResidency.end(), heapNode), csrResidency.end());
-        heapNode = heapNode->next;
     }
 
     cmdContainer.reset();
@@ -2342,12 +2343,12 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->setImmediateCmdListCsr(csr);
 
-    auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
+    auto &reusableHeapsList = MockAllocationsList::whiteboxCast(reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse());
 
     EXPECT_TRUE(reusableHeapsList.peekIsEmpty());
     cmdContainer->fillReusableAllocationLists();
     EXPECT_FALSE(reusableHeapsList.peekIsEmpty());
-    EXPECT_EQ(reusableHeapsList.peekHead()->countThisAndAllConnected(), 1u);
+    EXPECT_EQ(reusableHeapsList.peekSize(), 1u);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -2372,14 +2373,14 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
     cmdContainer->setImmediateCmdListCsr(csr);
 
-    auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
+    auto &reusableHeapsList = MockAllocationsList::whiteboxCast(reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse());
 
     EXPECT_TRUE(reusableHeapsList.peekIsEmpty());
 
     cmdContainer->fillReusableAllocationLists();
     EXPECT_FALSE(reusableHeapsList.peekIsEmpty());
     auto expectedHeapCount = hardwareInfo.capabilityTable.supportsImages ? 2u : 1u;
-    EXPECT_EQ(reusableHeapsList.peekHead()->countThisAndAllConnected(), expectedHeapCount);
+    EXPECT_EQ(reusableHeapsList.peekSize(), expectedHeapCount);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -2453,7 +2454,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 
     EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
     cmdContainer->fillReusableAllocationLists();
-    EXPECT_EQ(cmdContainer->immediateReusableAllocationList->peekHead()->countThisAndAllConnected(), 10u);
+    EXPECT_EQ(MockAllocationsList::whiteboxCast(*cmdContainer->immediateReusableAllocationList).peekSize(), 10u);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -2500,8 +2501,8 @@ TEST_F(CommandContainerTest, givenHostCommandBufferAllocationFailsWhenFillReusab
 
     ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
     ASSERT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
-    EXPECT_EQ(1u, cmdContainer->immediateReusableAllocationList->peekHead()->countThisAndAllConnected());
-    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekHead()->storageInfo.systemMemoryForced);
+    EXPECT_EQ(1u, MockAllocationsList::whiteboxCast(*cmdContainer->immediateReusableAllocationList).peekSize());
+    EXPECT_FALSE(MockAllocationsList::whiteboxCast(*cmdContainer->immediateReusableAllocationList).peekFront()->storageInfo.systemMemoryForced);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -2591,9 +2592,9 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
     cmdContainer->setImmediateCmdListCsr(csr);
 
     cmdContainer->fillReusableAllocationLists();
-    auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
+    auto &reusableHeapsList = MockAllocationsList::whiteboxCast(reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse());
     auto baseAlloc = cmdContainer->getIndirectHeapAllocation(HeapType::surfaceState);
-    auto reusableAlloc = reusableHeapsList.peekTail();
+    auto reusableAlloc = reusableHeapsList.peekBack();
 
     cmdContainer->getIndirectHeap(HeapType::surfaceState)->getSpace(cmdContainer->getIndirectHeap(HeapType::surfaceState)->getMaxAvailableSpace());
     auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 1024, 1024);

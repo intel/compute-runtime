@@ -11,6 +11,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -1581,9 +1582,9 @@ HWTEST_F(CommandListCreateWithBcs, givenHostPtrAllocAndImmediateCmdListWhenExter
     EXPECT_TRUE(commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
     auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true, false);
     EXPECT_FALSE(commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(alloc, commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
-    EXPECT_EQ(commandList->getCsr(false)->peekTaskCount(), commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->getTaskCount(commandList->getCsr(false)->getOsContext().getContextId()));
-    EXPECT_EQ(1u, commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->getHostPtrTaskCountAssignment());
+    EXPECT_EQ(alloc, MockAllocationsList::whiteboxCast(commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations()).peekFront());
+    EXPECT_EQ(commandList->getCsr(false)->peekTaskCount(), MockAllocationsList::whiteboxCast(commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations()).peekFront()->getTaskCount(commandList->getCsr(false)->getOsContext().getContextId()));
+    EXPECT_EQ(1u, MockAllocationsList::whiteboxCast(commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations()).peekFront()->getHostPtrTaskCountAssignment());
 }
 
 HWTEST_F(CommandListCreateTests, givenInternalMemWithinDifferentAllocWhenResolveAlignedAllocationCalledThenReturnNewAlloc) {

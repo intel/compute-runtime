@@ -24,6 +24,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -515,8 +516,8 @@ HWTEST_F(EnqueueSvmTest, givenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBuffe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
 
-    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
-    EXPECT_EQ(0u, tempAlloc->countSuccessors());
+    auto tempAlloc = MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekFront();
+    EXPECT_EQ(1u, MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekSize());
     EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
 
     auto srcAddress = myCmdQ.kernelParams.srcPtr;
@@ -549,9 +550,9 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBuffer
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER));
-    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
+    auto tempAlloc = MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekFront();
 
-    EXPECT_EQ(0u, tempAlloc->countSuccessors());
+    EXPECT_EQ(1u, MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekSize());
     EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
 
     auto srcAddress = myCmdQ.kernelParams.srcPtr;
@@ -631,10 +632,10 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueNonBlockingSVMMe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
 
-    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
-    EXPECT_EQ(1u, tempAlloc->countSuccessors());
+    auto tempAlloc = MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekFront();
+    EXPECT_EQ(2u, MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekSize());
     EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
-    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(tempAlloc->next->getGpuAddress()));
+    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekAt(1)->getGpuAddress()));
 
     auto srcAddress = myCmdQ.kernelParams.srcPtr;
     auto srcOffset = myCmdQ.kernelParams.srcOffset.x;
@@ -719,7 +720,7 @@ HWTEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSVMMemcpyThe
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY));
 
-    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
+    auto tempAlloc = MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekFront();
     EXPECT_EQ(nullptr, tempAlloc);
 
     auto srcAddress = myCmdQ.kernelParams.srcPtr;
@@ -988,7 +989,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
 
     ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
 
-    GraphicsAllocation *patternAllocation = csr.getAllocationsForReuse().peekHead();
+    GraphicsAllocation *patternAllocation = MockAllocationsList::whiteboxCast(csr.getAllocationsForReuse()).peekFront();
     ASSERT_NE(nullptr, patternAllocation);
 
     EXPECT_EQ(AllocationType::fillPattern, patternAllocation->getAllocationType());
@@ -2938,7 +2939,7 @@ HWTEST_F(EnqueueSvmTest, givenSrcSystemPtrWithSharedSystemEnabledWhenEnqueueSVMM
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
 
     auto &csr = myCmdQ.getGpgpuCommandStreamReceiver();
-    auto tempAllocationsBefore = csr.getTemporaryAllocations().peekHead();
+    auto tempAllocationsBefore = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
 
     retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
@@ -2953,7 +2954,7 @@ HWTEST_F(EnqueueSvmTest, givenSrcSystemPtrWithSharedSystemEnabledWhenEnqueueSVMM
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
 
-    auto tempAllocationsAfter = csr.getTemporaryAllocations().peekHead();
+    auto tempAllocationsAfter = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
     EXPECT_EQ(tempAllocationsBefore, tempAllocationsAfter);
 }
 
@@ -2972,7 +2973,7 @@ HWTEST_F(EnqueueSvmTest, givenDstSystemPtrWithSharedSystemEnabledWhenEnqueueSVMM
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
 
     auto &csr = myCmdQ.getGpgpuCommandStreamReceiver();
-    auto tempAllocationsBefore = csr.getTemporaryAllocations().peekHead();
+    auto tempAllocationsBefore = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
 
     retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
@@ -2987,7 +2988,7 @@ HWTEST_F(EnqueueSvmTest, givenDstSystemPtrWithSharedSystemEnabledWhenEnqueueSVMM
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER));
 
-    auto tempAllocationsAfter = csr.getTemporaryAllocations().peekHead();
+    auto tempAllocationsAfter = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
     EXPECT_EQ(tempAllocationsBefore, tempAllocationsAfter);
 }
 
@@ -3034,7 +3035,7 @@ HWTEST_F(EnqueueSvmTest, givenSrcAndDstSystemPtrsWithSharedSystemEnabledWhenEnqu
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
 
     auto &csr = myCmdQ.getGpgpuCommandStreamReceiver();
-    auto tempAllocationsBefore = csr.getTemporaryAllocations().peekHead();
+    auto tempAllocationsBefore = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
 
     retVal = myCmdQ.enqueueSVMMemcpy(
         false,   // cl_bool  blocking_copy
@@ -3049,7 +3050,7 @@ HWTEST_F(EnqueueSvmTest, givenSrcAndDstSystemPtrsWithSharedSystemEnabledWhenEnqu
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
 
-    auto tempAllocationsAfter = csr.getTemporaryAllocations().peekHead();
+    auto tempAllocationsAfter = MockAllocationsList::whiteboxCast(csr.getTemporaryAllocations()).peekFront();
     EXPECT_EQ(tempAllocationsBefore, tempAllocationsAfter);
 }
 
@@ -3079,7 +3080,7 @@ HWTEST_F(EnqueueSvmTest, givenSrcSystemPtrAndSharedSystemNotEnabledWhenEnqueueSV
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto tempAlloc = myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations().peekHead();
+    auto tempAlloc = MockAllocationsList::whiteboxCast(myCmdQ.getGpgpuCommandStreamReceiver().getTemporaryAllocations()).peekFront();
     EXPECT_NE(nullptr, tempAlloc);
     EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(tempAlloc->getGpuAddress()));
 }

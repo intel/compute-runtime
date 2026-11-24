@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
@@ -1069,14 +1070,14 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsAndSingleTempAllocation
     requirements.rootDeviceIndex = csr0->getRootDeviceIndex();
 
     memoryManager->deferAllocInUse = true;
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation0));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation1));
 
     // first CSR tag updated
     hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
 
-    EXPECT_FALSE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+    EXPECT_FALSE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation0));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation1));
 
     // second CSR tag updated
     hostPtrManager->checkAllocationsForOverlapping(*memoryManager, &requirements);
@@ -1117,12 +1118,12 @@ HWTEST_F(HostPtrAllocationTest, givenSingleTempAllocationsListWhenAddingToStorag
 
     storage0->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation0), TEMPORARY_ALLOCATION, taskCountReady);
     EXPECT_TRUE(storage0->allocationLists[TEMPORARY_ALLOCATION].peekIsEmpty());
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation0));
     EXPECT_EQ(taskCountReady, graphicsAllocation0->getTaskCount(csr0->getOsContext().getContextId()));
 
     storage1->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
     EXPECT_TRUE(storage1->allocationLists[TEMPORARY_ALLOCATION].peekIsEmpty());
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation1));
     EXPECT_EQ(taskCountReady, graphicsAllocation1->getTaskCount(csr1->getOsContext().getContextId()));
 
     csr0->setLatestSentTaskCount(taskCountNotReady);
@@ -1130,17 +1131,17 @@ HWTEST_F(HostPtrAllocationTest, givenSingleTempAllocationsListWhenAddingToStorag
 
     storage0->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
     storage1->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation0));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation1));
 
     csr1GpuTag = taskCountReady;
 
     storage0->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
-    EXPECT_FALSE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation1));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation0));
+    EXPECT_FALSE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation1));
 
     storage1->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);
-    EXPECT_TRUE(memoryManager->temporaryAllocations->peekContains(*graphicsAllocation0));
+    EXPECT_TRUE(MockAllocationsList::whiteboxCast(*memoryManager->temporaryAllocations).peekContains(*graphicsAllocation0));
 
     csr0GpuTag = taskCountReady;
     storage1->cleanAllocationList(taskCountNotReady, TEMPORARY_ALLOCATION);

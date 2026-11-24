@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/aub_tests/command_queue/enqueue_write_copy_read_buffer_aub_tests.h"
 
 #include "shared/source/memory_manager/allocations_list.h"
+#include "shared/test/common/mocks/mock_allocations_list.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -122,9 +123,12 @@ void AubWriteCopyReadBuffer::runTest() {
 
     pCmdQ->flush();
 
-    GraphicsAllocation *allocation = csr->getTemporaryAllocations().peekHead();
-    while (allocation && allocation->getUnderlyingBuffer() != hostPtrMemory) {
-        allocation = allocation->next;
+    auto &temporaryAllocations = MockAllocationsList::whiteboxCast(csr->getTemporaryAllocations());
+    GraphicsAllocation *allocation = nullptr;
+    for (size_t index = 0; index < temporaryAllocations.peekSize() && allocation == nullptr; index++) {
+        if (temporaryAllocations.peekAt(index)->getUnderlyingBuffer() == hostPtrMemory) {
+            allocation = temporaryAllocations.peekAt(index);
+        }
     }
 
     expectMemory<FamilyType>(AUBFixture::getGpuPointer(allocation), srcMemoryToWrite, bufferSize);
