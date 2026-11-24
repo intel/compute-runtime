@@ -367,7 +367,7 @@ bool testAppendImageBufferCopy(ze_context_handle_t &context, ze_device_handle_t 
                                {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
                                 ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
                                 ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
-                               width,
+                               size,
                                1,
                                1,
                                0,

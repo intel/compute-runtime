@@ -65,6 +65,10 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     const bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
 
+    if (desc->type == ZE_IMAGE_TYPE_BUFFER && hasIgnoredFormatType(desc->format.layout)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+    }
+
     const bool hasFixedChannelSelect = isMediaFormatLayout || isPackedYuvFormat(desc->format.layout);
 
     if (!hasFixedChannelSelect && !hasValidSwizzles(desc->format)) {
@@ -107,6 +111,24 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     if (imgInfo.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_INVALID) {
         return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+    }
+
+    if (desc->type == ZE_IMAGE_TYPE_BUFFER) {
+        const auto elementSize = this->imgInfo.surfaceFormat->imageElementSizeInBytes;
+        if (desc->width == 0 || desc->width % elementSize != 0 || desc->miplevels > 1) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        if (desc->width / elementSize > Image::maxBufferImageTexelCount) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+        }
+        this->imgInfo.imgDesc.imageWidth = desc->width / elementSize;
+        this->imgInfo.imgDesc.imageHeight = 1;
+        this->imgInfo.imgDesc.imageDepth = 1;
+        this->imgInfo.imgDesc.imageArraySize = 0;
+        this->imageFormatDesc.width = this->imgInfo.imgDesc.imageWidth;
+        this->imageFormatDesc.height = 1;
+        this->imageFormatDesc.depth = 1;
+        this->imageFormatDesc.arraylevels = 0;
     }
 
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;

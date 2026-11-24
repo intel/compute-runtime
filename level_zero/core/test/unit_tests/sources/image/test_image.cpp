@@ -216,6 +216,132 @@ HWTEST_F(ImageCreate, givenBufferTypeWithoutPitchedPtrWhenImageCreateThenInvalid
     ASSERT_EQ(imagePtr, nullptr);
 }
 
+HWTEST2_F(ImageCreate, givenBufferSizeWithoutWholeTexelsWhenImageCreateThenInvalidArgumentReturned, ImageSupport) {
+    constexpr size_t storageSize = MemoryConstants::pageSize;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &deviceDesc, storageSize, 0, &ptr));
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
+    pitchedDesc.ptr = ptr;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.pNext = &pitchedDesc;
+    zeDesc.type = ZE_IMAGE_TYPE_BUFFER;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+
+    for (const uint64_t width : {uint64_t{0u}, uint64_t{6u}}) {
+        zeDesc.width = width;
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, imageHW->initialize(device, &zeDesc)) << width;
+        EXPECT_FALSE(imageHW->imageFromBuffer) << width;
+    }
+
+    zeDesc.width = 8u;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &zeDesc));
+    EXPECT_EQ(2u, imageHW->getImageInfo().imgDesc.imageWidth);
+    imageHW.reset();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+HWTEST2_F(ImageCreate, givenBufferTypeWithMipLevelsWhenImageCreateThenInvalidArgumentReturned, ImageSupport) {
+    constexpr size_t storageSize = 256u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &deviceDesc, storageSize, 0, &ptr));
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
+    pitchedDesc.ptr = ptr;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.pNext = &pitchedDesc;
+    zeDesc.type = ZE_IMAGE_TYPE_BUFFER;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    zeDesc.width = storageSize;
+    zeDesc.miplevels = 4;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, imageHW->initialize(device, &zeDesc));
+    EXPECT_FALSE(imageHW->imageFromBuffer);
+
+    zeDesc.miplevels = 1;
+    imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &zeDesc));
+    imageHW.reset();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+HWTEST2_F(ImageCreate, givenBufferImageWhoseTexelWidthExceedsUint32WhenImageCreateThenUnsupportedSizeReturned, ImageSupport) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_BUFFER;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    zeDesc.width = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1u;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, imageHW->initialize(device, &zeDesc));
+    EXPECT_EQ(nullptr, imageHW->getAllocation());
+}
+
+HWTEST2_F(ImageCreate, givenBufferTypeWithMediaLayoutWhenImageCreateThenUnsupportedImageFormatReturned, ImageSupport) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.type = ZE_IMAGE_TYPE_BUFFER;
+    zeDesc.width = 256;
+
+    for (uint32_t layout = ZE_IMAGE_FORMAT_LAYOUT_Y8; layout <= ZE_IMAGE_FORMAT_LAYOUT_BRGP; ++layout) {
+        zeDesc.format.layout = static_cast<ze_image_format_layout_t>(layout);
+        auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, imageHW->initialize(device, &zeDesc)) << layout;
+        EXPECT_EQ(nullptr, imageHW->getAllocation());
+    }
+}
+
+HWTEST2_P(ImageCreateUsmPool, givenBufferTypeWithPitchedPtrWhenCreatingImageViewThenUnsupportedFeatureReturned, ImageSupport) {
+    const size_t width = 64;
+    const size_t size = width * sizeof(uint32_t);
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &deviceDesc, size, 0, &ptr));
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr;
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.pNext = &pitchedDesc;
+    zeDesc.type = ZE_IMAGE_TYPE_BUFFER;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    zeDesc.width = size;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &zeDesc));
+    EXPECT_TRUE(imageHW->imageFromBuffer);
+
+    ze_image_desc_t viewDesc = zeDesc;
+    viewDesc.pNext = nullptr;
+    viewDesc.type = ZE_IMAGE_TYPE_1D;
+    viewDesc.width = width;
+    viewDesc.height = 1;
+    viewDesc.depth = 1;
+    ze_image_handle_t viewHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, imageHW->createView(device, &viewDesc, &viewHandle));
+    EXPECT_EQ(nullptr, viewHandle);
+
+    imageHW.reset(nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
 HWTEST2_F(ImageCreate, givenBufferTypeWithThreeChannelLayoutWhenImageCreateThenUnsupportedImageFormatReturned, ImageSupport) {
     constexpr size_t width = 64u;
     void *ptr = nullptr;
@@ -234,7 +360,7 @@ HWTEST2_F(ImageCreate, givenBufferTypeWithThreeChannelLayoutWhenImageCreateThenU
                                 {layout, ZE_IMAGE_FORMAT_TYPE_UINT,
                                  ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
                                  ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_1},
-                                width,
+                                width * 6,
                                 1,
                                 1,
                                 0,
@@ -316,7 +442,7 @@ HWTEST2_P(ImageCreateUsmPool, GivenBufferTypeWithPitchedPtrWhenImageCreatedThenI
                                   {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
                                    ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
                                    ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
-                                  width,
+                                  size,
                                   1,
                                   depth,
                                   0,

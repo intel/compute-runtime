@@ -284,6 +284,7 @@ struct CapturingImageL0Context : public L0::ult::ContextStubMock {
 
     ze_result_t createImage(ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) override {
         createImageCalled = true;
+        capturedWidth = desc->width;
         for (auto *base = reinterpret_cast<const ze_base_desc_t *>(desc->pNext); base != nullptr;
              base = reinterpret_cast<const ze_base_desc_t *>(base->pNext)) {
             if (base->stype == ZE_STRUCTURE_TYPE_CUSTOM_PITCH_EXP_DESC) {
@@ -295,6 +296,7 @@ struct CapturingImageL0Context : public L0::ult::ContextStubMock {
     }
 
     bool createImageCalled = false;
+    uint64_t capturedWidth = 0;
     size_t capturedRowPitch = 0;
     ze_result_t createImageResult = ZE_RESULT_SUCCESS;
 };
@@ -372,6 +374,149 @@ TEST_F(CreateImageFromBufferWiringTest, givenImage1dBufferFromBufferWhenCreateIm
 
     clReleaseMemObject(image);
     EXPECT_EQ(refCountWithoutImage, buffer.getRefInternalCount());
+}
+
+TEST_F(CreateImageFromBufferWiringTest, givenImage1dBufferFromBufferWhenCreateImageThenWidthInBytesPassedToLevelZero) {
+    CapturingImageL0Context mockL0Context{};
+    mockL0Context.devices[device->getRootDeviceIndex()] = device->getL0Handle();
+
+    cl_device_id clDeviceId = device;
+    auto leoContext = std::make_unique<Context>(nullptr, mockL0Context.toHandle(), 1, &clDeviceId, true);
+
+    const size_t width = 64;
+    const size_t elementSize = 4;
+    MemoryProperties bufferProperties{};
+    uint64_t dummyBufferStorage = 0;
+    Buffer buffer(leoContext.get(), bufferProperties, CL_MEM_READ_WRITE, &dummyBufferStorage, nullptr, width * elementSize, true);
+
+    cl_image_format imageFormat{CL_RGBA, CL_SIGNED_INT8};
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    imageDesc.image_width = width;
+    imageDesc.mem_object = static_cast<cl_mem>(&buffer);
+
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_TRUE(mockL0Context.createImageCalled);
+    EXPECT_EQ(width * elementSize, mockL0Context.capturedWidth);
+
+    clReleaseMemObject(image);
+}
+
+TEST_F(CreateImageFromBufferWiringTest, givenImage1dBufferFromBufferWithFormatNotSupportedForFlagsWhenCreateImageThenImageFormatNotSupportedIsReturnedAndLevelZeroImageIsNotCreated) {
+    CapturingImageL0Context mockL0Context{};
+    mockL0Context.devices[device->getRootDeviceIndex()] = device->getL0Handle();
+
+    cl_device_id clDeviceId = device;
+    auto leoContext = std::make_unique<Context>(nullptr, mockL0Context.toHandle(), 1, &clDeviceId, true);
+
+    const size_t width = 64;
+    const size_t elementSize = 4;
+    MemoryProperties bufferProperties{};
+    uint64_t dummyBufferStorage = 0;
+    Buffer buffer(leoContext.get(), bufferProperties, CL_MEM_READ_WRITE, &dummyBufferStorage, nullptr, width * elementSize, true);
+    const auto refCountWithoutImage = buffer.getRefInternalCount();
+
+    const cl_image_format imageFormat{CL_sRGBA, CL_UNORM_INT8};
+    ASSERT_EQ(nullptr, Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat));
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    imageDesc.image_width = width;
+    imageDesc.mem_object = static_cast<cl_mem>(&buffer);
+
+    cl_int retVal = CL_SUCCESS;
+    const auto image = clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
+    EXPECT_EQ(nullptr, image);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+    EXPECT_EQ(refCountWithoutImage, buffer.getRefInternalCount());
+
+    if (image != nullptr) {
+        clReleaseMemObject(image);
+    }
+}
+
+TEST_F(CreateImageFromBufferWiringTest, givenImage1dBufferWithoutAccessFlagsFromReadOnlyBufferWhenCreateImageWithReadOnlyFormatThenImageIsCreatedWithWidthInBytes) {
+    CapturingImageL0Context mockL0Context{};
+    mockL0Context.devices[device->getRootDeviceIndex()] = device->getL0Handle();
+
+    cl_device_id clDeviceId = device;
+    auto leoContext = std::make_unique<Context>(nullptr, mockL0Context.toHandle(), 1, &clDeviceId, true);
+
+    const size_t width = 64;
+    const size_t elementSize = 4;
+    MemoryProperties bufferProperties{};
+    uint64_t dummyBufferStorage = 0;
+    Buffer buffer(leoContext.get(), bufferProperties, CL_MEM_READ_ONLY, &dummyBufferStorage, nullptr, width * elementSize, true);
+
+    const cl_image_format imageFormat{CL_sRGBA, CL_UNORM_INT8};
+    ASSERT_EQ(nullptr, Image::getSurfaceFormatFromTable(0, &imageFormat));
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    imageDesc.image_width = width;
+    imageDesc.mem_object = static_cast<cl_mem>(&buffer);
+
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImage(leoContext.get(), 0, &imageFormat, &imageDesc, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, image);
+
+    EXPECT_TRUE(mockL0Context.createImageCalled);
+    EXPECT_EQ(width * elementSize, mockL0Context.capturedWidth);
+
+    clReleaseMemObject(image);
+}
+
+TEST_F(CreateImageFromBufferWiringTest, givenImage1dBufferWithoutMemObjectWhenCreateImageThenInvalidImageDescriptorIsReturnedAndLevelZeroImageIsNotCreated) {
+    CapturingImageL0Context mockL0Context{};
+    mockL0Context.devices[device->getRootDeviceIndex()] = device->getL0Handle();
+
+    cl_device_id clDeviceId = device;
+    auto leoContext = std::make_unique<Context>(nullptr, mockL0Context.toHandle(), 1, &clDeviceId, true);
+
+    const cl_image_format imageFormat{CL_RGBA, CL_UNORM_INT8};
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    imageDesc.image_width = 64;
+
+    cl_int retVal = CL_SUCCESS;
+    const auto image = clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    EXPECT_EQ(nullptr, image);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+
+    if (image != nullptr) {
+        clReleaseMemObject(image);
+    }
+}
+
+TEST_F(CreateImageFromBufferWiringTest, givenImage1dBufferWithMemObjectThatIsNotMemoryObjectWhenCreateImageThenInvalidImageDescriptorIsReturnedAndLevelZeroImageIsNotCreated) {
+    CapturingImageL0Context mockL0Context{};
+    mockL0Context.devices[device->getRootDeviceIndex()] = device->getL0Handle();
+
+    cl_device_id clDeviceId = device;
+    auto leoContext = std::make_unique<Context>(nullptr, mockL0Context.toHandle(), 1, &clDeviceId, true);
+
+    const cl_image_format imageFormat{CL_RGBA, CL_UNORM_INT8};
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    imageDesc.image_width = 64;
+    imageDesc.mem_object = reinterpret_cast<cl_mem>(static_cast<cl_context>(leoContext.get()));
+
+    cl_int retVal = CL_SUCCESS;
+    const auto image = clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    EXPECT_EQ(nullptr, image);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+
+    if (image != nullptr) {
+        clReleaseMemObject(image);
+    }
 }
 
 TEST_F(CreateImageFromBufferWiringTest, givenImage2dFromBufferWhenCreateImageThenParentBufferIsRetained) {
@@ -830,6 +975,24 @@ TEST_F(LeoNv12ImageTest, givenNV12ParentWhenExtractingYPlaneThenDimensionsMatchP
     cl_mem associated = nullptr;
     EXPECT_EQ(CL_SUCCESS, clGetMemObjectInfo(yPlane.get(), CL_MEM_ASSOCIATED_MEMOBJECT, sizeof(associated), &associated, nullptr));
     EXPECT_EQ(static_cast<cl_mem>(parent.get()), associated);
+}
+
+TEST_F(LeoNv12ImageTest, givenImageAsMemObjectWhenCreatingImage1dBufferThenInvalidImageDescriptorIsReturnedAndParentIsNotRetained) {
+    auto parent = createParent();
+    ASSERT_NE(nullptr, parent);
+    const auto parentRefCount = parent->getRefInternalCount();
+
+    const cl_image_format imageFormat{CL_R, CL_UNORM_INT8};
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    imageDesc.image_width = width;
+    imageDesc.mem_object = parent.get();
+
+    cl_int err = CL_SUCCESS;
+    const auto image = clUniquePtr(castToObject<Image>(clCreateImage(context.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &err)));
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, err);
+    EXPECT_EQ(nullptr, image);
+    EXPECT_EQ(parentRefCount, parent->getRefInternalCount());
 }
 
 TEST_F(LeoNv12ImageTest, givenNV12ParentWhenExtractingUVPlaneThenDimensionsAreHalved) {

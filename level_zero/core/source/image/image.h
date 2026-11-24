@@ -9,6 +9,8 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
+#include <limits>
+
 struct _ze_image_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_image_handle_t>);
 
@@ -61,6 +63,10 @@ struct Image : _ze_image_handle_t {
     virtual void encodeImplicitArgsSurfaceState() = 0;
     virtual bool isSrgb() const = 0;
     virtual bool isDepthStencil() const = 0;
+
+    static constexpr uint64_t maxBufferImageTexelCount = std::numeric_limits<uint32_t>::max();
+    static constexpr uint64_t minTexelSizeInBytes = 1u;
+    static constexpr uint64_t maxBufferImageSizeInBytes = maxBufferImageTexelCount * minTexelSizeInBytes;
 
     static ze_result_t getPitchFor2dImage(
         ze_device_handle_t hDevice,

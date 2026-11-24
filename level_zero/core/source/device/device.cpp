@@ -1427,7 +1427,7 @@ ze_result_t Device::getDeviceImageProperties(ze_device_image_properties_t *pDevi
         pDeviceImageProperties->maxImageDims1D = static_cast<uint32_t>(deviceInfo.image2DMaxWidth);
         pDeviceImageProperties->maxImageDims2D = static_cast<uint32_t>(deviceInfo.image2DMaxHeight);
         pDeviceImageProperties->maxImageDims3D = static_cast<uint32_t>(deviceInfo.image3DMaxDepth);
-        pDeviceImageProperties->maxImageBufferSize = deviceInfo.imageMaxBufferSize;
+        pDeviceImageProperties->maxImageBufferSize = std::min(deviceInfo.maxMemAllocSize, Image::maxBufferImageSizeInBytes);
         pDeviceImageProperties->maxImageArraySlices = static_cast<uint32_t>(deviceInfo.imageMaxArraySize);
         pDeviceImageProperties->maxSamplers = deviceInfo.maxSamplers;
         pDeviceImageProperties->maxReadImageArgs = deviceInfo.maxReadImageArgs;

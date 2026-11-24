@@ -154,6 +154,11 @@ ze_result_t ImageImp::destroyPeerImages(const void *ptr, Device *device) {
 }
 
 ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze_image_handle_t *pImage) {
+    if (this->imgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer) {
+        *pImage = nullptr;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     auto gfxCoreFamily = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
 
     ImageAllocatorFn allocator = nullptr;

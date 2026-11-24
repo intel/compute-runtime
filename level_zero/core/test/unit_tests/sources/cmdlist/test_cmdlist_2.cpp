@@ -1730,6 +1730,7 @@ struct CommandListAppendImage1dBuffer : public CommandListAppend {
                                 0};
 
         if (type == ZE_IMAGE_TYPE_BUFFER) {
+            desc.width = imageWidth * bytesPerPixel;
             void *ptr = nullptr;
             ze_device_mem_alloc_desc_t deviceDesc = {};
             EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, imageWidth * bytesPerPixel, 0, &ptr));

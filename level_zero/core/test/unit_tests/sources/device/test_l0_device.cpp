@@ -4890,7 +4890,7 @@ TEST(zeDevice, givenImagesSupportedWhenGettingImagePropertiesThenValidValuesAreR
     deviceInfo.image2DMaxWidth = 1;
     deviceInfo.image2DMaxHeight = 2;
     deviceInfo.image3DMaxDepth = 3;
-    deviceInfo.imageMaxBufferSize = 4;
+    deviceInfo.maxMemAllocSize = 64;
     deviceInfo.imageMaxArraySize = 5;
     deviceInfo.maxSamplers = 6;
     deviceInfo.maxReadImageArgs = 7;
@@ -4902,11 +4902,27 @@ TEST(zeDevice, givenImagesSupportedWhenGettingImagePropertiesThenValidValuesAreR
     EXPECT_EQ(deviceInfo.image2DMaxWidth, static_cast<uint64_t>(properties.maxImageDims1D));
     EXPECT_EQ(deviceInfo.image2DMaxHeight, static_cast<uint64_t>(properties.maxImageDims2D));
     EXPECT_EQ(deviceInfo.image3DMaxDepth, static_cast<uint64_t>(properties.maxImageDims3D));
-    EXPECT_EQ(deviceInfo.imageMaxBufferSize, properties.maxImageBufferSize);
+    EXPECT_EQ(deviceInfo.maxMemAllocSize, properties.maxImageBufferSize);
     EXPECT_EQ(deviceInfo.imageMaxArraySize, static_cast<uint64_t>(properties.maxImageArraySlices));
     EXPECT_EQ(deviceInfo.maxSamplers, properties.maxSamplers);
     EXPECT_EQ(deviceInfo.maxReadImageArgs, properties.maxReadImageArgs);
     EXPECT_EQ(deviceInfo.maxWriteImageArgs, properties.maxWriteImageArgs);
+}
+
+TEST(zeDevice, givenMaxMemAllocSizeAboveBufferImageSizeLimitWhenGettingImagePropertiesThenMaxImageBufferSizeIsBufferImageSizeLimit) {
+    ze_result_t errorValue;
+
+    DriverHandle driverHandle{};
+    NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));
+    DeviceInfo &deviceInfo = neoDevice->deviceInfo;
+
+    deviceInfo.imageSupport = true;
+    deviceInfo.maxMemAllocSize = 2 * L0::Image::maxBufferImageSizeInBytes;
+
+    ze_device_image_properties_t properties{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetImageProperties(device->toHandle(), &properties));
+    EXPECT_EQ(L0::Image::maxBufferImageSizeInBytes, properties.maxImageBufferSize);
 }
 
 TEST(zeDevice, givenNoImagesSupportedWhenGettingImagePropertiesThenZeroValuesAreReturned) {

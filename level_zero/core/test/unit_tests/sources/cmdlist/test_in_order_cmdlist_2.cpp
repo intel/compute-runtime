@@ -2051,7 +2051,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenImageCopyOffloadDisallowedAndBlitPreferr
     zeDesc.type = ZE_IMAGE_TYPE_BUFFER;
     zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
     zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
-    zeDesc.width = width;
+    zeDesc.width = width * sizeof(uint32_t);
     zeDesc.height = 1;
     zeDesc.depth = 1;
     auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();

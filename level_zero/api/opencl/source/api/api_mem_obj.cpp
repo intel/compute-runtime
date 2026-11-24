@@ -356,6 +356,11 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         auto parentMemObj = NEO::LEO::castToObject<NEO::LEO::MemObj>(imageDesc->mem_object);
         auto device = pContext->getL0Object()->getDevices().begin()->second;
 
+        if ((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) && ((parentMemObj == nullptr) || !parentMemObj->isBuffer())) [[unlikely]] {
+            err.set(CL_INVALID_IMAGE_DESCRIPTOR);
+            return tracingScope.exit(nullptr);
+        }
+
         if (parentMemObj && parentMemObj->isImage()) {
             auto parentImage = static_cast<NEO::LEO::Image *>(parentMemObj);
             const uint32_t planeIndex = static_cast<uint32_t>(imageDesc->image_depth);
@@ -392,6 +397,17 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
 
             l0imageDesc.type = NEO::LEO::Image::clToL0ImageType(imageDesc->image_type);
             NEO::LEO::Image::clToL0ImageFormat(l0imageDesc.format, imageFormat->image_channel_order, imageFormat->image_channel_data_type);
+
+            if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+                const auto effectiveFlags = NEO::LEO::Buffer::inheritFlags(flags, parentMemObj->getFlags());
+                const auto surfaceFormat = NEO::LEO::Image::getSurfaceFormatFromTable(effectiveFlags, imageFormat);
+                if (surfaceFormat == nullptr) [[unlikely]] {
+                    err.set(CL_IMAGE_FORMAT_NOT_SUPPORTED);
+                    return tracingScope.exit(nullptr);
+                }
+                // Level Zero takes the width of a buffer image in bytes, OpenCL in pixels.
+                l0imageDesc.width = imageDesc->image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
+            }
 
             ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, NEO::LEO::Image::isSRGB(imageFormat->image_channel_order)};
             l0imageDesc.pNext = &srgbExtDesc;
