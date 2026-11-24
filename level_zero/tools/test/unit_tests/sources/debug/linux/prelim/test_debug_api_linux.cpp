@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/test/common/fixtures/sip_external_lib_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -442,6 +443,7 @@ TEST(DebugSessionLinuxi915Test, GivenContextStateSaveAreaBindInfoWhenGettingCSSA
 using DebugSessionLinuxi915FenceMode = Test<DebugApiLinuxPrelimFixture>;
 
 TEST_F(DebugSessionLinuxi915FenceMode, GivenDebuggerOpenVersionGreaterEqual3WhenDebugSessionCreatedThanBlockingOnFenceModeIsSet) {
+    NEO::injectSipLibIfRequired(*neoDevice);
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -465,6 +467,7 @@ TEST_F(DebugSessionLinuxi915FenceMode, GivenDebuggerOpenVersionGreaterEqual3When
 using DebugApiLinuxTest = Test<DebugApiLinuxPrelimFixture>;
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerOpenVersion1AndSuccessfulInitializationWhenCreatingDebugSessionThenBlockOnFenceModeIsFalse) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -489,6 +492,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerOpenVersion1AndSuccessfulInitializationWh
 }
 
 TEST_F(DebugApiLinuxTest, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
@@ -500,6 +504,7 @@ TEST_F(DebugApiLinuxTest, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSe
 }
 
 TEST_F(DebugApiLinuxTest, givenDebugSessionWhenCallingDebugDetachThenSessionIsClosedAndSuccessReturned) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
@@ -642,6 +647,7 @@ TEST_F(DebugApiLinuxTest, GivenEventRequiringAckWhenAcknowledgeEventCalledThenSu
 }
 
 TEST_F(DebugApiLinuxTest, GivenSuccessfulInitializationWhenCreatingDebugSessionThenAsyncThreadIsStarted) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -660,6 +666,7 @@ TEST_F(DebugApiLinuxTest, GivenSuccessfulInitializationWhenCreatingDebugSessionT
 }
 
 TEST_F(DebugApiLinuxTest, GivenRootDeviceWhenDebugSessionIsCreatedForTheSecondTimeThenSuccessIsReturned) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -989,6 +996,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsR
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessageIsPrintedAndResultSet) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
@@ -1014,6 +1022,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessa
 }
 
 TEST_F(DebugApiLinuxTest, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -1046,6 +1055,7 @@ TEST_F(DebugApiLinuxTest, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerSucceedsThenCorrectMessageIsPrintedAndResultSet) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     DebugManagerStateRestore restorer;
 
     NEO::debugManager.flags.DebuggerLogBitmask.set(255);
@@ -2240,6 +2250,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromMmapWhenCallingWriteGpuMemoryThenCloseIs
 }
 
 TEST_F(DebugApiLinuxTest, givenErrorReturnedFromInitializeWhenDebugSessionIsCreatedThenNullptrIsReturned) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0;
 
@@ -7896,6 +7907,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndRootAttachModeWhenDebugSess
 }
 
 TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootSessionIsCreatedAndTileAttachDisabled) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
@@ -7922,6 +7934,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootS
 }
 
 TEST_F(DebugApiLinuxMultitileTest, GivenSubDeviceWhenDebugAttachCalledThenTileSessionsAreCreatedAndRootCannotBeAttached) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;

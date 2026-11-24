@@ -1469,9 +1469,11 @@ ze_result_t Device::getDebugProperties(zet_device_debug_properties_t *pDebugProp
         isDebugAttachAvailable = false;
     }
     if (isDebugAttachAvailable) {
-        auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*this->getNEODevice()).getStateSaveAreaHeader();
+        auto debugSipKernel = NEO::SipKernel::getDebugSipKernelPtr(*this->getNEODevice());
 
-        if (stateSaveAreaHeader.size() == 0) {
+        if (debugSipKernel == nullptr) {
+            PRINT_DEBUGGER_INFO_LOG("Debug SIP kernel not available", "");
+        } else if (debugSipKernel->getStateSaveAreaHeader().size() == 0) {
             PRINT_DEBUGGER_INFO_LOG("Context state save area header missing", "");
         } else {
             bool tileAttach = NEO::debugManager.flags.ExperimentalEnableTileAttach.get();

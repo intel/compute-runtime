@@ -156,6 +156,22 @@ HWTEST2_F(DebugApiTest, givenDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesRe
     EXPECT_EQ(ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH, debugProperties.flags);
 }
 
+HWTEST2_F(DebugApiTest, givenSipExternalLibRequiredButNotAvailableWhenGettingDebugPropertiesThenAttachFlagIsNotReturned, isDebugSupportedProduct) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    neoDevice->getRootDeviceEnvironmentRef().sipExternalLibLookupDone = true;
+
+    zet_device_debug_properties_t debugProperties = {};
+    debugProperties.flags = ZET_DEVICE_DEBUG_PROPERTY_FLAG_FORCE_UINT32;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+
+    auto result = zetDeviceGetDebugProperties(device->toHandle(), &debugProperties);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, debugProperties.flags);
+}
+
 using isDebugNotSupportedProduct = IsAtMostProduct<IGFX_ALDERLAKE_N>;
 HWTEST2_F(DebugApiTest, givenDeviceWhenDebugIsNotSupportedThenGetPropertiesReturnsCorrectFlag, isDebugNotSupportedProduct) {
     zet_device_debug_properties_t debugProperties = {};

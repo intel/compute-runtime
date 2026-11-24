@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/debug/debug_session.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -35,6 +36,12 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         return nullptr;
     }
+    auto neoDevice = device->getNEODevice();
+    auto sipLibInterface = neoDevice->getSipExternalLibInterface();
+    if (sipLibInterface == nullptr && NEO::SipKernel::isExternalLibRequired(neoDevice->getGfxCoreHelper())) {
+        result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        return nullptr;
+    }
     auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
     auto drmVersion = NEO::Drm::getDrmVersion(drm->getFileDescriptor());
 
@@ -57,8 +64,6 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
         delete debugSession;
         return nullptr;
     }
-    auto neoDevice = device->getNEODevice();
-    auto sipLibInterface = neoDevice->getSipExternalLibInterface();
     if (sipLibInterface) {
         std::vector<char> sipBinary;
         std::vector<char> stateSaveAreaHeader;

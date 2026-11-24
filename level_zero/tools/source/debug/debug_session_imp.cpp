@@ -1379,9 +1379,7 @@ bool DebugSessionImp::getRegisterAccessProperties(EuThread::ThreadId *threadId, 
 
 bool DebugSessionImp::openSipWrapper(uint64_t contextHandle, uint64_t gpuVa) {
     auto sipExternalLib = getSipExternalLibInterface();
-    if (sipExternalLib == nullptr) {
-        return false;
-    }
+    UNRECOVERABLE_IF(!sipExternalLib);
     auto sipSessionIt = sipSessions.try_emplace(contextHandle).first;
     auto &sipSession = sipSessionIt->second;
     if (sipSession.handle != nullptr) {

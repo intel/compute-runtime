@@ -17,4 +17,6 @@ struct SipExternalLibFixture {
 
     MockSipExternalLib *sipExternalLib = nullptr;
 };
+
+void injectSipLibIfRequired(Device &device);
 } // namespace NEO

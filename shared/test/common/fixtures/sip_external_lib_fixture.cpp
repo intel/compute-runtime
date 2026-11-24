@@ -7,6 +7,7 @@
 
 #include "shared/test/common/fixtures/sip_external_lib_fixture.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/mocks/mock_sip_external_lib.h"
@@ -16,5 +17,11 @@ void SipExternalLibFixture::injectSipLib(Device &device) {
     auto mockSipLib = std::make_unique<MockSipExternalLib>();
     this->sipExternalLib = mockSipLib.get();
     device.getRootDeviceEnvironmentRef().sipExternalLib = std::move(mockSipLib);
+}
+
+void injectSipLibIfRequired(Device &device) {
+    if (SipKernel::isExternalLibRequired(device.getGfxCoreHelper())) {
+        SipExternalLibFixture{}.injectSipLib(device);
+    }
 }
 } // namespace NEO

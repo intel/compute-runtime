@@ -174,6 +174,7 @@ struct dirent mockFDEntries[] = {
 };
 
 TEST_F(DebugApiLinuxTestXe, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -186,6 +187,7 @@ TEST_F(DebugApiLinuxTestXe, givenDeviceWhenCallingDebugAttachThenSuccessAndValid
 }
 
 TEST_F(DebugApiLinuxTestXe, givenDebugSessionWhenCallingDebugDetachThenSessionIsClosedAndSuccessReturned) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     zet_debug_session_handle_t debugSession = nullptr;
@@ -201,6 +203,7 @@ TEST_F(DebugApiLinuxTestXe, givenDebugSessionWhenCallingDebugDetachThenSessionIs
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenDebuggerCreatedWithParamsThenVersionIsSaved) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -562,6 +565,7 @@ TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerConnectionUpstreamIsErrorThenReturns
 }
 
 TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
+    NEO::injectSipLibIfRequired(*neoDevice);
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -635,6 +639,29 @@ TEST_F(DebugApiLinuxSipExternalLibTestXe, GivenSipExternalLibFailingToCreateSipK
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
     EXPECT_EQ(1u, sipExternalLib->getSipKernelBinaryCalled);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibRequiredButNotAvailableWhenCreatingDebugSessionThenNotAvailableIsReturnedWithoutOpeningConnection) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    neoDevice->getRootDeviceEnvironmentRef().sipExternalLibLookupDone = true;
+
+    uint32_t openConnectionCalls = 0;
+    VariableBackup<OpenConnectionUpstreamHelperFunc> openConnectionBackup(&L0::ult::openConnectionUpstreamFuncXe, [&openConnectionCalls](int pid, L0::Device *device, NEO::EuDebugInterface &debugInterface, NEO::EuDebugConnect *open, int &debugFd) -> ze_result_t {
+        openConnectionCalls++;
+        debugFd = 10;
+        return ZE_RESULT_SUCCESS;
+    });
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    auto session = DebugSession::create(config, device, result, true);
+
+    EXPECT_EQ(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    EXPECT_EQ(0u, openConnectionCalls);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsReturned) {

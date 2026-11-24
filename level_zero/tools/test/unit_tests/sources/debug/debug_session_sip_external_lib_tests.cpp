@@ -6,7 +6,6 @@
  */
 
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -61,15 +60,6 @@ TEST_F(DebugSessionSipExternalLibTest, GivenOpenedSipSessionWhenOpenSipWrapperIs
 TEST_F(DebugSessionSipExternalLibTest, GivenOpenSipSessionFailsWhenOpenSipWrapperIsCalledThenFalseIsReturnedAndNothingIsStored) {
     injectSipLib(*neoDevice);
     sipExternalLib->openSipSessionRetValue = false;
-    auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, device);
-
-    EXPECT_FALSE(session->openSipWrapper(0x1111, 0x2222));
-
-    EXPECT_TRUE(session->sipSessions.empty());
-}
-
-TEST_F(DebugSessionSipExternalLibTest, GivenNoSipExternalLibWhenOpenSipWrapperIsCalledThenFalseIsReturnedAndNothingIsStored) {
-    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     auto session = std::make_unique<MockDebugSession>(zet_debug_config_t{}, device);
 
     EXPECT_FALSE(session->openSipWrapper(0x1111, 0x2222));
