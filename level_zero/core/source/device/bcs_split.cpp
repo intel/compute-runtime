@@ -16,7 +16,6 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 #include <algorithm>
 
@@ -50,7 +49,7 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnab
         return true;
     }
 
-    events.setAggregatedEventMode(NEO::debugManager.flags.SplitBcsAggregatedEventsMode.getIfNotDefault(device.getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled()));
+    events.setAggregatedEventMode(NEO::debugManager.flags.SplitBcsAggregatedEventsMode.getIfNotDefault(device.getHwInfo().caps.bcsSplitAggregatedModeEnabled));
 
     setupEnginesMask();
 

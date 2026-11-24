@@ -133,11 +133,6 @@ bool L0GfxCoreHelperHw<Family>::isCopyOffloadForOutOfOrderImmediateCmdListSuppor
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::bcsSplitAggregatedModeEnabled() const {
-    return false;
-}
-
-template <typename Family>
 uint64_t L0GfxCoreHelperHw<Family>::getSupportedCustomOperations1() const {
     return 0u;
 }

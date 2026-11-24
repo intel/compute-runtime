@@ -60,6 +60,7 @@ struct CapsXe3pCore {
 struct CapsCri : CapsXe3pCore {
     static constexpr uint32_t numCacheRegions = toUnderlying(CacheRegion::count);
 
+    static constexpr bool bcsSplitAggregatedModeEnabled = true;
     static constexpr bool bcsVirtualEngineForAllCopyEnginesSupported = true;
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
     static constexpr bool grfLimitedPreferredSlmSizeEnabled = true;

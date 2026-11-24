@@ -63,6 +63,7 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->adjustWalkOrderAvailable, hwInfo.caps.adjustWalkOrderAvailable);
         EXPECT_EQ(expectedCaps->auxSurfaceModeOverrideRequired, hwInfo.caps.auxSurfaceModeOverrideRequired);
         EXPECT_EQ(expectedCaps->availableSemaphore64, hwInfo.caps.availableSemaphore64);
+        EXPECT_EQ(expectedCaps->bcsSplitAggregatedModeEnabled, hwInfo.caps.bcsSplitAggregatedModeEnabled);
         EXPECT_EQ(expectedCaps->bcsVirtualEngineForAllCopyEnginesSupported, hwInfo.caps.bcsVirtualEngineForAllCopyEnginesSupported);
         EXPECT_EQ(expectedCaps->bFloat16ConversionSupported, hwInfo.caps.bFloat16ConversionSupported);
         EXPECT_EQ(expectedCaps->bindlessAddressingDisabled, hwInfo.caps.bindlessAddressingDisabled);
@@ -151,6 +152,7 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.adjustWalkOrderAvailable);
     EXPECT_FALSE(caps.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(caps.availableSemaphore64);
+    EXPECT_FALSE(caps.bcsSplitAggregatedModeEnabled);
     EXPECT_FALSE(caps.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_FALSE(caps.bFloat16ConversionSupported);
     EXPECT_FALSE(caps.bindlessAddressingDisabled);

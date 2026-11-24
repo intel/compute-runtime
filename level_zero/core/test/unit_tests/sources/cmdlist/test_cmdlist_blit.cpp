@@ -1747,16 +1747,22 @@ HWTEST_F(AggregatedBcsSplitTests, givenTransferDirectionWhenAskingIfSplitIsNeede
     }
 }
 
-HWTEST2_F(AggregatedBcsSplitTests, givenPlatformSupporingAggregatedSplitModeWhenInitializingThenEnableInBcsSplitObject, IsAtLeastXeHpcCore) {
+HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedSplitModeCapWhenInitializingThenAggregatedModeInBcsSplitObjectMatchesCap, IsAtLeastXeHpcCore) {
     debugManager.flags.SplitBcsAggregatedEventsMode.set(-1);
 
-    BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
+    auto &caps = device->getNEODevice()->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps;
 
-    bcsSplit.setupDevice(cmdList->getCsr(false), false);
+    for (const bool aggregatedModeEnabled : {false, true}) {
+        caps.bcsSplitAggregatedModeEnabled = aggregatedModeEnabled;
 
-    EXPECT_EQ(device->getL0GfxCoreHelper().bcsSplitAggregatedModeEnabled(), bcsSplit.events.isAggregatedEventMode());
+        BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
 
-    bcsSplit.releaseResources();
+        bcsSplit.setupDevice(cmdList->getCsr(false), false);
+
+        EXPECT_EQ(aggregatedModeEnabled, bcsSplit.events.isAggregatedEventMode());
+
+        bcsSplit.releaseResources();
+    }
 }
 
 struct SingleH2DEngineAggregatedBcsSplitTests : public AggregatedBcsSplitTests {

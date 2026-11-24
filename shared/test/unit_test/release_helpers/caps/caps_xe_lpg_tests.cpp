@@ -70,6 +70,7 @@ TEST(CapsXeLpgTest, givenMtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlUA0.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsMtlUA0.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsMtlUA0.availableSemaphore64);
+    EXPECT_FALSE(capsMtlUA0.bcsSplitAggregatedModeEnabled);
     EXPECT_FALSE(capsMtlUA0.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsMtlUA0.bFloat16ConversionSupported);
     EXPECT_FALSE(capsMtlUA0.bindlessAddressingDisabled);
@@ -148,6 +149,7 @@ TEST(CapsXeLpgTest, givenMtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlUB0.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsMtlUB0.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsMtlUB0.availableSemaphore64);
+    EXPECT_FALSE(capsMtlUB0.bcsSplitAggregatedModeEnabled);
     EXPECT_FALSE(capsMtlUB0.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsMtlUB0.bFloat16ConversionSupported);
     EXPECT_FALSE(capsMtlUB0.bindlessAddressingDisabled);
@@ -223,6 +225,7 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlHA0.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsMtlHA0.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsMtlHA0.availableSemaphore64);
+    EXPECT_FALSE(capsMtlHA0.bcsSplitAggregatedModeEnabled);
     EXPECT_FALSE(capsMtlHA0.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsMtlHA0.bFloat16ConversionSupported);
     EXPECT_FALSE(capsMtlHA0.bindlessAddressingDisabled);
@@ -301,6 +304,7 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlHB0.adjustWalkOrderAvailable);
     EXPECT_TRUE(capsMtlHB0.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsMtlHB0.availableSemaphore64);
+    EXPECT_FALSE(capsMtlHB0.bcsSplitAggregatedModeEnabled);
     EXPECT_FALSE(capsMtlHB0.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsMtlHB0.bFloat16ConversionSupported);
     EXPECT_FALSE(capsMtlHB0.bindlessAddressingDisabled);
@@ -375,6 +379,7 @@ TEST(CapsXeLpgTest, givenArlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_TRUE(capsArlH.adjustWalkOrderAvailable);
     EXPECT_FALSE(capsArlH.auxSurfaceModeOverrideRequired);
     EXPECT_FALSE(capsArlH.availableSemaphore64);
+    EXPECT_FALSE(capsArlH.bcsSplitAggregatedModeEnabled);
     EXPECT_FALSE(capsArlH.bcsVirtualEngineForAllCopyEnginesSupported);
     EXPECT_TRUE(capsArlH.bFloat16ConversionSupported);
     EXPECT_FALSE(capsArlH.bindlessAddressingDisabled);
