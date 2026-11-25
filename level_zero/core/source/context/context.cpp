@@ -82,12 +82,6 @@ Context::Context(DriverHandle *driverHandle) {
 
     this->contextExt = createContextExt(driverHandle);
 
-    auto memoryManager = driverHandle->getMemoryManager();
-    if (memoryManager->isAsyncDeleterEnabled()) {
-        this->deferredDeleter = memoryManager->getDeferredDeleter();
-        this->deferredDeleter->addClient();
-    }
-
     // Determine context settings based on device capabilities.
     settings.enableSvmHeapReservation = true;
     for (auto &device : this->driverHandle->devices) {
@@ -106,6 +100,14 @@ Context::Context(DriverHandle *driverHandle) {
     settings.useOpaqueHandle = Context::isOpaqueHandleSupported(&settings.handleType);
     // Inherit IPC handle sharing setting from driver handle
     settings.enableIpcHandleSharingByDefault = driverHandle->enableIpcHandleSharingByDefault;
+}
+
+void Context::registerDeferredDeleterClient() {
+    auto memoryManager = this->driverHandle->getMemoryManager();
+    if (memoryManager->isAsyncDeleterEnabled()) {
+        this->deferredDeleter = memoryManager->getDeferredDeleter();
+        this->deferredDeleter->addClient();
+    }
 }
 
 Context::~Context() {

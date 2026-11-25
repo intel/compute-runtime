@@ -81,6 +81,15 @@ void DeferredDeleter::removeClient() {
     }
 }
 
+bool DeferredDeleter::deferDeletionIfHasClients(std::unique_ptr<DeferrableDeletion> &deletion) {
+    std::lock_guard<std::mutex> lock(this->threadMutex);
+    if (this->numClients == 0) {
+        return false;
+    }
+    this->deferDeletion(deletion.release());
+    return true;
+}
+
 void DeferredDeleter::ensureThread() {
     if (worker != nullptr) {
         return;

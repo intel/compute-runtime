@@ -29,6 +29,8 @@ class DeferredDeleter : NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL void removeClient();
 
+    bool deferDeletionIfHasClients(std::unique_ptr<DeferrableDeletion> &deletion);
+
     MOCKABLE_VIRTUAL void drain(bool blocking, bool hostptrsOnly);
 
     MOCKABLE_VIRTUAL bool areElementsReleased(bool hostptrsOnly);

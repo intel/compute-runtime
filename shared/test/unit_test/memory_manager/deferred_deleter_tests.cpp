@@ -71,3 +71,17 @@ TEST(DeferredDeleter, givenDeferredDeleterWhenNonBlockingDrainIsCalledThenArElem
     EXPECT_EQ(0, deleter->areElementsReleasedCalled);
     EXPECT_EQ(1, deleter->drainCalled);
 }
+
+TEST(DeferredDeleter, givenNoClientsWhenDeferDeletionIfHasClientsIsCalledThenDeletionIsNotTakenAndAfterClientIsAddedItIsDeferred) {
+    auto deleter = std::make_unique<MockDeferredDeleter>();
+    std::unique_ptr<DeferrableDeletion> deletion = std::make_unique<MockDeferrableDeletion>();
+
+    EXPECT_FALSE(deleter->deferDeletionIfHasClients(deletion));
+    EXPECT_NE(nullptr, deletion);
+    EXPECT_EQ(0, deleter->deferDeletionCalled);
+
+    deleter->addClient();
+    EXPECT_TRUE(deleter->deferDeletionIfHasClients(deletion));
+    EXPECT_EQ(nullptr, deletion);
+    EXPECT_EQ(1, deleter->deferDeletionCalled);
+}
