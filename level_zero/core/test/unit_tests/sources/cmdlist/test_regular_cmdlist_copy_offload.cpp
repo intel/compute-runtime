@@ -1955,43 +1955,6 @@ HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenOnlyReadStreamWhenExec
     EXPECT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
 }
 
-HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenReadQueueOnWriteCopyEngineWhenCreatingWriteQueueThenUnsupportedFeatureIsReturned, IsCRI) {
-    const auto &copyEngines = getCopyEngines();
-    ASSERT_LE(2u, copyEngines.size());
-
-    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
-
-    ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    copyQueueDesc.ordinal = device->getCopyEngineOrdinal();
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex] = CommandQueue::create(device, copyEngines[DualStreamCopyOffload::copyOffloadWriteIndex].commandStreamReceiver, &copyQueueDesc, true, true, false, returnValue);
-    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, cmdQueue->createCopyOffloadQueue(DualStreamCopyOffload::copyOffloadWriteIndex));
-    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
-}
-
-HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenHighPriorityQueueWhenExecutingCmdListWithWriteStreamThenUnsupportedFeatureIsReturned, IsCRI) {
-    if (device->getNEODevice()->getHpCopyEngine() == nullptr) {
-        GTEST_SKIP();
-    }
-
-    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
-    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
-
-    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
-    auto cmdQueue = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
-    cmdQueue->initialize(false, false, false);
-
-    auto cmdListHandle = cmdList->toHandle();
-    CommandListExecutionInternalOptions internalOptions = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
-    EXPECT_NE(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]);
-    EXPECT_EQ(nullptr, cmdQueue->copyOffloadQueues[DualStreamCopyOffload::copyOffloadWriteIndex]);
-}
-
 HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyCsrNotAvailableWhenCreatingWriteQueueThenErrorIsReturned, IsCRI) {
     auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->createCopyOffloadQueue(DualStreamCopyOffload::copyOffloadReadIndex));

@@ -578,7 +578,7 @@ struct CopyOffloadInOrderFixture : public InOrderCmdListFixture {
     void SetUp() override {
         debugManager.flags.EnableLocalMemory.set(1);
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-        debugManager.flags.SkipHpBcsInitialization.set(0);
+        debugManager.flags.SkipHpBcsInitialization.set(skipHpBcsInitialization);
         backupHwInfo = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         defaultHwInfo->featureTable.ftrBcsInfo = bcsInfoMask;
@@ -588,6 +588,17 @@ struct CopyOffloadInOrderFixture : public InOrderCmdListFixture {
     template <GFXCORE_FAMILY gfxCoreFamily>
     DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdListWithOffload() {
         return createImmCmdListImpl<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(true);
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdListWithOffloadHint(ze_command_queue_priority_t priority) {
+        ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+        queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT;
+        queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+        queueDesc.priority = priority;
+        ze_command_list_handle_t cmdListHandle = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &cmdListHandle));
+        return DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle)));
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily>
@@ -607,6 +618,7 @@ struct CopyOffloadInOrderFixture : public InOrderCmdListFixture {
     const CopyOffloadMode nonDualStreamMode = CopyOffloadModes::dualStream + 1;
     std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
     NEO::BcsInfoMask bcsInfoMask = 0b111;
+    int32_t skipHpBcsInitialization = 0;
 };
 
 struct CopyOffloadWriteEngineInOrderFixture : public CopyOffloadInOrderFixture {
@@ -616,6 +628,13 @@ struct CopyOffloadWriteEngineInOrderFixture : public CopyOffloadInOrderFixture {
         debugManager.flags.CopyOffloadWriteEngine.set(1);
         bcsInfoMask = 0b1111;
         CopyOffloadInOrderFixture::SetUp();
+    }
+};
+
+struct CopyOffloadWriteEngineWithoutHpCopyEngineInOrderFixture : public CopyOffloadWriteEngineInOrderFixture {
+    void SetUp() override {
+        skipHpBcsInitialization = 1;
+        CopyOffloadWriteEngineInOrderFixture::SetUp();
     }
 };
 

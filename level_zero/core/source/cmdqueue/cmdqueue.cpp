@@ -195,16 +195,6 @@ ze_result_t CommandQueue::createCopyOffloadQueue(uint32_t queueIndex) {
         return returnValue;
     }
 
-    if (queueIndex == DualStreamCopyOffload::copyOffloadWriteIndex) {
-        UNRECOVERABLE_IF(this->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex] == nullptr);
-        if (copyCsr->getOsContext().getEngineType() == this->copyOffloadQueues[DualStreamCopyOffload::copyOffloadReadIndex]->getCsr()->getOsContext().getEngineType()) {
-            if (queueOwnershipTaken) {
-                copyCsr->releaseQueueOwnership();
-            }
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-    }
-
     ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     copyQueueDesc.ordinal = ordinal;
     copyQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -230,7 +220,6 @@ void CommandQueue::addRequiredCopyOffloadQueues(const CommandList &commandList, 
 }
 
 ze_result_t CommandQueue::createCopyOffloadQueues(const std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> &queuesRequired) {
-    static_assert(DualStreamCopyOffload::copyOffloadReadIndex < DualStreamCopyOffload::copyOffloadWriteIndex, "write queue engine is checked against read queue engine, so read queue has to be created first");
     for (uint32_t queueIndex = 0; queueIndex < DualStreamCopyOffload::numCopyOffloadQueues; queueIndex++) {
         if (queuesRequired[queueIndex] && this->copyOffloadQueues[queueIndex] == nullptr) {
             auto returnValue = createCopyOffloadQueue(queueIndex);

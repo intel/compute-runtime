@@ -5953,35 +5953,30 @@ HWTEST2_F(CopyOffloadWriteEngineSingleCopyEngineInOrderTests, givenSingleCopyEng
     EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadWriteIndex]);
 }
 
-HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenImmCmdListPriorityWhenGraphIsInstantiatedThenWriteStreamIsAllowedOnlyForNormalPriority, IsCRI) {
-    for (const auto priority : {ZE_COMMAND_QUEUE_PRIORITY_NORMAL, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH}) {
-        ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-        queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER | ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT;
-        queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-        queueDesc.priority = priority;
-        ze_command_list_handle_t cmdListHandle = nullptr;
-        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &cmdListHandle));
+using CopyOffloadWriteEngineWithoutHpCopyEngineInOrderTests = CopyOffloadWriteEngineWithoutHpCopyEngineInOrderFixture;
 
-        {
-            MockGraph graph(context, true, false);
-            ze_graph_handle_t graphHandle = graph.toHandle();
-            ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr));
-            ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopy(cmdListHandle, &copyData1, &copyData2, sizeof(copyData1), nullptr, 0, nullptr));
-            ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(cmdListHandle, &graphHandle, nullptr));
-            EXPECT_EQ(priority, graph.captureTargetDesc.priority);
+HWTEST2_F(CopyOffloadWriteEngineWithoutHpCopyEngineInOrderTests, givenImmCmdListPriorityWhenGraphIsInstantiatedThenWriteStreamIsAllowedForEachPriority, IsCRI) {
+    for (const auto priority : {ZE_COMMAND_QUEUE_PRIORITY_NORMAL, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW}) {
+        auto immCmdList = createImmCmdListWithOffloadHint<FamilyType::gfxCoreFamily>(priority);
+        ASSERT_NE(nullptr, immCmdList);
+        auto cmdListHandle = immCmdList->toHandle();
 
-            GraphInstatiateSettings settings{nullptr, false};
-            MockExecutableGraph execGraph;
-            ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(graph, settings));
-            ASSERT_NE(0u, execGraph.myCommandLists.size());
-            for (auto &graphCmdList : execGraph.myCommandLists) {
-                auto regularCmdList = static_cast<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(graphCmdList.get());
-                EXPECT_EQ(CopyOffloadModes::dualStream, regularCmdList->copyOffloadMode);
-                EXPECT_EQ(priority == ZE_COMMAND_QUEUE_PRIORITY_NORMAL, regularCmdList->copyOffloadWriteStreamAllowed);
-            }
+        MockGraph graph(context, true, false);
+        ze_graph_handle_t graphHandle = graph.toHandle();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopy(cmdListHandle, &copyData1, &copyData2, sizeof(copyData1), nullptr, 0, nullptr));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(cmdListHandle, &graphHandle, nullptr));
+        EXPECT_EQ(priority, graph.captureTargetDesc.priority);
+
+        GraphInstatiateSettings settings{nullptr, false};
+        MockExecutableGraph execGraph;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(graph, settings));
+        ASSERT_NE(0u, execGraph.myCommandLists.size());
+        for (auto &graphCmdList : execGraph.myCommandLists) {
+            auto regularCmdList = static_cast<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(graphCmdList.get());
+            EXPECT_EQ(CopyOffloadModes::dualStream, regularCmdList->copyOffloadMode);
+            EXPECT_TRUE(regularCmdList->copyOffloadWriteStreamAllowed);
         }
-
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(cmdListHandle));
     }
 }
 

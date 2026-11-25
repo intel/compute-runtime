@@ -1933,10 +1933,7 @@ L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode(uint32
     newCmdList->disableFlatCapture();
     newCmdList->setIsGraphInstantiationTarget(true);
     newCmdList->setupPatchPreambleEnabled(this->usePatchingPreamble);
-    // Graph is executed with capture source priority. Non-normal priority maps both copy offload streams to the same engine.
-    if (src->getCaptureTargetDesc().priority == ZE_COMMAND_QUEUE_PRIORITY_NORMAL) {
-        newCmdList->enableCopyOffloadWriteStream();
-    }
+    newCmdList->enableCopyOffloadWriteStream();
     this->myCommandLists.emplace_back(newCmdList);
     return newCmdList;
 }
