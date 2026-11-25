@@ -12,12 +12,15 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 
@@ -81,6 +84,27 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureThenLuidAndNodeMaskSetF
     EXPECT_EQ(lowLUID, (uint32_t)adapterLuid.LowPart);
     EXPECT_EQ(highLUID, (uint32_t)adapterLuid.HighPart);
     EXPECT_NE(deviceLuidProperties.nodeMask, (uint32_t)0);
+}
+
+using LuidDeviceWithoutWddmTest = Test<DeviceFixture>;
+
+TEST_F(LuidDeviceWithoutWddmTest, givenNoOsInterfaceWhenGettingLuidPropertiesThenUnsupportedFeatureReturnedAndNodeMaskIsOne) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_luid_ext_properties_t deviceLuidProperties = {ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES};
+    deviceProperties.pNext = &deviceLuidProperties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, device->getProperties(&deviceProperties));
+    EXPECT_EQ(1u, deviceLuidProperties.nodeMask);
+}
+
+TEST_F(LuidDeviceWithoutWddmTest, givenNonWddmDriverModelWhenGettingLuidPropertiesThenUnsupportedFeatureReturnedAndNodeMaskIsOne) {
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModel>());
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_luid_ext_properties_t deviceLuidProperties = {ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES};
+    deviceProperties.pNext = &deviceLuidProperties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, device->getProperties(&deviceProperties));
+    EXPECT_EQ(1u, deviceLuidProperties.nodeMask);
 }
 
 } // namespace ult

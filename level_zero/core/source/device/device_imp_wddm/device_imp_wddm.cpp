@@ -6,14 +6,24 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 
 #include "level_zero/core/source/device/device.h"
 
 namespace L0 {
 
+static bool hasWddmDriverModel(NEO::Device *device) {
+    auto &osInterface = device->getRootDeviceEnvironment().osInterface;
+    return osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm;
+}
+
 ze_result_t Device::queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties) {
     NEO::Device *activeDevice = getActiveDevice();
+    if (!hasWddmDriverModel(activeDevice)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     NEO::CommandStreamReceiver *csr = activeDevice->getDefaultEngine().commandStreamReceiver;
     NEO::OsContextWin *context = static_cast<NEO::OsContextWin *>(&csr->getOsContext());
     std::vector<uint8_t> luidData;
@@ -23,6 +33,9 @@ ze_result_t Device::queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidP
 }
 uint32_t Device::queryDeviceNodeMask() {
     NEO::Device *activeDevice = getActiveDevice();
+    if (!hasWddmDriverModel(activeDevice)) {
+        return 1;
+    }
     NEO::CommandStreamReceiver *csr = activeDevice->getDefaultEngine().commandStreamReceiver;
     NEO::OsContextWin *context = static_cast<NEO::OsContextWin *>(&csr->getOsContext());
     return context->getDeviceNodeMask();
