@@ -450,7 +450,9 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     slotContext.isMediaFormatLayout = isMediaFormatLayout;
     slotContext.hasFixedChannelSelect = hasFixedChannelSelect;
     slotContext.redescribedIsNV12 = redescribedIsNV12;
-    slotContext.packedSupported = productHelper.isPackedCopyFormatSupported();
+    const auto imageType = imgInfo.imgDesc.imageType;
+    const bool isPackedViewApplicable = (imageType == NEO::ImageType::image2D) || (imageType == NEO::ImageType::image3D);
+    slotContext.packedSupported = isPackedViewApplicable && productHelper.isPackedCopyFormatSupported();
 
     encodeSurfaceState(slotContext);
 
