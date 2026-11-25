@@ -454,7 +454,7 @@ bool OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGr
 
     multiGraphicsAllocation.removeAllocation(mappedAllocation->getRootDeviceIndex());
 
-    // The mapping borrows the physical backing storage, so it is not released through
+    // The mapping borrows the physical backing storage and GMMs, so it is not released through
     // freeGraphicsMemory; only the residency and download tracking it was given are dropped.
     auto &memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[mappedAllocation->getRootDeviceIndex()]->memoryOperationsInterface;
     if (memoryOperationsInterface) {
@@ -502,8 +502,10 @@ bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphi
     mappedAllocation->setGpuPtr(gpuRange);
     mappedAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
     mappedAllocation->storageInfo = physicalAllocation->storageInfo;
-    mappedAllocation->setMappedPhysicalAllocation(physicalAllocation);
-    registerPhysicalMemoryMapping(*physicalAllocation);
+    for (uint32_t handleId = 0; handleId < physicalAllocation->getNumGmms(); handleId++) {
+        mappedAllocation->setGmm(physicalAllocation->getGmm(handleId), handleId);
+    }
+    registerPhysicalMemoryMapping(*physicalAllocation, *mappedAllocation);
     multiGraphicsAllocation.addAllocation(mappedAllocation);
 
     return true;

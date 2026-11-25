@@ -467,7 +467,7 @@ class MemoryManager {
     };
     // A physical allocation outlives its mappings, which borrow its storage, GMMs and handles: a
     // release requested while mappings remain is carried out by the unmap of the last one.
-    void registerPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation);
+    void registerPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation, GraphicsAllocation &mappedAllocation);
     // Parking and the count drop happen under one lock: once the count is zero the physical allocation, and
     // with it every parked mapping, may be released by another thread.
     PhysicalMappingRelease parkPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t size);

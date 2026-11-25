@@ -376,7 +376,8 @@ void MemoryManager::setNewResourceBoundOnRegisteredEngines(uint32_t rootDeviceIn
     }
 }
 
-void MemoryManager::registerPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation) {
+void MemoryManager::registerPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation, GraphicsAllocation &mappedAllocation) {
+    mappedAllocation.setMappedPhysicalAllocation(&physicalAllocation);
     std::lock_guard lock{physicalMemoryMappingsMutex};
     physicalAllocation.getPhysicalMappingsInfo().liveMappingsCount++;
     physicalAllocation.getPhysicalMappingsInfo().handlesSharedWithMappings = true;

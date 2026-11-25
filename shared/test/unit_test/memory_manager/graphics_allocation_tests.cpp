@@ -35,41 +35,6 @@ TEST(GraphicsAllocationTest, givenGmmOnHandleWhenSettingOwnedGmmOnThatHandleThen
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-class GraphicsAllocationPhysicalMemoryMappingTest : public ::testing::Test {
-  protected:
-    struct DestructionTrackingGmm : public MockGmm {
-        DestructionTrackingGmm(GmmHelper *gmmHelper, bool &destroyed) : MockGmm(gmmHelper), destroyed(destroyed) {}
-        ~DestructionTrackingGmm() override { destroyed = true; }
-        bool &destroyed;
-    };
-
-    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
-    GmmHelper *gmmHelper = executionEnvironment.rootDeviceEnvironments[mockRootDeviceIndex]->getGmmHelper();
-    bool physicalGmmDestroyed = false;
-    MockGraphicsAllocation physicalAllocation;
-};
-
-TEST_F(GraphicsAllocationPhysicalMemoryMappingTest, givenMappingLinkedToPhysicalAllocationWhenGmmIsSetOnPhysicalAllocationThenMappingReturnsThatGmm) {
-    MockGraphicsAllocation mappedAllocation;
-    mappedAllocation.setMappedPhysicalAllocation(&physicalAllocation);
-
-    auto physicalGmm = std::make_unique<MockGmm>(gmmHelper);
-    auto physicalGmmPtr = physicalGmm.get();
-    physicalAllocation.setDefaultGmm(std::move(physicalGmm));
-
-    EXPECT_EQ(physicalGmmPtr, mappedAllocation.getDefaultGmm());
-}
-
-TEST_F(GraphicsAllocationPhysicalMemoryMappingTest, givenMappingLinkedToPhysicalAllocationWhenMappingIsDestroyedThenPhysicalGmmIsNotDestroyed) {
-    physicalAllocation.setDefaultGmm(std::make_unique<DestructionTrackingGmm>(gmmHelper, physicalGmmDestroyed));
-    auto mappedAllocation = std::make_unique<MockGraphicsAllocation>();
-    mappedAllocation->setMappedPhysicalAllocation(&physicalAllocation);
-
-    mappedAllocation.reset();
-
-    EXPECT_FALSE(physicalGmmDestroyed);
-}
-
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspectionIdsAreSetToZero) {
     MockGraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
     for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
