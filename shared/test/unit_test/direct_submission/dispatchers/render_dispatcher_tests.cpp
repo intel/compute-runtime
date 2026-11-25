@@ -170,7 +170,9 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenDispatchingTlbFlushThenExpectPipeC
 
     ASSERT_EQ(1u, hwParse.pipeControlList.size());
     auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*hwParse.pipeControlList.begin());
-    EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
+    }
     EXPECT_TRUE(pipeControl->getTlbInvalidate());
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
 }

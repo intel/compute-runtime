@@ -5298,9 +5298,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
                 pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.front());
             }
 
-            uint64_t address = pcCmd->getAddressHigh();
-            address <<= 32;
-            address |= pcCmd->getAddress();
+            uint64_t address = pcCmd->getAddress();
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), address);
             EXPECT_EQ(immCmdList->inOrderExecInfo->getCounterValue(), pcCmd->getImmediateData());
         }

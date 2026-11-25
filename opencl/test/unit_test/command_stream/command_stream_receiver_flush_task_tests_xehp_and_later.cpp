@@ -238,11 +238,13 @@ HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenFlushAllCachesVar
     }
 
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
-    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
     EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
-    EXPECT_TRUE(pipeControl->getVfCacheInvalidationEnable());
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+        EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
+        EXPECT_TRUE(pipeControl->getVfCacheInvalidationEnable());
+    }
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
     // XeHP+ only field
@@ -391,11 +393,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
             EXPECT_EQ(1, counterPC);
             EXPECT_EQ(bool(pipeControl->getCommandStreamerStallEnable()), true);
             EXPECT_EQ(bool(pipeControl->getDcFlushEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getRenderTargetCacheFlushEnable()), true);
             EXPECT_EQ(bool(pipeControl->getInstructionCacheInvalidateEnable()), true);
             EXPECT_EQ(bool(pipeControl->getTextureCacheInvalidationEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getPipeControlFlushEnable()), true);
-            EXPECT_EQ(bool(pipeControl->getVfCacheInvalidationEnable()), true);
+            if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+                EXPECT_EQ(bool(pipeControl->getRenderTargetCacheFlushEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getPipeControlFlushEnable()), true);
+                EXPECT_EQ(bool(pipeControl->getVfCacheInvalidationEnable()), true);
+            }
             EXPECT_EQ(bool(pipeControl->getConstantCacheInvalidationEnable()), true);
             EXPECT_EQ(bool(pipeControl->getStateCacheInvalidationEnable()), true);
             EXPECT_EQ(bool(pipeControl->getTlbInvalidate()), true);

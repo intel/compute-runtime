@@ -872,11 +872,13 @@ HWTEST_F(UltCommandStreamReceiverTest, WhenFlushingAllCachesThenPipeControlIsAdd
     }
 
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
-    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
     EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
-    EXPECT_TRUE(pipeControl->getVfCacheInvalidationEnable());
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+        EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
+        EXPECT_TRUE(pipeControl->getVfCacheInvalidationEnable());
+    }
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getTlbInvalidate());
@@ -914,11 +916,13 @@ HWTEST_F(UltCommandStreamReceiverTest, givenDebugDisablingCacheFlushWhenAddingPi
     }
 
     EXPECT_FALSE(pipeControl->getDcFlushEnable());
-    EXPECT_FALSE(pipeControl->getRenderTargetCacheFlushEnable());
     EXPECT_FALSE(pipeControl->getInstructionCacheInvalidateEnable());
     EXPECT_FALSE(pipeControl->getTextureCacheInvalidationEnable());
-    EXPECT_FALSE(pipeControl->getPipeControlFlushEnable());
-    EXPECT_FALSE(pipeControl->getVfCacheInvalidationEnable());
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        EXPECT_FALSE(pipeControl->getRenderTargetCacheFlushEnable());
+        EXPECT_FALSE(pipeControl->getPipeControlFlushEnable());
+        EXPECT_FALSE(pipeControl->getVfCacheInvalidationEnable());
+    }
     EXPECT_FALSE(pipeControl->getConstantCacheInvalidationEnable());
     EXPECT_FALSE(pipeControl->getStateCacheInvalidationEnable());
 }

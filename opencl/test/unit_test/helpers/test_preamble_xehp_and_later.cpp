@@ -470,18 +470,20 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsXe
     hwParser.parseCommands<FamilyType>(pipelineSelectStream, 0);
     hwParser.findHardwareCommands<FamilyType>();
 
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
-        bool pcWithRenderFlushFound = false;
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
+            bool pcWithRenderFlushFound = false;
 
-        auto itorPipeControl = hwParser.pipeControlList.begin();
-        if (itorPipeControl != hwParser.pipeControlList.end()) {
-            auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
-            if (pipeControl->getRenderTargetCacheFlushEnable()) {
-                pcWithRenderFlushFound = true;
+            auto itorPipeControl = hwParser.pipeControlList.begin();
+            if (itorPipeControl != hwParser.pipeControlList.end()) {
+                auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
+                if (pipeControl->getRenderTargetCacheFlushEnable()) {
+                    pcWithRenderFlushFound = true;
+                }
             }
-        }
 
-        EXPECT_TRUE(pcWithRenderFlushFound);
+            EXPECT_TRUE(pcWithRenderFlushFound);
+        }
     }
 }
 

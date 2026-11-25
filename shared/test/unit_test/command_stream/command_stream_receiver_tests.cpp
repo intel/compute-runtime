@@ -6493,7 +6493,10 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperW
         bool csStall = pipeControl->getCommandStreamerStallEnable();
         bool stateCache = pipeControl->getStateCacheInvalidationEnable();
         bool texCache = pipeControl->getTextureCacheInvalidationEnable();
-        bool renderTargetCache = pipeControl->getRenderTargetCacheFlushEnable();
+        bool renderTargetCache = true;
+        if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+            renderTargetCache = pipeControl->getRenderTargetCacheFlushEnable();
+        }
 
         if (csStall && stateCache && texCache && renderTargetCache) {
             pcFound = true;
@@ -6534,10 +6537,14 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperW
     bool pcFound = false;
     for (size_t i = 0; i < pipeControls.size(); i++) {
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
+        bool renderTargetCache = true;
+        if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+            renderTargetCache = pipeControl->getRenderTargetCacheFlushEnable();
+        }
         if (pipeControl->getCommandStreamerStallEnable() &&
             pipeControl->getStateCacheInvalidationEnable() &&
             pipeControl->getTextureCacheInvalidationEnable() &&
-            pipeControl->getRenderTargetCacheFlushEnable()) {
+            renderTargetCache) {
             pcFound = true;
             break;
         }
@@ -6587,7 +6594,9 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperW
     EXPECT_TRUE(pcCmd->getCommandStreamerStallEnable());
     EXPECT_TRUE(pcCmd->getStateCacheInvalidationEnable());
     EXPECT_TRUE(pcCmd->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pcCmd->getRenderTargetCacheFlushEnable());
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        EXPECT_TRUE(pcCmd->getRenderTargetCacheFlushEnable());
+    }
 
     EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
 }
@@ -6709,7 +6718,9 @@ HWTEST2_F(CommandStreamReceiverHwTest, GivenContextInitializedAndDirtyFlagForCon
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+    }
 
     EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
 
@@ -6865,9 +6876,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenUcResourceRequiresTagUpdateWhenFlushT
     EXPECT_EQ(cmd->getPostSyncOperation(), FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
     EXPECT_EQ(cmd->getImmediateData(), commandStreamReceiver.peekTaskCount());
 
-    uint64_t address = cmd->getAddressHigh();
-    address <<= 32;
-    address |= cmd->getAddress();
+    uint64_t address = cmd->getAddress();
     auto csrAddress = commandStreamReceiver.getUcTagGPUAddress();
     EXPECT_EQ(csrAddress, address);
 }
@@ -7056,9 +7065,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenUcResourceRequiresTagUpdateAndFullTas
     bool ucTagUpdateFound = false;
     for (auto &cmd : findAll<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end())) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*cmd);
-        uint64_t address = pipeControl->getAddressHigh();
-        address <<= 32;
-        address |= pipeControl->getAddress();
+        uint64_t address = pipeControl->getAddress();
         ucTagUpdateFound |= (address == ucTagAddress);
     }
     EXPECT_TRUE(ucTagUpdateFound);

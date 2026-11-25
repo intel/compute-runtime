@@ -306,18 +306,21 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
 
     pipeControl.setConstantCacheInvalidationEnable(args.constantCacheInvalidationEnable);
     pipeControl.setInstructionCacheInvalidateEnable(args.instructionCacheInvalidateEnable);
-    pipeControl.setPipeControlFlushEnable(args.pipeControlFlushEnable);
-    pipeControl.setRenderTargetCacheFlushEnable(args.renderTargetCacheFlushEnable);
     pipeControl.setStateCacheInvalidationEnable(args.stateCacheInvalidationEnable);
     pipeControl.setTextureCacheInvalidationEnable(args.textureCacheInvalidationEnable);
-    pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
     pipeControl.setTlbInvalidate(args.tlbInvalidation);
     pipeControl.setNotifyEnable(args.notifyEnable);
     pipeControl.setDcFlushEnable(args.dcFlushEnable);
-    pipeControl.setDepthCacheFlushEnable(args.depthCacheFlushEnable);
-    pipeControl.setDepthStallEnable(args.depthStallEnable);
     pipeControl.setProtectedMemoryDisable(args.protectedMemoryDisable);
     pipeControl.setCommandCacheInvalidateEnable(args.commandCacheInvalidateEnable);
+
+    if constexpr (UsesRenderPipeControlFlags<GfxFamily>) {
+        pipeControl.setPipeControlFlushEnable(args.pipeControlFlushEnable);
+        pipeControl.setRenderTargetCacheFlushEnable(args.renderTargetCacheFlushEnable);
+        pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
+        pipeControl.setDepthCacheFlushEnable(args.depthCacheFlushEnable);
+        pipeControl.setDepthStallEnable(args.depthStallEnable);
+    }
 
     if constexpr (GfxFamily::isUsingGenericMediaStateClear) {
         pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
@@ -328,20 +331,22 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
         if (flushCachesMask & FlushCachesBitmask::dcFlush) {
             pipeControl.setDcFlushEnable(true);
         }
-        if (flushCachesMask & FlushCachesBitmask::renderTargetCache) {
-            pipeControl.setRenderTargetCacheFlushEnable(true);
-        }
         if (flushCachesMask & FlushCachesBitmask::instructionCache) {
             pipeControl.setInstructionCacheInvalidateEnable(true);
         }
         if (flushCachesMask & FlushCachesBitmask::textureCache) {
             pipeControl.setTextureCacheInvalidationEnable(true);
         }
-        if (flushCachesMask & FlushCachesBitmask::pipeControl) {
-            pipeControl.setPipeControlFlushEnable(true);
-        }
-        if (flushCachesMask & FlushCachesBitmask::vfCache) {
-            pipeControl.setVfCacheInvalidationEnable(true);
+        if constexpr (UsesRenderPipeControlFlags<GfxFamily>) {
+            if (flushCachesMask & FlushCachesBitmask::renderTargetCache) {
+                pipeControl.setRenderTargetCacheFlushEnable(true);
+            }
+            if (flushCachesMask & FlushCachesBitmask::pipeControl) {
+                pipeControl.setPipeControlFlushEnable(true);
+            }
+            if (flushCachesMask & FlushCachesBitmask::vfCache) {
+                pipeControl.setVfCacheInvalidationEnable(true);
+            }
         }
         if (flushCachesMask & FlushCachesBitmask::constantCache) {
             pipeControl.setConstantCacheInvalidationEnable(true);
@@ -355,19 +360,20 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
     }
     if (debugManager.flags.DoNotFlushCaches.get()) {
         pipeControl.setDcFlushEnable(false);
-        pipeControl.setRenderTargetCacheFlushEnable(false);
         pipeControl.setInstructionCacheInvalidateEnable(false);
         pipeControl.setTextureCacheInvalidationEnable(false);
-        pipeControl.setPipeControlFlushEnable(false);
-        pipeControl.setVfCacheInvalidationEnable(false);
         pipeControl.setConstantCacheInvalidationEnable(false);
         pipeControl.setStateCacheInvalidationEnable(false);
+        if constexpr (UsesRenderPipeControlFlags<GfxFamily>) {
+            pipeControl.setRenderTargetCacheFlushEnable(false);
+            pipeControl.setPipeControlFlushEnable(false);
+            pipeControl.setVfCacheInvalidationEnable(false);
+        }
     }
 
     if (postSyncMode != PostSyncMode::noWrite) {
         args.postSyncCmd = commandsBuffer;
-        pipeControl.setAddress(static_cast<uint32_t>(gpuAddress & 0x0000FFFFFFFFULL));
-        pipeControl.setAddressHigh(static_cast<uint32_t>(gpuAddress >> 32));
+        pipeControl.setAddress(gpuAddress);
     }
 
     if (postSyncMode == PostSyncMode::timestamp) {
@@ -550,7 +556,9 @@ void MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(LinearStream &
 
     PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
     cmd.setCommandStreamerStallEnable(true);
-    cmd.setRenderTargetCacheFlushEnable(true);
+    if constexpr (UsesRenderPipeControlFlags<GfxFamily>) {
+        cmd.setRenderTargetCacheFlushEnable(true);
+    }
     cmd.setStateCacheInvalidationEnable(true);
     cmd.setTextureCacheInvalidationEnable(true);
     cmd.setDcFlushEnable(getDcFlushEnable(true, rootDeviceEnvironment));

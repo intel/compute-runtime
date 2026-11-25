@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -131,4 +132,45 @@ HWTEST2_F(CommandEncoderXeHpgTests, whenProgrammingStateComputeModeThenProperFie
             testProgrammingStateComputeModeXeLpgWithDisabledWa(executionEnvironment);
         }
     }
+}
+
+using XeHpgCoreEncodeMiFlushDwTest = Test<CommandEncodeStatesFixture>;
+
+XE_HPG_CORETEST_F(XeHpgCoreEncodeMiFlushDwTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
+    args.commandWithPostSync = true;
+
+    EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, 0x1230000, 456, args);
+    auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
+    EXPECT_EQ(0u, miFlushDwCmd->getFlushCcs());
+    EXPECT_EQ(0u, miFlushDwCmd->getFlushLlc());
+
+    miFlushDwCmd++;
+    EXPECT_EQ(1u, miFlushDwCmd->getFlushCcs());
+    EXPECT_EQ(1u, miFlushDwCmd->getFlushLlc());
+}
+
+XE_HPG_CORETEST_F(XeHpgCoreEncodeMiFlushDwTest, givenPostSyncAddressAbove4GbWhenMiFlushDwIsProgrammedThenFullAddressIsProgrammedAsPpgtt) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
+    args.commandWithPostSync = true;
+
+    constexpr uint64_t address = 0x0000'7FFF'1234'5678ull;
+    constexpr uint64_t immediateData = 0x1122'3344'5566'7788ull;
+    EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, address, immediateData, args);
+
+    auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(ptrOffset(buffer, linearStream.getUsed() - sizeof(MI_FLUSH_DW)));
+    EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, miFlushDwCmd->getPostSyncOperation());
+    EXPECT_EQ(address, miFlushDwCmd->getDestinationAddress());
+    EXPECT_EQ(MI_FLUSH_DW::DESTINATION_ADDRESS_TYPE_PPGTT, miFlushDwCmd->getDestinationAddressType());
+    EXPECT_EQ(immediateData, miFlushDwCmd->getImmediateData());
 }

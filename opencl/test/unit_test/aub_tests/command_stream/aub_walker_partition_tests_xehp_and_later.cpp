@@ -177,8 +177,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     ASSERT_NE(nullptr, pipeControl);
     auto programPipeControl = [&]() {
         pipeControl->setImmediateData(writeValue);
-        pipeControl->setAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
-        pipeControl->setAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+        pipeControl->setAddress(writeAddress);
     };
 
     // we have now command buffer that has conditional batch buffer end and pipe control that tests whether batch buffer end acted correctly

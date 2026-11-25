@@ -752,6 +752,21 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenSetExtraPropertiesThenFlushLSC) 
     EXPECT_TRUE(pipeControl.getUnTypedDataPortCacheFlush());
 }
 
+XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenWalkerWithProfilingEnqueuedWhenSetExtraPropertiesThenGoSyncWithWalkerPostSyncIsEnsured) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    for (auto isWalkerWithProfilingEnqueued : {false, true}) {
+        PIPE_CONTROL pipeControl = FamilyType::cmdInitPipeControl;
+        PipeControlArgs args = {};
+        args.isWalkerWithProfilingEnqueued = isWalkerWithProfilingEnqueued;
+        MemorySynchronizationCommands<FamilyType>::setSingleBarrier(&pipeControl, args);
+
+        auto expected = isWalkerWithProfilingEnqueued ? PIPE_CONTROL::DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC_ENSURE_GO_WITH_WALKER_POST_SYNC
+                                                      : PIPE_CONTROL::DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC_IGNORE_GO_WITH_WALKER_POST_SYNC;
+        EXPECT_EQ(expected, pipeControl.getDisableGoSyncWithWalkerPostSync());
+    }
+}
+
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenSetStallOnlyBarrierThenResourceBarrierProgrammed) {
     using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
     constexpr static auto bufferSize = sizeof(RESOURCE_BARRIER);
@@ -773,7 +788,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenSetStallOnlyBarrier
     EXPECT_EQ(RESOURCE_BARRIER::SIGNAL_STAGE::SIGNAL_STAGE_GPGPU, resourceBarrier->getSignalStage());
     EXPECT_FALSE(resourceBarrier->getL1DataportCacheInvalidate());
     EXPECT_FALSE(resourceBarrier->getL1DataportUavFlush());
-    EXPECT_FALSE(resourceBarrier->getDisableGoSyncWithWalkerPostSync());
+    EXPECT_EQ(RESOURCE_BARRIER::DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC_ENSURE_GO_WITH_WALKER_POST_SYNC, resourceBarrier->getDisableGoSyncWithWalkerPostSync());
 }
 
 struct GfxCoreHelperTestsXe3pCoreResourceBarrier : public GfxCoreHelperTestsXe3pCore,

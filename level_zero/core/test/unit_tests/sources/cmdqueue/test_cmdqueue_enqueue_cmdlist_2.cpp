@@ -1094,7 +1094,9 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenDirtyFlagForContextInBi
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+    }
 
     EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandQueue->getCsr()->getOsContext().getContextId()));
 
@@ -1212,7 +1214,9 @@ HWTEST_F(CommandQueueExecuteCommandListsMultiDeviceTest, GivenDirtyFlagForContex
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+    if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+        EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+    }
 
     EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandQueue->getCsr()->getOsContext().getContextId()));
 
@@ -2190,8 +2194,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenInOrderAndDcFlushRequi
 
     uint64_t expectedHostFunctionIdProgrammed = 1u;
     EXPECT_EQ(expectedHostFunctionIdProgrammed, pc.getImmediateData());
-    EXPECT_EQ(getLowPart(expectedHostFunctionMappedMemory), pc.getAddress());
-    EXPECT_EQ(getHighPart(expectedHostFunctionMappedMemory), pc.getAddressHigh());
+    EXPECT_EQ(expectedHostFunctionMappedMemory, pc.getAddress());
     EXPECT_TRUE(pc.getDcFlushEnable());
 
     auto expectedSemaphoreWaitClearedId = 0u;

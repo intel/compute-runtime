@@ -289,9 +289,9 @@ typedef struct tagPIPE_CONTROL {
             uint32_t PredicateEnable : BITFIELD_RANGE(8, 8);
             uint32_t DataportFlush : BITFIELD_RANGE(9, 9);
             uint32_t L3ReadOnlyCacheInvalidationEnable : BITFIELD_RANGE(10, 10);
-            uint32_t UntypedDataPortCacheFlush : BITFIELD_RANGE(11, 11);
+            uint32_t UnTypedDataPortCacheFlush : BITFIELD_RANGE(11, 11);
             uint32_t QueueDrainMode : BITFIELD_RANGE(12, 12);
-            uint32_t CompressionControlSurface_CcsFlush : BITFIELD_RANGE(13, 13);
+            uint32_t CompressionControlSurfaceCcsFlush : BITFIELD_RANGE(13, 13);
             uint32_t WorkloadPartitionIdOffsetEnable : BITFIELD_RANGE(14, 14);
             uint32_t DisableGoSyncWithWalkerPostSync : BITFIELD_RANGE(15, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
@@ -304,7 +304,7 @@ typedef struct tagPIPE_CONTROL {
             uint32_t StateCacheInvalidationEnable : BITFIELD_RANGE(2, 2);
             uint32_t ConstantCacheInvalidationEnable : BITFIELD_RANGE(3, 3);
             uint32_t VfCacheInvalidationEnable : BITFIELD_RANGE(4, 4);
-            uint32_t DcFlushEnable : BITFIELD_RANGE(5, 5); // patched: use DcFlushEnable name for consistency with other platforms
+            uint32_t DcFlushEnable : BITFIELD_RANGE(5, 5); // BSpec: Force Device Coherency; Neo keeps the DcFlushEnable name used on other platforms
             uint32_t ProtectedMemoryApplicationId : BITFIELD_RANGE(6, 6);
             uint32_t PipeControlFlushEnable : BITFIELD_RANGE(7, 7);
             uint32_t NotifyEnable : BITFIELD_RANGE(8, 8);
@@ -329,12 +329,10 @@ typedef struct tagPIPE_CONTROL {
             uint32_t CommandCacheInvalidateEnable : BITFIELD_RANGE(29, 29);
             uint32_t Reserved_62 : BITFIELD_RANGE(30, 30);
             uint32_t TbimrForceBatchClosure : BITFIELD_RANGE(31, 31);
-            // DWORD 2
-            uint32_t Reserved_64 : BITFIELD_RANGE(0, 1);
-            uint32_t Address : BITFIELD_RANGE(2, 31);
-            // DWORD 3
-            uint32_t AddressHigh;
-            // DWORD 4
+            // DWORD 2-3
+            uint64_t Reserved_64 : BITFIELD_RANGE(0, 1);
+            uint64_t Address : BITFIELD_RANGE(2, 63);
+            // DWORD 4-5
             uint64_t ImmediateData;
         } Common;
         uint32_t RawData[6];
@@ -342,6 +340,14 @@ typedef struct tagPIPE_CONTROL {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_DWORD_COUNT_N = 0x4,
     } DWORD_LENGTH;
+    typedef enum tagQUEUE_DRAIN_MODE {
+        QUEUE_DRAIN_MODE_DRAIN_ALL_QUEUES = 0x0,
+        QUEUE_DRAIN_MODE_DRAIN_ONLY_CURRENT_QUEUE = 0x1,
+    } QUEUE_DRAIN_MODE;
+    typedef enum tagDISABLE_GO_SYNC_WITH_WALKER_POST_SYNC {
+        DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC_ENSURE_GO_WITH_WALKER_POST_SYNC = 0x0,
+        DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC_IGNORE_GO_WITH_WALKER_POST_SYNC = 0x1,
+    } DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC;
     typedef enum tag_3D_COMMAND_SUB_OPCODE {
         _3D_COMMAND_SUB_OPCODE_PIPE_CONTROL = 0x0,
     } _3D_COMMAND_SUB_OPCODE;
@@ -373,19 +379,18 @@ typedef struct tagPIPE_CONTROL {
         TBIMR_FORCE_BATCH_CLOSURE_NO_BATCH_CLOSURE = 0x0,
         TBIMR_FORCE_BATCH_CLOSURE_CLOSE_BATCH = 0x1,
     } TBIMR_FORCE_BATCH_CLOSURE;
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0x2,
+        ADDRESS_ALIGN_SIZE = 0x4,
+    } ADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_PIPE_CONTROL;
+        TheStructure.Common.QueueDrainMode = true; // Manual generator override
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_PIPE_CONTROL;
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_3D;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_WRITE;
-        TheStructure.Common.LriPostSyncOperation = LRI_POST_SYNC_OPERATION_NO_LRI_OPERATION;
-        TheStructure.Common.DestinationAddressType = DESTINATION_ADDRESS_TYPE_PPGTT;
-        TheStructure.Common.TbimrForceBatchClosure = TBIMR_FORCE_BATCH_CLOSURE_NO_BATCH_CLOSURE;
-        TheStructure.Common.CommandStreamerStallEnable = 1; // Patched
-        TheStructure.Common.QueueDrainMode = 1;             // Patched
+        TheStructure.Common.CommandStreamerStallEnable = true; // Manual generator override
     }
     static tagPIPE_CONTROL sInit() {
         PIPE_CONTROL state;
@@ -414,11 +419,11 @@ typedef struct tagPIPE_CONTROL {
     inline bool getL3ReadOnlyCacheInvalidationEnable() const {
         return TheStructure.Common.L3ReadOnlyCacheInvalidationEnable;
     }
-    inline void setUnTypedDataPortCacheFlush(const bool value) { // patched: use setUnTypedDataPortCacheFlush name for consistency with other platforms
-        TheStructure.Common.UntypedDataPortCacheFlush = value;
+    inline void setUnTypedDataPortCacheFlush(const bool value) {
+        TheStructure.Common.UnTypedDataPortCacheFlush = value;
     }
-    inline bool getUnTypedDataPortCacheFlush() const { // patched: use getUnTypedDataPortCacheFlush name for consistency with other platforms
-        return TheStructure.Common.UntypedDataPortCacheFlush;
+    inline bool getUnTypedDataPortCacheFlush() const {
+        return TheStructure.Common.UnTypedDataPortCacheFlush;
     }
     inline void setQueueDrainMode(const bool value) {
         TheStructure.Common.QueueDrainMode = value;
@@ -427,10 +432,10 @@ typedef struct tagPIPE_CONTROL {
         return TheStructure.Common.QueueDrainMode;
     }
     inline void setCompressionControlSurfaceCcsFlush(const bool value) {
-        TheStructure.Common.CompressionControlSurface_CcsFlush = value;
+        TheStructure.Common.CompressionControlSurfaceCcsFlush = value;
     }
     inline bool getCompressionControlSurfaceCcsFlush() const {
-        return TheStructure.Common.CompressionControlSurface_CcsFlush;
+        return TheStructure.Common.CompressionControlSurfaceCcsFlush;
     }
     inline void setWorkloadPartitionIdOffsetEnable(const bool value) {
         TheStructure.Common.WorkloadPartitionIdOffsetEnable = value;
@@ -438,11 +443,35 @@ typedef struct tagPIPE_CONTROL {
     inline bool getWorkloadPartitionIdOffsetEnable() const {
         return TheStructure.Common.WorkloadPartitionIdOffsetEnable;
     }
-    inline void setDisableGoSyncWithWalkerPostSync(const bool value) {
+    inline void setDisableGoSyncWithWalkerPostSync(const DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC value) {
         TheStructure.Common.DisableGoSyncWithWalkerPostSync = value;
     }
-    inline bool getDisableGoSyncWithWalkerPostSync() const {
-        return TheStructure.Common.DisableGoSyncWithWalkerPostSync;
+    inline DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC getDisableGoSyncWithWalkerPostSync() const {
+        return static_cast<DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC>(TheStructure.Common.DisableGoSyncWithWalkerPostSync);
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setDepthCacheFlushEnable(const bool value) {
         TheStructure.Common.DepthCacheFlushEnable = value;
@@ -474,11 +503,11 @@ typedef struct tagPIPE_CONTROL {
     inline bool getVfCacheInvalidationEnable() const {
         return TheStructure.Common.VfCacheInvalidationEnable;
     }
-    inline void setDcFlushEnable(const bool value) { // patched
-        TheStructure.Common.DcFlushEnable = value;   // patched
+    inline void setDcFlushEnable(const bool value) {
+        TheStructure.Common.DcFlushEnable = value;
     }
-    inline bool getDcFlushEnable() const {        // patched
-        return TheStructure.Common.DcFlushEnable; // patched
+    inline bool getDcFlushEnable() const {
+        return TheStructure.Common.DcFlushEnable;
     }
     inline void setProtectedMemoryApplicationId(const bool value) {
         TheStructure.Common.ProtectedMemoryApplicationId = value;
@@ -606,22 +635,11 @@ typedef struct tagPIPE_CONTROL {
     inline TBIMR_FORCE_BATCH_CLOSURE getTbimrForceBatchClosure() const {
         return static_cast<TBIMR_FORCE_BATCH_CLOSURE>(TheStructure.Common.TbimrForceBatchClosure);
     }
-    typedef enum tagADDRESS {
-        ADDRESS_BIT_SHIFT = 0x2,
-        ADDRESS_ALIGN_SIZE = 0x4,
-    } ADDRESS;
-    inline void setAddress(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffff);
+    inline void setAddress(const uint64_t value) {
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getAddress() const {
+    inline uint64_t getAddress() const {
         return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
-    }
-    inline void setAddressHigh(const uint32_t value) {
-        TheStructure.Common.AddressHigh = value;
-    }
-    inline uint32_t getAddressHigh() const {
-        return TheStructure.Common.AddressHigh;
     }
     inline void setImmediateData(const uint64_t value) {
         TheStructure.Common.ImmediateData = value;
@@ -7795,13 +7813,13 @@ typedef struct tagRESOURCE_BARRIER {
             uint32_t DepthCache : BITFIELD_RANGE(22, 22);
             uint32_t ColorCache : BITFIELD_RANGE(23, 23);
             uint32_t L1DataportUavFlush : BITFIELD_RANGE(24, 24);
-            uint32_t Texture_Ro : BITFIELD_RANGE(25, 25);
-            uint32_t State_Ro : BITFIELD_RANGE(26, 26);
-            uint32_t Vf_Ro : BITFIELD_RANGE(27, 27);
+            uint32_t TextureRo : BITFIELD_RANGE(25, 25);
+            uint32_t StateRo : BITFIELD_RANGE(26, 26);
+            uint32_t VfRo : BITFIELD_RANGE(27, 27);
             uint32_t AMFS : BITFIELD_RANGE(28, 28);
             uint32_t ConstantCache : BITFIELD_RANGE(29, 29);
             uint32_t Reserved_94 : BITFIELD_RANGE(30, 31);
-            // DWORD 3
+            // DWORD 3-4
             uint64_t Reserved_96 : BITFIELD_RANGE(0, 2);
             uint64_t BarrierIdAddress : BITFIELD_RANGE(3, 63);
         } Common;
@@ -7810,6 +7828,14 @@ typedef struct tagRESOURCE_BARRIER {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_DWORD_COUNT_N = 0x3,
     } DWORD_LENGTH;
+    typedef enum tagQUEUE_DRAIN_MODE {
+        QUEUE_DRAIN_MODE_DRAIN_ALL_QUEUES = 0x0,
+        QUEUE_DRAIN_MODE_DRAIN_ONLY_CURRENT_QUEUE = 0x1,
+    } QUEUE_DRAIN_MODE;
+    typedef enum tagDISABLE_GO_SYNC_WITH_WALKER_POST_SYNC {
+        DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC_ENSURE_GO_WITH_WALKER_POST_SYNC = 0x0,
+        DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC_IGNORE_GO_WITH_WALKER_POST_SYNC = 0x1,
+    } DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC;
     typedef enum tagOPCODE {
         OPCODE_RESOURCE_BARRIER = 0x3,
     } OPCODE;
@@ -7827,8 +7853,6 @@ typedef struct tagRESOURCE_BARRIER {
         WAIT_STAGE_RASTER = 0x20,
         WAIT_STAGE_DEPTH = 0x40,
         WAIT_STAGE_PIXEL = 0x80,
-        WAIT_STAGE_PROF = 0x100,
-        WAIT_STAGE_DECOUPLING_BUFFER = 0x200,
     } WAIT_STAGE;
     typedef enum tagSIGNAL_STAGE {
         SIGNAL_STAGE_NONE = 0x0,
@@ -7841,8 +7865,6 @@ typedef struct tagRESOURCE_BARRIER {
         SIGNAL_STAGE_RASTER = 0x20,
         SIGNAL_STAGE_DEPTH = 0x40,
         SIGNAL_STAGE_PIXEL = 0x80,
-        SIGNAL_STAGE_PROF = 0x100,
-        SIGNAL_STAGE_DECOUPLING_BUFFER = 0x200,
     } SIGNAL_STAGE;
     typedef enum tagBARRIER_TYPE {
         BARRIER_TYPE_IMMEDIATE = 0x0,
@@ -7850,15 +7872,16 @@ typedef struct tagRESOURCE_BARRIER {
         BARRIER_TYPE_WAIT = 0x2,
         BARRIER_TYPE_UAV = 0x3,
     } BARRIER_TYPE;
+    typedef enum tagBARRIERIDADDRESS {
+        BARRIERIDADDRESS_BIT_SHIFT = 0x3,
+        BARRIERIDADDRESS_ALIGN_SIZE = 0x8,
+    } BARRIERIDADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
+        TheStructure.Common.QueueDrainMode = true; // Manual generator override
         TheStructure.Common.Opcode = OPCODE_RESOURCE_BARRIER;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFX_EXEC;
-        TheStructure.Common.WaitStage = WAIT_STAGE_NONE;
-        TheStructure.Common.SignalStage = SIGNAL_STAGE_NONE;
-        TheStructure.Common.BarrierType = BARRIER_TYPE_IMMEDIATE;
-        TheStructure.Common.QueueDrainMode = 1; // Patched
     }
     static tagRESOURCE_BARRIER sInit() {
         RESOURCE_BARRIER state;
@@ -7875,11 +7898,11 @@ typedef struct tagRESOURCE_BARRIER {
     inline bool getQueueDrainMode() const {
         return TheStructure.Common.QueueDrainMode;
     }
-    inline void setDisableGoSyncWithWalkerPostSync(const bool value) {
+    inline void setDisableGoSyncWithWalkerPostSync(const DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC value) {
         TheStructure.Common.DisableGoSyncWithWalkerPostSync = value;
     }
-    inline bool getDisableGoSyncWithWalkerPostSync() const {
-        return TheStructure.Common.DisableGoSyncWithWalkerPostSync;
+    inline DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC getDisableGoSyncWithWalkerPostSync() const {
+        return static_cast<DISABLE_GO_SYNC_WITH_WALKER_POST_SYNC>(TheStructure.Common.DisableGoSyncWithWalkerPostSync);
     }
     inline void setPredicateEnable(const bool value) {
         TheStructure.Common.PredicateEnable = value;
@@ -7892,6 +7915,12 @@ typedef struct tagRESOURCE_BARRIER {
     }
     inline OPCODE getOpcode() const {
         return static_cast<OPCODE>(TheStructure.Common.Opcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setWaitStage(const WAIT_STAGE value) {
         TheStructure.Common.WaitStage = value;
@@ -7936,22 +7965,22 @@ typedef struct tagRESOURCE_BARRIER {
         return TheStructure.Common.L1DataportUavFlush;
     }
     inline void setTextureRo(const bool value) {
-        TheStructure.Common.Texture_Ro = value;
+        TheStructure.Common.TextureRo = value;
     }
     inline bool getTextureRo() const {
-        return TheStructure.Common.Texture_Ro;
+        return TheStructure.Common.TextureRo;
     }
     inline void setStateRo(const bool value) {
-        TheStructure.Common.State_Ro = value;
+        TheStructure.Common.StateRo = value;
     }
     inline bool getStateRo() const {
-        return TheStructure.Common.State_Ro;
+        return TheStructure.Common.StateRo;
     }
     inline void setVfRo(const bool value) {
-        TheStructure.Common.Vf_Ro = value;
+        TheStructure.Common.VfRo = value;
     }
     inline bool getVfRo() const {
-        return TheStructure.Common.Vf_Ro;
+        return TheStructure.Common.VfRo;
     }
     inline void setAMFS(const bool value) {
         TheStructure.Common.AMFS = value;
@@ -7965,10 +7994,6 @@ typedef struct tagRESOURCE_BARRIER {
     inline bool getConstantCache() const {
         return TheStructure.Common.ConstantCache;
     }
-    typedef enum tagBARRIERIDADDRESS {
-        BARRIERIDADDRESS_BIT_SHIFT = 0x3,
-        BARRIERIDADDRESS_ALIGN_SIZE = 0x8,
-    } BARRIERIDADDRESS;
     inline void setBarrierIdAddress(const uint64_t value) {
         TheStructure.Common.BarrierIdAddress = value >> BARRIERIDADDRESS_BIT_SHIFT;
     }

@@ -91,8 +91,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
             if (expectPipeControl) {
                 auto pipeControl = genCmdCast<PIPE_CONTROL *>(*hostFunctionProgrammingHwCmd[0]);
                 EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
-                EXPECT_EQ(getLowPart(hostFunctionIdBaseAddress), pipeControl->getAddress());
-                EXPECT_EQ(getHighPart(hostFunctionIdBaseAddress), pipeControl->getAddressHigh());
+                EXPECT_EQ(hostFunctionIdBaseAddress, pipeControl->getAddress());
                 EXPECT_EQ(expectedHostFunctionId, pipeControl->getImmediateData());
                 EXPECT_TRUE(pipeControl->getDcFlushEnable());
             } else {
@@ -200,8 +199,7 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
                 EXPECT_EQ(1u, pipeControls.size());
 
                 auto pc = genCmdCast<PIPE_CONTROL *>(*pipeControls[0]);
-                EXPECT_EQ(getLowPart(hostFunctionIdBaseAddress), pc->getAddress());
-                EXPECT_EQ(getHighPart(hostFunctionIdBaseAddress), pc->getAddressHigh());
+                EXPECT_EQ(hostFunctionIdBaseAddress, pc->getAddress());
                 EXPECT_EQ(expectedHostFunctionId, pc->getImmediateData());
 
                 if constexpr (requires { &pc->getWorkloadPartitionIdOffsetEnable; }) {
@@ -752,8 +750,7 @@ HWTEST_F(HostFunctionTests, givenDebugFlagForHostFunctionSynchronizationWhenSetT
 
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*hostFunctionProgrammingHwCmd[0]);
         EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
-        EXPECT_EQ(getLowPart(hostFunctionIdBaseAddress), pipeControl->getAddress());
-        EXPECT_EQ(getHighPart(hostFunctionIdBaseAddress), pipeControl->getAddressHigh());
+        EXPECT_EQ(hostFunctionIdBaseAddress, pipeControl->getAddress());
         EXPECT_EQ(1u, pipeControl->getImmediateData());
         EXPECT_TRUE(pipeControl->getDcFlushEnable());
     } else {

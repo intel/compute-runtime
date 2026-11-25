@@ -517,6 +517,11 @@ struct MemorySynchronizationCommands {
 template <typename GfxFamily>
 concept UsesResourceBarrier = std::is_same_v<typename GfxFamily::StallingBarrierType, typename GfxFamily::RESOURCE_BARRIER>;
 
+template <typename GfxFamily>
+concept UsesRenderPipeControlFlags = requires(typename GfxFamily::PIPE_CONTROL &pipeControl) {
+    pipeControl.setRenderTargetCacheFlushEnable(true);
+};
+
 template <class GfxFamily>
 void setStallingBarrier(void *commandsBuffer, PipeControlArgs &args);
 

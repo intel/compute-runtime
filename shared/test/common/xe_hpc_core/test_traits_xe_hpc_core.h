@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/test/common/helpers/test_traits.h"
 
+#include <cstdint>
+
 template <>
 struct TestTraits<IGFX_XE_HPC_CORE> {
     static constexpr bool surfaceStateCompressionParamsSupported = true;
@@ -30,4 +32,5 @@ struct TestTraits<IGFX_XE_HPC_CORE> {
     static constexpr bool bindingTableStateSupported = true;
     static constexpr bool debugSipFromIgc = true;
     static constexpr bool csrSipFromIgc = false;
+    static constexpr uint32_t pipeControlRenderPipelineFlagsMask = (1u << 0) | (1u << 4) | (1u << 7) | (1u << 12) | (1u << 13);
 };

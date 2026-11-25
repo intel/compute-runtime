@@ -406,8 +406,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareMode
     ASSERT_NE(nullptr, pipeControl);
     auto programPipeControl = [&]() {
         pipeControl->setImmediateData(writeValue);
-        pipeControl->setAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
-        pipeControl->setAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+        pipeControl->setAddress(writeAddress);
     };
     auto flushStreamWithUpdatedCompareValue = [&]() {
         this->helperSurface->setAubWritable(true, GraphicsAllocation::allBanks);

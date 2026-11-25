@@ -34,7 +34,6 @@
 
 using namespace NEO;
 
-HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing, IGFX_XE2_HPG_CORE);
 
 using CommandEncodeXe2HpgCoreTest = ::testing::Test;

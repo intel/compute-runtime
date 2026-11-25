@@ -23,7 +23,7 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenPipeControlWhenInitCalledThenFieldsSetT
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DataportFlush);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.L3ReadOnlyCacheInvalidationEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.UnTypedDataPortCacheFlush); // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.CompressionControlSurface_CcsFlush);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.CompressionControlSurfaceCcsFlush);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.WorkloadPartitionIdOffsetEnable);
     EXPECT_EQ(PIPE_CONTROL::_3D_COMMAND_SUB_OPCODE_PIPE_CONTROL, cmd.TheStructure.Common._3DCommandSubOpcode);
     EXPECT_EQ(PIPE_CONTROL::_3D_COMMAND_OPCODE_PIPE_CONTROL, cmd.TheStructure.Common._3DCommandOpcode);
@@ -40,7 +40,6 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenPipeControlWhenInitCalledThenFieldsSetT
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ProtectedMemoryDisable);
     EXPECT_EQ(PIPE_CONTROL::TBIMR_FORCE_BATCH_CLOSURE_NO_BATCH_CLOSURE, cmd.TheStructure.Common.TbimrForceBatchClosure);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Address);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.AddressHigh);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.ImmediateData);
 }
 
@@ -139,15 +138,10 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenPipeControlWhenSetterUsedThenGetterRetu
     cmd.setTbimrForceBatchClosure(PIPE_CONTROL::TBIMR_FORCE_BATCH_CLOSURE_CLOSE_BATCH);
     EXPECT_EQ(PIPE_CONTROL::TBIMR_FORCE_BATCH_CLOSURE_CLOSE_BATCH, cmd.getTbimrForceBatchClosure());
 
-    cmd.setAddress(0x0u);
-    EXPECT_EQ(0x0u, cmd.getAddress());
-    cmd.setAddress(0xfffffffcu);
-    EXPECT_EQ(0xfffffffcu, cmd.getAddress());
-
-    cmd.setAddressHigh(0x0u);
-    EXPECT_EQ(0x0u, cmd.getAddressHigh());
-    cmd.setAddressHigh(0xffffffffu);
-    EXPECT_EQ(0xffffffffu, cmd.getAddressHigh());
+    cmd.setAddress(0x0ull);
+    EXPECT_EQ(0x0ull, cmd.getAddress());
+    cmd.setAddress(0xfffffffffffffffcull);
+    EXPECT_EQ(0xfffffffffffffffcull, cmd.getAddress());
 
     cmd.setImmediateData(0x0ull);
     EXPECT_EQ(0x0ull, cmd.getImmediateData());

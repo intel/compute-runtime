@@ -30,7 +30,6 @@
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 using namespace NEO;
-HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc, IGFX_XE3_CORE);
 HWTEST_EXCLUDE_PRODUCT(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing, IGFX_XE3_CORE);
 
 using CommandEncoderSbaTestXe3 = Test<DeviceFixture>;

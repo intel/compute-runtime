@@ -2400,7 +2400,7 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndEventWithoutP
     for (auto &it : itorPipeControl) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
         if (pipeControl->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            auto barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+            auto barrierNodeAddress = pipeControl->getAddress();
             isEventSignaled |= (barrierNodeAddress == contextStartAddress);
         }
     }
@@ -2440,7 +2440,7 @@ HWTEST2_F(StagingBuffersFixture, givenSingleTransferStagingAndEventWithoutProfil
     for (auto &it : itorPipeControl) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
         if (pipeControl->getPostSyncOperation() == PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            auto barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+            auto barrierNodeAddress = pipeControl->getAddress();
             isEventSignaled |= (barrierNodeAddress == contextStartAddress);
         }
     }

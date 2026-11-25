@@ -44,6 +44,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     mutablePipeControl.setPostSyncAddress(address);
 
     EXPECT_EQ(address, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+
+    const auto flagsDword = pipeControl->getRawData(1);
+    mutablePipeControl.setPostSyncAddress(0x0000'1234'5678'9AB3ull);
+
+    EXPECT_EQ(0x0000'1234'5678'9AB0ull, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+    EXPECT_EQ(flagsDword, pipeControl->getRawData(1));
 }
 
 } // namespace ult

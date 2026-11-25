@@ -973,7 +973,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCont
             EXPECT_EQ(cmd->getImmediateData(), data);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
-            uint64_t pcAddress = cmd->getAddress() | (static_cast<uint64_t>(cmd->getAddressHigh()) << 32);
+            uint64_t pcAddress = cmd->getAddress();
             EXPECT_EQ(expectedGpuAddress, pcAddress);
             postSyncFound = true;
         }

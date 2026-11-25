@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -86,13 +87,15 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
         }
         EXPECT_EQ(pipeControlCmd->getCommandStreamerStallEnable(), true);
         EXPECT_EQ(pipeControlCmd->getDcFlushEnable(), false);
-        EXPECT_EQ(pipeControlCmd->getRenderTargetCacheFlushEnable(), false);
         EXPECT_EQ(pipeControlCmd->getInstructionCacheInvalidateEnable(), false);
         EXPECT_EQ(pipeControlCmd->getTextureCacheInvalidationEnable(), false);
-        EXPECT_EQ(pipeControlCmd->getPipeControlFlushEnable(), false);
-        EXPECT_EQ(pipeControlCmd->getVfCacheInvalidationEnable(), false);
         EXPECT_EQ(pipeControlCmd->getConstantCacheInvalidationEnable(), false);
         EXPECT_EQ(pipeControlCmd->getStateCacheInvalidationEnable(), false);
+        if constexpr (UsesRenderPipeControlFlags<FamilyType>) {
+            EXPECT_EQ(pipeControlCmd->getRenderTargetCacheFlushEnable(), false);
+            EXPECT_EQ(pipeControlCmd->getPipeControlFlushEnable(), false);
+            EXPECT_EQ(pipeControlCmd->getVfCacheInvalidationEnable(), false);
+        }
         return true;
     }
 

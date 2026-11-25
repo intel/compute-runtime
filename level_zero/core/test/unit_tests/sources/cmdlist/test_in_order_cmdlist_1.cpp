@@ -3619,9 +3619,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             ASSERT_NE(cmdList.end(), pcItor);
             auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
 
-            uint64_t address = pcCmd->getAddressHigh();
-            address <<= 32;
-            address |= pcCmd->getAddress();
+            uint64_t address = pcCmd->getAddress();
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, address);
             EXPECT_EQ(2u, pcCmd->getImmediateData());
 
@@ -5376,9 +5374,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             ASSERT_NE(cmdList.end(), pcItor);
             auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
 
-            uint64_t address = pcCmd->getAddressHigh();
-            address <<= 32;
-            address |= pcCmd->getAddress();
+            uint64_t address = pcCmd->getAddress();
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), address);
             EXPECT_EQ(expectedCounter, pcCmd->getImmediateData());
 
@@ -5398,9 +5394,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
             auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
             ASSERT_NE(cmdList.end(), pcItor);
             auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
-            uint64_t address = pcCmd->getAddressHigh();
-            address <<= 32;
-            address |= pcCmd->getAddress();
+            uint64_t address = pcCmd->getAddress();
             EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), address);
         } else {
             ASSERT_NE(cmdList.end(), semaphoreItor);

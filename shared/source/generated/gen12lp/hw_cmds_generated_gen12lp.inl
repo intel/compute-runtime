@@ -4184,7 +4184,8 @@ typedef struct tagPIPE_CONTROL {
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 8);
             uint32_t HdcPipelineFlush : BITFIELD_RANGE(9, 9);
-            uint32_t Reserved_10 : BITFIELD_RANGE(10, 15);
+            uint32_t L3ReadOnlyCacheInvalidationEnable : BITFIELD_RANGE(10, 10);
+            uint32_t Reserved_11 : BITFIELD_RANGE(11, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
@@ -4211,7 +4212,7 @@ typedef struct tagPIPE_CONTROL {
             uint32_t GlobalSnapshotCountReset : BITFIELD_RANGE(19, 19);
             uint32_t CommandStreamerStallEnable : BITFIELD_RANGE(20, 20);
             uint32_t StoreDataIndex : BITFIELD_RANGE(21, 21);
-            uint32_t Reserved_54 : BITFIELD_RANGE(22, 22);
+            uint32_t ProtectedMemoryEnable : BITFIELD_RANGE(22, 22);
             uint32_t LriPostSyncOperation : BITFIELD_RANGE(23, 23);
             uint32_t DestinationAddressType : BITFIELD_RANGE(24, 24);
             uint32_t AmfsFlushEnable : BITFIELD_RANGE(25, 25);
@@ -4221,11 +4222,9 @@ typedef struct tagPIPE_CONTROL {
             uint32_t CommandCacheInvalidateEnable : BITFIELD_RANGE(29, 29);
             uint32_t L3FabricFlush : BITFIELD_RANGE(30, 30);
             uint32_t Reserved_63 : BITFIELD_RANGE(31, 31);
-            // DWORD 2
-            uint32_t Reserved_64 : BITFIELD_RANGE(0, 1);
-            uint32_t Address : BITFIELD_RANGE(2, 31);
-            // DWORD 3
-            uint32_t AddressHigh;
+            // DWORD 2-3
+            uint64_t Reserved_64 : BITFIELD_RANGE(0, 1);
+            uint64_t Address : BITFIELD_RANGE(2, 63);
             // DWORD 4-5
             uint64_t ImmediateData;
         } Common;
@@ -4264,18 +4263,17 @@ typedef struct tagPIPE_CONTROL {
         DESTINATION_ADDRESS_TYPE_PPGTT = 0x0,
         DESTINATION_ADDRESS_TYPE_GGTT = 0x1,
     } DESTINATION_ADDRESS_TYPE;
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0x2,
+        ADDRESS_ALIGN_SIZE = 0x4,
+    } ADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_PIPE_CONTROL;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_PIPE_CONTROL;
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_3D;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_WRITE;
-        TheStructure.Common.GlobalSnapshotCountReset = GLOBAL_SNAPSHOT_COUNT_RESET_DONT_RESET;
-        TheStructure.Common.LriPostSyncOperation = LRI_POST_SYNC_OPERATION_NO_LRI_OPERATION;
-        TheStructure.Common.DestinationAddressType = DESTINATION_ADDRESS_TYPE_PPGTT;
-        TheStructure.Common.CommandStreamerStallEnable = 1u;
+        TheStructure.Common.CommandStreamerStallEnable = true; // Manual generator override
     }
     static tagPIPE_CONTROL sInit() {
         PIPE_CONTROL state;
@@ -4291,6 +4289,36 @@ typedef struct tagPIPE_CONTROL {
     }
     inline bool getHdcPipelineFlush() const {
         return TheStructure.Common.HdcPipelineFlush;
+    }
+    inline void setL3ReadOnlyCacheInvalidationEnable(const bool value) {
+        TheStructure.Common.L3ReadOnlyCacheInvalidationEnable = value;
+    }
+    inline bool getL3ReadOnlyCacheInvalidationEnable() const {
+        return TheStructure.Common.L3ReadOnlyCacheInvalidationEnable;
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setDepthCacheFlushEnable(const bool value) {
         TheStructure.Common.DepthCacheFlushEnable = value;
@@ -4328,11 +4356,11 @@ typedef struct tagPIPE_CONTROL {
     inline bool getDcFlushEnable() const {
         return TheStructure.Common.DcFlushEnable;
     }
-    inline void setProtectedMemoryApplicationId(const uint32_t value) {
+    inline void setProtectedMemoryApplicationId(const bool value) {
         TheStructure.Common.ProtectedMemoryApplicationId = value;
     }
-    inline uint32_t getProtectedMemoryApplicationId() const {
-        return (TheStructure.Common.ProtectedMemoryApplicationId);
+    inline bool getProtectedMemoryApplicationId() const {
+        return TheStructure.Common.ProtectedMemoryApplicationId;
     }
     inline void setPipeControlFlushEnable(const bool value) {
         TheStructure.Common.PipeControlFlushEnable = value;
@@ -4418,6 +4446,12 @@ typedef struct tagPIPE_CONTROL {
     inline bool getStoreDataIndex() const {
         return TheStructure.Common.StoreDataIndex;
     }
+    inline void setProtectedMemoryEnable(const bool value) {
+        TheStructure.Common.ProtectedMemoryEnable = value;
+    }
+    inline bool getProtectedMemoryEnable() const {
+        return TheStructure.Common.ProtectedMemoryEnable;
+    }
     inline void setLriPostSyncOperation(const LRI_POST_SYNC_OPERATION value) {
         TheStructure.Common.LriPostSyncOperation = value;
     }
@@ -4442,11 +4476,11 @@ typedef struct tagPIPE_CONTROL {
     inline bool getFlushLlc() const {
         return TheStructure.Common.FlushLlc;
     }
-    inline void setProtectedMemoryDisable(const uint32_t value) {
+    inline void setProtectedMemoryDisable(const bool value) {
         TheStructure.Common.ProtectedMemoryDisable = value;
     }
-    inline uint32_t getProtectedMemoryDisable() const {
-        return (TheStructure.Common.ProtectedMemoryDisable);
+    inline bool getProtectedMemoryDisable() const {
+        return TheStructure.Common.ProtectedMemoryDisable;
     }
     inline void setTileCacheFlushEnable(const bool value) {
         TheStructure.Common.TileCacheFlushEnable = value;
@@ -4466,22 +4500,11 @@ typedef struct tagPIPE_CONTROL {
     inline bool getL3FabricFlush() const {
         return TheStructure.Common.L3FabricFlush;
     }
-    typedef enum tagADDRESS {
-        ADDRESS_BIT_SHIFT = 0x2,
-        ADDRESS_ALIGN_SIZE = 0x4,
-    } ADDRESS;
-    inline void setAddress(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffff);
+    inline void setAddress(const uint64_t value) {
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
-    inline uint32_t getAddress() const {
+    inline uint64_t getAddress() const {
         return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
-    }
-    inline void setAddressHigh(const uint32_t value) {
-        TheStructure.Common.AddressHigh = value;
-    }
-    inline uint32_t getAddressHigh() const {
-        return TheStructure.Common.AddressHigh;
     }
     inline void setImmediateData(const uint64_t value) {
         TheStructure.Common.ImmediateData = value;

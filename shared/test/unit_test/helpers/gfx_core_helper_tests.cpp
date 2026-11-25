@@ -274,8 +274,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     auto expectedPipeControl = FamilyType::cmdInitPipeControl;
     expectedPipeControl.setCommandStreamerStallEnable(true);
     expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
-    expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
-    expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
+    expectedPipeControl.setAddress(address);
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
@@ -295,7 +294,6 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     EXPECT_EQ(pipeControl->getCommandStreamerStallEnable(), expectedPipeControl.getCommandStreamerStallEnable());
     EXPECT_EQ(pipeControl->getPostSyncOperation(), expectedPipeControl.getPostSyncOperation());
     EXPECT_EQ(pipeControl->getAddress(), expectedPipeControl.getAddress());
-    EXPECT_EQ(pipeControl->getAddressHigh(), expectedPipeControl.getAddressHigh());
     EXPECT_EQ(pipeControl->getImmediateData(), expectedPipeControl.getImmediateData());
     EXPECT_EQ(pipeControl->getNotifyEnable(), expectedPipeControl.getNotifyEnable());
 }
@@ -333,8 +331,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     auto expectedPipeControl = FamilyType::cmdInitPipeControl;
     expectedPipeControl.setCommandStreamerStallEnable(true);
     expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-    expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
-    expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
+    expectedPipeControl.setAddress(address);
     expectedPipeControl.setImmediateData(immediateData);
 
     MockExecutionEnvironment mockExecutionEnvironment{};
@@ -355,7 +352,6 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     EXPECT_EQ(pipeControl->getCommandStreamerStallEnable(), expectedPipeControl.getCommandStreamerStallEnable());
     EXPECT_EQ(pipeControl->getPostSyncOperation(), expectedPipeControl.getPostSyncOperation());
     EXPECT_EQ(pipeControl->getAddress(), expectedPipeControl.getAddress());
-    EXPECT_EQ(pipeControl->getAddressHigh(), expectedPipeControl.getAddressHigh());
     EXPECT_EQ(pipeControl->getImmediateData(), expectedPipeControl.getImmediateData());
     EXPECT_EQ(pipeControl->getNotifyEnable(), expectedPipeControl.getNotifyEnable());
 }
@@ -371,8 +367,7 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
     auto expectedPipeControl = FamilyType::cmdInitPipeControl;
     expectedPipeControl.setCommandStreamerStallEnable(true);
     expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-    expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
-    expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
+    expectedPipeControl.setAddress(address);
     expectedPipeControl.setImmediateData(immediateData);
     expectedPipeControl.setNotifyEnable(true);
     MockExecutionEnvironment mockExecutionEnvironment{};
@@ -391,7 +386,6 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
     EXPECT_EQ(pipeControl->getCommandStreamerStallEnable(), expectedPipeControl.getCommandStreamerStallEnable());
     EXPECT_EQ(pipeControl->getPostSyncOperation(), expectedPipeControl.getPostSyncOperation());
     EXPECT_EQ(pipeControl->getAddress(), expectedPipeControl.getAddress());
-    EXPECT_EQ(pipeControl->getAddressHigh(), expectedPipeControl.getAddressHigh());
     EXPECT_EQ(pipeControl->getImmediateData(), expectedPipeControl.getImmediateData());
     EXPECT_EQ(pipeControl->getNotifyEnable(), expectedPipeControl.getNotifyEnable());
 }

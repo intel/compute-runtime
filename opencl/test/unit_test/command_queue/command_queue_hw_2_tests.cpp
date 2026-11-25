@@ -1342,7 +1342,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitAfterBarrierWhenEnqueueingCommandTh
         const auto pipeControlItor = find<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
         EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
-        barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+        barrierNodeAddress = pipeControl->getAddress();
 
         // There shouldn't be any semaphores before the barrier
         const auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(ccsHwParser.cmdList.begin(), pipeControlItor);
@@ -1406,7 +1406,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
         const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, queueHwParser.cmdList.end());
         const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
         EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
-        barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+        barrierNodeAddress = pipeControl->getAddress();
 
         // There shouldn't be any more semaphores before the barrier
         EXPECT_EQ(pipeControlItor, find<MI_SEMAPHORE_WAIT *>(std::next(semaphoreItor), pipeControlItor));
@@ -1496,7 +1496,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlockedBlitAfterBarrierWhenEnqueueingCo
         const auto pipeControlItor = find<PIPE_CONTROL *>(semaphoreItor, ccsHwParser.cmdList.end());
         const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
         EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
-        barrierNodeAddress = pipeControl->getAddress() | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+        barrierNodeAddress = pipeControl->getAddress();
 
         // There shouldn't be any more semaphores before the barrier
         EXPECT_EQ(pipeControlItor, find<MI_SEMAPHORE_WAIT *>(std::next(semaphoreItor), pipeControlItor));

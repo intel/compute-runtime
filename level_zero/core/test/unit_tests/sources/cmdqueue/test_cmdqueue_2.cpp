@@ -1427,8 +1427,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                     EXPECT_TRUE(pipeControl->getDcFlushEnable());
                     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
                     EXPECT_EQ(expectedId, pipeControl->getImmediateData());
-                    EXPECT_EQ(getLowPart(hostFunctionIdGpuAddress), pipeControl->getAddress());
-                    EXPECT_EQ(getHighPart(hostFunctionIdGpuAddress), pipeControl->getAddressHigh());
+                    EXPECT_EQ(hostFunctionIdGpuAddress, pipeControl->getAddress());
 
                     if constexpr (requires { &pipeControl->getWorkloadPartitionIdOffsetEnable; }) {
                         auto expectedWorkloadPartitionIdOffset = nPartitions > 1U;
@@ -1489,8 +1488,7 @@ HWTEST_F(HostFunctionsCmdPatchTests, givenHostFunctionPatchCommandsWhenPatchComm
                     EXPECT_TRUE(pipeControl->getDcFlushEnable());
                     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
                     EXPECT_EQ(expectedId, pipeControl->getImmediateData());
-                    EXPECT_EQ(getLowPart(hostFunctionIdGpuAddress), pipeControl->getAddress());
-                    EXPECT_EQ(getHighPart(hostFunctionIdGpuAddress), pipeControl->getAddressHigh());
+                    EXPECT_EQ(hostFunctionIdGpuAddress, pipeControl->getAddress());
                 } else {
 
                     if (useMemorySynchronization) {

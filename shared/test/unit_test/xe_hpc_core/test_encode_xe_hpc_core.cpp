@@ -34,7 +34,6 @@
 
 using namespace NEO;
 
-HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterEncodeMiFlushDWTest, whenMiFlushDwIsProgrammedThenSetFlushCcsAndLlc, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing, IGFX_XE_HPC_CORE);
 
 using CommandEncodeXeHpcCoreTest = ::testing::Test;
@@ -50,7 +49,6 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenMiFlushDwIsProgrammedThenSetAn
 
     EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, 0x1230000, 456, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
-    EXPECT_EQ(0u, miFlushDwCmd->getFlushCcs());
     EXPECT_EQ(1u, miFlushDwCmd->getFlushLlc());
 }
 

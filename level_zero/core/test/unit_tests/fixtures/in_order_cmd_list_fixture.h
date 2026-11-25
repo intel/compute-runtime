@@ -399,9 +399,7 @@ typename GfxFamily::PIPE_CONTROL *InOrderCmdListFixture::findInOrderCounterSigna
             continue;
         }
 
-        uint64_t address = pcCmd->getAddressHigh();
-        address <<= 32;
-        address |= pcCmd->getAddress();
+        uint64_t address = pcCmd->getAddress();
 
         if (address == deviceSyncVa) {
             return pcCmd;

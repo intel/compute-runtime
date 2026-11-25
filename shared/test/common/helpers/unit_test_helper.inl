@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device_info.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -40,10 +41,7 @@ const bool UnitTestHelper<GfxFamily>::additionalMiFlushDwRequired = false;
 
 template <typename GfxFamily>
 inline uint64_t UnitTestHelper<GfxFamily>::getPipeControlPostSyncAddress(const typename GfxFamily::PIPE_CONTROL &pipeControl) {
-    uint64_t gpuAddress = pipeControl.getAddress();
-    uint64_t gpuAddressHigh = pipeControl.getAddressHigh();
-
-    return (gpuAddressHigh << 32) | gpuAddress;
+    return pipeControl.getAddress();
 }
 
 template <typename GfxFamily>
@@ -100,7 +98,12 @@ bool UnitTestHelper<GfxFamily>::findStateCacheFlushPipeControl(CommandStreamRece
     while (itorPipeControl != hwParserCsr.pipeControlList.end()) {
         auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
 
-        if (pipeControl->getRenderTargetCacheFlushEnable() &&
+        bool renderTargetCacheFlushed = true;
+        if constexpr (UsesRenderPipeControlFlags<GfxFamily>) {
+            renderTargetCacheFlushed = pipeControl->getRenderTargetCacheFlushEnable();
+        }
+
+        if (renderTargetCacheFlushed &&
             pipeControl->getStateCacheInvalidationEnable() &&
             pipeControl->getTextureCacheInvalidationEnable() &&
             ((csr.isTlbFlushRequiredForStateCacheFlush() && pipeControl->getTlbInvalidate()) || (!csr.isTlbFlushRequiredForStateCacheFlush() && !pipeControl->getTlbInvalidate()))) {
