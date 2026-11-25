@@ -4,7 +4,7 @@ components:
     version: 1065
   ci_igsc:
     dest_dir: ci_igsc
-    version: 137
+    version: 176
   ci_l0_loader:
     dest_dir: level_zero
     version: v1.36.0
