@@ -22,7 +22,6 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 
     ${HW_SRC_LINK}
-    ${EXPORTS_FILENAME}
     $<TARGET_OBJECTS:neo_shared_dlls_precompiled_objects>
 )
 

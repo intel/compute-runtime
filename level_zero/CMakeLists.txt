@@ -360,10 +360,10 @@ if(BUILD_WITH_L0)
     endif()
   endif()
 
-  if(L0_BLACK_BOX_TEST_USE_DRIVER OR NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    set(L0_USE_INTERNAL_EXPORTS TRUE)
+  if(L0_BLACK_BOX_TEST_USE_DRIVER)
+    set(L0_USE_RELEASE_EXPORTS 0)
   else()
-    set(L0_USE_INTERNAL_EXPORTS FALSE)
+    set(L0_USE_RELEASE_EXPORTS $<CONFIG:Release>)
   endif()
 
   if(DONT_CARE_OF_VIRTUALS)
@@ -375,8 +375,8 @@ if(BUILD_WITH_L0)
     endif()
   endif()
 
-  if(WIN32 AND NOT L0_USE_INTERNAL_EXPORTS)
-    target_compile_definitions(${L0_RELEASE_LIB_NAME} PRIVATE ZE_APIEXPORT=)
+  if(WIN32)
+    target_compile_definitions(${L0_RELEASE_LIB_NAME} PRIVATE $<${L0_USE_RELEASE_EXPORTS}:ZE_APIEXPORT=>)
   endif()
 
   append_sources_from_properties(L0_SHARED_LIB_SRCS L0_SRCS_DLL NEO_CORE_SRCS_LINK NEO_SRCS_ENABLE_CORE)
@@ -387,18 +387,17 @@ if(BUILD_WITH_L0)
                         ${NEO_EXTRA_LIBS} ${ASAN_LIBS} ${TSAN_LIBS}
   )
 
+  if(WIN32)
+    set(L0_RELEASE_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/windows/ZeIntelGpu64ReleaseExports.def")
+    set(L0_INTERNAL_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/windows/ZeIntelGpu64InternalExports.def")
+  else()
+    set(L0_RELEASE_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze_release.exports")
+    set(L0_INTERNAL_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze_internal.exports")
+  endif()
+  set_config_exports(${TARGET_NAME_L0} ${L0_USE_RELEASE_EXPORTS} ${L0_RELEASE_EXPORTS_FILE} ${L0_INTERNAL_EXPORTS_FILE})
+
   if(UNIX)
     target_link_libraries(${TARGET_NAME_L0} PRIVATE ${GMM_LINK_NAME})
-    if(NOT ENABLE_DYNAMIC_MEMORY_TRACKING)
-      if(L0_USE_INTERNAL_EXPORTS)
-        set(L0_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze_internal.exports")
-      else()
-        set(L0_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze_release.exports")
-      endif()
-      set_property(TARGET ${TARGET_NAME_L0}
-                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${L0_EXPORTS_FILE}"
-      )
-    endif()
     set_property(TARGET ${TARGET_NAME_L0} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic")
   endif()
 

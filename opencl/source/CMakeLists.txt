@@ -83,23 +83,16 @@ set_property(TARGET ${NEO_STATIC_LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS 
 
 set_target_properties(${NEO_STATIC_LIB_NAME} PROPERTIES FOLDER ${OPENCL_RUNTIME_PROJECTS_FOLDER})
 
-set(EXPORTS_FILENAME "")
 if(WIN32)
-  set(EXPORTS_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/OpenCLExports${IGDRCL_OPTION__BITS}.def")
+  set(RELEASE_EXPORTS_FILE "${CMAKE_CURRENT_BINARY_DIR}/OpenCLReleaseExports${IGDRCL_OPTION__BITS}.def")
+  set(INTERNAL_EXPORTS_FILE "${CMAKE_CURRENT_BINARY_DIR}/OpenCLInternalExports${IGDRCL_OPTION__BITS}.def")
   set(MSVC_DEF_LIB_NAME "igdrcl${IGDRCL_OPTION__BITS}")
   set(MSVC_DEF_HEADER "This file was generated during CMake project configuration - please don't edit")
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/OpenCLReleaseExports.def.in" "${EXPORTS_FILENAME}")
-  else()
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/OpenCLInternalExports.def.in" "${EXPORTS_FILENAME}")
-  endif()
-elseif(UNIX)
-  set(EXPORTS_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/ocl.exports")
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl_release.exports" "${EXPORTS_FILENAME}" COPYONLY)
-  else()
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl_internal.exports" "${EXPORTS_FILENAME}" COPYONLY)
-  endif()
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/OpenCLReleaseExports.def.in" "${RELEASE_EXPORTS_FILE}")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/OpenCLInternalExports.def.in" "${INTERNAL_EXPORTS_FILE}")
+else()
+  set(RELEASE_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl_release.exports")
+  set(INTERNAL_EXPORTS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl_internal.exports")
 endif()
 
 if(${GENERATE_EXECUTABLE})
@@ -169,11 +162,6 @@ if(${GENERATE_EXECUTABLE})
     target_include_directories(${NEO_DYNAMIC_LIB_NAME} PRIVATE
                                ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
     )
-    if(NOT ENABLE_DYNAMIC_MEMORY_TRACKING)
-      set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
-                   APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${EXPORTS_FILENAME}"
-      )
-    endif()
     set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
                  APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic"
     )
@@ -190,7 +178,8 @@ if(${GENERATE_EXECUTABLE})
                         OUTPUT_NAME "${NEO_DLL_NAME_BASE}${IGDRCL_NAME_POSTFIX}${IGDRCL_OPTION__BITS}${NEO__SO_NAME_SUFFIX}"
   )
   set_target_properties(${NEO_DYNAMIC_LIB_NAME} PROPERTIES FOLDER ${OPENCL_RUNTIME_PROJECTS_FOLDER})
-  create_project_source_tree_with_exports(${NEO_DYNAMIC_LIB_NAME} "${EXPORTS_FILENAME}")
+  set_config_exports(${NEO_DYNAMIC_LIB_NAME} "$<CONFIG:Release>" ${RELEASE_EXPORTS_FILE} ${INTERNAL_EXPORTS_FILE})
+  create_project_source_tree_with_exports(${NEO_DYNAMIC_LIB_NAME} "${RELEASE_EXPORTS_FILE};${INTERNAL_EXPORTS_FILE}")
 endif()
 
 create_project_source_tree(${NEO_STATIC_LIB_NAME})

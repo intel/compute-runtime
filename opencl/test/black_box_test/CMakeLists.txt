@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2025 Intel Corporation
+# Copyright (C) 2020-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -39,6 +39,8 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       endif()
     else()
       target_link_libraries(${TEST_NAME} PUBLIC ${NEO_DYNAMIC_LIB_NAME})
+      # these tests call OpenCL functions that the Release library does not export
+      set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD_RELEASE TRUE)
     endif()
   endforeach()
 endif()
