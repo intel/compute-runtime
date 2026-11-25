@@ -102,6 +102,9 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/file_io.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture_os.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils_common.cpp
@@ -125,6 +128,7 @@ if(WIN32)
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_thread_win.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/stream_capture_windows.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/ocloc_supported_devices_helper_windows_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/ocloc_api_windows_tests.cpp
@@ -139,6 +143,7 @@ else()
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_thread_linux.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/stream_capture_linux.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/ocloc_supported_devices_helper_linux_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/linux/ocloc_api_linux_tests.cpp
   )

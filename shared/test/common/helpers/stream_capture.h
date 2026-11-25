@@ -10,107 +10,42 @@
 #include "shared/source/helpers/constants.h"
 
 #include <cstdio>
-#include <fcntl.h>
 #include <string>
-
-#if defined(_WIN32)
-#include <io.h>
-#else
-#include <cstring>
-#include <unistd.h>
-#endif
 
 class StreamCapture {
   public:
-    ~StreamCapture() {
-#if defined(_WIN32)
-        if (pipefdStdout[0] != -1) {
-            _close(pipefdStdout[0]);
-        }
-        if (pipefdStderr[0] != -1) {
-            _close(pipefdStderr[0]);
-        }
-#else
-        if (pipefdStdout[0] != -1) {
-            close(pipefdStdout[0]);
-        }
-        if (pipefdStderr[0] != -1) {
-            close(pipefdStderr[0]);
-        }
-#endif
-    }
+    ~StreamCapture();
+
     void captureStdout() {
-        captureStream(stdout, pipefdStdout, saveStdout);
+        captureStream(stdoutCapture);
     }
 
     void captureStderr() {
-        captureStream(stderr, pipefdStderr, saveStderr);
+        captureStream(stderrCapture);
     }
 
     std::string getCapturedStdout() {
-        return getCapturedStream(stdout, pipefdStdout, saveStdout);
+        return getCapturedStream(stdoutCapture);
     }
 
     std::string getCapturedStderr() {
-        return getCapturedStream(stderr, pipefdStderr, saveStderr);
+        return getCapturedStream(stderrCapture);
     }
+
+    static constexpr size_t pipeSize = 16 * MemoryConstants::kiloByte;
 
   private:
-    void captureStream(FILE *stream, int pipefd[2], int &savedFd) {
-#if defined(_WIN32)
-        _pipe(pipefd, bufferSize, O_TEXT);
-        fflush(stream);
-        savedFd = _dup(_fileno(stream));
-        _dup2(pipefd[1], _fileno(stream));
-        _close(pipefd[1]);
-        pipefd[1] = -1;
-#else
-        fflush(stream);
-        if (pipe(pipefd) == -1) {
-            return;
-        }
-        fcntl(pipefd[0], F_SETPIPE_SZ, bufferSize);
-        savedFd = dup(fileno(stream));
-        dup2(pipefd[1], fileno(stream));
-        close(pipefd[1]);
-        pipefd[1] = -1;
-#endif
-    }
+    struct Capture {
+        FILE *stream = nullptr;
+        int readFd = -1;
+        int savedFd = -1;
+    };
 
-    std::string getCapturedStream(FILE *stream, int pipefd[2], int &savedFd) {
-#if defined(_WIN32)
-        fflush(stream);
-        _dup2(savedFd, _fileno(stream));
-        _close(savedFd);
+    void captureStream(Capture &capture);
+    std::string getCapturedStream(Capture &capture);
+    void releaseCapture(Capture &capture);
+    void restoreStream(Capture &capture);
 
-        char buffer[bufferSize];
-        int count = _read(pipefd[0], buffer, sizeof(buffer) - 1);
-        _close(pipefd[0]);
-        pipefd[0] = -1;
-        if (count > 0) {
-            buffer[count] = '\0';
-            return std::string(buffer);
-        }
-        return "";
-#else
-        fflush(stream);
-        dup2(savedFd, fileno(stream));
-        close(savedFd);
-
-        char buffer[bufferSize];
-        ssize_t count = read(pipefd[0], buffer, bufferSize - 1);
-        close(pipefd[0]);
-        pipefd[0] = -1;
-        if (count > 0) {
-            buffer[count] = '\0';
-            return std::string(buffer);
-        }
-        return "";
-#endif
-    }
-    static constexpr size_t bufferSize = 16 * MemoryConstants::kiloByte;
-    int pipefdStdout[2]{-1, -1};
-    int pipefdStderr[2]{-1, -1};
-    int saveStdout{-1};
-    int saveStderr{-1};
+    Capture stdoutCapture{stdout};
+    Capture stderrCapture{stderr};
 };

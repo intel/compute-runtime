@@ -54,6 +54,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/required_libs_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/stream_capture_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl

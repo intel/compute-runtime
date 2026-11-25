@@ -102,6 +102,9 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_product_helper_hw.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_product_helper_hw.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture_os.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/ult_main_helpers.cpp
@@ -195,6 +198,7 @@ set(neo_libult_common_SRCS_LIB_ULT_WIN
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/stream_capture_windows.cpp
 )
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_WIN ${neo_libult_common_SRCS_LIB_ULT_WIN})
 
@@ -202,6 +206,7 @@ set(neo_libult_common_SRCS_LIB_ULT_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/linux/memory_allocator_multi_device_fixture_linux.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_buffer_object_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/stream_capture_linux.cpp
 )
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_LINUX ${neo_libult_common_SRCS_LIB_ULT_LINUX})
 
