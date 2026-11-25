@@ -6986,25 +6986,31 @@ TEST_F(MultipleDeviceMemAdviseTests, givenAllocationNotPresentOnAdvisedDeviceThe
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST(L0DeviceTest, givenXeLinkModelWhenFabricEdgeModelSupportsBandwidthAndLatencyThenReturnTrue) {
+TEST(L0DeviceTest, givenXeLinkLinkTypeWhenFabricEdgeSupportsBandwidthAndLatencyThenReturnTrue) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0);
     MockDeviceImp mockDevice(neoMockDevice);
 
-    EXPECT_TRUE(mockDevice.fabricEdgeModelSupportsBandwidthAndLatency("XeLink"));
+    FabricEdge edge;
+    strncpy(edge.properties.model, "XeLink", ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE - 1);
+    edge.linkType = NEO::FabricLinkTypes::xeLink;
+    EXPECT_TRUE(mockDevice.fabricEdgeSupportsBandwidthAndLatency(edge));
 }
 
-TEST(L0DeviceTest, givenNonXeLinkModelWhenFabricEdgeModelSupportsBandwidthAndLatencyThenReturnFalse) {
+TEST(L0DeviceTest, givenXeLinkModelAndUnknownLinkTypeWhenFabricEdgeSupportsBandwidthAndLatencyThenReturnFalse) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0);
     MockDeviceImp mockDevice(neoMockDevice);
 
-    EXPECT_FALSE(mockDevice.fabricEdgeModelSupportsBandwidthAndLatency("PCIe"));
+    FabricEdge edge;
+    strncpy(edge.properties.model, "XeLink", ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE - 1);
+    EXPECT_FALSE(mockDevice.fabricEdgeSupportsBandwidthAndLatency(edge));
 }
 
-TEST(L0DeviceTest, givenEmptyModelWhenFabricEdgeModelSupportsBandwidthAndLatencyThenReturnFalse) {
+TEST(L0DeviceTest, givenEmptyModelWhenFabricEdgeSupportsBandwidthAndLatencyThenReturnFalse) {
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0);
     MockDeviceImp mockDevice(neoMockDevice);
 
-    EXPECT_FALSE(mockDevice.fabricEdgeModelSupportsBandwidthAndLatency(""));
+    FabricEdge edge;
+    EXPECT_FALSE(mockDevice.fabricEdgeSupportsBandwidthAndLatency(edge));
 }
 
 using CommandQueueGroupTest = Test<DeviceFixture>;

@@ -73,6 +73,7 @@ struct FabricEdge : _ze_fabric_edge_handle_t {
     ze_fabric_edge_exp_properties_t properties = {};
     FabricVertex *vertexA = nullptr;
     FabricVertex *vertexB = nullptr;
+    NEO::FabricLinkType linkType = NEO::FabricLinkTypes::unknown;
 };
 
 } // namespace L0

@@ -33,7 +33,9 @@ void FabricEdge::createEdgesFromVertices(const std::vector<FabricVertex *> &vert
                 bool isConnected =
                     fabricDeviceInterface.second->getEdgeProperty(vertexB, edgeProperty);
                 if (isConnected) {
-                    edges.push_back(create(vertexA, vertexB, edgeProperty));
+                    auto *edge = create(vertexA, vertexB, edgeProperty);
+                    edge->linkType = FabricDeviceInterface::getLinkType(fabricDeviceInterface.first);
+                    edges.push_back(edge);
                 }
             }
         }

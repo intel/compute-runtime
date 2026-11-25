@@ -131,7 +131,7 @@ struct MockDeviceImp : public L0::Device {
     using BaseClass::adjustCommandQueueDesc;
     using BaseClass::debugSession;
     using BaseClass::deviceInOrderCounterAllocator;
-    using BaseClass::fabricEdgeModelSupportsBandwidthAndLatency;
+    using BaseClass::fabricEdgeSupportsBandwidthAndLatency;
     using BaseClass::getNEODevice;
     using BaseClass::hostInOrderCounterAllocator;
     using BaseClass::implicitScalingCapable;

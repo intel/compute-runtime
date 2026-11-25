@@ -34,7 +34,7 @@ void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &ve
     }
 
     // Get direct physical edges between all vertices
-    std::map<uint32_t, std::vector<std::pair<uint32_t, ze_fabric_edge_exp_properties_t *>>> adjacentVerticesMap;
+    std::map<uint32_t, std::vector<std::pair<uint32_t, FabricEdge *>>> adjacentVerticesMap;
     std::map<uint32_t, std::vector<uint32_t>> nonAdjacentVerticesMap;
     for (uint32_t vertexAIndex = 0; vertexAIndex < allVertices.size(); vertexAIndex++) {
         for (uint32_t vertexBIndex = vertexAIndex + 1; vertexBIndex < allVertices.size(); vertexBIndex++) {
@@ -47,9 +47,11 @@ void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &ve
                 bool isConnected =
                     fabricDeviceInterface.second->getEdgeProperty(vertexB, edgeProperty);
                 if (isConnected) {
-                    edges.push_back(FabricEdge::create(vertexA, vertexB, edgeProperty));
-                    adjacentVerticesMap[vertexAIndex].emplace_back(vertexBIndex, &edges.back()->properties);
-                    adjacentVerticesMap[vertexBIndex].emplace_back(vertexAIndex, &edges.back()->properties);
+                    auto *edge = FabricEdge::create(vertexA, vertexB, edgeProperty);
+                    edge->linkType = FabricDeviceInterface::getLinkType(fabricDeviceInterface.first);
+                    edges.push_back(edge);
+                    adjacentVerticesMap[vertexAIndex].emplace_back(vertexBIndex, edge);
+                    adjacentVerticesMap[vertexBIndex].emplace_back(vertexAIndex, edge);
                     isAdjacent = true;
                 }
             }
@@ -83,12 +85,12 @@ void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &ve
                         break;
                     }
 
-                    for (auto [vertexIndex, edgeProperty] : adjacentVerticesMap[currVertexIndex]) {
+                    for (auto [vertexIndex, edge] : adjacentVerticesMap[currVertexIndex]) {
                         if (!visited.contains(vertexIndex)) {
-                            if (strncmp(edgeProperty->model, "XeLink", 7) == 0) {
+                            if (edge->linkType == NEO::FabricLinkTypes::xeLink) {
                                 toVisitIaf.push_back(vertexIndex);
                             } else {
-                                DEBUG_BREAK_IF(strncmp(edgeProperty->model, "MDFI", 5) != 0);
+                                DEBUG_BREAK_IF(edge->linkType != NEO::FabricLinkTypes::mdfi);
                                 toVisitMdfi.push_back(vertexIndex);
                             }
                             visited[vertexIndex] = currVertexIndex;
@@ -119,23 +121,24 @@ void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &ve
 
                     while (true) {
                         const auto parentIndex = visited[currVertexIndex];
-                        ze_fabric_edge_exp_properties_t *currEdgeProperty = nullptr;
-                        for (const auto &[vertexIndex, edgeProperty] : adjacentVerticesMap[parentIndex]) {
+                        FabricEdge *currEdge = nullptr;
+                        for (const auto &[vertexIndex, edge] : adjacentVerticesMap[parentIndex]) {
                             if (vertexIndex == currVertexIndex) {
-                                currEdgeProperty = edgeProperty;
+                                currEdge = edge;
                                 break;
                             }
                         }
-                        UNRECOVERABLE_IF(currEdgeProperty == nullptr);
+                        UNRECOVERABLE_IF(currEdge == nullptr);
+                        const auto *currEdgeProperty = &currEdge->properties;
                         path = std::string(currEdgeProperty->model) + path;
-                        if (strncmp(currEdgeProperty->model, "XeLink", 7) == 0) {
+                        if (currEdge->linkType == NEO::FabricLinkTypes::xeLink) {
                             if (currEdgeProperty->bandwidth < properties.bandwidth) {
                                 properties.bandwidth = currEdgeProperty->bandwidth;
                             }
                             properties.latency += currEdgeProperty->latency;
                         }
 
-                        if (strncmp(currEdgeProperty->model, "MDFI", 5) == 0) {
+                        if (currEdge->linkType == NEO::FabricLinkTypes::mdfi) {
                             hasMdfi = true;
                         }
 
@@ -152,7 +155,9 @@ void createEdgesFromFabricDeviceInterfaces(const std::vector<FabricVertex *> &ve
                         properties.latency = 0;
                         properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
                     }
-                    indirectEdges.push_back(FabricEdge::create(allVertices[vertexAIndex], allVertices[vertexBIndex], properties));
+                    auto *indirectEdge = FabricEdge::create(allVertices[vertexAIndex], allVertices[vertexBIndex], properties);
+                    indirectEdge->linkType = NEO::FabricLinkTypes::xeLink;
+                    indirectEdges.push_back(indirectEdge);
                     break;
                 }
             }

@@ -211,6 +211,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 1u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     // Root to subdevice
@@ -225,6 +226,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 1u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     count = 0;
@@ -238,6 +240,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 1u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     // Subdevice to root
@@ -252,6 +255,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 1u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     // Subdevice to subdevice (direct)
@@ -266,6 +270,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI");
+    EXPECT_EQ(NEO::FabricLinkTypes::mdfi, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     count = 0;
@@ -279,6 +284,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 1u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     // Subdevice to subdevice (multi-hop)
@@ -293,6 +299,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     count = 0;
@@ -306,6 +313,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     count = 0;
@@ -319,6 +327,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
     count = 0;
@@ -332,7 +341,13 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricEdge::fromHandle(edges[0])->linkType);
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
+
+    ASSERT_FALSE(driverHandle->fabricIndirectEdges.empty());
+    for (const auto *indirectEdge : driverHandle->fabricIndirectEdges) {
+        EXPECT_EQ(NEO::FabricLinkTypes::xeLink, indirectEdge->linkType);
+    }
 
     for (auto &edge : driverHandle->fabricEdges) {
         delete edge;

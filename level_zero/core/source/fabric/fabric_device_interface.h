@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/os_interface/fabric_info.h"
+
 #include <level_zero/ze_api.h>
 
 #include <memory>
@@ -28,6 +30,15 @@ class FabricDeviceInterface {
     static std::unique_ptr<FabricDeviceInterface> createFabricDeviceInterfaceIaf(const FabricVertex *fabricVertex);
     static std::unique_ptr<FabricDeviceInterface> createFabricDeviceInterfaceMdfi(const FabricVertex *fabricVertex);
     virtual bool getEdgeProperty(FabricVertex *neighborVertex, ze_fabric_edge_exp_properties_t &edgeProperty) = 0;
+    static constexpr NEO::FabricLinkType getLinkType(Type type) {
+        switch (type) {
+        case Type::iaf:
+            return NEO::FabricLinkTypes::xeLink;
+        case Type::mdfi:
+            return NEO::FabricLinkTypes::mdfi;
+        }
+        return NEO::FabricLinkTypes::unknown;
+    }
 };
 
 class FabricDeviceMdfi : public FabricDeviceInterface {

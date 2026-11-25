@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/extendable_enum.h"
+
 #include <chrono>
 #include <cstdint>
 
@@ -43,6 +45,17 @@ enum class FabricDuplexMode : uint8_t {
     fullDuplex = 2,
 };
 
+struct FabricLinkType : ExtendableEnum {
+  public:
+    constexpr FabricLinkType(uint32_t val) : ExtendableEnum(val) {}
+};
+
+namespace FabricLinkTypes {
+static constexpr FabricLinkType unknown = 0;
+static constexpr FabricLinkType xeLink = 1;
+static constexpr FabricLinkType mdfi = 2;
+} // namespace FabricLinkTypes
+
 struct FabricEdgeInfo {
     uint16_t srcFabricId;
     uint16_t dstFabricId;
@@ -55,6 +68,7 @@ struct FabricEdgeInfo {
     FabricBandwidthUnit bandwidthUnit;
     FabricLatencyUnit latencyUnit;
     FabricDuplexMode duplexMode;
+    FabricLinkType linkType = FabricLinkTypes::unknown;
 };
 
 constexpr uint32_t packPciBdf(uint32_t domain, uint32_t bus, uint32_t device, uint32_t function) {

@@ -66,6 +66,7 @@ struct CommandList;
 struct DebugSession;
 class DriverHandle;
 struct ExecutionEnvironment;
+struct FabricEdge;
 struct FabricVertex;
 struct Image;
 struct Module;
@@ -304,7 +305,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;
     void getP2PPropertiesDirectFabricConnection(Device *peerDevice,
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
-    bool fabricEdgeModelSupportsBandwidthAndLatency(const char *model);
+    bool fabricEdgeSupportsBandwidthAndLatency(const FabricEdge &edge);
     ze_result_t selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint,
                                             bool sharedContextPriorityOverrideAllowed, bool *queueOwnershipTaken);
     bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, bool sharedContextPriorityOverrideAllowed, NEO::CommandStreamReceiver **csr);

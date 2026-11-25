@@ -79,6 +79,7 @@ TEST_F(P2pBandwidthPropertiesWindowsTest, GivenDirectXeLinkEdgeWhenQueryingP2pBa
     testEdge.vertexB = static_cast<Device *>(device1)->fabricVertex;
     const char *linkModel = "XeLink";
     memcpy_s(testEdge.properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, linkModel, strlen(linkModel));
+    testEdge.linkType = NEO::FabricLinkTypes::xeLink;
     testEdge.properties.bandwidth = testBandwidth;
     testEdge.properties.latency = testLatency;
     testEdge.properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
@@ -169,6 +170,7 @@ TEST_F(P2pBandwidthPropertiesWindowsTest, GivenXeLinkConnectionWithPeerAccessWhe
     testEdge.vertexB = static_cast<Device *>(device1)->fabricVertex;
     const char *linkModel = "XeLink";
     memcpy_s(testEdge.properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, linkModel, strlen(linkModel));
+    testEdge.linkType = NEO::FabricLinkTypes::xeLink;
     testEdge.properties.bandwidth = testBandwidth;
     testEdge.properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
     testEdge.properties.latency = 1u;

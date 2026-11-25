@@ -539,7 +539,7 @@ void Device::getP2PPropertiesDirectFabricConnection(Device *peerDevice,
                 ze_fabric_edge_exp_properties_t edgeProperties{};
                 fabricEdge->getProperties(&edgeProperties);
 
-                if (fabricEdgeModelSupportsBandwidthAndLatency(edgeProperties.model)) {
+                if (fabricEdgeSupportsBandwidthAndLatency(*fabricEdge)) {
                     bandwidthPropertiesDesc->logicalBandwidth = edgeProperties.bandwidth;
                     bandwidthPropertiesDesc->physicalBandwidth = edgeProperties.bandwidth;
                     bandwidthPropertiesDesc->bandwidthUnit = edgeProperties.bandwidthUnit;

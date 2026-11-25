@@ -88,6 +88,7 @@ TEST_F(P2pBandwidthPropertiesTest, GivenDirectFabricConnectionBetweenDevicesWhen
     testEdge.vertexB = static_cast<Device *>(device1)->fabricVertex;
     const char *linkModel = "XeLink";
     memcpy_s(testEdge.properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, linkModel, strlen(linkModel));
+    testEdge.linkType = NEO::FabricLinkTypes::xeLink;
     testEdge.properties.bandwidth = testBandwidth;
     testEdge.properties.latency = testLatency;
     testEdge.properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
@@ -209,6 +210,7 @@ TEST_F(P2pBandwidthPropertiesTest, GivenXeLinkAndMdfiFabricConnectionBetweenSubD
     testEdgeXeLink->vertexA = FabricVertex::fromHandle(vertex01);
     testEdgeXeLink->vertexB = FabricVertex::fromHandle(vertex10);
     memcpy_s(testEdgeXeLink->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, xeLinkModel, strlen(xeLinkModel));
+    testEdgeXeLink->linkType = NEO::FabricLinkTypes::xeLink;
     testEdgeXeLink->properties.bandwidth = xeLinkBandwidth;
     testEdgeXeLink->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
     testEdgeXeLink->properties.latency = 1u;
@@ -220,6 +222,7 @@ TEST_F(P2pBandwidthPropertiesTest, GivenXeLinkAndMdfiFabricConnectionBetweenSubD
     testEdgeMdfiXeLink->vertexA = FabricVertex::fromHandle(vertex00);
     testEdgeMdfiXeLink->vertexB = FabricVertex::fromHandle(vertex10);
     memcpy_s(testEdgeMdfiXeLink->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, mdfiXeLinkModel, strlen(mdfiXeLinkModel));
+    testEdgeMdfiXeLink->linkType = NEO::FabricLinkTypes::xeLink;
     testEdgeMdfiXeLink->properties.bandwidth = xeLinkBandwidth;
     testEdgeMdfiXeLink->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
     testEdgeMdfiXeLink->properties.latency = std::numeric_limits<uint32_t>::max();
@@ -231,6 +234,7 @@ TEST_F(P2pBandwidthPropertiesTest, GivenXeLinkAndMdfiFabricConnectionBetweenSubD
     testEdgeMdfiXeLinkMdfi->vertexA = FabricVertex::fromHandle(vertex00);
     testEdgeMdfiXeLinkMdfi->vertexB = FabricVertex::fromHandle(vertex11);
     memcpy_s(testEdgeMdfiXeLinkMdfi->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, mdfiXeLinkMdfiModel, strlen(mdfiXeLinkMdfiModel));
+    testEdgeMdfiXeLinkMdfi->linkType = NEO::FabricLinkTypes::xeLink;
     testEdgeMdfiXeLinkMdfi->properties.bandwidth = xeLinkBandwidth;
     testEdgeMdfiXeLinkMdfi->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
     testEdgeMdfiXeLinkMdfi->properties.latency = std::numeric_limits<uint32_t>::max();
@@ -242,6 +246,7 @@ TEST_F(P2pBandwidthPropertiesTest, GivenXeLinkAndMdfiFabricConnectionBetweenSubD
     testEdgeXeLinkMdfi->vertexA = FabricVertex::fromHandle(vertex01);
     testEdgeXeLinkMdfi->vertexB = FabricVertex::fromHandle(vertex11);
     memcpy_s(testEdgeXeLinkMdfi->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, xeLinkMdfiModel, strlen(xeLinkMdfiModel));
+    testEdgeXeLinkMdfi->linkType = NEO::FabricLinkTypes::xeLink;
     testEdgeXeLinkMdfi->properties.bandwidth = xeLinkBandwidth;
     testEdgeXeLinkMdfi->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
     testEdgeXeLinkMdfi->properties.latency = std::numeric_limits<uint32_t>::max();
@@ -454,6 +459,7 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
         edgeXeLink->vertexA = FabricVertex::fromHandle(vertex0SubVertices[1]);
         edgeXeLink->vertexB = FabricVertex::fromHandle(vertex1SubVertices[0]);
         memcpy_s(edgeXeLink->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, xeLinkModel, strlen(xeLinkModel));
+        edgeXeLink->linkType = NEO::FabricLinkTypes::xeLink;
         edgeXeLink->properties.bandwidth = p2pAtomicAccess ? xeLinkBandwidth : 0;
         edgeXeLink->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
         edgeXeLink->properties.latency = 1u;
@@ -465,6 +471,7 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
         edgeMdfiXeLink->vertexA = FabricVertex::fromHandle(vertex0SubVertices[0]);
         edgeMdfiXeLink->vertexB = FabricVertex::fromHandle(vertex1SubVertices[0]);
         memcpy_s(edgeMdfiXeLink->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, mdfiXeLinkModel, strlen(mdfiXeLinkModel));
+        edgeMdfiXeLink->linkType = NEO::FabricLinkTypes::xeLink;
         edgeMdfiXeLink->properties.bandwidth = p2pAtomicAccess ? xeLinkBandwidth : 0;
         edgeMdfiXeLink->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
         edgeMdfiXeLink->properties.latency = std::numeric_limits<uint32_t>::max();
@@ -476,6 +483,7 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
         edgeMdfiXeLinkMdfi->vertexA = FabricVertex::fromHandle(vertex0SubVertices[0]);
         edgeMdfiXeLinkMdfi->vertexB = FabricVertex::fromHandle(vertex1SubVertices[1]);
         memcpy_s(edgeMdfiXeLinkMdfi->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, mdfiXeLinkMdfiModel, strlen(mdfiXeLinkMdfiModel));
+        edgeMdfiXeLinkMdfi->linkType = NEO::FabricLinkTypes::xeLink;
         edgeMdfiXeLinkMdfi->properties.bandwidth = p2pAtomicAccess ? xeLinkBandwidth : 0;
         edgeMdfiXeLinkMdfi->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
         edgeMdfiXeLinkMdfi->properties.latency = std::numeric_limits<uint32_t>::max();
@@ -487,6 +495,7 @@ struct MultipleDevicesP2PWithXeLinkFixture : public ::testing::Test {
         edgeXeLinkMdfi->vertexA = FabricVertex::fromHandle(vertex0SubVertices[1]);
         edgeXeLinkMdfi->vertexB = FabricVertex::fromHandle(vertex1SubVertices[1]);
         memcpy_s(edgeXeLinkMdfi->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, xeLinkMdfiModel, strlen(xeLinkMdfiModel));
+        edgeXeLinkMdfi->linkType = NEO::FabricLinkTypes::xeLink;
         edgeXeLinkMdfi->properties.bandwidth = p2pAtomicAccess ? xeLinkBandwidth : 0;
         edgeXeLinkMdfi->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
         edgeXeLinkMdfi->properties.latency = std::numeric_limits<uint32_t>::max();

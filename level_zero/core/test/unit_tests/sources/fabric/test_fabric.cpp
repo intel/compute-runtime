@@ -473,6 +473,25 @@ TEST_F(FabricEdgeFixture, givenFabricEdgesAreCreatedWhenZeFabricEdgeGetPropertie
     EXPECT_EQ(getProperties.latency, 20u);
 }
 
+TEST_F(FabricEdgeFixture, givenSubDevicesOfSameRootDeviceWhenEdgesAreCreatedThenMdfiEdgeHasMdfiLinkType) {
+    uint32_t count = 0;
+    std::vector<ze_fabric_vertex_handle_t> phVertices;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricVertexGetExp(&count, nullptr));
+    phVertices.resize(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricVertexGetExp(&count, phVertices.data()));
+
+    auto &subVertices = driverHandle->fabricVertices[0]->subVertices;
+    ASSERT_LE(2u, subVertices.size());
+
+    count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricEdgeGetExp(subVertices[0], subVertices[1], &count, nullptr));
+    ASSERT_EQ(1u, count);
+    std::vector<ze_fabric_edge_handle_t> edges(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricEdgeGetExp(subVertices[0], subVertices[1], &count, edges.data()));
+    EXPECT_STREQ("MDFI", FabricEdge::fromHandle(edges[0])->properties.model);
+    EXPECT_EQ(NEO::FabricLinkTypes::mdfi, FabricEdge::fromHandle(edges[0])->linkType);
+}
+
 TEST_F(FabricEdgeFixture, givenMdfiLinksAreAvailableWhenEdgesAreCreatedThenVerifyThatBiDirectionalEdgesAreNotCreated) {
     // initialize
     uint32_t count = 0;
@@ -614,6 +633,11 @@ TEST_F(FabricVertexFixture, givenVertexInfoWhenCreateFromVertexInfoCalledThenPci
     EXPECT_EQ(0x7u, props.address.function);
 
     delete fabricVertex;
+}
+
+TEST(FabricDeviceInterfaceTest, givenInterfaceTypeWhenGettingLinkTypeThenMatchingLinkTypeIsReturned) {
+    EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricDeviceInterface::getLinkType(FabricDeviceInterface::Type::iaf));
+    EXPECT_EQ(NEO::FabricLinkTypes::mdfi, FabricDeviceInterface::getLinkType(FabricDeviceInterface::Type::mdfi));
 }
 
 } // namespace ult

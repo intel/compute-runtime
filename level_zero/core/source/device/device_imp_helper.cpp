@@ -6,13 +6,12 @@
  */
 
 #include "level_zero/core/source/device/device.h"
-
-#include <cstring>
+#include "level_zero/core/source/fabric/fabric.h"
 
 namespace L0 {
 
-bool Device::fabricEdgeModelSupportsBandwidthAndLatency(const char *model) {
-    return strstr(model, "XeLink") != nullptr;
+bool Device::fabricEdgeSupportsBandwidthAndLatency(const FabricEdge &edge) {
+    return edge.linkType == NEO::FabricLinkTypes::xeLink;
 }
 
 uint32_t Device::getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
