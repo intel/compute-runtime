@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,16 +53,4 @@ int verifyFListOrder(const NodeObjectType *base, const NodeObjectType *first, co
     }
 
     return sequenceRet;
-}
-
-// Helper function for testing if nodes are ordered exactly in given order
-// Negative return values indicates that the sequence is ordered as requested.
-// Non-negative value indicates first node that breaks the order.
-// Note : verifies also "first->prev == nullptr" and "last->tail == nulptr"
-template <typename NodeObjectType, typename... Rest>
-int verifyDListOrder(const NodeObjectType *base, const NodeObjectType *first, const Rest *...rest) {
-    if (base->prev != nullptr) {
-        return 0;
-    }
-    return verifyFListOrder(base, first, rest...);
 }

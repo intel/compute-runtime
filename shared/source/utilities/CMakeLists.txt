@@ -28,7 +28,6 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/host_clock.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_timestamps.h
     ${CMAKE_CURRENT_SOURCE_DIR}/iflist.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/idlist.h
     ${CMAKE_CURRENT_SOURCE_DIR}/io_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_dispatch_stats.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_dispatch_stats.h
