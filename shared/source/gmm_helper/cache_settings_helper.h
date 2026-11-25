@@ -31,7 +31,6 @@ struct CacheSettingsHelper {
     static GmmResourceUsageType getGmmUsageTypeForCachelineMisalignedUserPtr(const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper);
     static GmmResourceUsageType getGmmUsageTypeForCoherentSystemMemory(GmmResourceUsageType preferredUsageType, const ProductHelper &productHelper, const ReleaseHelper &releaseHelper);
 
-    static GmmResourceUsageType getGmmUsageTypeForStateHeap(bool forceUncached);
     static bool isUncachedType(GmmResourceUsageType gmmResourceUsageType);
 
     static bool preferNoCpuAccess(GmmResourceUsageType gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment);

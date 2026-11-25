@@ -244,7 +244,7 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseA
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
     auto expectedMocsForStateless = gmmHelper->getL1EnabledMOCS();
-    auto expectedMocsForHeap = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
+    auto expectedMocsForHeap = gmmHelper->getL3EnabledMOCS();
 
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getSurfaceStateMemoryObjectControlState());
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getDynamicStateMemoryObjectControlState());
@@ -273,7 +273,7 @@ HWTEST2_F(XeHpCommandStreamReceiverFlushTaskTests, whenFlushCalledThenStateBaseA
     hwParserCsr.findHardwareCommands<FamilyType>();
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    auto expectedMocsForHeap = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED);
+    auto expectedMocsForHeap = gmmHelper->getUncachedMOCS();
 
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getSurfaceStateMemoryObjectControlState());
     EXPECT_EQ(expectedMocsForHeap, stateBaseAddress->getDynamicStateMemoryObjectControlState());

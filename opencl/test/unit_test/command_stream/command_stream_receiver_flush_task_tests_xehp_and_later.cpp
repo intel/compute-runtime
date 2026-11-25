@@ -45,7 +45,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
         ASSERT_NE(nullptr, bindingTablePoolAlloc);
         EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
         EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
-        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
+        EXPECT_EQ(pDevice->getGmmHelper()->getL3EnabledMOCS(),
                   bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
     }
 }
@@ -68,9 +68,23 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
         ASSERT_NE(nullptr, bindingTablePoolAlloc);
         EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
         EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
-        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED),
+        EXPECT_EQ(pDevice->getGmmHelper()->getUncachedMOCS(),
                   bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
     }
+}
+
+HWTEST2_F(CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenInternalHeapForcedUncachedWhenReprogrammingSshThenBindingTablePoolIsProgrammedWithCachingOff, IsXeCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceUncachedGmmUsageType.set(1llu << (static_cast<int64_t>(AllocationType::internalHeap) - 1));
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto gmmHelper = pDevice->getGmmHelper();
+
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.getCS(0));
+    auto bindingTablePoolAlloc = getCommand<typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC>();
+    ASSERT_NE(nullptr, bindingTablePoolAlloc);
+    EXPECT_NE(gmmHelper->getL3EnabledMOCS(), gmmHelper->getUncachedMOCS());
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, whenNotReprogrammingSshThenBindingTablePoolIsNotProgrammed) {
@@ -90,7 +104,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
         ASSERT_NE(nullptr, bindingTablePoolAlloc);
         EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
         EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
-        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
+        EXPECT_EQ(pDevice->getGmmHelper()->getL3EnabledMOCS(),
                   bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
 
         auto offset = commandStreamReceiver.getCS(0).getUsed();
@@ -197,7 +211,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, wh
         ASSERT_NE(nullptr, bindingTablePoolAlloc);
         EXPECT_EQ(reinterpret_cast<uintptr_t>(ssh.getCpuBase()), bindingTablePoolAlloc->getBindingTablePoolBaseAddress());
         EXPECT_EQ(ssh.getHeapSizeInPages(), bindingTablePoolAlloc->getBindingTablePoolBufferSize());
-        EXPECT_EQ(pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER),
+        EXPECT_EQ(pDevice->getGmmHelper()->getL3EnabledMOCS(),
                   bindingTablePoolAlloc->getSurfaceObjectControlStateIndexToMocsTables());
 
         auto offset = commandStreamReceiver.getCS(0).getUsed();
@@ -467,7 +481,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, Wh
     if constexpr (FamilyType::isHeaplessRequired() == false) {
         typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
         auto gmmHelper = pDevice->getGmmHelper();
-        auto stateHeapMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER);
+        auto stateHeapMocs = gmmHelper->getL3EnabledMOCS();
         auto l1CacheOnMocs = gmmHelper->getL1EnabledMOCS();
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

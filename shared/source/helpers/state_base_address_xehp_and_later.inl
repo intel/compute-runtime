@@ -7,7 +7,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/state_base_address_base.inl"
 
@@ -69,10 +68,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         setSbaBindlessSamplerState<GfxFamily>(*args.stateBaseAddressCmd, args.globalHeapsBaseAddress, MemoryConstants::sizeOf4GBinPageEntities);
     }
 
-    auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
-
-    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, debugManager.flags.DisableCachingForHeaps.get(), productHelper, *args.gmmHelper->getHardwareInfo());
-    auto heapMocsValue = args.gmmHelper->getMOCS(heapResourceUsage);
+    auto heapMocsValue = args.gmmHelper->getHeapMOCS();
 
     args.stateBaseAddressCmd->setSurfaceStateMemoryObjectControlState(heapMocsValue);
     args.stateBaseAddressCmd->setDynamicStateMemoryObjectControlState(heapMocsValue);
@@ -115,7 +111,7 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
         _3DSTATE_BINDING_TABLE_POOL_ALLOC cmd = GfxFamily::cmdInitStateBindingTablePoolAlloc;
         cmd.setBindingTablePoolBaseAddress(baseAddress);
         cmd.setBindingTablePoolBufferSize(sizeInPages);
-        cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(CacheSettingsHelper::getGmmUsageTypeForStateHeap(debugManager.flags.DisableCachingForHeaps.get())));
+        cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getHeapMOCS());
 
         *bindingTablePoolAlloc = cmd;
     }

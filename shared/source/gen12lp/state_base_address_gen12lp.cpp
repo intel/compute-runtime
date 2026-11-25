@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gen12lp/hw_cmds_base.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/state_base_address_base.inl"
 
 namespace NEO {
@@ -67,11 +66,10 @@ void StateBaseAddressHelper<Family>::appendStateBaseAddressParameters(
 
     args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
 
-    auto l3CacheOnPolicy = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
-
     if (args.gmmHelper != nullptr) {
-        args.stateBaseAddressCmd->setBindlessSurfaceStateMemoryObjectControlState(args.gmmHelper->getMOCS(l3CacheOnPolicy));
-        args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(args.gmmHelper->getMOCS(l3CacheOnPolicy));
+        const auto heapMocs = args.gmmHelper->getHeapMOCS();
+        args.stateBaseAddressCmd->setBindlessSurfaceStateMemoryObjectControlState(heapMocs);
+        args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(heapMocs);
     }
 
     StateBaseAddressHelper<Family>::appendIohParameters(args);

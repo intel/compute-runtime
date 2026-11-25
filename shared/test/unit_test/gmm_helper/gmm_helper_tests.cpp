@@ -1397,6 +1397,18 @@ TEST_F(MockExecutionEnvironmentGmmFixtureTest, givenMocsDeferredToPatIndexWhenCr
     EXPECT_EQ(1u, productHelper.mockProductHelper->deferMOCSToPatIndexCalled);
 }
 
+TEST_F(MockExecutionEnvironmentGmmFixtureTest, givenCachingForHeapsDisabledOrEnabledWhenGettingHeapMocsThenMatchingCachedDefaultIsReturned) {
+    DebugManagerStateRestore restore;
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    GmmHelper gmmHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    ASSERT_NE(gmmHelper.getL3EnabledMOCS(), gmmHelper.getUncachedMOCS());
+
+    EXPECT_EQ(gmmHelper.getL3EnabledMOCS(), gmmHelper.getHeapMOCS());
+
+    debugManager.flags.DisableCachingForHeaps.set(1);
+    EXPECT_EQ(gmmHelper.getUncachedMOCS(), gmmHelper.getHeapMOCS());
+}
+
 struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {
     void SetUp() override {
         MockExecutionEnvironmentGmmFixtureTest::SetUp();

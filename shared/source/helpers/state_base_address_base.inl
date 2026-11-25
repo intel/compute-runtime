@@ -16,7 +16,6 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 
@@ -97,10 +96,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setInstructionBufferSizeModifyEnable(true);
         args.stateBaseAddressCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
-        auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
-        auto resourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, debugManager.flags.DisableCachingForHeaps.get(), productHelper, *args.gmmHelper->getHardwareInfo());
-
-        args.stateBaseAddressCmd->setInstructionMemoryObjectControlState(args.gmmHelper->getMOCS(resourceUsage));
+        args.stateBaseAddressCmd->setInstructionMemoryObjectControlState(args.gmmHelper->getHeapMOCS());
     }
 
     if (args.setGeneralStateBaseAddress) {

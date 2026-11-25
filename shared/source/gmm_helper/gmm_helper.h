@@ -31,6 +31,7 @@ class GmmHelper {
     uint32_t getL1EnabledMOCS() const;
     uint32_t getL3EnabledMOCS() const;
     uint32_t getUncachedMOCS() const;
+    uint32_t getHeapMOCS() const;
     void initMocsDefaults();
     std::unique_ptr<Gmm> createBufferGmm(GmmResourceUsageType usageType, bool cpuCacheable, bool isSystemMemory, size_t size);
 

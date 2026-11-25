@@ -99,6 +99,11 @@ uint32_t GmmHelper::getUncachedMOCS() const {
     return mocsUncached;
 }
 
+uint32_t GmmHelper::getHeapMOCS() const {
+    const auto heapUsageType = CacheSettingsHelper::getGmmUsageType(AllocationType::internalHeap, debugManager.flags.DisableCachingForHeaps.get(), this->rootDeviceEnvironment.getProductHelper(), *this->rootDeviceEnvironment.getHardwareInfo());
+    return CacheSettingsHelper::isUncachedType(heapUsageType) ? this->getUncachedMOCS() : this->getL3EnabledMOCS();
+}
+
 void GmmHelper::applyMocsEncryptionBit(uint32_t &index) {
     if (debugManager.flags.ForceStatelessMocsEncryptionBit.get() == 1) {
         index |= 1;

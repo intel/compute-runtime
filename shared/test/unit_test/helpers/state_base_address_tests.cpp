@@ -42,6 +42,20 @@ HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
     EXPECT_TRUE(stateBaseAddress.getBindlessSurfaceStateBaseAddressModifyEnable());
 }
 
+HWTEST2_F(SbaTest, givenCachingForHeapsDisabledWhenAppendStateBaseAddressParametersIsCalledThenBindlessHeapsAreUncached, IsGen12LP) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.DisableCachingForHeaps.set(1);
+    auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
+    auto gmmHelper = pDevice->getGmmHelper();
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, gmmHelper, &ssh, nullptr, nullptr);
+
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
+
+    EXPECT_NE(gmmHelper->getL3EnabledMOCS(), gmmHelper->getUncachedMOCS());
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), stateBaseAddress.getBindlessSurfaceStateMemoryObjectControlState());
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), stateBaseAddress.getBindlessSamplerStateMemoryObjectControlState());
+}
+
 HWTEST2_F(SbaTest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsSbaRequired) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
