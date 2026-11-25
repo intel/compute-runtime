@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -162,7 +162,7 @@ ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
     return ZE_RESULT_SUCCESS;
 }
 
-bool WddmPciImp::resizableBarSupported() {
+bool WddmPciImp::resizableBarSupported(uint32_t barIndex) {
     uint32_t valueSmall = 0;
     bool supported = false;
     KmdSysman::RequestProperty request;

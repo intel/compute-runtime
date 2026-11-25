@@ -28,7 +28,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getStats(zes_pci_stats_t *stats) override;
     ze_result_t getProperties(zes_pci_properties_t *properties) override;
     ze_result_t pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) override;
-    bool resizableBarSupported() override;
+    bool resizableBarSupported(uint32_t barIndex) override;
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     ze_result_t getExtensionProperties(void *pNext) override;
@@ -43,6 +43,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     L0::Sysman::SysFsAccessInterface *pSysfsAccess = nullptr;
     L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     ze_result_t getPciConfigMemory(const std::string &pciPath, std::vector<uint8_t> &configMem);
+    uint32_t getResizableBarRegistersPos(uint32_t barIndex, std::vector<uint8_t> &configMemory);
 
   private:
     static const std::string deviceDir;

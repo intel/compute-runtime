@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     void getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) override;
     ze_result_t getState(zes_pci_state_t *state) override;
     ze_result_t getProperties(zes_pci_properties_t *properties) override;
-    bool resizableBarSupported() override;
+    bool resizableBarSupported(uint32_t barIndex) override;
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     static uint32_t getRebarCapabilityPos(uint8_t *configMemory, bool isVfBar);
@@ -36,6 +36,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     SysfsAccess *pSysfsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     bool getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &configMem);
+    uint32_t getResizableBarRegistersPos(uint32_t barIndex, std::vector<uint8_t> &configMemory);
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
 
   private:

@@ -31,9 +31,9 @@ class PciImp : public Pci, NEO::NonCopyableAndNonMovableClass {
 
   private:
     OsSysman *pOsSysman = nullptr;
-    bool resizableBarSupported = false;
     zes_pci_properties_t pciProperties = {};
     std::vector<zes_pci_bar_properties_t *> pciBarProperties = {};
+    std::vector<ze_bool_t> resizableBarSupported = {};
     std::once_flag initPciOnce;
     void initPci();
 };

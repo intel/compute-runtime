@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class WddmPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     void getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) override;
     ze_result_t getState(zes_pci_state_t *state) override;
     ze_result_t getProperties(zes_pci_properties_t *properties) override;
-    bool resizableBarSupported() override;
+    bool resizableBarSupported(uint32_t barIndex) override;
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     WddmPciImp(OsSysman *pOsSysman);

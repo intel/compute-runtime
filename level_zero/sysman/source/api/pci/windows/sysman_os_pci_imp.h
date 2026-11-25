@@ -23,7 +23,7 @@ class WddmPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     ze_result_t getStats(zes_pci_stats_t *stats) override;
     ze_result_t getProperties(zes_pci_properties_t *properties) override;
     ze_result_t pciLinkSpeedUpdate(ze_bool_t downgradeUpgrade, zes_device_action_t *pendingAction) override;
-    bool resizableBarSupported() override;
+    bool resizableBarSupported(uint32_t barIndex) override;
     bool resizableBarEnabled(uint32_t barIndex) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     ze_result_t getPciConfigProperties(zes_pci_config_properties_t *pConfigProperties) override;

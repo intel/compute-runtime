@@ -175,7 +175,7 @@ ze_result_t WddmPciImp::getStats(zes_pci_stats_t *stats) {
     return pSysmanProductHelper->getPciStats(stats, pWddmSysmanImp);
 }
 
-bool WddmPciImp::resizableBarSupported() {
+bool WddmPciImp::resizableBarSupported(uint32_t barIndex) {
     uint32_t valueSmall = 0;
     bool supported = false;
     KmdSysman::RequestProperty request;

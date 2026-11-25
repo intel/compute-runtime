@@ -104,6 +104,33 @@ ssize_t readMock(int fd, void *buf, size_t count) {
     return -1;
 }
 
+constexpr uint32_t rebarControlCurrentSizeOffset = 0x429;
+constexpr uint8_t largestSupportedRebarSize = 0x11;
+
+template <uint8_t rebarCurrentSize>
+ssize_t readMockWithRebarCurrentSize(int fd, void *buf, size_t count) {
+    ssize_t bytesRead = readMock(fd, buf, count);
+    if (count == PCI_CFG_SPACE_EXP_SIZE) {
+        static_cast<uint8_t *>(buf)[rebarControlCurrentSizeOffset] = rebarCurrentSize;
+    }
+    return bytesRead;
+}
+
+constexpr uint32_t rebarCapabilityOffset = 0x424;
+constexpr uint32_t rebarCapabilityWithoutSupportedSizes = 0x0;
+constexpr uint32_t rebarCapabilityWithOnly1MbSupported = 0x10;
+
+template <uint32_t rebarCapability>
+ssize_t readMockWithRebarCapability(int fd, void *buf, size_t count) {
+    ssize_t bytesRead = readMock(fd, buf, count);
+    if (count == PCI_CFG_SPACE_EXP_SIZE) {
+        for (auto byte = 0u; byte < sizeof(rebarCapability); byte++) {
+            static_cast<uint8_t *>(buf)[rebarCapabilityOffset + byte] = static_cast<uint8_t>(rebarCapability >> (8 * byte));
+        }
+    }
+    return bytesRead;
+}
+
 ssize_t readMockHeaderFailure(int fd, void *buf, size_t count) {
     if (count == PCI_CFG_SPACE_EXP_SIZE) {
         return PCI_CFG_SPACE_EXP_SIZE;
@@ -488,8 +515,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenInitializingPciAndPciConfigOpenF
 
     pPciImp->pOsPci = static_cast<L0::Sysman::OsPci *>(pLinuxPciImpTemp);
     pPciImp->pciGetStaticFields();
-    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported());
     uint32_t barIndex = 2u;
+    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported(barIndex));
     EXPECT_FALSE(pPciImp->pOsPci->resizableBarEnabled(barIndex));
     delete pLinuxPciImpTemp;
     pPciImp->pOsPci = pOsPciOriginal;
@@ -502,8 +529,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenInitializingPciAndPciConfigReadF
 
     pPciImp->pOsPci = static_cast<L0::Sysman::OsPci *>(pLinuxPciImpTemp);
     pPciImp->pciGetStaticFields();
-    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported());
     uint32_t barIndex = 2u;
+    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported(barIndex));
     EXPECT_FALSE(pPciImp->pOsPci->resizableBarEnabled(barIndex));
     delete pLinuxPciImpTemp;
     pPciImp->pOsPci = pOsPciOriginal;
@@ -516,8 +543,8 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenCheckForResizableBarSupportAndHeaderF
 
     pPciImp->pOsPci = static_cast<L0::Sysman::OsPci *>(pLinuxPciImpTemp);
     pPciImp->pciGetStaticFields();
-    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported());
     uint32_t barIndex = 2u;
+    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported(barIndex));
     EXPECT_FALSE(pPciImp->pOsPci->resizableBarEnabled(barIndex));
     delete pLinuxPciImpTemp;
     pPciImp->pOsPci = pOsPciOriginal;
@@ -530,8 +557,8 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenCheckForResizableBarSupportAndCapabil
 
     pPciImp->pOsPci = static_cast<L0::Sysman::OsPci *>(pLinuxPciImpTemp);
     pPciImp->pciGetStaticFields();
-    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported());
     uint32_t barIndex = 2u;
+    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported(barIndex));
     EXPECT_FALSE(pPciImp->pOsPci->resizableBarEnabled(barIndex));
     delete pLinuxPciImpTemp;
     pPciImp->pOsPci = pOsPciOriginal;
@@ -544,11 +571,43 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenCheckForResizableBarSupportAndIfRebar
 
     pPciImp->pOsPci = static_cast<L0::Sysman::OsPci *>(pLinuxPciImpTemp);
     pPciImp->pciGetStaticFields();
-    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported());
     uint32_t barIndex = 2u;
+    EXPECT_FALSE(pPciImp->pOsPci->resizableBarSupported(barIndex));
     EXPECT_FALSE(pPciImp->pOsPci->resizableBarEnabled(barIndex));
     delete pLinuxPciImpTemp;
     pPciImp->pOsPci = pOsPciOriginal;
+}
+
+TEST_F(ZesPciFixture, GivenResizableBarCurrentSizeLargerThanLargestSupportedSizeWhenCheckingResizableBarEnabledThenTrueIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockWithRebarCurrentSize<largestSupportedRebarSize + 1>);
+    auto pLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    const uint32_t barIndex = 2u;
+    EXPECT_TRUE(pLinuxPciImp->resizableBarSupported(barIndex));
+    EXPECT_TRUE(pLinuxPciImp->resizableBarEnabled(barIndex));
+}
+
+TEST_F(ZesPciFixture, GivenResizableBarCurrentSizeSmallerThanLargestSupportedSizeWhenCheckingResizableBarEnabledThenFalseIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockWithRebarCurrentSize<largestSupportedRebarSize - 1>);
+    auto pLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    const uint32_t barIndex = 2u;
+    EXPECT_TRUE(pLinuxPciImp->resizableBarSupported(barIndex));
+    EXPECT_FALSE(pLinuxPciImp->resizableBarEnabled(barIndex));
+}
+
+TEST_F(ZesPciFixture, GivenResizableBarCapabilityWithoutSupportedSizesWhenCheckingResizableBarThenSupportedAndEnabledAreFalse) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockWithRebarCapability<rebarCapabilityWithoutSupportedSizes>);
+    auto pLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    const uint32_t barIndex = 2u;
+    EXPECT_FALSE(pLinuxPciImp->resizableBarSupported(barIndex));
+    EXPECT_FALSE(pLinuxPciImp->resizableBarEnabled(barIndex));
+}
+
+TEST_F(ZesPciFixture, GivenResizableBarCapabilityWithOnlySmallestSizeSupportedWhenCheckingResizableBarThenSupportedAndEnabledAreTrue) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockWithRebarCapability<rebarCapabilityWithOnly1MbSupported>);
+    auto pLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    const uint32_t barIndex = 2u;
+    EXPECT_TRUE(pLinuxPciImp->resizableBarSupported(barIndex));
+    EXPECT_TRUE(pLinuxPciImp->resizableBarEnabled(barIndex));
 }
 
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceedsWith1_2Extension) {
@@ -573,10 +632,11 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVe
         EXPECT_NE(pBarProps[i].base, 0u);
         EXPECT_NE(pBarProps[i].size, 0u);
         EXPECT_EQ(props12[i].stype, zes_structure_type_t::ZES_STRUCTURE_TYPE_PCI_BAR_PROPERTIES_1_2);
-        EXPECT_EQ(props12[i].resizableBarSupported, true);
         if (props12[i].index == 2) {
+            EXPECT_EQ(props12[i].resizableBarSupported, true);
             EXPECT_EQ(props12[i].resizableBarEnabled, true);
         } else {
+            EXPECT_EQ(props12[i].resizableBarSupported, false);
             EXPECT_EQ(props12[i].resizableBarEnabled, false);
         }
         EXPECT_LE(props12[i].type, ZES_PCI_BAR_TYPE_MEM);

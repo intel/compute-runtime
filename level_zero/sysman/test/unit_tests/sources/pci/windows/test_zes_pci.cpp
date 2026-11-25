@@ -296,7 +296,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingResizableBarSupp
     pKmdSysManager->mockRequestSingle = true;
     pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
-    EXPECT_EQ(false, pPciImp->resizableBarSupported());
+    EXPECT_EQ(false, pPciImp->resizableBarSupported(2u));
     delete pPciImp;
 }
 
