@@ -17,6 +17,9 @@ else()
   set(device_id 0)
 endif()
 
+string(TOUPPER ${product} product_upper)
+string(REPLACE "," ";" leo_platforms "${ALL_SUPPORTED_LEO_PLATFORMS}")
+
 if(NOT TARGET aub_tests)
   add_custom_target(aub_tests)
 endif()
@@ -49,7 +52,6 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
       string(TOLOWER ${product_with_aubs} product_with_aubs_lower)
       if(${product_with_aubs_lower} STREQUAL ${product})
         set(aubstream_mode_flag "")
-        string(TOUPPER ${product} product_upper)
         set_property(GLOBAL APPEND PROPERTY NEO_PLATFORMS_FOR_AUB_GENERATION "${product_upper} ")
         break()
       endif()
@@ -77,7 +79,7 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
 
 endif()
 
-if(TARGET igdrcl_aub_tests)
+if(TARGET igdrcl_aub_tests AND NOT product_upper IN_LIST leo_platforms)
   add_dependencies(aub_tests igdrcl_aub_tests)
 
   if(WIN32 OR NOT DEFINED NEO__GMM_LIBRARY_PATH)

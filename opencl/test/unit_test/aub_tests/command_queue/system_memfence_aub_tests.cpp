@@ -123,9 +123,6 @@ class SystemMemFenceBlitter : public MulticontextOclAubFixture,
 
         debugManager.flags.EnableBlitterOperationsSupport.set(1);
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-        if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
-            debugManager.flags.BlitterEnableMaskOverride.set(6);
-        }
 
         MockExecutionEnvironment mockExecutionEnvironment{};
         auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
