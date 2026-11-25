@@ -878,18 +878,16 @@ if(NOT MSVC)
       # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111073
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-stringop-overflow")
     endif()
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-      # Disable specific warnings due to GCC bug for version 12
-      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
-        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-restrict")
-      endif()
-      # Disable specific warnings due to GCC bug for versions >= 12
-      if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
-        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105616
-        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105562
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
-      endif()
+    # Disable specific warnings in Release due to GCC bug for version 12
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12 AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
+      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-restrict")
+    endif()
+    # Disable specific warnings in Release due to GCC bug for versions >= 12
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
+      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105616
+      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105562
+      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wno-maybe-uninitialized")
     endif()
   endif()
 
@@ -906,29 +904,28 @@ if(NOT MSVC)
 endif()
 
 # Compile code with defenses enabled (settings to be used for production release code)
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  if(MSVC)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GS")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /sdl")
-    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /NXCompat")
-    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DynamicBase")
-    if("${NEO_ARCH}" STREQUAL "x86")
-      set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /SafeSEH")
-    endif()
-  else()
-    string(FIND ${CMAKE_CXX_FLAGS} "-D_FORTIFY_SOURCE=3" __FORTIFY_SOURCE_3_SET)
-    if(${__FORTIFY_SOURCE_3_SET} LESS 0)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -D_FORTIFY_SOURCE=2")
-    endif()
+if(MSVC)
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GS")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /sdl")
+  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /NXCompat")
+  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DynamicBase")
+  if("${NEO_ARCH}" STREQUAL "x86")
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /SafeSEH")
+  endif()
+else()
+  string(FIND ${CMAKE_CXX_FLAGS} "-D_FORTIFY_SOURCE=3" __FORTIFY_SOURCE_3_SET)
+  if(${__FORTIFY_SOURCE_3_SET} LESS 0)
+    # prepended, so the optimization level already set for Release still wins
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -D_FORTIFY_SOURCE=2 ${CMAKE_CXX_FLAGS_RELEASE}")
+  endif()
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-strong")
-    if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    else()
-      # gcc, g++ only
-      set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,-z,noexecstack")
-      set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,-z,relro")
-      set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,-z,now")
-    endif()
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fstack-protector-strong")
+  if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  else()
+    # gcc, g++ only
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,-z,noexecstack")
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,-z,relro")
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,-z,now")
   endif()
 endif()
 
