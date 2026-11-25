@@ -1455,6 +1455,19 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, WhenThreadPerThreadGroupNotZero
     EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
 }
 
+HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, givenSimd1AndMoreThan64WorkItemsInGroupWhenEncodingThreadDataThenDoNotAbort) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    simd = 1u;
+    workGroupSizes[0] = 112u;
+
+    EXPECT_NO_THROW(EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+                                                                       0, 0, true, false, false, requiredWorkGroupOrder, rootDeviceEnvironment));
+}
+
 HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, WhenExecutionMaskNotZeroThenExpectOverrideExecutionMaskCalculation) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 

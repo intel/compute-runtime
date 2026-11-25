@@ -451,7 +451,6 @@ typedef struct tagGPGPU_WALKER {
         return static_cast<uint32_t>(TheStructure.Common.IndirectDataStartAddress) << INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
     inline void setThreadWidthCounterMaximum(const uint32_t value) {
-        UNRECOVERABLE_IF(value < 1 || value > 0x40u);
         TheStructure.Common.ThreadWidthCounterMaximum = value - 1;
     }
     inline uint32_t getThreadWidthCounterMaximum() const {
