@@ -614,5 +614,60 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMu
     EXPECT_EQ(&ultCsr, executableGraph.lastExecutionCsr);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMutationAndExecutedGraphWhenUpdatingExecutableGraphFromSourceGraphThenLastExecutionIsWaitedForBeforeNodesAreUpdated) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET, 1u, &commandList);
+    auto &ultCsr = recordLastExecution<FamilyType>(true);
+    const auto waitCallsBefore = ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load();
+    bool nodesUpdatedBeforeWait = true;
+    ultCsr.onWaitForCompletionWithTimeout = [&]() { nodesUpdatedBeforeWait = !commandList.mutableCommandList.recordedGlobalOffsetMutations.empty(); };
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.update(sourceGraph));
+
+    EXPECT_EQ(waitCallsBefore + 1u, ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(lastExecutionTaskCount, ultCsr.latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_FALSE(nodesUpdatedBeforeWait);
+    EXPECT_EQ(1u, commandList.mutableCommandList.recordedGlobalOffsetMutations.size());
+    EXPECT_EQ(nullptr, executableGraph.lastExecutionCsr);
+    ultCsr.onWaitForCompletionWithTimeout = nullptr;
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMutationAndGpuHangWhenUpdatingExecutableGraphFromSourceGraphThenDeviceLostIsReturnedAndNodesAreNotUpdated) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET, 1u, &commandList);
+    auto &ultCsr = recordLastExecution<FamilyType>(true);
+    ultCsr.returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, executableGraph.update(sourceGraph));
+
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGlobalOffsetMutations.empty());
+    EXPECT_TRUE(executableGraph.updatedNodeCommandLists.empty());
+    EXPECT_EQ(&ultCsr, executableGraph.lastExecutionCsr);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMutationAndOtherSourceGraphWhenUpdatingExecutableGraphThenUnsupportedFeatureIsReturnedAndLastExecutionIsNotWaitedFor) {
+    MockGraph otherGraph{&context, true, true};
+    auto &ultCsr = recordLastExecution<FamilyType>(true);
+    const auto waitCallsBefore = ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, executableGraph.update(otherGraph));
+
+    EXPECT_EQ(waitCallsBefore, ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(&ultCsr, executableGraph.lastExecutionCsr);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenImplicitSyncMutationDisabledAndExecutedGraphWhenUpdatingExecutableGraphFromSourceGraphThenLastExecutionIsNotWaitedForAndNodesAreUpdated) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET, 1u, &commandList);
+    auto &ultCsr = recordLastExecution<FamilyType>(false);
+    const auto waitCallsBefore = ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, executableGraph.update(sourceGraph));
+
+    EXPECT_EQ(waitCallsBefore, ultCsr.waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, commandList.mutableCommandList.recordedGlobalOffsetMutations.size());
+    EXPECT_EQ(&ultCsr, executableGraph.lastExecutionCsr);
+}
+
 } // namespace ult
 } // namespace L0

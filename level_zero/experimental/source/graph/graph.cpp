@@ -2255,6 +2255,12 @@ auto ExecutableGraph::update(const Graph &sourceGraph) -> ze_result_t {
     if (&sourceGraph != this->src) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+    if (this->implicitSyncMutation) {
+        const auto waitResult = this->waitForLastExecution();
+        if (ZE_RESULT_SUCCESS != waitResult) {
+            return waitResult;
+        }
+    }
     for (const auto &graphNode : sourceGraph.getGraphNodes()) {
         auto result = this->applyCurrentNodeState(*graphNode);
         if (ZE_RESULT_SUCCESS != result) {
