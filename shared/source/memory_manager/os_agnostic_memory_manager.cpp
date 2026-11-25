@@ -470,7 +470,7 @@ bool OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGr
     return true;
 }
 
-bool OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) {
+bool OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool isSvmReservation) {
     for (uint32_t i = 0; i < static_cast<uint32_t>(multiGraphicsAllocation.getGraphicsAllocations().size()); i++) {
         delete multiGraphicsAllocation.getGraphicsAllocation(i);
         multiGraphicsAllocation.removeAllocation(i);
@@ -509,7 +509,7 @@ bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphi
     return true;
 }
 
-bool OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) {
+bool OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool isSvmReservation) {
     // offset is intentionally not modeled here: these allocations only reference the physical
     // memory by shared handle (no backing pointer to offset into), and gpuAddress must stay
     // gpuRange for SVM tracking. The real offset semantics are exercised on DRM/WDDM only.

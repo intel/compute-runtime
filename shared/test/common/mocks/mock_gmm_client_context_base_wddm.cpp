@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,11 @@ uint64_t MockGmmClientContextBase::mapGpuVirtualAddress(MapGpuVirtualAddressGmm 
     passedWrite = pMapGpuVa->mapGpuVirtualAddressParams->Protection.Write;
     passedNoAccess = pMapGpuVa->mapGpuVirtualAddressParams->Protection.NoAccess;
     return pMapGpuVa->gdi->mapGpuVirtualAddress(pMapGpuVa->mapGpuVirtualAddressParams);
+}
+uint64_t MockGmmClientContextBase::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
+    freeGpuVirtualAddressCalled++;
+    freeGpuVirtualAddressBaseAddressPassed = pFreeGpuVa->baseAddress;
+    return freeGpuVirtualAddressStatusToReturn;
 }
 long MockGmmClientContextBase::deallocate2(DeallocateGmm *deallocateGmm) {
     return deallocateGmm->gdi->destroyAllocation2(deallocateGmm->destroyAllocation2);

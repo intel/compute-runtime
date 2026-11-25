@@ -421,9 +421,9 @@ class MemoryManager {
     std::map<void *, PhysicalMemoryAllocation *> &getPhysicalMemoryAllocationMap() { return this->physicalMemoryAllocationMap; };
     [[nodiscard]] std::unique_lock<std::mutex> lockPhysicalMemoryAllocationMap() { return std::unique_lock<std::mutex>(this->physicalMemoryAllocationMapMutex); };
     virtual bool mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) = 0;
-    virtual bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) = 0;
+    virtual bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool isSvmReservation) = 0;
     virtual bool unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) = 0;
-    virtual bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) = 0;
+    virtual bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool isSvmReservation) = 0;
     // False when one GEM handle cannot be placed at several VAs at once, i.e. vm_bind is unavailable.
     virtual bool supportsPhysicalDeviceMemoryMultiMapping(uint32_t rootDeviceIndex) const { return true; }
     void releaseParkedPhysicalMemoryMappings(uint64_t rangeStart, uint64_t rangeEnd);

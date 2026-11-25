@@ -553,12 +553,12 @@ bool MockMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllo
     return OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, memoryflags, offset);
 }
 
-bool MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) {
+bool MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool isSvmReservation) {
     passedMapPhysicalHostMemoryOffset = offset;
     if (failMapPhysicalToVirtualMemory) {
         return false;
     }
-    return OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset, keepReservationPlaceholder);
+    return OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset, isSvmReservation);
 }
 
 bool MockMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
@@ -570,9 +570,9 @@ bool MockMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphics
     return retVal;
 }
 
-bool MockMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) {
+bool MockMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool isSvmReservation) {
     // Need to call actual unMapPhysicalDeviceMemoryFromVirtualMemory to ensure the virtual memory is unmapped.
-    bool retVal = OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, true);
+    bool retVal = OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, isSvmReservation);
     if (failUnMapPhysicalToVirtualMemory) { // Return false if unmapping is supposed to fail.
         return false;
     }

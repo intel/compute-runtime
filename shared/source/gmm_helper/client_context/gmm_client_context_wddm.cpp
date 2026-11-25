@@ -28,7 +28,7 @@ uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFree
         GMM_FREEGPUVIRTUALADDRESS gmmFreeAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size, 1, &gmmResource};
         return clientContext->FreeGpuVirtualAddress(&gmmFreeAddress);
     } else {
-        return 0;
+        return STATUS_UNSUCCESSFUL;
     }
 }
 long GmmClientContext::deallocate2(DeallocateGmm *deallocateGmm) {

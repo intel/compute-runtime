@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,11 +32,6 @@ uint8_t MockGmmClientContextBase::getMediaSurfaceStateCompressionFormat(GMM_RESO
     capturedFormat = format;
     getMediaSurfaceStateCompressionFormatCalled++;
     return compressionFormatToReturn;
-}
-
-uint64_t MockGmmClientContextBase::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
-    freeGpuVirtualAddressCalled++;
-    return 0;
 }
 
 void MockGmmClientContextBase::initialize(const RootDeviceEnvironment &rootDeviceEnvironment) {

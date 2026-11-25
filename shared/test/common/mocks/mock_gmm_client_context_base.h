@@ -40,6 +40,8 @@ class MockGmmClientContextBase : public GmmClientContext {
     uint32_t getMediaSurfaceStateCompressionFormatCalled = 0u;
     uint32_t mapGpuVirtualAddressCalled = 0u;
     uint32_t freeGpuVirtualAddressCalled = 0u;
+    uint64_t freeGpuVirtualAddressStatusToReturn = 0u;
+    uint64_t freeGpuVirtualAddressBaseAddressPassed = 0u;
     uint32_t initializeCalled = 0u;
     bool returnErrorOnPatIndexQuery = false;
 

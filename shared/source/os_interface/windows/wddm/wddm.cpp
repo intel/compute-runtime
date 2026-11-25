@@ -676,7 +676,7 @@ NTSTATUS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress,
 uint64_t Wddm::freeGmmGpuVirtualAddress(Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
     uint64_t status = STATUS_SUCCESS;
     FreeGpuVirtualAddressGmm freeGpuva = {getAdapter(), rootDeviceEnvironment.getGmmHelper()->decanonize(gpuPtr), size, gmm->gmmResourceInfo.get(), getGdi()};
-    status = gmm->getGmmHelper()->getClientContext()->freeGpuVirtualAddress(&freeGpuva);
+    status = rootDeviceEnvironment.getGmmHelper()->getClientContext()->freeGpuVirtualAddress(&freeGpuva);
     return status;
 }
 

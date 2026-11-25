@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ uint64_t GmmClientContext::mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpu
     return pMapGpuVa->gdi->mapGpuVirtualAddress(pMapGpuVa->mapGpuVirtualAddressParams);
 }
 uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
-    return 0;
+    return STATUS_UNSUCCESSFUL;
 }
 long GmmClientContext::deallocate2(DeallocateGmm *deallocateGmm) {
     return deallocateGmm->gdi->destroyAllocation2(deallocateGmm->destroyAllocation2);

@@ -265,6 +265,7 @@ class WddmMock : public Wddm {
     bool callBaseWaitExternalSemaphoresFromGpu = true;
     bool waitExternalSemaphoresFromGpuReturnValue = true;
     bool failReserveGpuVirtualAddress = false;
+    D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddressOverride = 0u;
     bool failReserveValidAddressRange = false;
     bool failCreateAllocation = false;
     bool failDestroyAllocations = false;

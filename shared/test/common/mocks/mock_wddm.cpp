@@ -387,6 +387,10 @@ NTSTATUS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, 
         *reservedAddress = nullAddress;
         return STATUS_INVALID_PARAMETER;
     }
+    if (reserveGpuVirtualAddressOverride != 0u) {
+        *reservedAddress = reserveGpuVirtualAddressOverride;
+        return STATUS_SUCCESS;
+    }
     return Wddm::reserveGpuVirtualAddress(baseAddress, minimumAddress, maximumAddress, size, reservedAddress);
 }
 

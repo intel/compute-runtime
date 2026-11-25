@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,11 @@ namespace NEO {
 uint64_t MockGmmClientContextBase::mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpuVa) {
     mapGpuVirtualAddressCalled++;
     return pMapGpuVa->gdi->mapGpuVirtualAddress(pMapGpuVa->mapGpuVirtualAddressParams);
+}
+uint64_t MockGmmClientContextBase::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
+    freeGpuVirtualAddressCalled++;
+    freeGpuVirtualAddressBaseAddressPassed = pFreeGpuVa->baseAddress;
+    return freeGpuVirtualAddressStatusToReturn;
 }
 long MockGmmClientContextBase::deallocate2(DeallocateGmm *deallocateGmm) {
     return deallocateGmm->gdi->destroyAllocation2(deallocateGmm->destroyAllocation2);

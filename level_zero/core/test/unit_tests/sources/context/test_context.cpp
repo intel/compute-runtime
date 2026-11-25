@@ -3875,7 +3875,7 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override { return nullptr; };
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override { return false; };
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override { return false; };
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool isSvmReservation) override { return false; };
     bool mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
         if (failMapVirtualMemory) {
             return false;
@@ -3884,7 +3884,7 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
             return true;
         }
     };
-    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) override {
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool isSvmReservation) override {
         if (failMapVirtualMemory) {
             return false;
         } else {
@@ -3959,9 +3959,9 @@ struct FoldPrefixMemoryManagerMock : public NEO::MockMemoryManager {
         }
         NEO::MockMemoryManager::freeCpuAddress(addressRange);
     }
-    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, NEO::MultiGraphicsAllocation &multiGraphicsAllocation, NEO::GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) override {
-        passedKeepReservationPlaceholder = keepReservationPlaceholder;
-        return NEO::MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset, keepReservationPlaceholder);
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, NEO::MultiGraphicsAllocation &multiGraphicsAllocation, NEO::GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool isSvmReservation) override {
+        passedIsSvmReservation = isSvmReservation;
+        return NEO::MockMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset, isSvmReservation);
     }
     bool mapPhysicalDeviceMemoryToVirtualMemory(NEO::MultiGraphicsAllocation &multiGraphicsAllocation, NEO::GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const NEO::MemoryFlags *memoryflags, size_t offset) override {
         lastDeviceMapFlags = *memoryflags;
@@ -3993,7 +3993,7 @@ struct FoldPrefixMemoryManagerMock : public NEO::MockMemoryManager {
     std::set<size_t> failingAccessUpdateCalls;
     uint32_t deviceMapFailuresLeft = 0u;
     NEO::MemoryFlags lastDeviceMapFlags{};
-    bool passedKeepReservationPlaceholder = false;
+    bool passedIsSvmReservation = false;
     bool failReserveExactCpuAddress = false;
     uint32_t reserveExactCalls = 0u;
     uint64_t lastReserveExactAddress = 0u;
@@ -4081,20 +4081,20 @@ TEST_F(ContextFoldPrefixTest, givenHostBackedRangeWhenSettingAccessAttributeThen
     tearDownMock(reservedPtr);
 }
 
-TEST_F(ContextFoldPrefixTest, givenSvmAndNonSvmReservationWhenMappingHostPhysicalMemoryThenPlaceholderIsKeptOnlyForSvmReservation) {
+TEST_F(ContextFoldPrefixTest, givenSvmAndNonSvmReservationWhenMappingHostPhysicalMemoryThenReservationTypeIsPassedToMemoryManager) {
     setUpMock(false);
     auto reservation = getReservation();
     ASSERT_NE(nullptr, reservation);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS,
               contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
-    EXPECT_TRUE(memoryManagerMock->passedKeepReservationPlaceholder);
+    EXPECT_TRUE(memoryManagerMock->passedIsSvmReservation);
     ASSERT_EQ(ZE_RESULT_SUCCESS, contextImp->unMapVirtualMem(reservedPtr, pagesize));
 
     reservation->isSvmReservation = false;
     ASSERT_EQ(ZE_RESULT_SUCCESS,
               contextImp->mapVirtualMem(reservedPtr, pagesize, physicalMem, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
-    EXPECT_FALSE(memoryManagerMock->passedKeepReservationPlaceholder);
+    EXPECT_FALSE(memoryManagerMock->passedIsSvmReservation);
     reservation->isSvmReservation = true;
 
     tearDownMock(reservedPtr);
