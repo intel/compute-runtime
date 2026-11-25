@@ -191,8 +191,8 @@ NEO::GraphicsAllocation *MutableCommandListFixtureInit::getUsmAllocation(void *u
     return nullptr;
 }
 
-Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag) {
-    Event *event = nullptr;
+L0::Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag) {
+    L0::Event *event = nullptr;
     if (cbEvent) {
         ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
         ze_event_counter_based_external_aggregate_storage_desc_t externalStorageAllocProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
@@ -225,7 +225,7 @@ Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalS
         EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
         if (eventHandle) {
             this->eventHandles.push_back(eventHandle);
-            event = Event::fromHandle(eventHandle);
+            event = L0::Event::fromHandle(eventHandle);
             this->events.push_back(event);
         }
     } else {
@@ -263,7 +263,7 @@ Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalS
             EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
             if (eventHandle) {
                 this->eventHandles.push_back(eventHandle);
-                event = Event::fromHandle(eventHandle);
+                event = L0::Event::fromHandle(eventHandle);
                 this->events.push_back(event);
             }
         }
@@ -327,6 +327,8 @@ void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL:
 
     if (varType == L0::MCL::VariableType::buffer) {
         NEO::ArgDescriptor kernelArgPtr = {NEO::ArgDescriptor::argTPointer};
+        kernelArgPtr.getTraits().argByValSize = sizeof(void *);
+        kernelArgPtr.getTraits().addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::AddrGlobal;
         auto &argPtr = kernelArgPtr.as<NEO::ArgDescPointer>();
         argPtr.stateless = offset;
         argPtr.bufferOffset = 0;
@@ -334,14 +336,17 @@ void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL:
         argPtr.pointerSize = 8;
 
         if (kernelMask & kernel1Bit) {
-            mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgPtr;
+            this->mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgPtr;
+            this->kernel->privateState.kernelArgHandlers[argIndex] = &KernelImp::setArgBuffer;
         }
         if (kernelMask & kernel2Bit) {
-            mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgPtr;
+            this->mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgPtr;
+            this->kernel2->privateState.kernelArgHandlers[argIndex] = &KernelImp::setArgBuffer;
         }
     }
     if (varType == L0::MCL::VariableType::value) {
         NEO::ArgDescriptor kernelArgValue = {NEO::ArgDescriptor::argTValue};
+        kernelArgValue.getTraits().argByValSize = sizeof(uint32_t);
         auto &argValue = kernelArgValue.as<NEO::ArgDescValue>();
         NEO::ArgDescValue::Element element{};
         element.offset = offset;
@@ -349,14 +354,17 @@ void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL:
         argValue.elements.push_back(element);
 
         if (kernelMask & kernel1Bit) {
-            mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgValue;
+            this->mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgValue;
+            this->kernel->privateState.kernelArgHandlers[argIndex] = &KernelImp::setArgImmediate;
         }
         if (kernelMask & kernel2Bit) {
-            mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgValue;
+            this->mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgValue;
+            this->kernel2->privateState.kernelArgHandlers[argIndex] = &KernelImp::setArgImmediate;
         }
     }
     if (varType == L0::MCL::VariableType::slmBuffer) {
         NEO::ArgDescriptor kernelArgSlm = {NEO::ArgDescriptor::argTPointer};
+        kernelArgSlm.getTraits().argByValSize = sizeof(void *);
         kernelArgSlm.getTraits().addressQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier::AddrLocal;
         auto &argSlm = kernelArgSlm.as<NEO::ArgDescPointer>();
         argSlm.requiredSlmAlignment = 4;
@@ -365,12 +373,14 @@ void MutableCommandListFixtureInit::prepareKernelArg(uint16_t argIndex, L0::MCL:
         argSlm.pointerSize = 8;
 
         if (kernelMask & kernel1Bit) {
-            memset(&kernel->getCrossThreadDataSpan()[argSlm.slmOffset], 0, 8);
-            mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgSlm;
+            memset(&this->kernel->getCrossThreadDataSpan()[argSlm.slmOffset], 0, 8);
+            this->mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgSlm;
+            this->kernel->privateState.kernelArgHandlers[argIndex] = &KernelImp::setArgSlm;
         }
         if (kernelMask & kernel2Bit) {
-            memset(&kernel2->getCrossThreadDataSpan()[argSlm.slmOffset], 0, 8);
-            mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgSlm;
+            memset(&this->kernel2->getCrossThreadDataSpan()[argSlm.slmOffset], 0, 8);
+            this->mockKernelImmData2->kernelDescriptor->payloadMappings.explicitArgs[argIndex] = kernelArgSlm;
+            this->kernel2->privateState.kernelArgHandlers[argIndex] = &KernelImp::setArgSlm;
         }
     }
 }

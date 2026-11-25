@@ -44,7 +44,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     std::unique_ptr<MockImmutableData> prepareKernelImmData(uint32_t isaSize);
     std::unique_ptr<MockModule> prepareModule(MockImmutableData *immData);
     std::unique_ptr<MutableCommandList> createMutableCmdList();
-    Event *createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag);
+    L0::Event *createTestEvent(bool cbEvent, bool signalScope, bool timestamp, bool externalMemory, bool externalFlag);
     void *allocateUsm(size_t size);
     void *allocateDeviceUsm(size_t size);
     NEO::GraphicsAllocation *getUsmAllocation(void *usm);
@@ -131,7 +131,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     std::vector<void *> usmAllocations;
     std::vector<void *> deviceUsmAllocations;
     std::vector<ze_event_handle_t> eventHandles;
-    std::vector<Event *> events;
+    std::vector<L0::Event *> events;
     std::vector<ze_event_pool_handle_t> eventPoolHandles;
     std::vector<void *> externalStorages;
 
