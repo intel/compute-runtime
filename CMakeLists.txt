@@ -252,6 +252,13 @@ if(DEFINED SKIP_UNIT_TESTS)
   set(NEO_SKIP_UNIT_TESTS ${SKIP_UNIT_TESTS})
 endif()
 
+# Enable/Disable BuiltIns compilation during build
+set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
+if(NOT COMPILE_BUILT_INS AND NOT NEO_SKIP_UNIT_TESTS)
+  message(WARNING "Unit tests are skipped because COMPILE_BUILT_INS is OFF")
+  set(NEO_SKIP_UNIT_TESTS TRUE)
+endif()
+
 if(NEO_SKIP_UNIT_TESTS)
   set(NEO_SKIP_SHARED_UNIT_TESTS TRUE)
   set(NEO_SKIP_OCL_UNIT_TESTS TRUE)
@@ -618,8 +625,6 @@ endif()
 
 include(cmake${BRANCH_DIR_SUFFIX}/find_drm.cmake)
 
-# Enable/Disable BuiltIns compilation during build
-set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
 if(NOT DEFINED NEO_KERNELS_BIN_DIR)
   if(WIN32)
     get_filename_component(NEO_KERNELS_BIN_DIR "${NEO_SOURCE_DIR}/../kernels_bin/windows" ABSOLUTE)
