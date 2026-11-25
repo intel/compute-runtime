@@ -159,6 +159,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxSetWidth, -1, "-1: default, >=0: 
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxSetHeight, -1, "-1: default, >=0: Max height")
 DECLARE_DEBUG_VARIABLE(int32_t, PostBlitCommand, -1, "-1: default, 0: MI_ARB_CHECK, 1: MI_FLUSH, 2: Nothing, 3: MI_SEMAPHORE_WAIT on always signaled address with queue switch after command is parsed")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideBcsWriteSplit, -1, "Split BCS writes into 2MB chunks followed by MI_FLUSH. -1: default, 0: disable, 1: enable for destination in system or remote memory, 2: force enable")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideBcsCopyChunkSize, -1, "-1: default, 0: disabled, >0: max number of bytes copied or filled by a single BCS command on non high priority queues")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideHwIpVersion, -1, "-1: default,  >=0: Hardware IP version")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePreemptionSurfaceSizeInMb, -1, "-1: default, >=0 Override preemption surface size with value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideLeastOccupiedBank, -1, "-1: default,  >=0 Override least occupied bank with value")

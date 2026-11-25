@@ -33,14 +33,19 @@ struct BlitCommandsHelper {
     using COLOR_DEPTH = typename GfxFamily::XY_COLOR_BLT::COLOR_DEPTH;
     static uint64_t getMaxBlitWidth(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitWidthOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory, uint64_t blitWidth);
+    static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
+    static uint64_t getMaxBlitHeightForCopy(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory, bool highPriority, uint64_t blitWidth);
+    static uint64_t getMaxBlitHeightForFill(const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t maxBlitHeight, bool highPriority, uint64_t bytesPerRow);
+    static uint64_t limitBlitHeightToChunkSize(uint64_t maxBlitHeight, uint64_t chunkSize, uint64_t bytesPerRow);
+    static uint64_t getQueueSwitchChunkSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool highPriority);
+    static uint64_t getCopyChunkSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool isDstSystemOrRemoteMemory, bool highPriority);
     static uint64_t getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static uint64_t getMaxBlitSetWidth(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitSetHeight(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchPreBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimatePreBlitCommandSize();
     static bool isFlushBetweenBlitsRequired(const RootDeviceEnvironment &rootDeviceEnvironment, bool isDstSystemOrRemoteMemory);
-    static void dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd, bool isDstSystemOrRemoteMemory, bool programQueueSwitchPoint);
+    static void dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment, bool hasAdditionalBlitProperties, bool isLastCmd, bool writeSplitFlushRequired, bool programQueueSwitchPoint);
     static bool isQueueSwitchPointAfterBlitRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchQueueSwitchPointSemaphore(LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimateQueueSwitchPointsAfterBlitsSize(const RootDeviceEnvironment &rootDeviceEnvironment, size_t nBlits);
@@ -49,14 +54,14 @@ struct BlitCommandsHelper {
     static size_t estimatePostBlitWaCommandsSize();
     static void dispatchPostBlitWaCommands(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
-                                          bool profilingEnabled, bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled, bool validPitches, bool isDstSystemOrRemoteMemory);
+                                          bool profilingEnabled, bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled, bool validPitches, bool isDstSystemOrRemoteMemory, bool highPriority);
     static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, bool profilingEnabled,
                                            bool debugPauseEnabled, bool blitterDirectSubmission, bool relaxedOrderingEnabled, const RootDeviceEnvironment &rootDeviceEnvironment);
-    static size_t getNumberOfBlitsForCopyRegion(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory);
-    static size_t getNumberOfBlitsForCopyPerRow(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory);
-    static size_t getNumberOfBlitsForColorFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
-    static size_t getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
-    static size_t getNumberOfBlitsForFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
+    static size_t getNumberOfBlitsForCopyRegion(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory, bool highPriority);
+    static size_t getNumberOfBlitsForCopyPerRow(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory, bool highPriority);
+    static size_t getNumberOfBlitsForColorFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool highPriority);
+    static size_t getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool highPriority);
+    static size_t getNumberOfBlitsForFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool highPriority);
     static uint64_t calculateBlitCommandDestinationBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);
     static uint64_t calculateBlitCommandSourceBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);
     static uint64_t calculateBlitCommandDestinationBaseAddressCopyRegion(const BlitProperties &blitProperties, size_t slice);
@@ -101,7 +106,7 @@ struct BlitCommandsHelper {
     static size_t getSizeForDebugPauseCommands(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize);
     static bool validatePitchesForCopyRegion(size_t srcRowPitch, size_t dstRowPitch);
-    static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory);
+    static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool isDstSystemOrRemoteMemory, bool highPriority);
     static void programGlobalSequencerFlush(LinearStream &commandStream, bool useSemaphore64bCmd);
     static size_t getSizeForGlobalSequencerFlush();
     static bool preBlitCommandWARequired();

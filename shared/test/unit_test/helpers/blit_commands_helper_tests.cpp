@@ -271,13 +271,13 @@ HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvide
     DebugManagerStateRestore restore{};
 
     ASSERT_EQ(BlitterConstants::maxBlitWidth, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironment()));
-    ASSERT_EQ(BlitterConstants::maxBlitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), false, false, BlitterConstants::maxBlitWidth));
+    ASSERT_EQ(BlitterConstants::maxBlitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), false));
 
     debugManager.flags.LimitBlitterMaxWidth.set(50);
     EXPECT_EQ(50u, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironment()));
 
     debugManager.flags.LimitBlitterMaxHeight.set(60);
-    EXPECT_EQ(60u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), false, false, BlitterConstants::maxBlitWidth));
+    EXPECT_EQ(60u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), false));
 }
 
 HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSetSizeThenHonorUseProvidedValues) {
@@ -529,7 +529,7 @@ HWTEST_F(BlitTests, givenWriteSplitRequiredWhenCheckingFlushBetweenBlitsThenTrue
     EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isFlushBetweenBlitsRequired(rootDeviceEnvironment, true));
 }
 
-HWTEST_F(BlitTests, givenWriteSplitRequiredAndFlushBetweenBlitsNotRequiredWhenDispatchPostBlitCommandThenFlushEmittedOnlyForDstInSystemOrRemoteMemory) {
+HWTEST_F(BlitTests, givenFlushBetweenBlitsNotRequiredWhenDispatchPostBlitCommandThenFlushEmittedOnlyWhenWriteSplitFlushIsRequired) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     DebugManagerStateRestore restorer;
@@ -537,46 +537,42 @@ HWTEST_F(BlitTests, givenWriteSplitRequiredAndFlushBetweenBlitsNotRequiredWhenDi
 
     RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = false;
-    debugManager.flags.OverrideBcsWriteSplit.set(1);
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
 
-    for (bool isDstSystemOrRemoteMemory : {false, true}) {
+    for (bool writeSplitFlushRequired : {false, true}) {
         uint32_t streamBuffer[100] = {};
         LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
 
-        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, isDstSystemOrRemoteMemory, false);
+        BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, rootDeviceEnvironment, false, false, writeSplitFlushRequired, false);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(linearStream, 0);
-        EXPECT_EQ(isDstSystemOrRemoteMemory, hwParser.getCommandCount<MI_FLUSH_DW>() > 0u);
+        EXPECT_EQ(writeSplitFlushRequired, hwParser.getCommandCount<MI_FLUSH_DW>() > 0u);
         EXPECT_GT(hwParser.getCommandCount<MI_ARB_CHECK>(), 0u);
     }
 }
 
-HWTEST_F(BlitTests, givenWriteSplitNotRequiredAndFlushBetweenBlitsNotRequiredWhenDispatchPostBlitCommandForDstInSystemMemoryThenFlushNotEmitted) {
+template <typename FamilyType>
+std::vector<bool> getFlushesAfterBlits(LinearStream &stream) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.PostBlitCommand.set(-1);
 
-    RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = false;
-    debugManager.flags.OverrideBcsWriteSplit.set(0);
+    GenCmdList cmdList;
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
 
-    uint32_t streamBuffer[100] = {};
-    LinearStream linearStream(streamBuffer, sizeof(streamBuffer));
-
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, pDevice->getRootDeviceEnvironmentRef(), false, false, true, false);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(linearStream, 0);
-    EXPECT_EQ(0u, hwParser.getCommandCount<MI_FLUSH_DW>());
+    auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    std::vector<bool> flushesAfterBlits;
+    for (size_t i = 0; i < blits.size(); i++) {
+        auto nextBlit = (i + 1 < blits.size()) ? blits[i + 1] : cmdList.end();
+        flushesAfterBlits.push_back(find<MI_FLUSH_DW *>(blits[i], nextBlit) != nextBlit);
+    }
+    return flushesAfterBlits;
 }
 
 template <typename FamilyType>
 void verifyEachBlitIsFollowedByFlush(LinearStream &stream, size_t expectedBlitsCount, uint64_t expectedMaxHeight) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
@@ -584,14 +580,10 @@ void verifyEachBlitIsFollowedByFlush(LinearStream &stream, size_t expectedBlitsC
     auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(expectedBlitsCount, blits.size());
 
-    for (size_t i = 0; i < blits.size(); i++) {
-        auto blitCmd = genCmdCast<XY_COPY_BLT *>(*blits[i]);
-        EXPECT_LE(blitCmd->getDestinationY2CoordinateBottom(), expectedMaxHeight);
-
-        auto nextBlit = (i + 1 < blits.size()) ? blits[i + 1] : cmdList.end();
-        auto flush = find<MI_FLUSH_DW *>(blits[i], nextBlit);
-        EXPECT_NE(nextBlit, flush);
+    for (auto &blit : blits) {
+        EXPECT_LE(genCmdCast<XY_COPY_BLT *>(*blit)->getDestinationY2CoordinateBottom(), expectedMaxHeight);
     }
+    EXPECT_EQ(std::vector<bool>(expectedBlitsCount, true), getFlushesAfterBlits<FamilyType>(stream));
 }
 
 HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInSystemMemoryWhenDispatchBlitCommandsForBufferPerRowThenCopyIsSplitInto2MBChunksEachFollowedByFlush) {
@@ -602,6 +594,7 @@ HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInSystemMemoryWhenDispatchBlitC
     RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = false;
     debugManager.flags.OverrideBcsWriteSplit.set(1);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
 
     MockGraphicsAllocation srcAlloc(nullptr, 0x100000, 0);
@@ -636,61 +629,279 @@ HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInSystemMemoryWhenDispatchBlitC
 
     auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, false, false, false,
                                                                                  rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, false, true,
-                                                                                 blitProperties.isDstSystemOrRemoteMemory);
+                                                                                 blitProperties.isDstSystemOrRemoteMemory, false);
     EXPECT_GE(estimatedSize, stream.getUsed());
 }
 
-HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInRemoteMemoryWhenDispatchBlitCommandsForBufferPerRowThenCopyIsSplitInto2MBChunksEachFollowedByFlush) {
+HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInSystemOrRemoteMemoryWhenDispatchHighPriorityBlitCommandsForBufferPerRowThenCopyIsSplitInto2MBChunksEachFollowedByFlush) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     DebugManagerStateRestore restorer;
     debugManager.flags.PostBlitCommand.set(-1);
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(static_cast<int32_t>(512 * MemoryConstants::kiloByte));
 
     RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = false;
-    debugManager.flags.OverrideBcsWriteSplit.set(1);
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
 
     MockGraphicsAllocation srcAlloc(nullptr, 0x100000, 0);
     srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
     MockGraphicsAllocation dstAlloc(nullptr, 0x40000000, 0);
     dstAlloc.overrideMemoryPool(MemoryPool::localMemory);
 
+    const size_t copySize = 2 * BlitterConstants::writeSplitChunkSize + 1;
     auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
-                                                                     0, 0, {2 * BlitterConstants::writeSplitChunkSize, 1, 1}, 0, 0, 0, 0, nullptr, true);
+                                                                     0, 0, {copySize, 1, 1}, 0, 0, 0, 0, nullptr, true);
+    blitProperties.highPriority = true;
     ASSERT_TRUE(blitProperties.isDstSystemOrRemoteMemory);
 
     uint32_t streamBuffer[400] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
-    BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, rootDeviceEnvironment);
 
-    verifyEachBlitIsFollowedByFlush<FamilyType>(stream, 2u, 128u);
+    verifyEachBlitIsFollowedByFlush<FamilyType>(stream, 3u, 128u);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+    auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(3u, blits.size());
+    for (size_t i = 0; i < 2; i++) {
+        auto blitCmd = genCmdCast<XY_COPY_BLT *>(*blits[i]);
+        EXPECT_EQ(BlitterConstants::maxBlitWidth, blitCmd->getDestinationX2CoordinateRight());
+        EXPECT_EQ(128u, blitCmd->getDestinationY2CoordinateBottom());
+        EXPECT_EQ(dstAlloc.getGpuAddress() + i * BlitterConstants::writeSplitChunkSize, blitCmd->getDestinationBaseAddress());
+    }
+    auto lastBlitCmd = genCmdCast<XY_COPY_BLT *>(*blits[2]);
+    EXPECT_EQ(1u, lastBlitCmd->getDestinationX2CoordinateRight());
+    EXPECT_EQ(1u, lastBlitCmd->getDestinationY2CoordinateBottom());
+
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, false, false, false,
+                                                                                 rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, false, true,
+                                                                                 blitProperties.isDstSystemOrRemoteMemory, blitProperties.highPriority);
+    EXPECT_GE(estimatedSize, stream.getUsed());
 }
 
-HWTEST_F(BlitTests, givenWriteSplitNotRequiredWhenGettingMaxBlitHeightThenDefaultMaxBlitHeightReturned) {
+HWTEST_F(BlitTests, givenCopyChunkSizeAndWriteSplitRequiredWhenDispatchBlitCommandsForBufferPerRowToSystemOrRemoteMemoryThenFlushIsProgrammedAfterEach2MBAndAfterLastBlit) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    DebugManagerStateRestore restorer;
+    constexpr size_t copyChunkSize = 512 * MemoryConstants::kiloByte;
+    debugManager.flags.PostBlitCommand.set(-1);
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(static_cast<int32_t>(copyChunkSize));
+
+    RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = false;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+
+    MockGraphicsAllocation srcAlloc(nullptr, 0x100000, 0);
+    srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
+    MockGraphicsAllocation dstAlloc(nullptr, 0x40000000, 0);
+    dstAlloc.overrideMemoryPool(MemoryPool::localMemory);
+
+    const size_t copySize = 2 * BlitterConstants::writeSplitChunkSize + copyChunkSize;
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
+                                                                     0, 0, {copySize, 1, 1}, 0, 0, 0, 0, nullptr, true);
+
+    uint32_t streamBuffer[1024] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, rootDeviceEnvironment);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+    auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(9u, blits.size());
+    for (auto &blit : blits) {
+        EXPECT_EQ(copyChunkSize / BlitterConstants::maxBlitWidth, genCmdCast<XY_COPY_BLT *>(*blit)->getDestinationY2CoordinateBottom());
+    }
+    EXPECT_EQ((std::vector<bool>{false, false, false, true, false, false, false, true, true}), getFlushesAfterBlits<FamilyType>(stream));
+
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, false, false, false,
+                                                                                 rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, false, true,
+                                                                                 blitProperties.isDstSystemOrRemoteMemory, blitProperties.highPriority);
+    EXPECT_GE(estimatedSize, stream.getUsed());
+}
+
+HWTEST_F(BlitTests, givenCopyChunkSizeAndWriteSplitRequiredWhenDispatchBlitCommandsForBufferRegionToSystemOrRemoteMemoryThenFlushIsProgrammedAfterEach2MBAndAfterLastBlit) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    DebugManagerStateRestore restorer;
+    constexpr size_t copyChunkSize = 512 * MemoryConstants::kiloByte;
+    debugManager.flags.PostBlitCommand.set(-1);
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(static_cast<int32_t>(copyChunkSize));
+
+    RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = false;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+
+    MockGraphicsAllocation srcAlloc(nullptr, 0x100000, 0);
+    srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
+    MockGraphicsAllocation dstAlloc(nullptr, 0x40000000, 0);
+    dstAlloc.overrideMemoryPool(MemoryPool::localMemory);
+
+    const size_t width = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
+    const size_t rowsPerChunk = copyChunkSize / width;
+    const size_t height = 9 * rowsPerChunk;
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
+                                                                     0, 0, {width, height, 1}, width, width * height, width, width * height, nullptr, true);
+
+    EXPECT_EQ(9u, BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, true, false));
+
+    uint32_t streamBuffer[1024] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferRegion(blitProperties, stream, rootDeviceEnvironment);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+    auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(9u, blits.size());
+    for (auto &blit : blits) {
+        EXPECT_EQ(rowsPerChunk, genCmdCast<XY_COPY_BLT *>(*blit)->getDestinationY2CoordinateBottom());
+    }
+    EXPECT_EQ((std::vector<bool>{false, false, false, true, false, false, false, true, true}), getFlushesAfterBlits<FamilyType>(stream));
+}
+
+HWTEST_F(BlitTests, givenCopyChunkSizeAndWriteSplitRequiredWhenDispatchBlitCommandsForBufferRegionWithWidthNotDividingChunkThenFlushIsProgrammedBeforeWriteSplitChunkIsExceeded) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    DebugManagerStateRestore restorer;
+    constexpr size_t copyChunkSize = 512 * MemoryConstants::kiloByte;
+    debugManager.flags.PostBlitCommand.set(-1);
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(static_cast<int32_t>(copyChunkSize));
+
+    RAIIProductHelperFactory<MockProductHelper> raii(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->isFlushBetweenBlitsRequiredResult = false;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+
+    MockGraphicsAllocation srcAlloc(nullptr, 0x100000, 0);
+    srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
+    MockGraphicsAllocation dstAlloc(nullptr, 0x40000000, 0);
+    dstAlloc.overrideMemoryPool(MemoryPool::localMemory);
+
+    constexpr size_t width = 3000;
+    constexpr size_t rowsPerChunk = copyChunkSize / width;
+    const size_t height = 9 * rowsPerChunk;
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
+                                                                     0, 0, {width, height, 1}, width, width * height, width, width * height, nullptr, true);
+
+    uint32_t streamBuffer[1024] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferRegion(blitProperties, stream, rootDeviceEnvironment);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+    auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(9u, blits.size());
+    for (auto &blit : blits) {
+        EXPECT_EQ(rowsPerChunk, genCmdCast<XY_COPY_BLT *>(*blit)->getDestinationY2CoordinateBottom());
+    }
+    EXPECT_EQ((std::vector<bool>{false, false, false, true, false, false, false, true, true}), getFlushesAfterBlits<FamilyType>(stream));
+}
+
+HWTEST_F(BlitTests, givenCopyChunkSizeWhenDispatchBlitCommandsForBufferPerRowThenOnlyNonHighPriorityCopyIsChunked) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    DebugManagerStateRestore restorer;
+    constexpr size_t copyChunkSize = 512 * MemoryConstants::kiloByte;
+    debugManager.flags.OverrideBcsWriteSplit.set(0);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(static_cast<int32_t>(copyChunkSize));
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+
+    MockGraphicsAllocation srcAlloc(nullptr, 0x100000, 0);
+    srcAlloc.overrideMemoryPool(MemoryPool::localMemory);
+    MockGraphicsAllocation dstAlloc(nullptr, 0x40000000, 0);
+    dstAlloc.overrideMemoryPool(MemoryPool::system4KBPages);
+
+    const size_t copySize = 4 * copyChunkSize;
+    for (bool highPriority : {false, true}) {
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
+                                                                         0, 0, {copySize, 1, 1}, 0, 0, 0, 0, nullptr, false);
+        blitProperties.highPriority = highPriority;
+        const size_t expectedBlitsCount = highPriority ? 1u : 4u;
+        EXPECT_EQ(expectedBlitsCount, BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, false, highPriority));
+
+        uint32_t streamBuffer[400] = {};
+        LinearStream stream(streamBuffer, sizeof(streamBuffer));
+        BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, rootDeviceEnvironment);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+        EXPECT_EQ(expectedBlitsCount, findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end()).size());
+    }
+}
+
+HWTEST_F(BlitTests, givenWriteSplitAndCopyChunkNotRequiredWhenGettingMaxBlitHeightForCopyThenDefaultMaxBlitHeightReturned) {
     DebugManagerStateRestore restorer;
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
     debugManager.flags.OverrideBcsWriteSplit.set(0);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
 
     for (bool isSystemMemoryPoolUsed : {false, true}) {
-        const auto defaultHeight = BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed, false, BlitterConstants::maxBlitWidth);
-        for (uint64_t blitWidth : {1u, 256u, 16384u}) {
-            EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed, true, blitWidth));
+        const auto defaultHeight = BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, isSystemMemoryPoolUsed);
+        for (bool isDstSystemOrRemoteMemory : {false, true}) {
+            for (bool highPriority : {false, true}) {
+                for (uint64_t blitWidth : {1u, 256u, 16384u}) {
+                    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemOrRemoteMemory, highPriority, blitWidth));
+                }
+            }
         }
     }
 }
 
-HWTEST_F(BlitTests, givenWriteSplitRequiredWhenGettingMaxBlitHeightThenHeightLimitsBlitTo2MBOnlyForDstInSystemOrRemoteMemory) {
+HWTEST_F(BlitTests, givenWriteSplitRequiredWhenGettingMaxBlitHeightForCopyThenHeightLimitsBlitTo2MBOnlyForDstInSystemOrRemoteMemory) {
     DebugManagerStateRestore restorer;
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
     debugManager.flags.OverrideBcsWriteSplit.set(1);
-    const auto defaultHeight = BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, false, BlitterConstants::maxBlitWidth);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
+    const auto defaultHeight = BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false);
 
-    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, false, 256u));
+    for (bool highPriority : {false, true}) {
+        EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, false, highPriority, 256u));
 
-    EXPECT_EQ(128u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, BlitterConstants::maxBlitWidth));
-    EXPECT_EQ(std::min<uint64_t>(BlitterConstants::writeSplitChunkSize / 256u, defaultHeight), BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, 256u));
-    EXPECT_EQ(std::min<uint64_t>(BlitterConstants::writeSplitChunkSize / 3000u, defaultHeight), BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, 3000u));
-    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, 1u));
-    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, 0u));
-    EXPECT_EQ(1u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, true, 2 * BlitterConstants::writeSplitChunkSize));
+        EXPECT_EQ(128u, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, highPriority, BlitterConstants::maxBlitWidth));
+        EXPECT_EQ(std::min<uint64_t>(BlitterConstants::writeSplitChunkSize / 256u, defaultHeight), BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, highPriority, 256u));
+        EXPECT_EQ(std::min<uint64_t>(BlitterConstants::writeSplitChunkSize / 3000u, defaultHeight), BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, highPriority, 3000u));
+        EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, highPriority, 1u));
+        EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, highPriority, 0u));
+        EXPECT_EQ(1u, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, highPriority, 2 * BlitterConstants::writeSplitChunkSize));
+    }
+}
+
+HWTEST_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenGettingMaxBlitHeightForCopyThenNonHighPriorityCopyIsLimitedTo512KBByDefault) {
+    DebugManagerStateRestore restorer;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    debugManager.flags.OverrideBcsWriteSplit.set(0);
+    const auto defaultHeight = BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false);
+    const auto maxWidth = BlitterConstants::maxBlitWidth;
+
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(1);
+    EXPECT_EQ(BlitterConstants::queueSwitchCopyChunkSize / maxWidth, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, false, false, maxWidth));
+    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, false, true, maxWidth));
+
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(0);
+    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, false, false, maxWidth));
+    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, false, true, maxWidth));
+}
+
+HWTEST_F(BlitTests, givenCopyChunkSizeWhenGettingMaxBlitHeightForCopyThenNonHighPriorityCopyIsLimitedToSmallerOfCopyChunkAndWriteSplitChunk) {
+    DebugManagerStateRestore restorer;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    const auto defaultHeight = BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false);
+    const auto maxWidth = BlitterConstants::maxBlitWidth;
+    const auto writeSplitHeight = BlitterConstants::writeSplitChunkSize / maxWidth;
+
+    debugManager.flags.OverrideBcsCopyChunkSize.set(static_cast<int32_t>(512 * MemoryConstants::kiloByte));
+    debugManager.flags.OverrideBcsWriteSplit.set(0);
+    EXPECT_EQ(32u, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, false, maxWidth));
+    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, true, maxWidth));
+
+    debugManager.flags.OverrideBcsWriteSplit.set(1);
+    EXPECT_EQ(32u, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, false, maxWidth));
+    EXPECT_EQ(writeSplitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, true, maxWidth));
+    EXPECT_EQ(32u, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, false, false, maxWidth));
+    EXPECT_EQ(defaultHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, false, true, maxWidth));
+
+    debugManager.flags.OverrideBcsCopyChunkSize.set(static_cast<int32_t>(2 * BlitterConstants::writeSplitChunkSize));
+    EXPECT_EQ(writeSplitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, true, false, maxWidth));
+    EXPECT_EQ(2 * writeSplitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(rootDeviceEnvironment, false, false, false, maxWidth));
 }
 
 HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInSystemMemoryWhenDispatchBlitCommandsForBufferRegionWithFullWidthRowsThenEachBlitIs2MBAndIsFollowedByFlush) {
@@ -709,13 +920,13 @@ HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInSystemMemoryWhenDispatchBlitC
     dstAlloc.overrideMemoryPool(MemoryPool::system4KBPages);
 
     const size_t width = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
-    const size_t expectedMaxHeight = static_cast<size_t>(std::min<uint64_t>(BlitterConstants::writeSplitChunkSize / width, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, false, BlitterConstants::maxBlitWidth)));
+    const size_t expectedMaxHeight = static_cast<size_t>(std::min<uint64_t>(BlitterConstants::writeSplitChunkSize / width, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false)));
     const size_t height = 2 * expectedMaxHeight + 44;
     auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                      0, 0, {width, height, 1}, width, width * height, width, width * height, nullptr, false);
     ASSERT_TRUE(blitProperties.isDstSystemOrRemoteMemory);
 
-    EXPECT_EQ(3u, BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, true));
+    EXPECT_EQ(3u, BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, true, false));
 
     uint32_t streamBuffer[400] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -749,13 +960,13 @@ HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInSystemMemoryWhenDispatchBlitC
 
     const size_t width = 4096;
     const size_t rowPitch = 8192;
-    const size_t expectedMaxHeight = static_cast<size_t>(std::min<uint64_t>(BlitterConstants::writeSplitChunkSize / width, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false, false, BlitterConstants::maxBlitWidth)));
+    const size_t expectedMaxHeight = static_cast<size_t>(std::min<uint64_t>(BlitterConstants::writeSplitChunkSize / width, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false)));
     ASSERT_GT(expectedMaxHeight, 128u);
     const size_t height = 2 * expectedMaxHeight + 5;
     auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAlloc, 0, &srcAlloc, 0,
                                                                      0, 0, {width, height, 1}, rowPitch, rowPitch * height, rowPitch, rowPitch * height, nullptr, false);
 
-    EXPECT_EQ(3u, BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, true));
+    EXPECT_EQ(3u, BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, true, false));
 
     uint32_t streamBuffer[400] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -777,7 +988,7 @@ HWTEST_F(BlitTests, givenWriteSplitRequiredAndDstInSystemMemoryWhenDispatchBlitC
 
     auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, false, false, false,
                                                                                  rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, false, true,
-                                                                                 blitProperties.isDstSystemOrRemoteMemory);
+                                                                                 blitProperties.isDstSystemOrRemoteMemory, false);
     EXPECT_GE(estimatedSize, stream.getUsed());
 }
 
@@ -901,6 +1112,8 @@ HWTEST_F(BlitTests, givenSystemAllocatedMemoryWhenConstructPropertiesForMemoryFi
 }
 
 HWTEST2_F(BlitTests, givenUnalignedPatternSizeWhenDispatchingBlitFillThenSetCorrectColorDepth, IsAtMostXe3pCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
@@ -1684,6 +1897,7 @@ HWTEST2_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlu
 HWTEST_F(BlitTests, givenBlitPropertiesContainerWithNullSrcOrDstAllocationWhenEstimatingCommandsSizeThenCalculateForAllAttachedProperties) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(0);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
     const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const uint32_t numberOfBlts = 3;
     const size_t bltSize = (3 * max2DBlitSize);
@@ -1763,7 +1977,7 @@ HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUs
     uint64_t dstGpuAddr = 0x54321;
     uint64_t clearGpuAddr = 0x5678;
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
-    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), false, false, BlitterConstants::maxBlitWidth));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(pDevice->getRootDeviceEnvironmentRef(), false, false, false, BlitterConstants::maxBlitWidth));
     std::unique_ptr<MockGraphicsAllocation> srcAlloc(new MockGraphicsAllocation(src, srcGpuAddr, sizeof(src)));
     std::unique_ptr<MockGraphicsAllocation> dstAlloc(new MockGraphicsAllocation(dst, dstGpuAddr, sizeof(dst)));
     std::unique_ptr<GraphicsAllocation> clearColorAllocation(new MockGraphicsAllocation(clear, clearGpuAddr, sizeof(clear)));
@@ -1817,7 +2031,7 @@ HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUs
     uint64_t dstGpuAddr = 0x54321;
     uint64_t clearGpuAddr = 0x5678;
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
-    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), false, false, BlitterConstants::maxBlitWidth));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeightForCopy(pDevice->getRootDeviceEnvironmentRef(), false, false, false, BlitterConstants::maxBlitWidth));
     std::unique_ptr<MockGraphicsAllocation> srcAlloc(new MockGraphicsAllocation(src, srcGpuAddr, sizeof(src)));
     std::unique_ptr<MockGraphicsAllocation> dstAlloc(new MockGraphicsAllocation(dst, dstGpuAddr, sizeof(dst)));
     std::unique_ptr<GraphicsAllocation> clearColorAllocation(new MockGraphicsAllocation(clear, clearGpuAddr, sizeof(clear)));
@@ -1872,7 +2086,7 @@ HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUs
     Vec3<size_t> srcOffsets = {0, 0, 0};
 
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
-    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), false, false, BlitterConstants::maxBlitWidth));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), false));
     size_t copySizeX = maxBlitWidth - 1;
     size_t copySizeY = maxBlitHeight - 1;
     Vec3<size_t> copySize = {copySizeX, copySizeY, 0x3};
@@ -1937,7 +2151,7 @@ HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePat
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, 0, dstSize, pattern, sizeof(uint8_t), 0);
     EXPECT_EQ(1u, blitProperties.fillPatternSize);
 
-    auto nBlits = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint8_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+    auto nBlits = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint8_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed, blitProperties.highPriority);
     EXPECT_EQ(4u, nBlits);
 
     uint32_t streamBuffer[400] = {};
@@ -1962,8 +2176,10 @@ HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesAndSingleBytePat
 }
 
 HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
-    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), true, false, BlitterConstants::maxBlitWidth));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), true));
     size_t dstSize = 2 * sizeof(uint32_t) * (maxBlitWidth * maxBlitHeight) + sizeof(uint32_t);
     MockGraphicsAllocation dstAlloc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                     reinterpret_cast<void *>(0x1234), 0x1000, 0, dstSize,
@@ -1973,8 +2189,8 @@ HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUs
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&dstAlloc, 0, dstSize, pattern, sizeof(uint32_t), 0);
     ASSERT_TRUE(blitProperties.isSystemMemoryPoolUsed);
 
-    auto nBlitsColorFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
-    auto nBlitsFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+    auto nBlitsColorFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed, blitProperties.highPriority);
+    auto nBlitsFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed, blitProperties.highPriority);
     EXPECT_EQ(3u, nBlitsColorFill);
     EXPECT_EQ(nBlitsFill, nBlitsColorFill);
 
@@ -2001,10 +2217,11 @@ HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUs
 
 HWTEST2_PRODUCT_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWithAndWithoutUseAdditionalPropertiesWhenCallingDispatchBlitMemoryColorFillThenTheResultsAreTheSame, MatchAny) {
     DebugManagerStateRestore restore;
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
     debugManager.flags.LimitBlitterMaxWidth.set(1024);
     debugManager.flags.LimitBlitterMaxHeight.set(1024);
     size_t maxBlitWidth = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironmentRef()));
-    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), true, false, BlitterConstants::maxBlitWidth));
+    size_t maxBlitHeight = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironmentRef(), true));
     size_t dstSize = 2 * sizeof(uint32_t) * (maxBlitWidth * maxBlitHeight) + sizeof(uint32_t);
     // dstPtr is only ever used as a numeric GPU address, never dereferenced.
     uint8_t dstData{};
@@ -2014,8 +2231,8 @@ HWTEST2_PRODUCT_F(BlitTests, givenSystemMemoryPlatformWithBlitSyncPropertiesWith
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(nullptr, reinterpret_cast<uint64_t>(&dstData), dstSize, pattern, sizeof(uint32_t), 0);
     ASSERT_TRUE(blitProperties.isSystemMemoryPoolUsed);
 
-    auto nBlitsColorFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
-    auto nBlitsFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed);
+    auto nBlitsColorFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed, blitProperties.highPriority);
+    auto nBlitsFill = NEO::BlitCommandsHelper<FamilyType>::getNumberOfBlitsForFill(blitProperties.copySize, sizeof(uint32_t), pDevice->getRootDeviceEnvironmentRef(), blitProperties.isSystemMemoryPoolUsed, blitProperties.highPriority);
     EXPECT_EQ(3u, nBlitsColorFill);
     EXPECT_EQ(nBlitsFill, nBlitsColorFill);
 
@@ -2047,7 +2264,7 @@ HWTEST_F(BlitTests, givenBlitPropertieswithImageOperationWhenCallingEstimateBlit
     Vec3<size_t> copySize{maxBlitWidth - 1, 1, 1};
     NEO::CsrDependencies csrDependencies{};
 
-    size_t totalSize = NEO::BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(copySize, csrDependencies, false, false, true, pDevice->getRootDeviceEnvironmentRef(), false, false, false, false);
+    size_t totalSize = NEO::BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(copySize, csrDependencies, false, false, true, pDevice->getRootDeviceEnvironmentRef(), false, false, false, false, false);
 
     size_t expectedSize = sizeof(typename FamilyType::XY_BLOCK_COPY_BLT);
     expectedSize += NEO::BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(true);
@@ -2384,15 +2601,15 @@ HWTEST_F(BlitTests, givenValidPitchesWhenEstimatingBufferCopyThenUsesMinOfRegion
     NEO::CsrDependencies csrDependencies{};
 
     size_t nRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(
-        copySize, pDevice->getRootDeviceEnvironmentRef(), false, false);
+        copySize, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
     size_t nPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(
-        copySize, pDevice->getRootDeviceEnvironmentRef(), false, false);
+        copySize, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
 
     size_t sizeValid = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, true, false);
+        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, true, false, false);
 
     size_t sizeInvalid = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, false, false);
+        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, false, false, false);
 
     size_t expectedMinBlits = std::min(nRegion, nPerRow);
     if (expectedMinBlits < nPerRow) {
@@ -2407,17 +2624,17 @@ HWTEST_F(BlitTests, givenInvalidPitchesWhenEstimatingBufferCopyThenUsesPerRowCou
     NEO::CsrDependencies csrDependencies{};
 
     size_t sizeValid = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, true, false);
+        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, true, false, false);
 
     size_t sizeInvalid = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, false, false);
+        copySize, csrDependencies, false, false, false, pDevice->getRootDeviceEnvironmentRef(), false, false, false, false, false);
 
     EXPECT_GE(sizeInvalid, sizeValid);
 }
 
 HWTEST_F(BlitTests, givenValidPitchesAndRegionPreferredWhenDispatchingBufferCopyThenCopyRegionUsed) {
     Vec3<size_t> copySize{256, 256, 1};
-    size_t nRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, pDevice->getRootDeviceEnvironmentRef(), false, false);
+    size_t nRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
 
     BlitProperties blitProperties{};
     blitProperties.srcRowPitch = BlitterConstants::maxBlitPitch / 2; // Valid
@@ -2441,7 +2658,7 @@ HWTEST_F(BlitTests, givenValidPitchesAndRegionPreferredWhenDispatchingBufferCopy
 HWTEST_F(BlitTests, givenInvalidPitchesButRegionPreferredWhenDispatchingBufferCopyThenFallsBackToPerRow) {
     Vec3<size_t> copySize{256, 256, 1};
     size_t nPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(
-        copySize, pDevice->getRootDeviceEnvironmentRef(), false, false);
+        copySize, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
 
     BlitProperties blitProperties{};
     blitProperties.srcRowPitch = BlitterConstants::maxBlitPitch * 2; // Invalid - triggers fallback
@@ -2463,7 +2680,7 @@ HWTEST_F(BlitTests, givenInvalidPitchesButRegionPreferredWhenDispatchingBufferCo
 
 HWTEST_F(BlitTests, givenMaxValidPitchesAndRegionPreferredWhenDispatchingBufferCopyThenCopyRegionUsedOnce) {
     Vec3<size_t> copySize{256, 256, 1};
-    size_t nRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, pDevice->getRootDeviceEnvironmentRef(), false, false);
+    size_t nRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, pDevice->getRootDeviceEnvironmentRef(), false, false, false);
 
     BlitProperties blitProperties{};
     blitProperties.srcRowPitch = BlitterConstants::maxBlitPitch; // Max valid
@@ -2585,8 +2802,90 @@ HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingMultiB
     }
 }
 
-HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingMultiBlitCopyPerRowThenSemaphoreIsProgrammedAfterEachBlitOnlyForNonHighPriorityCopy, IsAtLeastXe3pCore) {
+HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingColorFillThenOnlyNonHighPriorityFillIsSplitInto512KBChunks, IsAtMostXe3pCore) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
+    DebugManagerStateRestore restore{};
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(1);
+    debugManager.flags.LimitBlitterMaxWidth.set(static_cast<int32_t>(BlitterConstants::maxBlitWidth));
+    debugManager.flags.LimitBlitterMaxHeight.set(static_cast<int32_t>(BlitterConstants::maxBlitHeight));
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    constexpr size_t patternSize = sizeof(uint32_t);
+    constexpr size_t chunksCount = 4;
+    constexpr size_t fillSize = chunksCount * BlitterConstants::queueSwitchCopyChunkSize;
+    constexpr uint64_t rowsPerChunk = BlitterConstants::queueSwitchCopyChunkSize / (BlitterConstants::maxBlitWidth * patternSize);
+    uint32_t pattern[4] = {1, 0, 0, 0};
+    MockGraphicsAllocation mockAllocation(0, 1u, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234), 0x1000, 0, fillSize,
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    for (bool highPriority : {false, true}) {
+        auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, fillSize, pattern, patternSize, 0);
+        blitProperties.highPriority = highPriority;
+
+        uint32_t streamBuffer[400] = {};
+        LinearStream stream(streamBuffer, sizeof(streamBuffer));
+        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, rootDeviceEnvironment);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+        auto blits = findAll<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+        const size_t expectedBlitsCount = highPriority ? 1u : chunksCount;
+        ASSERT_EQ(expectedBlitsCount, blits.size()) << highPriority;
+        EXPECT_EQ(expectedBlitsCount, BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, patternSize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, highPriority));
+
+        for (size_t i = 0; i < blits.size(); i++) {
+            auto blitCmd = genCmdCast<XY_COLOR_BLT *>(*blits[i]);
+            EXPECT_EQ(BlitterConstants::maxBlitWidth, blitCmd->getDestinationX2CoordinateRight());
+            EXPECT_EQ(highPriority ? chunksCount * rowsPerChunk : rowsPerChunk, blitCmd->getDestinationY2CoordinateBottom());
+            EXPECT_EQ(mockAllocation.getGpuAddress() + i * BlitterConstants::queueSwitchCopyChunkSize, blitCmd->getDestinationBaseAddress());
+        }
+    }
+}
+
+HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingByteFillThenOnlyNonHighPriorityFillIsSplitInto512KBChunks, IsAtLeastXeHpcCore) {
+    using MEM_SET = typename FamilyType::MEM_SET;
+    DebugManagerStateRestore restore{};
+    constexpr uint64_t maxBlitSetWidth = 64 * MemoryConstants::kiloByte;
+    debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(1);
+    debugManager.flags.LimitBlitterMaxSetWidth.set(static_cast<int32_t>(maxBlitSetWidth));
+    debugManager.flags.LimitBlitterMaxSetHeight.set(static_cast<int32_t>(BlitterConstants::maxBlitHeight));
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    constexpr size_t chunksCount = 4;
+    constexpr size_t fillSize = chunksCount * BlitterConstants::queueSwitchCopyChunkSize;
+    constexpr uint64_t rowsPerChunk = BlitterConstants::queueSwitchCopyChunkSize / maxBlitSetWidth;
+    uint32_t pattern[4] = {1, 0, 0, 0};
+    MockGraphicsAllocation mockAllocation(0, 1u, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234), 0x1000, 0, fillSize,
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    for (bool highPriority : {false, true}) {
+        auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, fillSize, pattern, sizeof(uint8_t), 0);
+        blitProperties.highPriority = highPriority;
+
+        uint32_t streamBuffer[400] = {};
+        LinearStream stream(streamBuffer, sizeof(streamBuffer));
+        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryByteFill(blitProperties, stream, rootDeviceEnvironment);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+        auto blits = findAll<MEM_SET *>(cmdList.begin(), cmdList.end());
+        const size_t expectedBlitsCount = highPriority ? 1u : chunksCount;
+        ASSERT_EQ(expectedBlitsCount, blits.size()) << highPriority;
+        EXPECT_EQ(expectedBlitsCount, BlitCommandsHelper<FamilyType>::getNumberOfBlitsForColorFill(blitProperties.copySize, sizeof(uint8_t), rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, highPriority));
+
+        for (size_t i = 0; i < blits.size(); i++) {
+            auto blitCmd = genCmdCast<MEM_SET *>(*blits[i]);
+            EXPECT_EQ(maxBlitSetWidth, blitCmd->getFillWidth());
+            EXPECT_EQ(highPriority ? chunksCount * rowsPerChunk : rowsPerChunk, blitCmd->getFillHeight());
+            EXPECT_EQ(mockAllocation.getGpuAddress() + i * BlitterConstants::queueSwitchCopyChunkSize, blitCmd->getDestinationStartAddress());
+        }
+    }
+}
+
+HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingMultiBlitCopyPerRowThenSemaphoreIsProgrammedAfterEachBlitAndBeforeFlushOnlyForNonHighPriorityCopy, IsAtLeastXe3pCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     DebugManagerStateRestore restore{};
     debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(1);
@@ -2602,7 +2901,7 @@ HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingMultiB
 
         auto blitProperties = BlitProperties::constructPropertiesForCopy(&dstAllocation, 0, &srcAllocation, 0, 0, 0, {copySize, 1, 1}, 0, 0, 0, 0, nullptr, false);
         blitProperties.highPriority = highPriority;
-        const auto numberOfBlits = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory);
+        const auto numberOfBlits = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(blitProperties.copySize, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, blitProperties.isDstSystemOrRemoteMemory, false);
         ASSERT_LT(1u, numberOfBlits);
 
         BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForBufferPerRow(blitProperties, stream, rootDeviceEnvironment);
@@ -2611,6 +2910,13 @@ HWTEST2_F(BlitTests, givenQueueSwitchPointAfterBlitRequiredWhenDispatchingMultiB
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
         const auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(highPriority ? 0u : numberOfBlits, semaphores.size());
+
+        if (!highPriority) {
+            const auto lastBlit = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end()).back();
+            const auto flushAfterLastBlit = find<MI_FLUSH_DW *>(lastBlit, cmdList.end());
+            ASSERT_NE(cmdList.end(), flushAfterLastBlit);
+            EXPECT_NE(flushAfterLastBlit, find<MI_SEMAPHORE_WAIT *>(lastBlit, flushAfterLastBlit));
+        }
     }
 }
 

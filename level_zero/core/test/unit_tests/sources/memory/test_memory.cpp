@@ -5144,7 +5144,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenAllocDataWhenCheckingIfRemoteCop
     context->freeMem(ptr0);
 }
 
-HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledByDebugFlagAndCopyOnlyCommandListWhenAppendingMemoryCopyToRemoteDstAllocationThenCopyIsSplitInto2MBChunksEachFollowedByFlush, IsCRI) {
+HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledByDebugFlagAndCopyOnlyCommandListWhenAppendingMemoryCopyThenCopyIsSplitInto512KBChunksAndFlushIsProgrammedAfterEach2MBOnlyForRemoteDst, IsCRI) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideBcsWriteSplit.set(1);
 
@@ -5153,8 +5153,9 @@ HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledByDebugFlagAnd
 
     L0::Device *device0 = driverHandle->devices[0];
     auto svmManager = driverHandle->getSvmAllocsManager();
-    const size_t numChunks = 2;
-    const size_t size = numChunks * BlitterConstants::writeSplitChunkSize;
+    constexpr size_t copyChunkSize = BlitterConstants::queueSwitchCopyChunkSize;
+    constexpr size_t chunksPerFlush = BlitterConstants::writeSplitChunkSize / copyChunkSize;
+    const size_t size = 2 * BlitterConstants::writeSplitChunkSize;
 
     ze_device_mem_alloc_desc_t deviceDesc = {};
     void *srcPtr = nullptr;
@@ -5184,17 +5185,11 @@ HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledByDebugFlagAnd
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
         auto blits = findAll<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
 
-        if (isImportedAllocation) {
-            ASSERT_EQ(numChunks, blits.size());
-            for (size_t i = 0; i < blits.size(); i++) {
-                auto blitCmd = genCmdCast<XY_COPY_BLT *>(*blits[i]);
-                EXPECT_EQ(128u, blitCmd->getDestinationY2CoordinateBottom());
-                auto nextBlit = (i + 1 < blits.size()) ? blits[i + 1] : cmdList.end();
-                EXPECT_NE(nextBlit, find<MI_FLUSH_DW *>(blits[i], nextBlit));
-            }
-        } else {
-            ASSERT_EQ(1u, blits.size());
-            EXPECT_LT(128u, genCmdCast<XY_COPY_BLT *>(*blits[0])->getDestinationY2CoordinateBottom());
+        ASSERT_EQ(size / copyChunkSize, blits.size());
+        for (size_t i = 0; i + 1 < blits.size(); i++) {
+            EXPECT_EQ(copyChunkSize / BlitterConstants::maxBlitWidth, genCmdCast<XY_COPY_BLT *>(*blits[i])->getDestinationY2CoordinateBottom());
+            const bool flushExpected = isImportedAllocation && (i % chunksPerFlush == chunksPerFlush - 1);
+            EXPECT_EQ(flushExpected, find<MI_FLUSH_DW *>(blits[i], blits[i + 1]) != blits[i + 1]) << i;
         }
     }
 
@@ -5206,6 +5201,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledByDebugFlagAnd
 HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledAndHostUsmDstWithCpuInaccessiblePoolOnSecondRootWhenAppendingMemoryCopyThenCopyIsSplitInto2MBChunksEachFollowedByFlush, IsCRI) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideBcsWriteSplit.set(1);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
 
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
@@ -5257,6 +5253,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledAndHostUsmDstW
 HWTEST2_F(MultipleDevicePeerAllocationTest, givenWriteSplitEnabledAndHostUsmDstWithCpuInaccessiblePoolOnSecondRootWhenAppendingMemoryCopyRegionThenEachBlitIsFollowedByFlush, IsCRI) {
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideBcsWriteSplit.set(1);
+    debugManager.flags.OverrideBcsCopyChunkSize.set(0);
 
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;

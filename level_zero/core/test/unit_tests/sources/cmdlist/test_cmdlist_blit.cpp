@@ -771,6 +771,47 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToExte
     EXPECT_EQ(ret, ZE_RESULT_SUCCESS);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListForMemFillAdditionalTimestamp : public MockCommandListForMemFill<gfxCoreFamily> {
+  public:
+    using BaseClass = MockCommandListForMemFill<gfxCoreFamily>;
+    using BaseClass::useAdditionalBlitProperties;
+
+    void setAdditionalBlitProperties(NEO::BlitProperties &blitProperties, L0::Event *signalEvent, uint64_t forceAggregatedEventIncValue, bool useAdditionalTimestamp) override {
+        useAdditionalTimestampPassed = useAdditionalTimestamp;
+    }
+    std::optional<bool> useAdditionalTimestampPassed;
+};
+
+HWTEST_F(AppendMemoryCopyTests, givenNonHighPriorityCopyOnlyCommandListWhenAppendBlitFillSplitIntoQueueSwitchChunksThenAdditionalTimestampIsUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(0);
+    debugManager.flags.LimitBlitterMaxWidth.set(static_cast<int32_t>(BlitterConstants::maxBlitWidth));
+    debugManager.flags.LimitBlitterMaxHeight.set(static_cast<int32_t>(BlitterConstants::maxBlitHeight));
+    debugManager.flags.LimitBlitterMaxSetWidth.set(static_cast<int32_t>(64 * MemoryConstants::kiloByte));
+    debugManager.flags.LimitBlitterMaxSetHeight.set(static_cast<int32_t>(BlitterConstants::maxBlitHeight));
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
+    sharedSystemMemCapabilities = 0xf;
+
+    uint8_t pattern = 1;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    constexpr size_t fillSize = 4 * BlitterConstants::queueSwitchCopyChunkSize;
+
+    for (int32_t programQueueSwitchPoint : {0, 1}) {
+        debugManager.flags.ProgramQueueSwitchPointAfterBlit.set(programQueueSwitchPoint);
+        MockCommandListForMemFillAdditionalTimestamp<FamilyType::gfxCoreFamily> cmdList;
+        cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+        cmdList.useAdditionalBlitProperties = true;
+
+        auto ret = cmdList.appendMemoryFill(ptr, &pattern, sizeof(pattern), fillSize, nullptr, 0, nullptr, copyParams);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+        ASSERT_TRUE(cmdList.useAdditionalTimestampPassed.has_value());
+        EXPECT_EQ(programQueueSwitchPoint == 1, cmdList.useAdditionalTimestampPassed.value());
+    }
+}
+
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToSharedSystemUsmThenSuccessReturned) {
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);

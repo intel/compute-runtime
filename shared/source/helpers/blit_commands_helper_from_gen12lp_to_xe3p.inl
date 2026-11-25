@@ -30,7 +30,6 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(co
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     auto blitCmd = GfxFamily::cmdInitXyColorBlt;
     const auto maxWidth = getMaxBlitWidth(rootDeviceEnvironment);
-    const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, true, false, maxWidth);
 
     auto colorDepth = COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR;
     size_t patternSize = 16;
@@ -47,6 +46,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(co
         colorDepth = *colorDepthV;
         patternSize = blitProperties.fillPatternSize;
     }
+    const auto maxHeight = getMaxBlitHeightForFill(rootDeviceEnvironment, getMaxBlitHeight(rootDeviceEnvironment, true), blitProperties.highPriority, maxWidth * patternSize);
 
     blitCmd.setFillColor(blitProperties.fillPattern);
     blitCmd.setColorDepth(colorDepth);

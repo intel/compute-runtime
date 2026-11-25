@@ -1050,7 +1050,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     if (isCopyOnly(true)) {
         auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
         auto maxBlitWidth = NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(rootDeviceEnvironment);
-        auto nBlits = size / (maxBlitWidth * NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(rootDeviceEnvironment, true, true, maxBlitWidth));
+        auto nBlits = size / (maxBlitWidth * NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeightForCopy(rootDeviceEnvironment, true, true, false, maxBlitWidth));
         estimatedSize += estimateCopyBlitCommandsSize(nBlits, sizeof(typename GfxFamily::XY_COPY_BLT), true);
     }
     auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
@@ -1132,7 +1132,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     if (isCopyOnly(true)) {
         auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
         auto xBlits = static_cast<size_t>(std::ceil(srcRegion->width / static_cast<double>(BlitterConstants::maxBlitWidth)));
-        auto maxBlitHeight = NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(rootDeviceEnvironment, true, true, std::min<uint64_t>(srcRegion->width, BlitterConstants::maxBlitWidth));
+        auto maxBlitHeight = NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeightForCopy(rootDeviceEnvironment, true, true, false, std::min<uint64_t>(srcRegion->width, BlitterConstants::maxBlitWidth));
         auto yBlits = static_cast<size_t>(std::ceil(srcRegion->height / static_cast<double>(maxBlitHeight)));
         auto zBlits = static_cast<size_t>(std::max(srcRegion->depth, 1u));
         auto nBlits = xBlits * yBlits * zBlits;
@@ -1334,7 +1334,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
         auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
         auto isSystemMemoryPoolUsed = NEO::MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool());
         auto isDstSystemMemory = NEO::MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool());
-        auto nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow({size, 1, 1}, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemMemory);
+        auto nBlits = NEO::BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForCopyPerRow({size, 1, 1}, rootDeviceEnvironment, isSystemMemoryPoolUsed, isDstSystemMemory, false);
         estimatedSize += estimateCopyBlitCommandsSize(nBlits, sizeof(typename GfxFamily::XY_COPY_BLT), isDstSystemMemory);
     }
     auto spaceCheckStatus = checkAvailableSpace(0, false, estimatedSize, false);

@@ -6,8 +6,8 @@
  */
 
 template <>
-size_t BlitCommandsHelper<Family>::getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
-    return NEO::BlitCommandsHelper<Family>::getNumberOfBlitsForFill(copySize, patternSize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
+size_t BlitCommandsHelper<Family>::getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool highPriority) {
+    return NEO::BlitCommandsHelper<Family>::getNumberOfBlitsForFill(copySize, patternSize, rootDeviceEnvironment, isSystemMemoryPoolUsed, highPriority);
 }
 
 template <>

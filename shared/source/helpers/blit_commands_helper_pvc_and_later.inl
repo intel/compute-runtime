@@ -12,9 +12,9 @@
 namespace NEO {
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+size_t BlitCommandsHelper<GfxFamily>::getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool highPriority) {
     auto maxWidthToFill = getMaxBlitSetWidth(rootDeviceEnvironment);
-    auto maxHeightToFill = getMaxBlitSetHeight(rootDeviceEnvironment);
+    auto maxHeightToFill = getMaxBlitHeightForFill(rootDeviceEnvironment, getMaxBlitSetHeight(rootDeviceEnvironment), highPriority, maxWidthToFill);
     auto nBlits = 0;
     uint64_t width = 1;
     uint64_t height = 1;
@@ -38,7 +38,7 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
     using MEM_SET = typename Family::MEM_SET;
     auto blitCmd = Family::cmdInitMemSet;
     const auto maxBlitSetWidth = getMaxBlitSetWidth(rootDeviceEnvironment);
-    const auto maxBlitSetHeight = getMaxBlitSetHeight(rootDeviceEnvironment);
+    const auto maxBlitSetHeight = getMaxBlitHeightForFill(rootDeviceEnvironment, getMaxBlitSetHeight(rootDeviceEnvironment), blitProperties.highPriority, maxBlitSetWidth);
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getL3EnabledMOCS();
     if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
