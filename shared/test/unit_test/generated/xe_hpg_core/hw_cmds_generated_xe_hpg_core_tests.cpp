@@ -3288,8 +3288,7 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenL3FlushAddressRangeWhenInitCalledT
     cmd.init();
 
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.AddressMask);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.AddressLow);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.AddressHigh);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.Address);
     EXPECT_EQ(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION, cmd.TheStructure.Common.L3FlushEvictionPolicy);
 }
 
@@ -3303,21 +3302,16 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenL3FlushAddressRangeWhenSetterUsedT
     cmd.setAddressMask(0x3fu);
     EXPECT_EQ(0x3fu, cmd.getAddressMask());
 
-    cmd.setAddressLow(0x0u);
-    EXPECT_EQ(0x0u, cmd.getAddressLow());
-    cmd.setAddressLow(0xffff000u);
-    EXPECT_EQ(0xffff000u, cmd.getAddressLow());
-
-    cmd.setAddressHigh(0x0u);
-    EXPECT_EQ(0x0u, cmd.getAddressHigh());
-    cmd.setAddressHigh(0xffffu);
-    EXPECT_EQ(0xffffu, cmd.getAddressHigh());
+    cmd.setAddress(0x0u);
+    EXPECT_EQ(0x0u, cmd.getAddress());
+    cmd.setAddress(0xfffffffff000u);
+    EXPECT_EQ(0xfffffffff000u, cmd.getAddress());
 
     cmd.setL3FlushEvictionPolicy(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION);
     EXPECT_EQ(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION, cmd.getL3FlushEvictionPolicy());
 
-    cmd.setL3FlushEvictionPolicy(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_OUT_EVICTION);              // patched
-    EXPECT_EQ(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_OUT_EVICTION, cmd.getL3FlushEvictionPolicy()); // patched
+    cmd.setL3FlushEvictionPolicy(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITHOUT_EVICTION);
+    EXPECT_EQ(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITHOUT_EVICTION, cmd.getL3FlushEvictionPolicy());
 
     cmd.setL3FlushEvictionPolicy(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_DISCARD);
     EXPECT_EQ(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_DISCARD, cmd.getL3FlushEvictionPolicy());

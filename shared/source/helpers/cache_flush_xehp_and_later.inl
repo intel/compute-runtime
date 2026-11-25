@@ -59,7 +59,7 @@ inline void flushGpuCache(LinearStream *commandStream, std::span<const L3Range> 
         cmdFlushRange = GfxFamily::cmdInitL3FlushAddressRange;
 
         cmdFlushRange.setAddress(it->getMaskedAddress());
-        cmdFlushRange.setAddressMask(it->getMask());
+        cmdFlushRange.setAddressMask(static_cast<uint32_t>(it->getMask()));
         cmdFlushRange.setL3FlushEvictionPolicy(static_cast<L3_FLUSH_EVICTION_POLICY>(it->getPolicy()));
         *l3Ranges = cmdFlushRange;
     }

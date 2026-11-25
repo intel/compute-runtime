@@ -6368,25 +6368,28 @@ STATIC_ASSERT(16 == sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC));
 typedef struct tagL3_FLUSH_ADDRESS_RANGE {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0-1
             uint64_t Reserved_0 : BITFIELD_RANGE(0, 2);
             uint64_t AddressMask : BITFIELD_RANGE(3, 8);
             uint64_t Reserved_9 : BITFIELD_RANGE(9, 11);
-            uint64_t AddressLow : BITFIELD_RANGE(12, 31);
-            uint64_t AddressHigh : BITFIELD_RANGE(32, 47);
+            uint64_t Address : BITFIELD_RANGE(12, 47);
             uint64_t Reserved_48 : BITFIELD_RANGE(48, 59);
             uint64_t L3FlushEvictionPolicy : BITFIELD_RANGE(60, 61);
             uint64_t Reserved_62 : BITFIELD_RANGE(62, 63);
         } Common;
         uint32_t RawData[2];
     } TheStructure;
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0xc,
+        ADDRESS_ALIGN_SIZE = 0x1000,
+    } ADDRESS;
     typedef enum tagL3_FLUSH_EVICTION_POLICY {
         L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION = 0x0,
-        L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_OUT_EVICTION = 0x1,
+        L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITHOUT_EVICTION = 0x1,
         L3_FLUSH_EVICTION_POLICY_DISCARD = 0x2,
     } L3_FLUSH_EVICTION_POLICY;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.L3FlushEvictionPolicy = L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION;
     }
     static tagL3_FLUSH_ADDRESS_RANGE sInit() {
         L3_FLUSH_ADDRESS_RANGE state;
@@ -6397,49 +6400,24 @@ typedef struct tagL3_FLUSH_ADDRESS_RANGE {
         UNRECOVERABLE_IF(index >= 2);
         return TheStructure.RawData[index];
     }
-
-    typedef enum tagADDRESSLOW {
-        ADDRESSLOW_BIT_SHIFT = 0xC,
-        ADDRESSLOW_ALIGN_SIZE = 0x1000,
-    } ADDRESSLOW;
-
-    inline void setAddressLow(const uint64_t value) {
-        TheStructure.Common.AddressLow = value >> ADDRESSLOW_BIT_SHIFT;
+    inline void setAddressMask(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fu);
+        TheStructure.Common.AddressMask = value;
     }
-
-    inline uint64_t getAddressLow() const {
-        return (TheStructure.Common.AddressLow << ADDRESSLOW_BIT_SHIFT);
+    inline uint32_t getAddressMask() const {
+        return TheStructure.Common.AddressMask;
     }
-
-    inline void setAddressHigh(const uint64_t value) {
-        TheStructure.Common.AddressHigh = value;
-    }
-
-    inline uint64_t getAddressHigh() const {
-        return (TheStructure.Common.AddressHigh);
-    }
-
     inline void setAddress(const uint64_t value) {
-        setAddressLow(static_cast<uint32_t>(value));
-        setAddressHigh(static_cast<uint32_t>(value >> 32));
+        TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
-
     inline uint64_t getAddress() const {
-        return static_cast<uint64_t>(getAddressLow()) | (static_cast<uint64_t>(getAddressHigh()) << 32);
+        return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
     }
-
     inline void setL3FlushEvictionPolicy(const L3_FLUSH_EVICTION_POLICY value) {
         TheStructure.Common.L3FlushEvictionPolicy = value;
     }
     inline L3_FLUSH_EVICTION_POLICY getL3FlushEvictionPolicy() const {
         return static_cast<L3_FLUSH_EVICTION_POLICY>(TheStructure.Common.L3FlushEvictionPolicy);
-    }
-    inline void setAddressMask(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0x1f8);
-        TheStructure.Common.AddressMask = value;
-    }
-    inline uint32_t getAddressMask() const {
-        return TheStructure.Common.AddressMask;
     }
 } L3_FLUSH_ADDRESS_RANGE;
 STATIC_ASSERT(8 == sizeof(L3_FLUSH_ADDRESS_RANGE));
