@@ -143,7 +143,7 @@ struct MutableCommandListImp : public MutableCommandList {
         }
     }
     void addToResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) override {
-        if (allocation == nullptr) {
+        if (allocation == nullptr || allocation->isUserManagedResidency()) {
             return;
         }
         if (redirectToCopyOffload) {

@@ -49,6 +49,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override {
         makeResidentCalledCount++;
         makeResidentForcePagingFenceValue = forcePagingFence;
+        makeResidentDevices.push_back(device);
         if (MemoryOperationsStatus::success != makeResidentResult) {
             return makeResidentResult;
         }
@@ -133,6 +134,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
 
     std::vector<GraphicsAllocation *> gfxAllocationsForMakeResident{};
     std::vector<Device *> decompressDevices{};
+    std::vector<Device *> makeResidentDevices{};
     std::atomic<int> makeResidentCalledCount{0};
     std::atomic<bool> makeResidentForcePagingFenceValue{false};
     std::atomic<int> evictCalledCount{0};

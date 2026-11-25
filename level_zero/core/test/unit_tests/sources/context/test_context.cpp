@@ -2527,6 +2527,7 @@ TEST_F(ContextTest, givenUnmappedPhysicalDeviceMemoryWhenMappedAtAnotherVirtualA
     auto secondMappingAllocation = getMappingAllocation(secondPtr);
     ASSERT_NE(nullptr, secondMappingAllocation);
     EXPECT_EQ(firstMappingAllocation, secondMappingAllocation);
+    EXPECT_TRUE(secondMappingAllocation->isUserManagedResidency());
     res = contextImp->unMapVirtualMem(secondPtr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -2835,6 +2836,8 @@ TEST_F(ContextTest, whenMappingPhysicalDeviceMemoryToVirtualMemoryThenSvmAllocat
     auto mappedAllocation = svmData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
     ASSERT_NE(nullptr, mappedAllocation);
     EXPECT_NE(physicalAllocation, mappedAllocation);
+    EXPECT_TRUE(mappedAllocation->isUserManagedResidency());
+    EXPECT_FALSE(physicalAllocation->isUserManagedResidency());
     EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), mappedAllocation->getGpuAddress());
     ASSERT_EQ(1u, multiMappingMemoryManager->mappedAllocations.size());
     EXPECT_EQ(multiMappingMemoryManager->mappedAllocations[0], mappedAllocation);
@@ -2853,6 +2856,33 @@ TEST_F(ContextTest, whenMappingPhysicalDeviceMemoryToVirtualMemoryThenSvmAllocat
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+using ContextMultiSubDeviceTest = Test<SingleRootMultiSubDeviceFixture>;
+
+TEST_F(ContextMultiSubDeviceTest, givenPhysicalDeviceMemoryCreatedOnSubDeviceWhenMappingThenMappedAllocationIsMadeResidentOnRootDevice) {
+    auto memoryOperations = new NEO::MockMemoryOperations();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperations);
+
+    ASSERT_EQ(numSubDevices, device->subDevices.size());
+    L0::Device *subDevice = device->subDevices[0];
+
+    size_t pagesize = 0u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->queryVirtualMemPageSize(subDevice->toHandle(), MemoryConstants::pageSize, &pagesize));
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->reserveVirtualMem(nullptr, pagesize, &ptr));
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(subDevice->toHandle(), &descMem, &mem));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(ptr, pagesize, mem, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    ASSERT_EQ(1u, memoryOperations->makeResidentDevices.size());
+    EXPECT_EQ(neoDevice, memoryOperations->makeResidentDevices[0]);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(ptr, pagesize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(mem));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeVirtualMem(ptr, pagesize));
 }
 
 TEST_F(ContextTest, whenFreeingVirtualMemoryWithStillMappedAllocationsThenMappingsAreCleanedUpAndSuccessIsReturned) {

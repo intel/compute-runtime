@@ -115,7 +115,8 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
                 uint32_t isImported : 1;
                 uint32_t qualifiedFor2MBPages : 1;
                 uint32_t sharedPhysicalMemoryMapping : 1;
-                uint32_t reserved : 21;
+                uint32_t userManagedResidency : 1;
+                uint32_t reserved : 20;
             } flags;
             uint32_t allFlags = 0u;
         };
@@ -131,6 +132,7 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
             flags.isImported = false;
             flags.qualifiedFor2MBPages = false;
             flags.sharedPhysicalMemoryMapping = false;
+            flags.userManagedResidency = false;
         }
     };
 
@@ -233,6 +235,9 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
     bool peekEvictable() const { return allocationInfo.flags.evictable; }
     bool isLockedMemory() const { return allocationInfo.flags.lockedMemory; }
     void setLockedMemory(bool locked) { allocationInfo.flags.lockedMemory = locked; }
+    // set only on allocations kept persistently resident by the memory operations interface while GPU-reachable
+    bool isUserManagedResidency() const { return allocationInfo.flags.userManagedResidency; }
+    void setUserManagedResidency(bool userManaged) { allocationInfo.flags.userManagedResidency = userManaged; }
 
     bool isUncacheable() const { return allocationInfo.flags.uncacheable; }
     void setUncacheable(bool uncacheable) { allocationInfo.flags.uncacheable = uncacheable; }
@@ -534,7 +539,7 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
         std::atomic<uint32_t> liveMappingsCount{0u};
         bool releasePending = false;
         bool handlesSharedWithMappings = false;
-        // Unmapped mappings stay alive, as kernels and command lists keep referencing them, and are
+        // Unmapped mappings stay alive, as kernels keep referencing them, and are
         // reused by the next map of the physical allocation, at the same range if one matches, else at any.
         std::vector<ParkedPhysicalMemoryMapping> parkedMappings;
     };

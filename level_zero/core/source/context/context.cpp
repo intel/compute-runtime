@@ -2771,17 +2771,18 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
         allocData.virtualReservationData = virtualMemoryReservation;
         allocData.ipcHandleTypeFlags = allocationNode->ipcHandleTypeFlags;
         allocData.mappedPhysicalOffset = offset;
-        // This makes the mapping available across engines and tiles before zeVirtualMemMap returns.
+        // This makes the mapping available across all engines and tiles of the root device before zeVirtualMemMap returns.
         // With vm_bind it establishes the binding; without vm_bind it adds the mapping to the
         // persistent residency set.
         NEO::MemoryOperationsHandler *memoryOperationsIface = allocationNode->device->getRootDeviceEnvironment().memoryOperationsInterface.get();
-        auto success = memoryOperationsIface->makeResident(allocationNode->device, ArrayRef<NEO::GraphicsAllocation *>(&mappedAllocation, 1), false, true);
+        auto success = memoryOperationsIface->makeResident(allocationNode->device->getRootDevice(), ArrayRef<NEO::GraphicsAllocation *>(&mappedAllocation, 1), false, true);
         ze_result_t res = changeMemoryOperationStatusToL0ResultType(success);
         if (res != ZE_RESULT_SUCCESS) {
             NEO::OsContext *osContext = &allocationNode->device->getDefaultEngine().commandStreamReceiver->getOsContext();
             this->driverHandle->getMemoryManager()->unMapPhysicalDeviceMemoryFromVirtualMemory(allocData.gpuAllocations, mappedAllocation, reinterpret_cast<uint64_t>(ptr), size, osContext, virtualMemoryReservation->rootDeviceIndex);
             return res;
         }
+        mappedAllocation->setUserManagedResidency(true);
         NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;
         mappedRange->ptr = ptr;
         mappedRange->size = size;

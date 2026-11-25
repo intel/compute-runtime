@@ -1774,6 +1774,81 @@ HWTEST_F(DrmMemoryOperationsHandlerBindPerContextVmDecompressTest, givenPerConte
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+template <typename FamilyType>
+struct RegisteredOsContextNotInDeviceEngines {
+    RegisteredOsContextNotInDeviceEngines(ExecutionEnvironment &executionEnvironment, MemoryManager &memoryManager, Device &device)
+        : csr(executionEnvironment, device.getRootDeviceIndex(), device.getDeviceBitfield()) {
+        osContext = memoryManager.createAndRegisterOsContext(&csr, EngineDescriptorHelper::getDefaultDescriptor(device.getDeviceBitfield()));
+        csr.setupContext(*osContext);
+    }
+
+    VariableBackup<uint32_t> maxOsContextCountBackup{&MemoryManager::maxOsContextCount, MemoryManager::maxOsContextCount + 1};
+    UltCommandStreamReceiver<FamilyType> csr;
+    OsContext *osContext = nullptr;
+};
+
+using DrmMemoryOperationsHandlerBindPerContextVmResidencyTest = DrmMemoryOperationsHandlerBindWithPerContextVms;
+
+HWTEST_F(DrmMemoryOperationsHandlerBindPerContextVmResidencyTest, givenPerContextVmsAndContextNotInDeviceEnginesWhenMakeResidentAndEvictOnDeviceThenResidencyIsUpdatedInAllRegisteredContexts) {
+    RegisteredOsContextNotInDeviceEngines<FamilyType> extraContext(*executionEnvironment, *memoryManager, *device);
+    auto osContext = extraContext.osContext;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    auto &registeredEngines = memoryManager->getRegisteredEngines(device->getRootDeviceIndex());
+    ASSERT_GT(registeredEngines.size(), device->getAllEngines().size());
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false));
+    EXPECT_TRUE(osContext->isInitialized());
+    for (const auto &engine : registeredEngines) {
+        EXPECT_TRUE(allocation->isAlwaysResident(engine.osContext->getContextId()));
+    }
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->isResident(device, *allocation));
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->evict(device, *allocation));
+    for (const auto &engine : registeredEngines) {
+        EXPECT_FALSE(allocation->isAlwaysResident(engine.osContext->getContextId()));
+    }
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, operationHandler->isResident(device, *allocation));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindPerContextVmResidencyTest, givenPerContextVmsWhenMakeResidentOnSubDeviceThenAllocationIsResidentInRegisteredContextsUsingItsTileOnly) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+    auto subDevice = device->getSubDevice(1u);
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->makeResident(subDevice, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false));
+
+    for (const auto &engine : memoryManager->getRegisteredEngines(device->getRootDeviceIndex())) {
+        EXPECT_EQ(engine.osContext->getDeviceBitfield().test(1u), allocation->isAlwaysResident(engine.osContext->getContextId()));
+    }
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->isResident(subDevice, *allocation));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, operationHandler->isResident(device->getSubDevice(0u), *allocation));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenSharedVmAndContextNotInDeviceEnginesWhenMakeResidentOnDeviceThenOnlyDeviceEnginesAreHandled) {
+    RegisteredOsContextNotInDeviceEngines<FamilyType> extraContext(*executionEnvironment, *memoryManager, *device);
+    auto osContext = extraContext.osContext;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false));
+
+    EXPECT_FALSE(osContext->isInitialized());
+    EXPECT_FALSE(allocation->isAlwaysResident(osContext->getContextId()));
+    for (const auto &engine : device->getAllEngines()) {
+        EXPECT_TRUE(allocation->isAlwaysResident(engine.osContext->getContextId()));
+    }
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWithPendingGpuWorkWhenDecompressCalledThenItDoesNotWaitForEnginesAndIssuesDecompressBind) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);

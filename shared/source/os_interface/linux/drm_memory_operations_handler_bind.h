@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 
@@ -34,6 +35,7 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
     MemoryOperationsStatus waitForAsyncResidency(OsContext *osContext, GraphicsAllocation *gfxAllocation) override;
 
   protected:
+    const EngineControlContainer &getEnginesForResidency(Device *device) const;
     int evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield) override;
 };
 } // namespace NEO

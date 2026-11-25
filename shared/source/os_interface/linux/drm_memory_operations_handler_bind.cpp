@@ -30,10 +30,26 @@ DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(const RootDeviceE
 
 DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 
+namespace {
+bool isEngineInResidencyScope(const EngineControl &engine, const Device &device) {
+    return (engine.osContext->getDeviceBitfield() & device.getDeviceBitfield()).any();
+}
+} // namespace
+
+const EngineControlContainer &DrmMemoryOperationsHandlerBind::getEnginesForResidency(Device *device) const {
+    // with per-context VMs every registered context has its own VM
+    if (rootDeviceEnvironment.osInterface->getDriverModel()->as<Drm>()->isPerContextVMRequired()) {
+        return rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex);
+    }
+    return device->getAllEngines();
+}
+
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) {
-    auto &engines = device->getAllEngines();
     MemoryOperationsStatus result = MemoryOperationsStatus::success;
-    for (const auto &engine : engines) {
+    for (const auto &engine : getEnginesForResidency(device)) {
+        if (!isEngineInResidencyScope(engine, *device)) {
+            continue;
+        }
         engine.commandStreamReceiver->initializeResources(device->getPreemptionMode());
         result = this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false, forcePagingFence, true);
         if (result != MemoryOperationsStatus::success) {
@@ -155,10 +171,12 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evict(Device *device, GraphicsAllocation &gfxAllocation) {
-    auto &engines = device->getAllEngines();
     auto retVal = MemoryOperationsStatus::success;
     gfxAllocation.setLockedMemory(false);
-    for (const auto &engine : engines) {
+    for (const auto &engine : getEnginesForResidency(device)) {
+        if (!isEngineInResidencyScope(engine, *device)) {
+            continue;
+        }
         retVal = this->evictWithinOsContext(engine.osContext, gfxAllocation);
         if (retVal != MemoryOperationsStatus::success) {
             return retVal;
@@ -202,8 +220,10 @@ int DrmMemoryOperationsHandlerBind::evictImpl(OsContext *osContext, GraphicsAllo
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
     bool isResident = true;
-    auto &engines = device->getAllEngines();
-    for (const auto &engine : engines) {
+    for (const auto &engine : getEnginesForResidency(device)) {
+        if (!isEngineInResidencyScope(engine, *device)) {
+            continue;
+        }
         isResident &= gfxAllocation.isAlwaysResident(engine.osContext->getContextId());
     }
 

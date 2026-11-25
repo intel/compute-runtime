@@ -207,7 +207,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 }
 
 void CommandContainer::addToResidencyContainer(GraphicsAllocation *alloc) {
-    if (alloc == nullptr) {
+    if (alloc == nullptr || alloc->isUserManagedResidency()) {
         return;
     }
     if (alloc->getResidencyContainerStamp() == this->residencyContainerStamp) {

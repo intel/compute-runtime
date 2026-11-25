@@ -2060,7 +2060,7 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAlloca
     context->freeMem(dstBuffer);
 }
 
-HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDeviceAllocationThenResidencyContainerHasNoUntouchedMappedAllocations) {
+HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDeviceAllocationThenMappedPhysicalAllocationsAreNotAddedToResidencyContainer) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -2089,22 +2089,14 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevic
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
-    auto isPhys2Resident = [&](auto &cmdList) {
-        for (auto alloc : cmdList->getCmdContainer().getResidencyContainer()) {
-            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress)) {
-                return true;
-            }
-        }
-        return false;
+    commandList->appendMemoryCopy(dstBuffer, srcPtr, 2 * size, nullptr, 0, nullptr, copyParams);
+
+    auto isMappedPhysicalAllocation = [&](const NEO::GraphicsAllocation *alloc) {
+        return alloc && (alloc->getGpuAddress() == reinterpret_cast<uint64_t>(dstBuffer) ||
+                         alloc->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAddress));
     };
-
-    commandList->appendMemoryCopy(dstBuffer, srcPtr, size, nullptr, 0, nullptr, copyParams);
-    EXPECT_FALSE(isPhys2Resident(commandList));
-
-    auto commandList2 = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
-    commandList2->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    commandList2->appendMemoryCopy(dstBuffer, srcPtr, 2 * size, nullptr, 0, nullptr, copyParams);
-    EXPECT_TRUE(isPhys2Resident(commandList2));
+    const auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
+    EXPECT_TRUE(std::none_of(residencyContainer.begin(), residencyContainer.end(), isMappedPhysicalAllocation));
 
     res = context->unMapVirtualMem(dstBuffer, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -2288,32 +2280,20 @@ struct CommandListReservationResidencyTest : CommandListTest {
     std::vector<NEO::GraphicsAllocation *> chunkAllocations;
 };
 
-HWTEST_F(CommandListReservationResidencyTest, givenReservationWithManyDeviceMappingsWhenResolvingAlignedAllocationThenOnlyTouchedChunksAreAddedToResidency) {
+HWTEST_F(CommandListReservationResidencyTest, givenReservationWithManyDeviceMappingsWhenResolvingAlignedAllocationAcrossChunksThenNoChunksAreAddedToResidency) {
     constexpr size_t deviceChunkSize = MemoryConstants::pageSize64k;
     constexpr size_t chunkCount = 8u;
     reserveAndMapChunks(deviceChunkSize, chunkCount, 0u);
     ASSERT_EQ(chunkCount, chunkAllocations.size());
 
-    struct {
-        size_t offset;
-        size_t size;
-        size_t firstChunk;
-        size_t lastChunk;
-    } testCases[] = {
-        {3 * deviceChunkSize + MemoryConstants::pageSize, MemoryConstants::pageSize, 3, 3},
-        {3 * deviceChunkSize + deviceChunkSize / 2, deviceChunkSize, 3, 4},
-        {3 * deviceChunkSize + deviceChunkSize / 2, 2 * deviceChunkSize, 3, 5},
-    };
-
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList->getCmdContainer().clearResidencyContainer();
 
-    for (const auto &testCase : testCases) {
-        commandList->getCmdContainer().clearResidencyContainer();
-        auto outData = commandList->resolveAlignedAllocation(device, ptrOffset(reservedBuffer, testCase.offset), testCase.size, nullptr, {});
-        commandList->getCmdContainer().addToResidencyContainer(outData.alloc);
-        expectOnlyChunksResident(*commandList, testCase.firstChunk, testCase.lastChunk);
-    }
+    auto outData = commandList->resolveAlignedAllocation(device, ptrOffset(reservedBuffer, 3 * deviceChunkSize + deviceChunkSize / 2), 2 * deviceChunkSize, nullptr, {});
+    commandList->getCmdContainer().addToResidencyContainer(outData.alloc);
+
+    EXPECT_TRUE(commandList->getCmdContainer().getResidencyContainer().empty());
 }
 
 HWTEST_F(CommandListReservationResidencyTest, givenReservationWithHostMappingsWhenResolvingAlignedAllocationAcrossChunkBoundaryThenOnlyTouchedChunksAreAddedToResidency) {

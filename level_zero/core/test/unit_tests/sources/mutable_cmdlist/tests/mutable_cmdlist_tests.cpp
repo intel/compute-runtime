@@ -81,6 +81,25 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenAllocationWithUserManagedResidencyWhenAddingToMutableResidencyThenOnlyDriverManagedAllocationIsAdded) {
+    NEO::MockGraphicsAllocation userManagedAllocation;
+    userManagedAllocation.setUserManagedResidency(true);
+    NEO::MockGraphicsAllocation driverManagedAllocation;
+
+    mutableCommandList->addToResidencyContainer(&userManagedAllocation, false);
+    mutableCommandList->addToResidencyContainer(&driverManagedAllocation, false);
+
+    auto &addedAllocations = static_cast<L0::ult::WhiteBoxMutableResidencyAllocations &>(mutableCommandList->mutableAllocations).addedAllocations;
+    auto isAdded = [&addedAllocations](const NEO::GraphicsAllocation *allocation) {
+        return std::any_of(addedAllocations.begin(), addedAllocations.end(),
+                           [allocation](const L0::MCL::AllocationReference &ref) { return ref.allocation == allocation; });
+    };
+    EXPECT_FALSE(isAdded(&userManagedAllocation));
+    EXPECT_TRUE(isAdded(&driverManagedAllocation));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenInvalidCoreFamilyWhenCreatingCommandListThenNoObjectCreated) {
     ze_result_t returnValue;
 

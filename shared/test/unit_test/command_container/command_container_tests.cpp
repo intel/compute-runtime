@@ -576,6 +576,23 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddNullPtrToResidenc
     EXPECT_EQ(cmdContainer.getResidencyContainer().size(), size);
 }
 
+TEST_F(CommandContainerTest, givenAllocationWithUserManagedResidencyWhenAddingToResidencyContainerThenItIsNotAdded) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    auto &residencyContainer = cmdContainer.getResidencyContainer();
+    auto size = residencyContainer.size();
+
+    MockGraphicsAllocation userManagedAllocation;
+    userManagedAllocation.setUserManagedResidency(true);
+    cmdContainer.addToResidencyContainer(&userManagedAllocation);
+    EXPECT_EQ(size, residencyContainer.size());
+
+    MockGraphicsAllocation driverManagedAllocation;
+    cmdContainer.addToResidencyContainer(&driverManagedAllocation);
+    ASSERT_EQ(size + 1, residencyContainer.size());
+    EXPECT_EQ(&driverManagedAllocation, residencyContainer.back());
+}
+
 TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenCmdBuffersAreAddedToResidencyContainer) {
     CommandContainer cmdContainer;
     EXPECT_EQ(cmdContainer.getResidencyContainer().size(), 0u);
