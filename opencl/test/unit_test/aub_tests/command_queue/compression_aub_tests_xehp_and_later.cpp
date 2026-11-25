@@ -120,6 +120,8 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedBuffersWhenWriting
 template <bool testLocalMemory>
 template <typename FamilyType>
 void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferWhenItIsUsedThenDataIsCorrect() {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
     const size_t imageWidth = 16;
     const size_t imageHeight = 16;
 
@@ -187,6 +189,8 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferW
 template <bool testLocalMemory>
 template <typename FamilyType>
 void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImageWhenReadingThenResultsAreCorrect() {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
     const size_t imageWidth = 8;
     const size_t imageHeight = 4;
     const size_t perChannelDataSize = sizeof(cl_float);

@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
@@ -145,6 +146,8 @@ void CompressionL0AubFixture<useLocalMemory>::givenCompressedBuffersWhenWritingA
 template <bool useLocalMemory>
 template <typename FamilyType>
 void CompressionL0AubFixture<useLocalMemory>::givenCompressedImage2DFromBufferWhenItIsUsedThenDataIsCorrect() {
+    REQUIRE_IMAGES_OR_SKIP(NEO::defaultHwInfo);
+
     constexpr uint32_t imageWidth = 16;
     constexpr uint32_t imageHeight = 16;
     constexpr size_t bufferSize = 64 * MemoryConstants::kiloByte;
@@ -202,6 +205,8 @@ void CompressionL0AubFixture<useLocalMemory>::givenCompressedImage2DFromBufferWh
 template <bool useLocalMemory>
 template <typename FamilyType>
 void CompressionL0AubFixture<useLocalMemory>::givenCompressedImageWhenReadingThenResultsAreCorrect() {
+    REQUIRE_IMAGES_OR_SKIP(NEO::defaultHwInfo);
+
     constexpr uint32_t imageWidth = 8;
     constexpr uint32_t imageHeight = 4;
     constexpr size_t perChannelDataSize = sizeof(float);
