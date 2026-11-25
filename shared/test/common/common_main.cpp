@@ -34,11 +34,14 @@
 #include "gtest/gtest.h"
 #include "hw_cmds_default.h"
 
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <mutex>
 #include <optional>
+#include <sstream>
 #include <thread>
 #if !defined(__linux__)
 #include <regex>

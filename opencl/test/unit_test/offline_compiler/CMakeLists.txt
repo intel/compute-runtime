@@ -113,6 +113,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/mock_io_functions.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_matcher_registry.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/custom_event_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/ult_main_helpers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/ult_main_helpers.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
