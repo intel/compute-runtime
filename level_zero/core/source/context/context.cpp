@@ -203,23 +203,22 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
         unifiedMemoryProperties.allocationFlags.flags.readOnly = 1;
     }
 
-    auto isUnalignedReadOnlyImport = [&](const void *importPtr, size_t importSize) {
-        return unifiedMemoryProperties.allocationFlags.flags.readOnly && NEO::debugManager.flags.EnableUsmHostPtrFragments.get() == 1 &&
-               !(isAligned<MemoryConstants::pageSize>(importPtr) && isAligned<MemoryConstants::pageSize>(importSize));
-    };
-
     if (hostMemDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
-        if (isUnalignedReadOnlyImport(*ptr, size)) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
     }
 
     unifiedMemoryProperties.ipcHandleTypeFlags = lookupTable.ipcHandleTypeFlags;
 
     if (lookupTable.isExternalMemmapSystem) {
-        if (isUnalignedReadOnlyImport(lookupTable.externalMemmapSystem.systemMemory, lookupTable.externalMemmapSystem.size)) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        const bool unalignedImport = NEO::debugManager.flags.EnableUsmHostPtrFragments.get() == 1 &&
+                                     !isAligned<MemoryConstants::pageSize>(lookupTable.externalMemmapSystem.systemMemory, lookupTable.externalMemmapSystem.size);
+        if (unalignedImport) {
+            if (unifiedMemoryProperties.allocationFlags.flags.readOnly) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            if (alignment != 0) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
+            }
         }
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(lookupTable.externalMemmapSystem.systemMemory);
         unifiedMemoryProperties.isExternalMemmapAllocation = true;

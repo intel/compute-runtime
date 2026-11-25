@@ -1155,36 +1155,14 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithDefaultDescriptorsThenCachedRes
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MemoryTest, givenUsmHostPtrFragmentsEnabledWhenAllocatingReadOnlyHostMemoryWithUseHostPtrFlagThenUnalignedHostPtrOrSizeIsRejected) {
+TEST_F(MemoryTest, givenUnalignedUseHostPtrWhenAllocatingReadOnlyHostMemoryThenAllocationIsNotRejected) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableUsmHostPtrFragments.set(1);
     auto buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
     ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.flags = ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR | ZE_HOST_MEM_ALLOC_FLAG_MEM_READ_ONLY;
 
-    void *ptr = ptrOffset(buffer, 0x40);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocHostMem(&hostDesc, MemoryConstants::pageSize, 1u, &ptr));
-    ptr = buffer;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocHostMem(&hostDesc, MemoryConstants::pageSize + 1, 1u, &ptr));
-
-    ptr = buffer;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, MemoryConstants::pageSize, 1u, &ptr));
-    EXPECT_EQ(buffer, ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
-    alignedFree(buffer);
-}
-
-TEST_F(MemoryTest, givenUnalignedUseHostPtrWhenAllocatingHostMemoryWithoutReadOnlyFlagOrWithUsmHostPtrFragmentsDisabledThenAllocationIsNotRejected) {
-    DebugManagerStateRestore restorer;
-    auto buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-    ze_host_mem_alloc_desc_t hostDesc = {};
-
     for (const int32_t usmHostPtrFragments : {0, 1}) {
         debugManager.flags.EnableUsmHostPtrFragments.set(usmHostPtrFragments);
-        hostDesc.flags = ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR;
-        if (usmHostPtrFragments == 0) {
-            hostDesc.flags |= ZE_HOST_MEM_ALLOC_FLAG_MEM_READ_ONLY;
-        }
         void *ptr = ptrOffset(buffer, 0x40);
         EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, MemoryConstants::pageSize, 1u, &ptr));
         EXPECT_EQ(ptrOffset(buffer, 0x40), ptr);
@@ -1226,9 +1204,32 @@ TEST_F(MemoryTest, givenUnalignedExternalMemmapWhenAllocatingHostMemoryWithoutRe
     for (const int32_t usmHostPtrFragments : {0, 1}) {
         debugManager.flags.EnableUsmHostPtrFragments.set(usmHostPtrFragments);
         hostDesc.flags = usmHostPtrFragments == 0 ? static_cast<ze_host_mem_alloc_flags_t>(ZE_HOST_MEM_ALLOC_FLAG_MEM_READ_ONLY) : 0u;
+        const size_t alignment = usmHostPtrFragments == 0 ? 1u : 0u;
         void *ptr = nullptr;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, MemoryConstants::pageSize, 1u, &ptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, MemoryConstants::pageSize, alignment, &ptr));
         EXPECT_EQ(ptrOffset(buffer, 0x40), ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    }
+    alignedFree(buffer);
+}
+
+TEST_F(MemoryTest, givenUsmHostPtrFragmentsEnabledWhenAllocatingHostMemoryWithUnalignedExternalMemmapAndNonZeroAlignmentThenUnsupportedAlignmentIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUsmHostPtrFragments.set(1);
+    auto buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    const std::pair<void *, size_t> unalignedRanges[] = {{ptrOffset(buffer, 0x40), MemoryConstants::pageSize}, {buffer, 100u}};
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+
+    for (const auto &[systemMemory, size] : unalignedRanges) {
+        sysMemDesc.pSystemMemory = systemMemory;
+        sysMemDesc.size = size;
+        void *ptr = nullptr;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT, context->allocHostMem(&hostDesc, size, MemoryConstants::pageSize, &ptr));
+        EXPECT_EQ(nullptr, ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 0u, &ptr));
+        EXPECT_EQ(systemMemory, ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
     }
     alignedFree(buffer);
