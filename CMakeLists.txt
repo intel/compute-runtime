@@ -228,10 +228,7 @@ if(UNIX)
   set(CMAKE_EXE_LINKER_FLAGS_RELEASEINTERNAL "${CMAKE_EXE_LINKER_FLAGS_RELEASEINTERNAL} -g")
 endif()
 
-string(TOLOWER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_lower)
-if("${BUILD_TYPE_lower}" STREQUAL "releaseinternal")
-  add_definitions(-D_RELEASE_INTERNAL)
-endif("${BUILD_TYPE_lower}" STREQUAL "releaseinternal")
+add_compile_definitions($<$<CONFIG:ReleaseInternal>:_RELEASE_INTERNAL>)
 
 message(STATUS "${CMAKE_BUILD_TYPE} build configuration")
 

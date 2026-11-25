@@ -112,10 +112,6 @@ if(BUILD_WITH_L0)
   # Get build type
   string(TOLOWER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 
-  if("${BUILD_TYPE}" STREQUAL "debug")
-    add_definitions(-DZE_DEBUG)
-  endif()
-
   include_directories(${COMPUTE_RUNTIME_DIR}/third_party/opencl_headers)
 
   if(NOT DEFINED NEO_IGSC_HEADERS_DIR)

@@ -61,8 +61,10 @@ set(CLOC_SEGFAULT_TEST_INCLUDES
     ${NEO_SOURCE_DIR}
 )
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR(WIN32 AND NOT MSVC AND ${CMAKE_BUILD_TYPE} STREQUAL "Release"))
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_compile_definitions(ocloc_segfault_test PRIVATE SKIP_SEGFAULT_TEST=1)
+elseif(WIN32 AND NOT MSVC)
+  target_compile_definitions(ocloc_segfault_test PRIVATE $<$<CONFIG:Release>:SKIP_SEGFAULT_TEST=1>)
 endif()
 
 get_property(CLOC_FOLDER TARGET ocloc PROPERTY FOLDER)
