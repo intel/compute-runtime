@@ -135,6 +135,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, WaitpkgThreshold, -1, "-1: use default, >=0: Whe
 DECLARE_DEBUG_VARIABLE(int32_t, ForceL1Caching, -1, "Program L1 cache policy for surface state and stateless accesses; values = -1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationEnabled, -1, "Require AUX translation for kernels; values = -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideStatelessMocsIndex, -1, "Program provided MOCS index for stateless accesses in state base address for regular buffers; ignore when -1")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideHeaplessInstructionMocsIndex, -1, "Program provided MOCS index for instruction fetch in heapless state base address; ignore when -1")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMocsIndexForScratchSpace, -1, "Program provided MOCS index for stateful accesses in surface state for scratch space; ignore when -1")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEFusedEUDispatch, -1, "Set Fused EU dispatch in FrontEnd State command; values = -1: default, 0: enabled, 1: disabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationMode, -1, "Override AUX Translation mode; values = -1: default, 0: none, 1: builtin, 2: blit")

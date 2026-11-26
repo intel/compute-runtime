@@ -97,6 +97,11 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
         args.stateBaseAddressCmd->setInstructionMemoryObjectControlState(args.gmmHelper->getHeapMOCS());
+    } else if (args.heaplessModeEnabled) {
+        constexpr uint32_t mocsIndexUsingPageTableCachePolicy = 0u;
+        const auto instructionMocsIndex = debugManager.flags.OverrideHeaplessInstructionMocsIndex.getIfNotDefault(mocsIndexUsingPageTableCachePolicy);
+        args.stateBaseAddressCmd->setInstructionBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setInstructionMemoryObjectControlState(instructionMocsIndex << 1);
     }
 
     if (args.setGeneralStateBaseAddress) {

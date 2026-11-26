@@ -476,6 +476,52 @@ SBA_HWTEST_F(SbaTest, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabl
     EXPECT_EQ(0u, sbaCmd.getInstructionMemoryObjectControlState());
 }
 
+SBA_HWTEST_F(SbaTest, givenHeaplessModeAndInstructionBaseAddressNotSetWhenProgrammingSbaThenInstructionMocsIndexZeroIsProgrammed) {
+    typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getGmmHelper());
+    args.heaplessModeEnabled = true;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(sbaCmd.getInstructionBaseAddressModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getInstructionMemoryObjectControlState());
+    EXPECT_EQ(0ull, sbaCmd.getInstructionBaseAddress());
+    EXPECT_FALSE(sbaCmd.getInstructionBufferSizeModifyEnable());
+}
+
+SBA_HWTEST_F(SbaTest, givenHeaplessModeAndOverrideHeaplessInstructionMocsIndexWhenProgrammingSbaThenProvidedInstructionMocsIndexIsProgrammed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideHeaplessInstructionMocsIndex.set(1);
+
+    typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getGmmHelper());
+    args.heaplessModeEnabled = true;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(sbaCmd.getInstructionBaseAddressModifyEnable());
+    EXPECT_EQ(1u << 1, sbaCmd.getInstructionMemoryObjectControlState());
+}
+
+SBA_HWTEST_F(SbaTest, givenHeaplessModeAndInstructionBaseAddressSetWhenProgrammingSbaThenInstructionMocsIsSameAsWithoutHeaplessMode) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideHeaplessInstructionMocsIndex.set(7);
+
+    typename FamilyType::STATE_BASE_ADDRESS heapfulSbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> heapfulArgs = createSbaHelperArgs<FamilyType>(&heapfulSbaCmd, pDevice->getGmmHelper());
+    heapfulArgs.setInstructionStateBaseAddress = true;
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(heapfulArgs);
+
+    typename FamilyType::STATE_BASE_ADDRESS heaplessSbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> heaplessArgs = createSbaHelperArgs<FamilyType>(&heaplessSbaCmd, pDevice->getGmmHelper());
+    heaplessArgs.setInstructionStateBaseAddress = true;
+    heaplessArgs.heaplessModeEnabled = true;
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(heaplessArgs);
+
+    EXPECT_TRUE(heaplessSbaCmd.getInstructionBaseAddressModifyEnable());
+    EXPECT_EQ(heapfulSbaCmd.getInstructionMemoryObjectControlState(), heaplessSbaCmd.getInstructionMemoryObjectControlState());
+}
+
 HWCMDTEST_F(IGFX_GEN12LP_CORE, SbaTest, givenSbaProgrammingWhenHeapsAreNotProvidedThenDontProgram) {
     auto gmmHelper = pDevice->getGmmHelper();
 
