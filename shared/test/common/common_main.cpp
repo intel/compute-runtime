@@ -19,6 +19,7 @@
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
+#include "shared/test/common/helpers/inject_debug_keys.h"
 #include "shared/test/common/helpers/mock_sip_listener.h"
 #include "shared/test/common/helpers/skipped_aub_test_file_remover.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -516,11 +517,21 @@ int main(int argc, char **argv) {
             }
         }
 
+        std::optional<DebugVariables> flagsBeforeDebugKeys;
         if (!isAubTestMode(testMode)) {
             MockBuiltinBinaries::registerForDevice(hwInfoForTests);
+        } else {
+            std::string debugKeysEnvNamePrefix = std::string("NEO_AUB_TESTS_") + hardwarePrefix[productFamily] + "_";
+            std::transform(debugKeysEnvNamePrefix.begin(), debugKeysEnvNamePrefix.end(), debugKeysEnvNamePrefix.begin(), ::toupper);
+            flagsBeforeDebugKeys = debugManager.flags;
+            VariableBackup<decltype(NEO::IoFunctions::getenvPtr)> getenvBackup(&NEO::IoFunctions::getenvPtr, &getenv);
+            injectDebugKeys(debugManager.flags, debugKeysEnvNamePrefix);
         }
 
         retVal = RUN_ALL_TESTS();
+        if (flagsBeforeDebugKeys) {
+            debugManager.flags = *flagsBeforeDebugKeys;
+        }
         cleanupSignals();
 
         virtualFileListTestKernelsOnly.clear();

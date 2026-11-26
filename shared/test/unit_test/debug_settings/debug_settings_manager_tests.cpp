@@ -18,6 +18,7 @@
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/inject_debug_keys.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -892,4 +893,31 @@ TEST(DebugSettingsManager, givenNoSettingsFileOrKeyMissingFromItWhenRefreshEnvVa
 
         EXPECT_EQ("COMPOSITE", debugManager.flags.ZE_FLAT_DEVICE_HIERARCHY.get());
     }
+}
+
+TEST(InjectDebugKeysTest, givenEnvVariablesWithPrefixWhenInjectingDebugKeysThenDebugAndReleaseKeysAreSetFromThemAndOtherEnvVariablesAreIgnored) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"PREFIX_TbxPort", "1234"},
+                                                                 {"PREFIX_AubDumpAddMmioRegistersList", "0x1A09C;0x10001000;0x2000;0x5"},
+                                                                 {"PREFIX_OverrideDefaultFP64Settings", "1"},
+                                                                 {"OverrideCsrAllocationSize", "8"}};
+    VariableBackup<decltype(NEO::IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::DebugVariables flags;
+    flags.OverrideCsrAllocationSize.set(7);
+
+    NEO::injectDebugKeys(flags, "PREFIX_");
+
+    EXPECT_EQ(1234, flags.TbxPort.get());
+    EXPECT_STREQ("0x1A09C;0x10001000;0x2000;0x5", flags.AubDumpAddMmioRegistersList.get().c_str());
+    EXPECT_EQ(1, flags.OverrideDefaultFP64Settings.get());
+    EXPECT_EQ(7, flags.OverrideCsrAllocationSize.get());
+}
+
+TEST(InjectDebugKeysTest, givenKeyThatNeedsTranslationWhenInjectingDebugKeysThenItIsTranslated) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"PREFIX_FlushAllCaches", "1"}};
+    VariableBackup<decltype(NEO::IoFunctions::mockableEnvValues)> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
+    NEO::DebugVariables flags;
+
+    NEO::injectDebugKeys(flags, "PREFIX_");
+
+    EXPECT_EQ(NEO::FlushCachesBitmask::allCaches, flags.FlushAllCaches.get());
 }

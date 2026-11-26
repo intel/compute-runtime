@@ -96,6 +96,8 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_variables_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/execution_environment_helper.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/inject_debug_keys.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/inject_debug_keys.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
