@@ -102,7 +102,6 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWithOverrideGpuAddressSpaceWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAubManagerIsInitializedWithCorrectGpuAddressSpace) {
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.UseAubStream.set(1);
     debugManager.flags.SetCommandStreamReceiver.set(1);
     debugManager.flags.ProductFamilyOverride.set("tgllp");
     debugManager.flags.OverrideGpuAddressSpace.set(48);

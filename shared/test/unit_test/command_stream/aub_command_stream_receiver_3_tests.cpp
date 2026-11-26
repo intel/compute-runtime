@@ -697,9 +697,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenUsmAllocationWhenDumpAllocationIsCa
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST_F(AubCommandStreamReceiverTests, givenNotUsedAubStreamAndAUBDumpSubCaptureModeWhenAubCsrIsCreatedThenNonNullptrAubCsrIsReturned) {
+TEST_F(AubCommandStreamReceiverTests, givenAUBDumpSubCaptureModeWhenAubCsrIsCreatedThenNonNullptrAubCsrIsReturned) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.UseAubStream.set(false);
     debugManager.flags.AUBDumpSubCaptureMode.set(1);
 
     std::string aubFileName = "";

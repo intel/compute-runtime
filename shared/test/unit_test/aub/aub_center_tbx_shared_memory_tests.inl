@@ -28,7 +28,6 @@ namespace NEO {
 
 struct AubCenterTbxSharedMemoryTests : public ::testing::Test {
     void SetUp() override {
-        debugManager.flags.UseAubStream.set(true);
         debugManager.flags.PrintDebugMessages.set(true);
         debugManager.flags.TbxSharedSystemMemoryFile.set("system_memory.bin");
         useSmallMemoryBanks(rootDeviceEnvironment);

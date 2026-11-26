@@ -30,16 +30,7 @@ struct AubCenterTests : public ::testing::Test {
     RootDeviceEnvironment &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 };
 
-TEST_F(AubCenterTests, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAubCenterDoesNotCreateAubManager) {
-    debugManager.flags.UseAubStream.set(false);
-
-    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::aub);
-    EXPECT_EQ(nullptr, aubCenter.aubManager.get());
-}
-
 TEST_F(AubCenterTests, GivenDefaultSetCommandStreamReceiverFlagAndAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
-    debugManager.flags.UseAubStream.set(true);
-
     std::string aubFile("test.aub");
     auto mode = AubCenter::getAubStreamMode(aubFile, CommandStreamReceiverType::aub);
 
@@ -47,8 +38,6 @@ TEST_F(AubCenterTests, GivenDefaultSetCommandStreamReceiverFlagAndAubFileNameWhe
 }
 
 TEST_F(AubCenterTests, GivenCsrHwAndEmptyAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
-    debugManager.flags.UseAubStream.set(true);
-
     std::string aubFile("");
     auto mode = AubCenter::getAubStreamMode(aubFile, CommandStreamReceiverType::hardware);
 
@@ -56,8 +45,6 @@ TEST_F(AubCenterTests, GivenCsrHwAndEmptyAubFileNameWhenGettingAubStreamModeThen
 }
 
 TEST_F(AubCenterTests, GivenCsrHwAndNotEmptyAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
-    debugManager.flags.UseAubStream.set(true);
-
     std::string aubFile("test.aub");
     auto mode = AubCenter::getAubStreamMode(aubFile, CommandStreamReceiverType::hardware);
 
@@ -77,8 +64,6 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
         {REVISION_D, aub_stream::SteppingValues::D},
         {REVISION_K, aub_stream::SteppingValues::K}};
 
-    debugManager.flags.UseAubStream.set(true);
-
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     for (auto steppingPair : steppingPairsToTest) {
@@ -94,8 +79,6 @@ TEST_F(AubCenterTests, WhenAubManagerIsCreatedThenCorrectSteppingIsSet) {
 }
 
 HWTEST_F(AubCenterTests, whenCreatingAubManagerThenCorrectProductFamilyIsPassed) {
-    debugManager.flags.UseAubStream.set(true);
-
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
 
     const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
@@ -113,8 +96,6 @@ HWTEST_F(AubCenterTests, whenCreatingAubManagerThenCorrectProductFamilyIsPassed)
 }
 
 TEST_F(AubCenterTests, GivenCsrTypeWhenGettingAubStreamModeThenCorrectModeIsReturned) {
-    debugManager.flags.UseAubStream.set(true);
-
     std::string aubFile("test.aub");
 
     auto mode = AubCenter::getAubStreamMode(aubFile, CommandStreamReceiverType::aub);
@@ -141,7 +122,6 @@ TEST_F(AubCenterTests, GivenAubStreamModeWhenGettingTranslationTableSharedMemory
 }
 
 TEST_F(AubCenterTests, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubManagerIsCreatedThenCsrTypeDefinesAubStreamMode) {
-    debugManager.flags.UseAubStream.set(true);
     debugManager.flags.SetCommandStreamReceiver.set(-1);
 
     std::vector<CommandStreamReceiverType> aubTypes = {CommandStreamReceiverType::hardware,
@@ -161,8 +141,6 @@ TEST_F(AubCenterTests, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubMan
 }
 
 TEST_F(AubCenterTests, GivenSetCommandStreamReceiverFlagSetWhenAubManagerIsCreatedThenDebugFlagDefinesAubStreamMode) {
-    debugManager.flags.UseAubStream.set(true);
-
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
 
     MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::aub);

@@ -65,7 +65,7 @@ void RootDeviceEnvironment::initAubCenter(bool localMemoryEnabled, const std::st
         UNRECOVERABLE_IF(!getGmmHelper());
         aubCenter.reset(new AubCenter(*this, localMemoryEnabled, aubFileName, csrType));
     }
-    if (debugManager.flags.UseAubStream.get() && aubCenter->getAubManager() == nullptr) {
+    if (aubCenter->getAubManager() == nullptr) {
         printToStderr("ERROR: Simulation mode detected but Aubstream is not available.\n");
         UNRECOVERABLE_IF(true);
     }

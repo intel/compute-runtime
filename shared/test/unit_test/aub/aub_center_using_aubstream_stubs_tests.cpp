@@ -24,9 +24,8 @@ extern std::string tbxServerIp;
 extern bool tbxFrontdoorMode;
 } // namespace aub_stream_stubs
 
-TEST(AubCenter, GivenUseAubStreamAndTbxServerIpDebugVariableSetWhenAubCenterIsCreatedThenServerIpIsModified) {
+TEST(AubCenter, GivenTbxServerIpDebugVariableSetWhenAubCenterIsCreatedThenServerIpIsModified) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.UseAubStream.set(true);
     debugManager.flags.TbxServer.set("10.10.10.10");
     VariableBackup<std::string> backup(&aub_stream_stubs::tbxServerIp);
 
@@ -40,9 +39,8 @@ TEST(AubCenter, GivenUseAubStreamAndTbxServerIpDebugVariableSetWhenAubCenterIsCr
     EXPECT_STREQ("10.10.10.10", aub_stream_stubs::tbxServerIp.c_str());
 }
 
-TEST(AubCenter, GivenUseAubStreamAndTbxServerPortDebugVariableSetWhenAubCenterIsCreatedThenServerPortIsModified) {
+TEST(AubCenter, GivenTbxServerPortDebugVariableSetWhenAubCenterIsCreatedThenServerPortIsModified) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.UseAubStream.set(true);
     debugManager.flags.TbxPort.set(1234);
 
     VariableBackup<uint16_t> backup(&aub_stream_stubs::tbxServerPort);
@@ -60,7 +58,6 @@ TEST(AubCenter, GivenUseAubStreamAndTbxServerPortDebugVariableSetWhenAubCenterIs
 
 TEST(AubCenter, GivenCreateMultipleRootDevicesWhenAubCenterIsCreatedForSecondRootDeviceThenTbxServerPortIsIncremented) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.UseAubStream.set(true);
     debugManager.flags.CreateMultipleRootDevices.set(2);
 
     VariableBackup<uint16_t> backup(&aub_stream_stubs::tbxServerPort);
@@ -76,9 +73,8 @@ TEST(AubCenter, GivenCreateMultipleRootDevicesWhenAubCenterIsCreatedForSecondRoo
     EXPECT_EQ(static_cast<uint16_t>(firstPort + 1), secondPort);
 }
 
-TEST(AubCenter, GivenUseAubStreamAndTbxFrontdoorModeDebugVariableSetWhenAubCenterIsCreatedThenFrontdoorModeIsModified) {
+TEST(AubCenter, GivenTbxFrontdoorModeDebugVariableSetWhenAubCenterIsCreatedThenFrontdoorModeIsModified) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.UseAubStream.set(true);
     debugManager.flags.TbxFrontdoorMode.set(true);
 
     VariableBackup<bool> backup(&aub_stream_stubs::tbxFrontdoorMode);

@@ -849,17 +849,6 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCommandStreamReceiverWhenPhysicalAdd
     ASSERT_NE(nullptr, allocator);
 }
 
-HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenItIsCreatedWithUseAubStreamFalseThenDontInitializeAubManager) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.UseAubStream.set(false);
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), false, 1);
-    executionEnvironment.initializeMemoryManager();
-    executionEnvironment.initGmm();
-
-    auto tbxCsr = std::make_unique<TbxCommandStreamReceiverHw<FamilyType>>(executionEnvironment, 0, 1);
-    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->aubCenter->getAubManager());
-}
-
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledThenItShouldCallTheExpectedHwContextFunctions) {
     MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
@@ -1527,27 +1516,6 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
     tbxCsr.dumpAllocation(*gfxAllocation);
     EXPECT_FALSE(gfxAllocation->isAllocDumpable());
     EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
-
-    memoryManager->freeGraphicsMemory(gfxAllocation);
-}
-
-HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalledButUseAubStreamIsSetToFalseThenEarlyReturn) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.UseAubStream.set(false);
-    debugManager.flags.AUBDumpBufferFormat.set("BIN");
-
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), false, 1);
-    executionEnvironment.initializeMemoryManager();
-    executionEnvironment.initGmm();
-
-    MockTbxCsr<FamilyType> tbxCsr(executionEnvironment, 1);
-    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->aubCenter->getAubManager());
-
-    auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, pDevice->getDeviceBitfield()});
-
-    tbxCsr.dumpAllocation(*gfxAllocation);
-    EXPECT_TRUE(tbxCsr.dumpAllocationCalled);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

@@ -33,7 +33,6 @@
 using namespace NEO;
 
 using AubCommandStreamReceiverTests = Test<AubCommandStreamReceiverFixture>;
-using AubCommandStreamReceiverWithoutAubStreamTests = Test<AubCommandStreamReceiverWithoutAubStreamFixture>;
 using AubCsrTests = Test<AubCommandStreamReceiverFixture>;
 
 template <typename GfxFamily>
@@ -59,23 +58,6 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenTypeIsChe
     std::unique_ptr<CommandStreamReceiver> aubCsr(AUBCommandStreamReceiver::create("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     EXPECT_NE(nullptr, aubCsr);
     EXPECT_EQ(CommandStreamReceiverType::aub, aubCsr->getType());
-}
-
-HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverWhenItIsCreatedThenAubManagerAndHardwareContextAreNull) {
-
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), false, 1);
-    executionEnvironment.initGmm();
-    executionEnvironment.initializeMemoryManager();
-
-    executionEnvironment.rootDeviceEnvironments[0]->initAubCenter(false, "", CommandStreamReceiverType::aub);
-    executionEnvironment.rootDeviceEnvironments[0]->aubCenter->getAubManager();
-
-    DeviceBitfield deviceBitfield(1);
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, executionEnvironment, 0, deviceBitfield);
-
-    ASSERT_NE(nullptr, aubCsr);
-    EXPECT_EQ(nullptr, aubCsr->aubManager);
-    EXPECT_EQ(nullptr, aubCsr->hardwareContextController);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSettingsThenItHasImmediateDispatchModeEnabled) {
@@ -279,7 +261,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndResidentAllocationWhenProc
     EXPECT_EQ(&allocation2, memoryOperationsHandler->residentAllocations[0]);
 }
 
-HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverInSubCaptureModeWhenProcessResidencyIsCalledButAllocationSizeIsZeroThenItShouldntWriteMemory) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenProcessResidencyIsCalledButAllocationSizeIsZeroThenItShouldntWriteMemory) {
 
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
@@ -300,7 +282,7 @@ HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamRec
     EXPECT_FALSE(aubCsr->writeMemoryCalled);
 }
 
-HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldntInitializeEngineInfo) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldntInitializeEngineInfo) {
 
     AubSubCaptureCommon aubSubCaptureCommon;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
@@ -321,7 +303,7 @@ HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamRec
     EXPECT_EQ(nullptr, aubCsr->engineInfo.pRingBuffer);
 }
 
-HWTEST_F(AubCommandStreamReceiverWithoutAubStreamTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
 
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();

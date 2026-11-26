@@ -40,7 +40,6 @@
 using namespace NEO;
 
 using AubFileStreamTests = Test<AubCommandStreamReceiverFixture>;
-using AubFileStreamWithoutAubStreamTests = Test<AubCommandStreamReceiverWithoutAubStreamFixture>;
 using AubCsrTests = Test<AubCommandStreamReceiverFixture>;
 
 HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitFileIsCalledWithInvalidFileNameThenFileIsNotOpened) {
@@ -127,7 +126,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenReopenFileIsCalled
     EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIsCalledThenFileStreamShouldBeLocked) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenInitializeEngineIsCalledThenFileStreamShouldBeLocked) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
@@ -135,7 +134,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenIn
     EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenSubmitBatchBufferIsCalledThenFileStreamShouldBeLocked) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenSubmitBatchBufferIsCalledThenFileStreamShouldBeLocked) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
@@ -154,7 +153,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenSu
     EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenFileStreamShouldBeLocked) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenFileStreamShouldBeLocked) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
@@ -166,7 +165,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenWr
     EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenPollForCompletionIsCalledThenFileStreamShouldBeLocked) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenPollForCompletionIsCalledThenFileStreamShouldBeLocked) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
@@ -177,7 +176,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenPo
     EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenFileStreamShouldBeLocked) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenFileStreamShouldBeLocked) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
@@ -185,7 +184,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenEx
     EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenAddAubCommentIsCalledThenFileStreamShouldBeLocked) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenAddAubCommentIsCalledThenFileStreamShouldBeLocked) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
@@ -193,7 +192,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenAd
     EXPECT_TRUE(aubCsr->lockStreamCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenDumpAllocationIsCalledThenFileStreamShouldBeLocked) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenDumpAllocationIsCalledThenFileStreamShouldBeLocked) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     GraphicsAllocation allocation{0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
@@ -218,7 +217,7 @@ HWTEST_F(AubCsrTests, givenAubCommandStreamReceiverWithAubManagerWhenCallingAddA
     EXPECT_STREQ(comment, mockAubManager->receivedComments.c_str());
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenCallingInsertAubWaitInstructionThenCallPollForCompletion) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCallingInsertAubWaitInstructionThenCallPollForCompletion) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     ASSERT_FALSE(aubCsr->pollForCompletionCalled);
@@ -305,7 +304,7 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithHardwareContextInS
     EXPECT_FALSE(hardwareContext->pollForCompletionCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenItShouldCallTheExpectedFunctions) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryEqualIsCalledThenItShouldCallTheExpectedFunctions) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
@@ -315,7 +314,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenEx
     EXPECT_TRUE(aubCsr->expectMemoryEqualCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryNotEqualIsCalledThenItShouldCallTheExpectedFunctions) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryNotEqualIsCalledThenItShouldCallTheExpectedFunctions) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 
@@ -325,7 +324,7 @@ HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenEx
     EXPECT_TRUE(aubCsr->expectMemoryNotEqualCalled);
 }
 
-HWTEST_F(AubFileStreamWithoutAubStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryCompressedIsCalledThenItShouldCallTheExpectedFunctions) {
+HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenExpectMemoryCompressedIsCalledThenItShouldCallTheExpectedFunctions) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
 

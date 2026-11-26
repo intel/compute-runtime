@@ -47,7 +47,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, MaxSubSlicesSupportedOverride, -1, "Value to ove
 DECLARE_DEBUG_VARIABLE(bool, TbxFrontdoorMode, false, "Set TBX frontdoor mode for read and write memory accesses (the default mode is via backdoor)")
 DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-level batch buffers to AUB as single, flat batch buffer")
 DECLARE_DEBUG_VARIABLE(bool, AddPatchInfoCommentsForAUBDump, false, "Dump comments containing allocations and patching information")
-DECLARE_DEBUG_VARIABLE(bool, UseAubStream, true, "Use aubstream for aub dumping")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueReadOnly, false, "Force dumping buffers and images on clEnqueueReadBuffer/Image only (blocking calls)")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueSVMMemcpyOnly, false, "Force dumping allocations on clEnqueueSVMMemcpy only (blocking calls)")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpForceAllToLocalMemory, false, "Force placing every allocation in local memory address space")

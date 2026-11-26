@@ -25,50 +25,50 @@ namespace NEO {
 extern aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOptions &options);
 
 AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
-    if (debugManager.flags.UseAubStream.get()) {
-        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-        auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
-        const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-        auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo, releaseHelper);
-        CommandStreamReceiverType type = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), csrType);
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo, releaseHelper);
+    CommandStreamReceiverType type = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), csrType);
 
-        aubStreamMode = getAubStreamMode(aubFileName, type);
+    aubStreamMode = getAubStreamMode(aubFileName, type);
 
-        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-        const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-        auto aubStreamProductFamily = productHelper.getAubStreamProductFamily();
+    auto aubStreamProductFamily = productHelper.getAubStreamProductFamily();
 
-        stepping = productHelper.getAubStreamSteppingFromHwRevId(*hwInfo);
+    stepping = productHelper.getAubStreamSteppingFromHwRevId(*hwInfo);
 
-        auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
-        aub_stream::MMIOList extraMmioList = gfxCoreHelper.getExtraMmioList(*hwInfo, *gmmHelper);
-        aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+    aub_stream::MMIOList extraMmioList = gfxCoreHelper.getExtraMmioList(*hwInfo, *gmmHelper);
+    aub_stream::MMIOList debugMmioList = AubHelper::getAdditionalMmioList();
 
-        extraMmioList.insert(extraMmioList.end(), debugMmioList.begin(), debugMmioList.end());
+    extraMmioList.insert(extraMmioList.end(), debugMmioList.begin(), debugMmioList.end());
 
-        aub_stream::injectMMIOListLegacy(extraMmioList);
+    aub_stream::injectMMIOListLegacy(extraMmioList);
 
-        AubHelper::setTbxConfiguration(rootDeviceEnvironment.getRootDeviceIndex());
-        aub_stream::setAubStreamCaller(aub_stream::caller::neo);
+    AubHelper::setTbxConfiguration(rootDeviceEnvironment.getRootDeviceIndex());
+    aub_stream::setAubStreamCaller(aub_stream::caller::neo);
 
-        aub_stream::AubManagerOptions options{};
-        options.version = 1u;
-        options.productFamily = static_cast<uint32_t>(aubStreamProductFamily.value_or(aub_stream::ProductFamily::MaxProduct));
-        options.devicesCount = devicesCount;
-        options.memoryBankSize = memoryBankSize;
-        options.stepping = stepping;
-        options.localMemorySupported = localMemoryEnabled;
-        const bool inProcessSimulatorRequested = debugManager.flags.TbxInProcessSimulatorLibrary.get() != "unk";
-        auto sharedMemoryAubStreamMode = getSharedMemoryAubStreamMode(aubStreamMode, inProcessSimulatorRequested);
-        if (sharedMemoryAubStreamMode != aubStreamMode && enableTbxSharedMemory(rootDeviceEnvironment, inProcessSimulatorRequested, options)) {
-            aubStreamMode = sharedMemoryAubStreamMode;
-        }
-        options.mode = aubStreamMode;
-        options.gpuAddressSpace = hwInfo->capabilityTable.gpuAddressSpace;
-        options.programAdditionalEngineMMIO = productHelper.isProgramAdditionalEngineMMIORequired(*hwInfo);
+    aub_stream::AubManagerOptions options{};
+    options.version = 1u;
+    options.productFamily = static_cast<uint32_t>(aubStreamProductFamily.value_or(aub_stream::ProductFamily::MaxProduct));
+    options.devicesCount = devicesCount;
+    options.memoryBankSize = memoryBankSize;
+    options.stepping = stepping;
+    options.localMemorySupported = localMemoryEnabled;
+    const bool inProcessSimulatorRequested = debugManager.flags.TbxInProcessSimulatorLibrary.get() != "unk";
+    auto sharedMemoryAubStreamMode = getSharedMemoryAubStreamMode(aubStreamMode, inProcessSimulatorRequested);
+    if (sharedMemoryAubStreamMode != aubStreamMode && enableTbxSharedMemory(rootDeviceEnvironment, inProcessSimulatorRequested, options)) {
+        aubStreamMode = sharedMemoryAubStreamMode;
+    }
+    options.mode = aubStreamMode;
+    options.gpuAddressSpace = hwInfo->capabilityTable.gpuAddressSpace;
+    options.programAdditionalEngineMMIO = productHelper.isProgramAdditionalEngineMMIORequired(*hwInfo);
 
-        aubManager.reset(createAubManager(options));
+    aubManager.reset(createAubManager(options));
+    if (aubManager) {
         aubManager->setCCSMode(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     }
     subCaptureCommon = std::make_unique<AubSubCaptureCommon>();

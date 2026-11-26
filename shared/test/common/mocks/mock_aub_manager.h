@@ -249,3 +249,7 @@ class MockAubManager : public aub_stream::AubManager {
   protected:
     HardwareContext *hardwareContext = nullptr;
 };
+
+namespace NEO {
+extern bool createAubManagerReturnsNullptr;
+} // namespace NEO

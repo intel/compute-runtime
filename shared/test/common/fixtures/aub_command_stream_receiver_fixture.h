@@ -10,23 +10,16 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_aub_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 namespace NEO {
 struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixture {
-    bool useAubManager = true;
-
-    virtual void setUp(bool createAubManager) {
+    virtual void setUp() {
         DeviceFixture::setUp();
         MockAubCenterFixture::setUp();
         setMockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    }
-
-    virtual void setUp() {
-        setUp(true);
     }
 
     virtual void tearDown() {
@@ -43,7 +36,7 @@ struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixt
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
 
-        setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], CommandStreamReceiverType::aub, this->useAubManager);
+        setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], CommandStreamReceiverType::aub, true);
 
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
         executionEnvironment->initializeMemoryManager();
@@ -72,18 +65,6 @@ struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixt
         aubExecutionEnvironment->commandStreamReceiver = std::move(commandStreamReceiver);
         return aubExecutionEnvironment;
     }
-}; // namespace NEO
-
-struct AubCommandStreamReceiverWithoutAubStreamFixture : public AubCommandStreamReceiverFixture {
-    DebugManagerStateRestore stateRestore;
-
-    void setUp() override {
-        debugManager.flags.UseAubStream.set(false);
-        AubCommandStreamReceiverFixture::setUp(false);
-    }
-
-    void tearDown() override {
-        AubCommandStreamReceiverFixture::tearDown();
-    }
 };
+
 } // namespace NEO
