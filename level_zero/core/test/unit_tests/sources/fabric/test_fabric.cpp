@@ -492,6 +492,42 @@ TEST_F(FabricEdgeFixture, givenSubDevicesOfSameRootDeviceWhenEdgesAreCreatedThen
     EXPECT_EQ(NEO::FabricLinkTypes::mdfi, FabricEdge::fromHandle(edges[0])->linkType);
 }
 
+TEST_F(FabricEdgeFixture, givenStypeAndPNextSetWhenZeFabricEdgeGetPropertiesExpIsCalledThenStypeAndPNextArePreservedAndPropertiesAreReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricVertexGetExp(&count, nullptr));
+
+    ze_fabric_edge_exp_properties_t properties = {};
+    properties.stype = ZE_STRUCTURE_TYPE_FABRIC_EDGE_EXP_PROPERTIES;
+    for (uint8_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
+        properties.uuid.id[i] = static_cast<uint8_t>(i + 1);
+    }
+    strcpy_s(properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, "MDFI");
+    properties.bandwidth = 10;
+    properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+    properties.latency = 20;
+    properties.latencyUnit = ZE_LATENCY_UNIT_HOP;
+    properties.duplexity = ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX;
+    auto edge = FabricEdge::create(driverHandle->fabricVertices[0], driverHandle->fabricVertices[1], properties);
+
+    ze_base_properties_t extensionProperties = {};
+    ze_fabric_edge_exp_properties_t getProperties = {};
+    getProperties.stype = ZE_STRUCTURE_TYPE_FORCE_UINT32;
+    getProperties.pNext = &extensionProperties;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edge->toHandle(), &getProperties));
+
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_FORCE_UINT32, getProperties.stype);
+    EXPECT_EQ(&extensionProperties, getProperties.pNext);
+    EXPECT_EQ(0, memcmp(properties.uuid.id, getProperties.uuid.id, ZE_MAX_UUID_SIZE));
+    EXPECT_STREQ(properties.model, getProperties.model);
+    EXPECT_EQ(properties.bandwidth, getProperties.bandwidth);
+    EXPECT_EQ(properties.bandwidthUnit, getProperties.bandwidthUnit);
+    EXPECT_EQ(properties.latency, getProperties.latency);
+    EXPECT_EQ(properties.latencyUnit, getProperties.latencyUnit);
+    EXPECT_EQ(properties.duplexity, getProperties.duplexity);
+
+    delete edge;
+}
+
 TEST_F(FabricEdgeFixture, givenMdfiLinksAreAvailableWhenEdgesAreCreatedThenVerifyThatBiDirectionalEdgesAreNotCreated) {
     // initialize
     uint32_t count = 0;
@@ -585,11 +621,43 @@ TEST_F(FabricVertexFixture, givenVertexInfoWhenCreateFromVertexInfoCalledThenTyp
     ASSERT_NE(nullptr, fabricVertex);
 
     ze_fabric_vertex_exp_properties_t props{};
+    props.stype = ZE_STRUCTURE_TYPE_FABRIC_VERTEX_EXP_PROPERTIES;
     fabricVertex->getProperties(&props);
 
     EXPECT_EQ(ZE_STRUCTURE_TYPE_FABRIC_VERTEX_EXP_PROPERTIES, props.stype);
     EXPECT_EQ(ZE_FABRIC_VERTEX_EXP_TYPE_SUBDEVICE, props.type);
     EXPECT_FALSE(props.remote);
+
+    delete fabricVertex;
+}
+
+TEST_F(FabricVertexFixture, givenStypeAndPNextSetWhenZeFabricVertexGetPropertiesExpIsCalledThenStypeAndPNextArePreservedAndPropertiesAreReturned) {
+    NEO::FabricVertexInfo vertexInfo{};
+    vertexInfo.fabricId = 1u;
+    vertexInfo.type = NEO::FabricVertexType::subdevice;
+    for (uint8_t i = 0; i < sizeof(vertexInfo.uuid); i++) {
+        vertexInfo.uuid[i] = static_cast<uint8_t>(i + 1);
+    }
+    vertexInfo.pciBdf = (0x0001u << 16) | (0x02u << 8) | (0x1fu << 3) | 0x7u;
+
+    auto fabricVertex = FabricVertex::createFromVertexInfo(driverHandle->devices[0], vertexInfo);
+    ASSERT_NE(nullptr, fabricVertex);
+
+    ze_base_properties_t extensionProperties = {};
+    ze_fabric_vertex_exp_properties_t props{};
+    props.stype = ZE_STRUCTURE_TYPE_FORCE_UINT32;
+    props.pNext = &extensionProperties;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricVertexGetPropertiesExp(fabricVertex->toHandle(), &props));
+
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_FORCE_UINT32, props.stype);
+    EXPECT_EQ(&extensionProperties, props.pNext);
+    EXPECT_EQ(0, memcmp(props.uuid.id, vertexInfo.uuid, sizeof(vertexInfo.uuid)));
+    EXPECT_EQ(ZE_FABRIC_VERTEX_EXP_TYPE_SUBDEVICE, props.type);
+    EXPECT_FALSE(props.remote);
+    EXPECT_EQ(0x0001u, props.address.domain);
+    EXPECT_EQ(0x02u, props.address.bus);
+    EXPECT_EQ(0x1fu, props.address.device);
+    EXPECT_EQ(0x7u, props.address.function);
 
     delete fabricVertex;
 }

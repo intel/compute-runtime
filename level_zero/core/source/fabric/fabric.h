@@ -57,7 +57,11 @@ struct FabricEdge : _ze_fabric_edge_handle_t {
     static void createEdgesFromVertices(const std::vector<FabricVertex *> &vertices, std::vector<FabricEdge *> &edges, std::vector<FabricEdge *> &indirectEdges);
     static FabricEdge *create(FabricVertex *vertexA, FabricVertex *vertexB, ze_fabric_edge_exp_properties_t &properties);
     ze_result_t getProperties(ze_fabric_edge_exp_properties_t *pEdgeProperties) const {
+        const auto stype = pEdgeProperties->stype;
+        const auto pNext = pEdgeProperties->pNext;
         *pEdgeProperties = properties;
+        pEdgeProperties->stype = stype;
+        pEdgeProperties->pNext = pNext;
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t getVertices(ze_fabric_vertex_handle_t *phVertexA,

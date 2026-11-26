@@ -113,7 +113,11 @@ ze_result_t FabricVertex::getSubVertices(uint32_t *pCount, ze_fabric_vertex_hand
 }
 
 ze_result_t FabricVertex::getProperties(ze_fabric_vertex_exp_properties_t *pVertexProperties) const {
+    const auto stype = pVertexProperties->stype;
+    const auto pNext = pVertexProperties->pNext;
     *pVertexProperties = properties;
+    pVertexProperties->stype = stype;
+    pVertexProperties->pNext = pNext;
     return ZE_RESULT_SUCCESS;
 }
 
