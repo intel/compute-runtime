@@ -7,6 +7,13 @@
 
 #pragma once
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debug_settings/debug_variables_helper.h"
+#include "shared/source/debug_settings/definitions/translate_debug_settings.h"
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/utilities/debug_settings_reader.h"
+
+#include <iostream>
 #include <string>
 
 namespace testing {
@@ -28,5 +35,15 @@ bool parseCommonUltOption(int argc, char **argv, int &argIndex, UltCommandLineOp
 CCustomEventListener *replaceDefaultResultPrinter(::testing::TestEventListeners &listeners);
 void appendCommonUltListeners(::testing::TestEventListeners &listeners);
 void reportTestStats(const UltCommandLineOptions &options);
+
+template <DebugFunctionalityLevel debugLevel>
+void readDebugSettingsFromConfig(DebugSettingsManager<debugLevel> &settingsManager) {
+    if (!DebugSettingsManager<debugLevel>::registryReadAvailable() && !isDebugKeysReadEnabled()) {
+        std::cout << "--read-config: debug variables are not supported in this build type, only release variables are read" << std::endl;
+    }
+    settingsManager.setReaderImpl(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
+    settingsManager.injectSettingsFromReader();
+    translateDebugSettings(settingsManager.flags);
+}
 
 } // namespace NEO

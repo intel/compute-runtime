@@ -53,6 +53,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/read_debug_settings_from_config_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/required_libs_helpers_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/stream_capture_tests.cpp
@@ -61,6 +62,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_variables.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/topology_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/ult_main_helpers_tests.cpp
 )
 
 if(MSVC OR COMPILER_SUPPORTS_SSE42)

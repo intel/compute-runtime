@@ -9,13 +9,13 @@
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
-#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/stdio.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/allocation_logger.h"
 #include "shared/source/utilities/cpu_info.h"
-#include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
@@ -26,6 +26,7 @@
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/ult_main_helpers.h"
 #include "shared/test/common/helpers/ult_output_guard_listener.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_builtin_binaries.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -86,6 +87,19 @@ bool checkAubTestsExecutionPathValidity() {
     }
     return valid;
 }
+
+struct RealIoFunctionsScope : NonCopyableAndNonMovableClass {
+    VariableBackup<IoFunctions::fopenFuncPtr> fopenBackup{&IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+                                                              FILE *pFile = nullptr;
+                                                              fopen_s(&pFile, filename, mode);
+                                                              return pFile;
+                                                          }};
+    VariableBackup<IoFunctions::fseekFuncPtr> fseekBackup{&IoFunctions::fseekPtr, &fseek};
+    VariableBackup<IoFunctions::ftellFuncPtr> ftellBackup{&IoFunctions::ftellPtr, &ftell};
+    VariableBackup<IoFunctions::freadFuncPtr> freadBackup{&IoFunctions::freadPtr, &fread};
+    VariableBackup<IoFunctions::fcloseFuncPtr> fcloseBackup{&IoFunctions::fclosePtr, &fclose};
+    VariableBackup<IoFunctions::getenvFuncPtr> getenvBackup{&IoFunctions::getenvPtr, &getenv};
+};
 
 } // namespace NEO
 
@@ -307,10 +321,8 @@ int main(int argc, char **argv) {
         } else if (!strcmp("--generate_random_inputs", argv[i])) {
             generateRandomInput = true;
         } else if (!strcmp("--read-config", argv[i]) && isAubTestMode(testMode)) {
-            if (debugManager.registryReadAvailable()) {
-                debugManager.setReaderImpl(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
-                debugManager.injectSettingsFromReader();
-            }
+            RealIoFunctionsScope realIoFunctionsScope;
+            readDebugSettingsFromConfig(debugManager);
         } else if (!strcmp("--dump_buffer_format", argv[i]) && isAubTestMode(testMode)) {
             ++i;
             std::string dumpBufferFormat(argv[i]);
@@ -483,15 +495,7 @@ int main(int argc, char **argv) {
         }
 
         {
-            VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenSetter(&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
-                FILE *pFile = nullptr;
-                fopen_s(&pFile, filename, mode);
-                return pFile;
-            });
-            VariableBackup<decltype(NEO::IoFunctions::fseekPtr)> mockFseekSetter(&NEO::IoFunctions::fseekPtr, [](FILE *stream, long int offset, int origin) -> int { return fseek(stream, offset, origin); });
-            VariableBackup<decltype(NEO::IoFunctions::ftellPtr)> mockFtellSetter(&NEO::IoFunctions::ftellPtr, [](FILE *stream) -> long int { return ftell(stream); });
-            VariableBackup<decltype(NEO::IoFunctions::freadPtr)> mockFreadSetter(&NEO::IoFunctions::freadPtr, [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t { return fread(ptr, size, count, stream); });
-            VariableBackup<decltype(NEO::IoFunctions::fclosePtr)> mockFcloseSetter(&NEO::IoFunctions::fclosePtr, [](FILE *stream) -> int { return fclose(stream); });
+            RealIoFunctionsScope realIoFunctionsScope;
             if (isAubTestMode(testMode)) {
                 for (const std::string binaryFileCommonName : {"simple_kernels", "CopyBuffer_simd32",
                                                                "stateless_kernel", "simple_nonuniform", "CopyBuffer_simd8", "CopyBuffer_simd16",

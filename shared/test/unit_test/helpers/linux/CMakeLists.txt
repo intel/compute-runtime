@@ -10,5 +10,6 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_reader_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/path_linux_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/required_libs_helpers_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/ult_main_helpers_linux_tests.cpp
   )
 endif()
