@@ -93,6 +93,20 @@ HWTEST_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectVal
     }
 }
 
+HWTEST_F(CommandListCreate, givenInOrderCounterSignalFlushFailureWhenHandlingImplicitDependenciesThenNoDependencyIsReportedAsSent) {
+    struct FailingCounterSignalCommandList : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
+        using BaseClass = WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+        using BaseClass::handleInOrderImplicitDependencies;
+        ze_result_t flushInOrderCounterSignal() override { return ZE_RESULT_ERROR_DEVICE_LOST; }
+    };
+
+    FailingCounterSignalCommandList commandList;
+    commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    EXPECT_FALSE(commandList.handleInOrderImplicitDependencies(true, false));
+    EXPECT_FALSE(commandList.handleInOrderImplicitDependencies(false, true));
+}
+
 HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenPartitionCountIsReversedToOne) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(device,

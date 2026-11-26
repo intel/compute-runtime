@@ -3919,9 +3919,8 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(bool relaxedOrderingAllowed, bool dualStreamCopyOffloadOperation) {
     if (dualStreamCopyOffloadOperation || relaxedOrderingAllowed) {
-        auto ret = this->flushInOrderCounterSignal();
-        if (ret != ZE_RESULT_SUCCESS) {
-            return ret;
+        if (this->flushInOrderCounterSignal() != ZE_RESULT_SUCCESS) {
+            return false;
         }
     }
 
