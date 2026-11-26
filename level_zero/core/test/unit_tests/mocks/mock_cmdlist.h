@@ -295,6 +295,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::inOrderExecInfo;
     using BaseClass::internalUsage;
     using BaseClass::interruptEvents;
+    using BaseClass::isAppendSplitNeeded;
     using BaseClass::isCopyOffloadAllowed;
     using BaseClass::isInOrderCounterSignalPending;
     using BaseClass::isInOrderNonWalkerSignalingRequired;

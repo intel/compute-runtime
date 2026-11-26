@@ -1608,6 +1608,17 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenCreatingCmdListThe
     EXPECT_FALSE(mockCmdList2->isBcsSplitEnabled());
 }
 
+HWTEST2_F(AggregatedBcsSplitTests, givenSplitAllowedOnlyForCopyOffloadWhenCreatingImmediateCmdListThenSplitIsEnabledOnlyWithCopyOffload, IsAtLeastXeHpcCore) {
+    debugManager.flags.SplitBcsCopyOffloadOnly.set(1);
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+
+    auto copyOnlyCmdList = createCmdList(true);
+    EXPECT_FALSE(static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(copyOnlyCmdList.get())->isBcsSplitEnabled());
+
+    auto computeCmdList = createCmdList(false);
+    EXPECT_EQ(computeCmdList->isCopyOffloadEnabled(), static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(computeCmdList.get())->isBcsSplitEnabled());
+}
+
 HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendWithEventCalledThenDontProgramBarriers, IsAtLeastXeHpcCore) {
     if (device->getGfxCoreHelper().crossEngineCacheFlushRequired()) {
         GTEST_SKIP();
@@ -1786,9 +1797,32 @@ HWTEST_F(AggregatedBcsSplitTests, givenTransferDirectionWhenAskingIfSplitIsNeede
     auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
 
     for (auto transferDirection : {TransferDirection::localToLocal, TransferDirection::localToHost, TransferDirection::hostToLocal, TransferDirection::hostToHost, TransferDirection::remote}) {
-        bool required = cmdListHw->transferDirectionRequiresBcsSplit(transferDirection);
-        EXPECT_EQ(transferDirection != TransferDirection::localToLocal, required);
+        for (auto isRemoteRead : {false, true}) {
+            bool required = cmdListHw->transferDirectionRequiresBcsSplit(transferDirection, isRemoteRead);
+            EXPECT_EQ(transferDirection != TransferDirection::localToLocal, required);
+        }
     }
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenHostUsmWithCpuInaccessiblePoolWhenCheckingIfSplitIsNeededThenHostUsmIsTreatedAsSystemMemory, IsAtLeastXeHpcCore) {
+    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+
+    auto hostPtr = allocHostMem();
+    auto devicePtr = allocDeviceMem(device);
+
+    auto hostAllocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(hostPtr);
+    ASSERT_NE(nullptr, hostAllocData);
+    static_cast<NEO::MemoryAllocation *>(hostAllocData->gpuAllocations.getDefaultGraphicsAllocation())->overrideMemoryPool(NEO::MemoryPool::systemCpuInaccessible);
+
+    NEO::TransferDirection direction;
+    EXPECT_TRUE(cmdListHw->isAppendSplitNeeded(devicePtr, hostPtr, copySize, direction));
+    EXPECT_EQ(NEO::TransferDirection::hostToLocal, direction);
+
+    EXPECT_TRUE(cmdListHw->isAppendSplitNeeded(hostPtr, devicePtr, copySize, direction));
+    EXPECT_EQ(NEO::TransferDirection::localToHost, direction);
+
+    context->freeMem(hostPtr);
+    context->freeMem(devicePtr);
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedSplitModeCapWhenInitializingThenAggregatedModeInBcsSplitObjectMatchesCap, IsAtLeastXeHpcCore) {

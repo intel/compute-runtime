@@ -454,6 +454,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.SplitBcsAggregatedEventsMode.set(useAggregatedEventsMode() ? 1 : 0);
         debugManager.flags.SplitBcsCopy.set(1);
+        debugManager.flags.SplitBcsCopyOffloadOnly.set(0);
         debugManager.flags.SplitBcsRequiredTileCount.set(expectedTileCount);
         debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
         debugManager.flags.SplitBcsMask.set(0b11110);

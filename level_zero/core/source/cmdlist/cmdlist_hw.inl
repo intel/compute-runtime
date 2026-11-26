@@ -5045,13 +5045,10 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(co
     return hostPtrSize;
 }
 
-inline NEO::MemoryPool getMemoryPoolFromAllocDataForSplit(bool allocFound, const NEO::SvmAllocationData *allocData) {
-    if (allocFound) {
-        return allocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool();
-    } else if (NEO::debugManager.flags.SplitBcsCopyHostptr.get() != 0) {
-        return NEO::MemoryPool::system4KBPages;
-    }
-    return NEO::MemoryPool::memoryNull;
+inline bool isLocalMemoryForSplit(bool allocFound, const NEO::SvmAllocationData *allocData) {
+    return allocFound &&
+           (allocData->memoryType != InternalMemoryType::hostUnifiedMemory) &&
+           !NEO::MemoryPoolHelper::isSystemMemoryPool(allocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -5099,23 +5096,18 @@ bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, con
         return false;
     }
 
-    auto srcMemoryPool = getMemoryPoolFromAllocDataForSplit(srcAllocFound, srcAllocData);
-    auto dstMemoryPool = getMemoryPoolFromAllocDataForSplit(dstAllocFound, dstAllocData);
-    for (const auto memoryPool : {srcMemoryPool, dstMemoryPool}) {
-        if (memoryPool == NEO::MemoryPool::memoryNull) {
-            return false;
-        }
+    if ((!srcAllocFound || !dstAllocFound) && (NEO::debugManager.flags.SplitBcsCopyHostptr.get() == 0)) {
+        return false;
     }
 
-    bool remoteCopy = isRemoteAlloc(srcAllocData) || isRemoteAlloc(dstAllocData);
-
-    return this->isAppendSplitNeeded(dstMemoryPool, srcMemoryPool, size, directionOut, remoteCopy);
+    return this->isAppendSplitNeeded(isLocalMemoryForSplit(dstAllocFound, dstAllocData), isLocalMemoryForSplit(srcAllocFound, srcAllocData), size, directionOut, isRemoteAlloc(dstAllocData), isRemoteAlloc(srcAllocData));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut, bool remoteCopy) {
-    directionOut = NEO::createTransferDirection(!NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool), !NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool), remoteCopy);
-    bool directionSupported = transferDirectionRequiresBcsSplit(directionOut);
+inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(bool dstLocal, bool srcLocal, size_t size, NEO::TransferDirection &directionOut, bool dstRemote, bool srcRemote) {
+    directionOut = NEO::createTransferDirection(srcLocal, dstLocal, srcRemote || dstRemote);
+    const bool isRemoteRead = srcRemote && !dstRemote && dstLocal;
+    bool directionSupported = transferDirectionRequiresBcsSplit(directionOut, isRemoteRead);
 
     if (NEO::debugManager.flags.SplitBcsTransferDirectionMask.get() != -1) {
         directionSupported = (1 << static_cast<int32_t>(directionOut)) & NEO::debugManager.flags.SplitBcsTransferDirectionMask.get();
@@ -5131,7 +5123,7 @@ inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::Memor
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const {
+bool CommandListCoreFamily<gfxCoreFamily>::transferDirectionRequiresBcsSplit(NEO::TransferDirection direction, bool isRemoteRead) const {
     return (direction != NEO::TransferDirection::localToLocal);
 }
 

@@ -425,7 +425,7 @@ struct CommandListCoreFamily : public CommandList {
 
     size_t getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch);
     bool isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size, NEO::TransferDirection &directionOut);
-    bool isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut, bool remoteCopy);
+    bool isAppendSplitNeeded(bool dstLocal, bool srcLocal, size_t size, NEO::TransferDirection &directionOut, bool dstRemote, bool srcRemote);
     bool isRemoteAlloc(NEO::SvmAllocationData *allocData) const;
     bool isDstSystemOrRemoteAlloc(NEO::SvmAllocationData *allocData) const;
     static bool isRemoteReadDenied(const NEO::SvmAllocationData *allocData);
@@ -531,7 +531,7 @@ struct CommandListCoreFamily : public CommandList {
     std::pair<NEO::GraphicsAllocation *, size_t> getIohAllocationAndOffsetForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace, bool isThreadDataMapAllowed, bool &outThreadDataCacheHit);
     virtual size_t ensureCmdBufferSpaceForPrefetch(const NEO::GraphicsAllocation &iohAllocation, size_t iohOffset) { return 0; }
     void patchKernelProperties(CmdListKernelLaunchParams &launchParams, Kernel &kernel, const ze_group_count_t &threadGroupDimensions);
-    bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction) const;
+    bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction, bool isRemoteRead) const;
     std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName, NEO::SWTags::CounterType counterType = NEO::SWTags::CounterType::none);
     size_t getDefaultMinBcsSplitSize() const;
     void calculateHostFunctionsPatchSize();

@@ -23,6 +23,11 @@ namespace L0 {
 
 static constexpr auto gfxCoreFamily = IGFX_XE3P_CORE;
 
+template <>
+bool CommandListCoreFamily<gfxCoreFamily>::transferDirectionRequiresBcsSplit(NEO::TransferDirection direction, bool isRemoteRead) const {
+    return (direction == NEO::TransferDirection::hostToLocal) || (direction == NEO::TransferDirection::remote && isRemoteRead);
+}
+
 template struct CommandListCoreFamily<gfxCoreFamily>;
 template struct CommandListCoreFamilyImmediate<gfxCoreFamily>;
 

@@ -12,6 +12,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/cpu_copy_helper.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -971,6 +972,11 @@ ze_result_t CommandList::initializeImmediateResources() {
 
 void CommandList::enableBcsSplit() {
     if (device->getNEODevice()->isBcsSplitSupported() && !internalUsage && !isBcsSplitEnabled()) {
+        const bool copyOffloadOnly = NEO::debugManager.flags.SplitBcsCopyOffloadOnly.getIfNotDefault(device->getProductHelper().getBcsSplitSettings(device->getHwInfo()).copyOffloadOnly);
+        if (copyOffloadOnly && !isCopyOffloadEnabled()) {
+            return;
+        }
+
         if (isImmediateType()) {
             this->bcsSplitMode = getDevice()->bcsSplit->setupDevice(getCsr(false), isCopyOffloadEnabled(), this->immediateQueuePriority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) ? BcsSplitParams::BcsSplitMode::immediate : BcsSplitParams::BcsSplitMode::disabled;
         } else if (isInOrderExecutionEnabled() && device->getProductHelper().useAdditionalBlitProperties() && (NEO::debugManager.flags.SplitBcsForRegularCmdList.get() != 0)) {

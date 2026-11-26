@@ -265,6 +265,21 @@ CRITEST_F(CriProductHelper, givenCriWhenAskingForCopyOffloadWriteEngineSupportTh
     EXPECT_TRUE(productHelper->isCopyOffloadWriteEngineSupported());
 }
 
+CRITEST_F(CriProductHelper, givenCriWhenGettingBcsSplitSettingsThenSplitIsEnabledOnTwoCopyEnginesUsedForReads) {
+    constexpr auto readEnginesMask = 0b1010u;
+
+    auto bcsSplitSettings = productHelper->getBcsSplitSettings(pInHwInfo);
+
+    EXPECT_TRUE(bcsSplitSettings.enabled);
+    EXPECT_EQ(readEnginesMask, bcsSplitSettings.allEngines.to_ulong());
+    EXPECT_EQ(readEnginesMask, bcsSplitSettings.h2dEngines.to_ulong());
+    EXPECT_EQ(readEnginesMask, bcsSplitSettings.d2hEngines.to_ulong());
+    EXPECT_EQ(1u, bcsSplitSettings.perEngineMaxSize);
+    EXPECT_EQ(2u, bcsSplitSettings.minRequiredTotalCsrCount);
+    EXPECT_EQ(1u, bcsSplitSettings.requiredTileCount);
+    EXPECT_TRUE(bcsSplitSettings.copyOffloadOnly);
+}
+
 CRITEST_F(CriProductHelper, givenCriWhenAskingForDedicatedHighPriorityCopyEngineSupportThenReturnFalseByDefaultAndRespectDebugFlag) {
     DebugManagerStateRestore restorer;
 

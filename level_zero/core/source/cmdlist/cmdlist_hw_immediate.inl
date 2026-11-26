@@ -1345,7 +1345,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
     ze_result_t ret;
 
     NEO::TransferDirection direction;
-    auto isSplitNeeded = this->isAppendSplitNeeded(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool(), size, direction, false);
+    auto isSplitNeeded = this->isAppendSplitNeeded(!NEO::MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool()), !NEO::MemoryPoolHelper::isSystemMemoryPool(srcAllocation->getMemoryPool()), size, direction, false, false);
 
     CmdListMemoryCopyParams bcsSplitMemoryCopyParams{};
 

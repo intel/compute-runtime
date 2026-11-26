@@ -30,6 +30,57 @@ namespace ult {
 HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryCopyThenAppendProfilingCalledOnceBeforeAndAfterCommand, IGFX_XE3P_CORE);
 HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryCopyRegionBlitThenTimeStampRegistersAreAdded, IGFX_XE3P_CORE);
 HWTEST_EXCLUDE_PRODUCT(InOrderCmdListTests, givenCmdListWhenAskingForQwordDataSizeThenReturnFalse, IGFX_XE3P_CORE);
+HWTEST_EXCLUDE_PRODUCT(AggregatedBcsSplitTests, givenTransferDirectionWhenAskingIfSplitIsNeededThenReturnCorrectValue, IGFX_XE3P_CORE);
+
+using CmdListBcsSplitTestsXe3pCore = ::testing::Test;
+
+XE3P_CORETEST_F(CmdListBcsSplitTestsXe3pCore, givenTransferDirectionWhenAskingIfSplitIsRequiredThenOnlyHostToLocalAndRemoteReadsAreSplit) {
+    WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> commandList;
+
+    for (auto transferDirection : {TransferDirection::localToLocal, TransferDirection::localToHost, TransferDirection::hostToLocal, TransferDirection::hostToHost, TransferDirection::remote}) {
+        for (auto isRemoteRead : {false, true}) {
+            bool expected = (transferDirection == TransferDirection::hostToLocal) || (transferDirection == TransferDirection::remote && isRemoteRead);
+            EXPECT_EQ(expected, commandList.transferDirectionRequiresBcsSplit(transferDirection, isRemoteRead));
+        }
+    }
+}
+
+struct RemoteReadBcsSplitTestsXe3pCore : public AggregatedBcsSplitTests {
+    bool useAggregatedEventsMode() const override { return false; }
+
+    void SetUp() override {
+        AggregatedBcsSplitTests::SetUp();
+        debugManager.flags.SplitBcsTransferDirectionMask.set(-1);
+    }
+};
+
+XE3P_CORETEST_F(RemoteReadBcsSplitTestsXe3pCore, givenCopyWhenCheckingIfSplitIsNeededThenSplitOnlyHostToLocalAndRemoteSourceReadIntoLocalMemory) {
+    auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
+    ASSERT_TRUE(cmdListHw->isBcsSplitEnabled());
+
+    struct {
+        bool dstLocal;
+        bool srcLocal;
+        bool dstRemote;
+        bool srcRemote;
+        NEO::TransferDirection expectedDirection;
+        bool expectedSplit;
+    } testCases[] = {
+        {true, false, false, false, NEO::TransferDirection::hostToLocal, true},
+        {false, true, false, false, NEO::TransferDirection::localToHost, false},
+        {true, true, false, true, NEO::TransferDirection::remote, true},
+        {true, true, true, false, NEO::TransferDirection::remote, false},
+        {true, true, true, true, NEO::TransferDirection::remote, false},
+        {false, true, false, true, NEO::TransferDirection::remote, false},
+        {true, false, true, false, NEO::TransferDirection::remote, false},
+    };
+
+    for (const auto &testCase : testCases) {
+        NEO::TransferDirection direction;
+        EXPECT_EQ(testCase.expectedSplit, cmdListHw->isAppendSplitNeeded(testCase.dstLocal, testCase.srcLocal, copySize, direction, testCase.dstRemote, testCase.srcRemote));
+        EXPECT_EQ(testCase.expectedDirection, direction);
+    }
+}
 
 using CommandListAppendLaunchKernelXe3p = Test<ModuleFixture>;
 XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenCmdListWhenAskingForQwordDataSizeThenReturnTrue) {

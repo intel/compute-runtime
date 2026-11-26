@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
@@ -207,6 +208,22 @@ bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteM
     default:
         return isDstSystemOrRemoteMemory;
     }
+}
+
+template <>
+BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings(const HardwareInfo &hwInfo) const {
+    constexpr BcsInfoMask readEnginesMask = NEO::EngineHelpers::h2dCopyEngineMask;
+
+    return {
+        .allEngines = readEnginesMask,
+        .h2dEngines = readEnginesMask,
+        .d2hEngines = readEnginesMask,
+        .perEngineMaxSize = 1,
+        .minRequiredTotalCsrCount = static_cast<uint32_t>(readEnginesMask.count()),
+        .requiredTileCount = 1,
+        .enabled = true,
+        .copyOffloadOnly = true,
+    };
 }
 
 template <>
