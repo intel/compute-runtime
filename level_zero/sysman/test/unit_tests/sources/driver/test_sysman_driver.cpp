@@ -16,7 +16,6 @@
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/test/unit_tests/sources/driver/mock_sysman_driver.h"
 #include "level_zero/sysman/test/unit_tests/sources/driver/mock_sysman_fixture.h"
-#include "level_zero/zes_intel_gpu_sysman.h"
 
 #include "gtest/gtest.h"
 
@@ -90,12 +89,12 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
 }
 
 TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
-     GivenEXP_NO_GPUSFlagWhenNoDevicesPresentThenInitializeSucceedsInDeferredMode) {
+     GivenNoDevicesFlagWhenNoDevicesPresentThenInitializeSucceedsInDeferredMode) {
     OsAgnosticMockSysmanDriver driver;
     L0::Sysman::globalSysmanDriverHandle = nullptr;
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, L0::Sysman::globalSysmanDriverHandle);
@@ -117,7 +116,7 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
     L0::Sysman::globalSysmanDriverHandle = nullptr;
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     // globalSysmanDriver is a MockSysmanDriverHandleImp created by createDeferredHandle()
@@ -146,7 +145,7 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
     L0::Sysman::globalSysmanDriverHandle = nullptr;
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto *handleImp = static_cast<MockSysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
@@ -171,7 +170,7 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
     L0::Sysman::globalSysmanDriverHandle = nullptr;
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto *handleImp = static_cast<MockSysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
@@ -195,6 +194,16 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
     OsAgnosticMockSysmanDriver driver;
 
     ze_result_t result = L0::Sysman::init(static_cast<zes_init_flags_t>(ZE_INIT_FLAG_GPU_ONLY));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+}
+
+TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
+     GivenNoDevicesFlagWhenInitCalledThenDriverIsInitialized) {
+    OsAgnosticMockSysmanDriver driver;
+
+    ze_result_t result = L0::Sysman::init(ZES_INIT_FLAG_NO_DEVICES);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, driver.initCalledCount);
@@ -238,7 +247,6 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
      GivenUnrecognisedFlagWhenInitCalledThenReturnsUninitialisedWithoutCallingDriverInit) {
     OsAgnosticMockSysmanDriver driver;
 
-    // 0x0002 is not ZE_INIT_FLAG_GPU_ONLY (0x1) and not ZES_INTEL_INIT_FLAG_EXP_NO_GPUS (bit 16)
     ze_result_t result = L0::Sysman::init(static_cast<zes_init_flags_t>(0x0002));
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
@@ -251,7 +259,7 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
     MockSysmanDriverWithFailingDiscovery driver;
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     L0::Sysman::globalSysmanDriverHandle = nullptr;
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto *handleImp = static_cast<MockSysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);
@@ -283,7 +291,7 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
     driver.pMockOsDriver->survivabilityResult = ZE_RESULT_SUCCESS;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, L0::Sysman::globalSysmanDriverHandle);
@@ -317,7 +325,7 @@ TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
     OsAgnosticMockSysmanDriver driver;
     L0::Sysman::globalSysmanDriverHandle = nullptr;
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto *handleImp = static_cast<MockSysmanDriverHandleImp *>(L0::Sysman::globalSysmanDriver);

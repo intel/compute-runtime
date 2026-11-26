@@ -221,8 +221,8 @@ void getSysmanDeviceHandles(zes_driver_handle_t &sysmanDriverHandle, std::vector
 
     bool noGpus = validateGetenv("ZES_INIT_NO_GPUS");
     if (noGpus) {
-        std::cout << "ZES_INIT_NO_GPUS is set, calling zesInit() with ZES_INTEL_INIT_FLAG_EXP_NO_GPUS" << std::endl;
-        VALIDATECALL(zesInit(static_cast<zes_init_flags_t>(ZES_INTEL_INIT_FLAG_EXP_NO_GPUS)));
+        std::cout << "ZES_INIT_NO_GPUS is set, calling zesInit() with ZES_INIT_FLAG_NO_DEVICES" << std::endl;
+        VALIDATECALL(zesInit(ZES_INIT_FLAG_NO_DEVICES));
     } else {
         std::cout << "ZES_INIT_NO_GPUS is not set, calling zesInit() with 0" << std::endl;
         VALIDATECALL(zesInit(0));

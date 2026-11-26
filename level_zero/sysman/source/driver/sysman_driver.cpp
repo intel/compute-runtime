@@ -54,8 +54,7 @@ uint32_t SysmanDriverImp::discoverAndInitializeDevices(NEO::ExecutionEnvironment
 void SysmanDriverImp::initialize(ze_result_t *result, zes_init_flags_t flags) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    // Extract experimental flag (bit 16)
-    bool allowDeferredDiscovery = (flags & ZES_INTEL_INIT_FLAG_EXP_NO_GPUS) != 0;
+    const bool allowDeferredDiscovery = (flags & ZES_INIT_FLAG_NO_DEVICES) != 0;
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
@@ -152,8 +151,8 @@ static SysmanDriverImp driverImp;
 SysmanDriver *SysmanDriver::driver = &driverImp;
 
 ze_result_t init(zes_init_flags_t flags) {
-    constexpr auto allowedFlags =
-        ZE_INIT_FLAG_GPU_ONLY | ZES_INTEL_INIT_FLAG_EXP_NO_GPUS;
+    constexpr zes_init_flags_t allowedFlags =
+        static_cast<zes_init_flags_t>(ZE_INIT_FLAG_GPU_ONLY) | ZES_INIT_FLAG_NO_DEVICES;
 
     if (flags & ~allowedFlags) {
         return ZE_RESULT_ERROR_UNINITIALIZED;

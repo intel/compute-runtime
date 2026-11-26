@@ -593,7 +593,7 @@ TEST(SysmanDriverDeferredDiscovery, GivenDeferredInitWithoutDevicesWhenDiscovery
     MockSysmanDriver driver;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, L0::Sysman::globalSysmanDriverHandle);
@@ -641,7 +641,7 @@ TEST(SysmanDriverDeferredDiscovery, GivenDeferredInitWithoutDevicesWhenDiscovery
     MockSysmanDriver driver;
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    driver.initialize(&result, ZES_INTEL_INIT_FLAG_EXP_NO_GPUS);
+    driver.initialize(&result, ZES_INIT_FLAG_NO_DEVICES);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, L0::Sysman::globalSysmanDriverHandle);
