@@ -2246,6 +2246,82 @@ TEST_F(IoctlHelperXeTest, givenIoctlFailureWhenCreatingEngineInfoThenNoEnginesAr
     EXPECT_EQ(nullptr, engineInfo);
 }
 
+TEST_F(IoctlHelperXeTest, givenExecQueueDestroyIoctlFailureWhenDestroyingDrmContextThenNoAbortAndFailureIsPrinted) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    {
+        StreamCapture capture;
+        capture.captureStderr();
+        DebugManagerStateRestore restorer;
+        debugManager.flags.PrintDebugMessages.set(true);
+
+        drm->gemDestroyContextCalled = 0;
+        drm->destroyDrmContext(drm->mockExecQueueId);
+        std::string output = capture.getCapturedStderr();
+
+        EXPECT_EQ(1, drm->gemDestroyContextCalled);
+        EXPECT_EQ(std::string::npos, output.find("ioctl(GEM_CONTEXT_DESTROY) failed")) << output;
+    }
+
+    for (auto destroyErrno : {ECANCELED, ENODEV, ENOTTY}) {
+        drm->testMode(1, -1);
+        drm->errnoValue = destroyErrno;
+
+        StreamCapture capture;
+        capture.captureStderr();
+        DebugManagerStateRestore restorer;
+        debugManager.flags.PrintDebugMessages.set(true);
+
+        EXPECT_NO_THROW(drm->destroyDrmContext(drm->mockExecQueueId));
+        std::string output = capture.getCapturedStderr();
+
+        std::string expectedOutput = "ioctl(GEM_CONTEXT_DESTROY) failed with -1. errno=" + std::to_string(destroyErrno) + "(";
+        EXPECT_NE(std::string::npos, output.find(expectedOutput)) << output;
+    }
+    drm->testMode(0);
+    drm->errnoValue = 0;
+}
+
+TEST_F(IoctlHelperXeTest, givenVmDestroyIoctlFailureWhenDestroyingDrmVirtualMemoryThenNoAbortAndFailureIsPrinted) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    {
+        StreamCapture capture;
+        capture.captureStderr();
+        DebugManagerStateRestore restorer;
+        debugManager.flags.PrintDebugMessages.set(true);
+
+        drm->destroyDrmVirtualMemory(static_cast<uint32_t>(testValueVmId));
+        std::string output = capture.getCapturedStderr();
+
+        EXPECT_EQ(std::string::npos, output.find("ioctl(GEM_VM_DESTROY) failed")) << output;
+    }
+
+    for (auto destroyErrno : {ECANCELED, ENODEV, ENOTTY}) {
+        drm->testMode(1, -1);
+        drm->errnoValue = destroyErrno;
+
+        StreamCapture capture;
+        capture.captureStderr();
+        DebugManagerStateRestore restorer;
+        debugManager.flags.PrintDebugMessages.set(true);
+
+        EXPECT_NO_THROW(drm->destroyDrmVirtualMemory(static_cast<uint32_t>(testValueVmId)));
+        std::string output = capture.getCapturedStderr();
+
+        std::string expectedOutput = "ioctl(GEM_VM_DESTROY) failed with -1. errno=" + std::to_string(destroyErrno) + "(";
+        EXPECT_NE(std::string::npos, output.find(expectedOutput)) << output;
+    }
+    drm->testMode(0);
+    drm->errnoValue = 0;
+}
+
 TEST_F(IoctlHelperXeTest, givenEnabledFtrMultiTileArchWhenCreatingEngineInfoThenMultiTileArchInfoIsProperlySet) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

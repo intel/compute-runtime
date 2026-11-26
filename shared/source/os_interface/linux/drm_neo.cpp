@@ -554,14 +554,22 @@ void Drm::destroyDrmContext(uint32_t drmContextId) {
     GemContextDestroy destroy{};
     destroy.contextId = drmContextId;
     auto retVal = ioctlHelper->ioctl(DrmIoctl::gemContextDestroy, &destroy);
-    UNRECOVERABLE_IF((retVal != 0) && (errno != ENODEV) && (errno != ENOTTY));
+    if (retVal != 0) {
+        auto err = getErrno();
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CONTEXT_DESTROY) failed with %d. errno=%d(%s)\n", retVal, err, strerror(err));
+        DEBUG_BREAK_IF((err != ENODEV) && (err != ENOTTY) && (err != ECANCELED));
+    }
 }
 
 void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
     GemVmControl ctl = {};
     ctl.vmId = drmVmId;
     auto ret = ioctlHelper->ioctl(DrmIoctl::gemVmDestroy, &ctl);
-    UNRECOVERABLE_IF((ret != 0) && (errno != ENODEV) && (errno != ENOTTY));
+    if (ret != 0) {
+        auto err = getErrno();
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_VM_DESTROY) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF((err != ENODEV) && (err != ENOTTY) && (err != ECANCELED));
+    }
 }
 
 int Drm::queryVmId(uint32_t drmContextId, uint32_t &vmId) {
