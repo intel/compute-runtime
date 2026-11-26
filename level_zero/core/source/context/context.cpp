@@ -228,7 +228,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
             *ptr = usmPtr;
             return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = 0;
