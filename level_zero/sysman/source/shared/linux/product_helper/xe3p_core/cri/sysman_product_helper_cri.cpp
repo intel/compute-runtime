@@ -1881,6 +1881,13 @@ bool SysmanProductHelperHw<gfxProduct>::isNetlinkEventSupported() {
 }
 
 template <>
+void SysmanProductHelperHw<gfxProduct>::getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) {
+    fwTypes.clear();
+    pFwInterface->getDeviceSupportedFwTypes(fwTypes);
+    std::erase(fwTypes, "PSC");
+}
+
+template <>
 bool SysmanProductHelperHw<gfxProduct>::isFlashOverrideSupported() {
     return true;
 }

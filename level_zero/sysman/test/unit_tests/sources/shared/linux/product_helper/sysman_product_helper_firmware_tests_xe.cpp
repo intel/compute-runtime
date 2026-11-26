@@ -164,6 +164,22 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenCRIProductHelperWhenChec
     EXPECT_TRUE(pSysmanProductHelper->isFlashOverrideSupported());
 }
 
+HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenFirmwareInterfaceReportingPscWhenCallingEnumerateThenPscHandleIsNotReturned, IsCRI) {
+    pSysfsAccess->canReadResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(3u, count);
+
+    std::vector<std::string> firmwareNames;
+    for (const auto &handle : getFirmwareHandles(count)) {
+        zes_firmware_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handle, &properties));
+        firmwareNames.push_back(properties.name);
+    }
+    EXPECT_EQ((std::vector<std::string>{"GFX", "OptionROM", "Flash_Override"}), firmwareNames);
+}
+
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixtureXe, GivenValidDeviceHandleAndFirmwareUnSupportedWhenCallingEnumerateThenOnlyFlashOverrideHandleIsReturned, IsCRI) {
     struct MockSysmanProductHelperFirmware : L0::Sysman::SysmanProductHelperHw<IGFX_CRI> {
         MockSysmanProductHelperFirmware() = default;
