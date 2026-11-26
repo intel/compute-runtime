@@ -259,3 +259,94 @@ TEST_F(WddmMemoryManagerAllocationFromSectionTest, givenCreatingAllocationFailsW
     EXPECT_EQ(1u, SysCalls::unmapViewOfFileCalled);
     EXPECT_EQ(view, SysCalls::unmapViewOfFileLastAddress);
 }
+
+namespace {
+MEMORY_BASIC_INFORMATION hostMemoryRegions[2] = {};
+size_t hostMemoryRegionQueries = 0u;
+SIZE_T queryHostMemoryRegion(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
+    hostMemoryRegionQueries++;
+    const auto address = reinterpret_cast<uintptr_t>(lpAddress);
+    for (const auto &region : hostMemoryRegions) {
+        const auto regionStart = reinterpret_cast<uintptr_t>(region.BaseAddress);
+        if (address >= regionStart && address < regionStart + region.RegionSize) {
+            *lpBuffer = region;
+            return sizeof(MEMORY_BASIC_INFORMATION);
+        }
+    }
+    return 0;
+}
+} // namespace
+
+using WddmMemoryManagerHostMemoryMappableTest = WddmFixture;
+
+TEST_F(WddmMemoryManagerHostMemoryMappableTest, givenProtectionOfHostMemoryWhenCheckingIfHostMemoryIsMappableThenOnlyCommittedMemoryWithRequiredAccessIsMappable) {
+    VariableBackup<MEMORY_BASIC_INFORMATION> memoryInfoBackup{&SysCalls::virtualQueryMemoryBasicInformation};
+    VariableBackup<SIZE_T> virtualQueryResultBackup{&SysCalls::virtualQueryResult};
+
+    auto hostPtr = reinterpret_cast<void *>(0x10000);
+    const size_t size = 2 * MemoryConstants::pageSize;
+    auto &memoryInfo = SysCalls::virtualQueryMemoryBasicInformation;
+    memoryInfo.BaseAddress = ptrOffset(hostPtr, -static_cast<ptrdiff_t>(MemoryConstants::pageSize));
+    memoryInfo.RegionSize = 4 * MemoryConstants::pageSize;
+    memoryInfo.State = MEM_COMMIT;
+
+    memoryInfo.Protect = PAGE_READWRITE;
+    EXPECT_TRUE(memoryManager->isHostMemoryMappable(hostPtr, size, true));
+    EXPECT_TRUE(memoryManager->isHostMemoryMappable(hostPtr, size, false));
+
+    memoryInfo.Protect = PAGE_READONLY;
+    EXPECT_FALSE(memoryManager->isHostMemoryMappable(hostPtr, size, true));
+    EXPECT_TRUE(memoryManager->isHostMemoryMappable(hostPtr, size, false));
+
+    memoryInfo.Protect = PAGE_NOACCESS;
+    EXPECT_FALSE(memoryManager->isHostMemoryMappable(hostPtr, size, false));
+
+    memoryInfo.Protect = PAGE_READWRITE | PAGE_GUARD;
+    EXPECT_FALSE(memoryManager->isHostMemoryMappable(hostPtr, size, false));
+
+    memoryInfo.Protect = PAGE_READWRITE;
+    memoryInfo.State = MEM_RESERVE;
+    EXPECT_FALSE(memoryManager->isHostMemoryMappable(hostPtr, size, false));
+
+    memoryInfo.State = MEM_COMMIT;
+    SysCalls::virtualQueryResult = 0;
+    EXPECT_FALSE(memoryManager->isHostMemoryMappable(hostPtr, size, false));
+}
+
+TEST_F(WddmMemoryManagerHostMemoryMappableTest, givenSizeThatOverflowsAddressSpaceWhenCheckingIfHostMemoryIsMappableThenMemoryIsNotMappable) {
+    auto hostPtr = reinterpret_cast<void *>(0x10000);
+    const size_t overflowingSize = std::numeric_limits<uintptr_t>::max() - reinterpret_cast<uintptr_t>(hostPtr) + 1;
+    EXPECT_FALSE(memoryManager->isHostMemoryMappable(hostPtr, overflowingSize, false));
+}
+
+TEST_F(WddmMemoryManagerHostMemoryMappableTest, givenRangeSpanningTwoRegionsWhenCheckingIfHostMemoryIsMappableThenEveryRegionIsChecked) {
+    VariableBackup<decltype(SysCalls::sysCallsVirtualQuery)> virtualQueryBackup{&SysCalls::sysCallsVirtualQuery, queryHostMemoryRegion};
+    VariableBackup<size_t> regionQueriesBackup{&hostMemoryRegionQueries, 0u};
+
+    auto firstRegion = reinterpret_cast<void *>(0x10000);
+    hostMemoryRegions[0] = {};
+    hostMemoryRegions[0].BaseAddress = firstRegion;
+    hostMemoryRegions[0].RegionSize = MemoryConstants::pageSize;
+    hostMemoryRegions[0].State = MEM_COMMIT;
+    hostMemoryRegions[0].Protect = PAGE_READWRITE;
+    hostMemoryRegions[1] = hostMemoryRegions[0];
+    hostMemoryRegions[1].BaseAddress = ptrOffset(firstRegion, MemoryConstants::pageSize);
+    hostMemoryRegions[1].RegionSize = 2 * MemoryConstants::pageSize;
+
+    auto hostPtr = ptrOffset(firstRegion, 0x100);
+    const size_t size = 2 * MemoryConstants::pageSize;
+    EXPECT_TRUE(memoryManager->isHostMemoryMappable(hostPtr, size, true));
+    EXPECT_EQ(2u, hostMemoryRegionQueries);
+
+    hostMemoryRegions[1].Protect = PAGE_READONLY;
+    EXPECT_FALSE(memoryManager->isHostMemoryMappable(hostPtr, size, true));
+    EXPECT_TRUE(memoryManager->isHostMemoryMappable(hostPtr, size, false));
+
+    hostMemoryRegions[1].Protect = PAGE_READWRITE;
+    hostMemoryRegions[1].State = MEM_RESERVE;
+    EXPECT_FALSE(memoryManager->isHostMemoryMappable(hostPtr, size, false));
+
+    hostMemoryRegionQueries = 0u;
+    EXPECT_TRUE(memoryManager->isHostMemoryMappable(hostPtr, MemoryConstants::pageSize - 0x100, false));
+    EXPECT_EQ(1u, hostMemoryRegionQueries);
+}

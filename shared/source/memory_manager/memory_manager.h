@@ -370,6 +370,7 @@ class MemoryManager {
     virtual void commonCleanup() {};
     virtual bool isCpuCopyRequired(const void *ptr) { return false; }
     virtual bool isWCMemory(const void *ptr) { return false; }
+    virtual bool isHostMemoryMappable(const void *ptr, size_t size, bool writable) { return true; }
 
     virtual AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation);
     virtual AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex);

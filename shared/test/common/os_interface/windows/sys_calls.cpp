@@ -772,7 +772,11 @@ LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDW
 
 MEMORY_BASIC_INFORMATION virtualQueryMemoryBasicInformation = {};
 SIZE_T virtualQueryResult = sizeof(MEMORY_BASIC_INFORMATION);
+SIZE_T (*sysCallsVirtualQuery)(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) = nullptr;
 SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
+    if (sysCallsVirtualQuery) {
+        return sysCallsVirtualQuery(lpAddress, lpBuffer, dwLength);
+    }
     memcpy_s(lpBuffer, sizeof(MEMORY_BASIC_INFORMATION), &virtualQueryMemoryBasicInformation, sizeof(MEMORY_BASIC_INFORMATION));
     return virtualQueryResult;
 }

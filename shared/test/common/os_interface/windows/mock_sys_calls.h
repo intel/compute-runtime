@@ -128,5 +128,6 @@ extern size_t unmapViewOfFileCalled;
 extern LPCVOID unmapViewOfFileLastAddress;
 extern MEMORY_BASIC_INFORMATION virtualQueryMemoryBasicInformation;
 extern SIZE_T virtualQueryResult;
+extern SIZE_T (*sysCallsVirtualQuery)(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
 } // namespace SysCalls
 } // namespace NEO

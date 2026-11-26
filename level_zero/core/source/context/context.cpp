@@ -224,6 +224,10 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
         }
+        if (!this->driverHandle->getMemoryManager()->isHostMemoryMappable(lookupTable.externalMemmapSystem.systemMemory, lookupTable.externalMemmapSystem.size,
+                                                                          !unifiedMemoryProperties.allocationFlags.flags.readOnly)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(lookupTable.externalMemmapSystem.systemMemory);
         unifiedMemoryProperties.isExternalMemmapAllocation = true;
         auto usmPtr = this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(lookupTable.externalMemmapSystem.size,

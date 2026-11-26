@@ -11,4 +11,8 @@ namespace NEO {
 bool WddmMemoryManager::isWCMemory(const void *ptr) {
     return false;
 }
+
+bool WddmMemoryManager::isHostMemoryMappable(const void *ptr, size_t size, bool writable) {
+    return true;
+}
 } // namespace NEO

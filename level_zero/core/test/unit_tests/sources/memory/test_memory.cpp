@@ -898,6 +898,29 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFail
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
 }
 
+TEST_F(MemoryTest, givenExternalMemmapWhenSystemMemoryCannotBeMappedThenInvalidArgumentIsReturnedAndWriteAccessIsRequiredOnlyWithoutReadOnlyFlag) {
+    auto memoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+    auto buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC, nullptr, buffer, MemoryConstants::pageSize};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+
+    for (const bool readOnly : {false, true}) {
+        hostDesc.flags = readOnly ? static_cast<ze_host_mem_alloc_flags_t>(ZE_HOST_MEM_ALLOC_FLAG_MEM_READ_ONLY) : 0u;
+        memoryManager->isHostMemoryMappableResult = false;
+        void *ptr = nullptr;
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocHostMem(&hostDesc, MemoryConstants::pageSize, 0u, &ptr));
+        EXPECT_EQ(nullptr, ptr);
+        EXPECT_EQ(!readOnly, memoryManager->isHostMemoryMappableWritable);
+
+        memoryManager->isHostMemoryMappableResult = true;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, MemoryConstants::pageSize, 0u, &ptr));
+        EXPECT_EQ(buffer, ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    }
+    alignedFree(buffer);
+}
+
 TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsExpectedProperties) {
     size_t size = 10;
     size_t alignment = 1u;

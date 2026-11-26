@@ -150,6 +150,13 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     bool isCpuCopyRequired(const void *ptr) override { return cpuCopyRequired; }
 
+    bool isHostMemoryMappable(const void *ptr, size_t size, bool writable) override {
+        isHostMemoryMappableWritable = writable;
+        return isHostMemoryMappableResult;
+    }
+    bool isHostMemoryMappableResult = true;
+    bool isHostMemoryMappableWritable = false;
+
     GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, AllocationType allocationType);
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
 

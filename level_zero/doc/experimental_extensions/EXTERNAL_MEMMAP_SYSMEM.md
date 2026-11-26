@@ -186,6 +186,9 @@ void useApplicationBufferOnGpu(ze_context_handle_t context,
 * `pSystemMemory` and `size` must both be aligned to a page size supported by
   the device; otherwise `zeMemAllocHost` returns `ZE_RESULT_ERROR_UNSUPPORTED_SIZE`
   / `ZE_RESULT_ERROR_INVALID_ARGUMENT`.
+* `pSystemMemory` must point to committed host memory that the driver can map;
+  otherwise `zeMemAllocHost` returns `ZE_RESULT_ERROR_INVALID_ARGUMENT`. Read-only
+  host memory can only be mapped with `ZE_HOST_MEM_ALLOC_FLAG_MEM_READ_ONLY` set.
 * The application retains ownership of the underlying system memory. It must keep
   that memory valid for the entire lifetime of the USM allocation, and free it
   only after the allocation has been released with `zeMemFree`.
