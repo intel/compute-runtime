@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"

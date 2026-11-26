@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
-#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/mocks/linux/mock_buffer_object.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/constants.h"
+#include "shared/test/common/mocks/linux/mock_buffer_object.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/mock_device.h"

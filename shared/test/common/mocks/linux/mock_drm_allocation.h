@@ -7,68 +7,9 @@
 
 #pragma once
 #include "shared/source/os_interface/linux/drm_allocation.h"
-#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include <optional>
-
 namespace NEO {
-
-class MockBufferObjectHandleWrapper : public BufferObjectHandleWrapper {
-  public:
-    using BufferObjectHandleWrapper::boHandle;
-    using BufferObjectHandleWrapper::BufferObjectHandleWrapper;
-    using BufferObjectHandleWrapper::controlBlock;
-
-    MockBufferObjectHandleWrapper(BufferObjectHandleWrapper &&rhs)
-        : BufferObjectHandleWrapper(std::move(rhs)) {}
-};
-
-class MockBufferObject : public BufferObject {
-  public:
-    using BufferObject::bindExtHandles;
-    using BufferObject::bindInfo;
-    using BufferObject::BufferObject;
-    using BufferObject::gpuAddress;
-    using BufferObject::handle;
-    using BufferObject::isaDebugDataHandle;
-    using BufferObject::resourceClass;
-    using BufferObject::size;
-
-    struct ExecParams {
-        uint64_t completionGpuAddress = 0;
-        TaskCountType completionValue = 0;
-    };
-
-    void setSize(size_t mockSize) {
-        size = mockSize;
-    }
-
-    std::optional<int> execReturnValue;
-    std::vector<ExecParams> passedExecParams{};
-    MockBufferObject(uint32_t rootDeviceIndex, Drm *drm) : BufferObject(rootDeviceIndex, drm, CommonConstants::unsupportedPatIndex, 0, 0, 1) {
-    }
-    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-             BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue) override {
-        if (execReturnValue) {
-            return *execReturnValue;
-        }
-        passedExecParams.push_back({completionGpuAddress, completionValue});
-        return BufferObject::exec(used, startOffset, flags, requiresCoherency, osContext, vmHandleId, drmContextId,
-                                  residency, residencyCount, execObjectsStorage, completionGpuAddress, completionValue);
-    }
-
-    int unbind(OsContext *osContext, uint32_t vmHandleId) override {
-        errno = 0;
-        if (unbindErrno != 0) {
-            errno = unbindErrno;
-            return -1;
-        }
-        return BufferObject::unbind(osContext, vmHandleId);
-    }
-
-    int unbindErrno = 0;
-};
 
 class MockDrmAllocation : public DrmAllocation {
   public:
@@ -77,37 +18,14 @@ class MockDrmAllocation : public DrmAllocation {
     using DrmAllocation::memoryToUnmap;
     using DrmAllocation::registeredBoBindHandles;
 
-    MockDrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, MemoryPool pool)
-        : DrmAllocation(rootDeviceIndex, 1u /*num gmms*/, allocationType, nullptr, nullptr, 0, static_cast<size_t>(0), pool) {
-    }
-
-    MockDrmAllocation(AllocationType allocationType, MemoryPool pool, BufferObjects &bos)
-        : DrmAllocation(0, 0, allocationType, bos, nullptr, 0, static_cast<size_t>(0), pool) {
-    }
+    MockDrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, MemoryPool pool);
+    MockDrmAllocation(AllocationType allocationType, MemoryPool pool, BufferObjects &bos);
     ~MockDrmAllocation() override;
 
-    void registerBOBindExtHandle(Drm *drm) override {
-        registerBOBindExtHandleCalled = true;
-        DrmAllocation::registerBOBindExtHandle(drm);
-    }
-
-    void markForCapture() override {
-        markedForCapture = true;
-        DrmAllocation::markForCapture();
-    }
-
-    int bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) override {
-        bindBOsCalled = true;
-        DrmAllocation::bindBOs(osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
-        return bindBOsRetValue;
-    }
-
-    bool prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t subDeviceId) override {
-        prefetchBOCalled = true;
-        vmHandleIdsReceived.push_back(vmHandleId);
-        subDeviceIdsReceived.push_back(subDeviceId);
-        return DrmAllocation::prefetchBO(bo, vmHandleId, subDeviceId);
-    }
+    void registerBOBindExtHandle(Drm *drm) override;
+    void markForCapture() override;
+    int bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) override;
+    bool prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t subDeviceId) override;
 
     ADDMETHOD_NOBASE(makeBOsResident, int, 0, (OsContext * osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence));
 
