@@ -295,6 +295,9 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
                 tokEnd = consumeNumberOrSign(text, context.pos);
                 if (tokEnd > context.pos) {
                     outTokens.push_back(Token(ConstStringRef(context.pos, tokEnd - context.pos), Token::literalNumber));
+                } else if (context.lineTraits.hasDictionaryEntry && isNumber(*context.pos)) {
+                    tokEnd = consumeNameIdentifierCharacters(text, context.pos);
+                    outTokens.push_back(Token(ConstStringRef(context.pos, tokEnd - context.pos).trimEnd(isWhitespace), Token::literalString));
                 } else {
                     outErrReason = constructYamlError(outLines.size(), context.lineBeginPos, context.pos, "Invalid numeric literal");
                     return false;

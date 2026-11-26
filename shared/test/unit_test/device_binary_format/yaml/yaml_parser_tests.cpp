@@ -232,9 +232,9 @@ TEST(YamlConsumeNameIdentifier, GivenNameIdentifierBeginningCharacterThenConsume
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {
         bool isNameOrSeparationWhitespaceIndentifierChar = NEO::Yaml::isNameIdentifierCharacter(static_cast<char>(c));
         isNameOrSeparationWhitespaceIndentifierChar |= NEO::Yaml::isSeparationWhitespace(static_cast<char>(c));
-        char nameIdentifierStr[] = {'A', static_cast<char>(c)};
-        auto expected = nameIdentifierStr + (isNameOrSeparationWhitespaceIndentifierChar ? 2 : 1);
-        EXPECT_EQ(expected, NEO::Yaml::consumeNameIdentifier(ConstStringRef::fromArray(nameIdentifierStr), nameIdentifierStr)) << c;
+        std::string nameIdentifierStr = {'A', static_cast<char>(c)};
+        auto expected = nameIdentifierStr.data() + (isNameOrSeparationWhitespaceIndentifierChar ? 2 : 1);
+        EXPECT_EQ(expected, NEO::Yaml::consumeNameIdentifier(ConstStringRef(nameIdentifierStr), nameIdentifierStr.data())) << c;
     }
 }
 
@@ -1038,6 +1038,39 @@ TEST(YamlTokenize, GivenInvalidNumericLiteralThenReturnError) {
     EXPECT_FALSE(success);
     EXPECT_STREQ("NEO::Yaml : Could not parse line : [0] : [@] <-- parser position on error. Reason : Invalid numeric literal\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(YamlTokenize, GivenListEntryStartingWithDigitFollowedByLetterThenReturnError) {
+    ConstStringRef yaml = "- 60c\n";
+
+    NEO::Yaml::LinesCache lines;
+    NEO::Yaml::TokensCache tokens;
+    std::string warnings;
+    std::string errors;
+    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_FALSE(success);
+    EXPECT_STREQ("NEO::Yaml : Could not parse line : [0] : [- 6] <-- parser position on error. Reason : Invalid numeric literal\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(YamlParser, GivenDictionaryValueStartingWithDigitFollowedByLetterThenReadItAsString) {
+    ConstStringRef yaml = "igca_target : 60c\nigca_targets : [60c]\n";
+    std::string errors;
+    std::string warnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, errors, warnings);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    auto igcaTargetNode = parser.getChild(*parser.getRoot(), "igca_target");
+    ASSERT_NE(nullptr, igcaTargetNode);
+    EXPECT_EQ(ConstStringRef("60c"), parser.readValue(*igcaTargetNode));
+
+    auto igcaTargetsNode = parser.getChild(*parser.getRoot(), "igca_targets");
+    ASSERT_NE(nullptr, igcaTargetsNode);
+    ASSERT_EQ(1U, igcaTargetsNode->numChildren);
+    EXPECT_EQ(ConstStringRef("60c"), parser.readValue(*parser.createChildrenRange(*igcaTargetsNode).begin()));
 }
 
 TEST(YamlTokenize, GivenSpaceSeparatedStringAsValueThenReadItCorrectly) {

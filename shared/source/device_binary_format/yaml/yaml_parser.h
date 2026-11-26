@@ -124,19 +124,23 @@ constexpr const char *consumeNumberOrSign(ConstStringRef wholeText, const char *
     return parsePos;
 }
 
-constexpr const char *consumeNameIdentifier(ConstStringRef wholeText, const char *parsePos) {
+constexpr const char *consumeNameIdentifierCharacters(ConstStringRef wholeText, const char *parsePos) {
     auto parseEnd = wholeText.end();
-    if (isNameIdentifierBeginningCharacter(*parsePos)) {
-        auto it = parsePos + 1;
-        while (it < parseEnd) {
-            if (false == isNameIdentifierCharacter(*it)) {
-                if (false == isSeparationWhitespace(*it)) {
-                    break;
-                }
+    auto it = parsePos;
+    while (it < parseEnd) {
+        if (false == isNameIdentifierCharacter(*it)) {
+            if (false == isSeparationWhitespace(*it)) {
+                break;
             }
-            ++it;
         }
-        return it;
+        ++it;
+    }
+    return it;
+}
+
+constexpr const char *consumeNameIdentifier(ConstStringRef wholeText, const char *parsePos) {
+    if (isNameIdentifierBeginningCharacter(*parsePos)) {
+        return consumeNameIdentifierCharacters(wholeText, parsePos + 1);
     }
     return parsePos;
 }
