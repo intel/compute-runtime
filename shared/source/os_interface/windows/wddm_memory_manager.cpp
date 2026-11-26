@@ -399,13 +399,12 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const Alloca
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
                                                        MemoryPool::systemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
     allocation->setipcSupportedAllocationByDefault(allocationData.flags.ipcSupportedAllocationByDefault);
-    allocation->setDefaultGmm(gmm.get());
+    allocation->setDefaultGmm(std::move(gmm));
     allocation->storageInfo = allocationData.storageInfo;
     if (!createPhysicalAllocation(allocation.get())) {
         return nullptr;
     }
 
-    gmm.release();
     status = AllocationStatus::Success;
     return allocation.release();
 }
@@ -427,7 +426,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
                                                        MemoryPool::systemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
     allocation->setipcSupportedAllocationByDefault(allocationData.flags.ipcSupportedAllocationByDefault);
-    allocation->setDefaultGmm(gmm.get());
+    allocation->setDefaultGmm(std::move(gmm));
     allocation->storageInfo = allocationData.storageInfo;
     void *requiredGpuVa = nullptr;
     if (!adjustGpuPtrToHostAddressSpace(*allocation.get(), requiredGpuVa)) {
@@ -436,8 +435,6 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
     if (!createWddmAllocation(allocation.get(), requiredGpuVa)) {
         return nullptr;
     }
-
-    gmm.release();
 
     return allocation.release();
 }
@@ -449,12 +446,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
                                                        nullptr, MemoryPool::systemCpuInaccessible,
                                                        0u, // shareable
                                                        maxOsContextCount);
-    allocation->setDefaultGmm(gmm.get());
+    allocation->setDefaultGmm(std::move(gmm));
     if (!createWddmAllocation(allocation.get(), nullptr)) {
         return nullptr;
     }
-
-    gmm.release();
 
     return allocation.release();
 }
@@ -1879,7 +1874,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalHostMemory(const Allocati
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, 1u, allocationData.type,
                                                        nullptr, 0, allocationData.size, nullptr,
                                                        MemoryPool::system64KBPages, 0u, maxOsContextCount);
-    allocation->setDefaultGmm(gmm.get());
+    allocation->setDefaultGmm(std::move(gmm));
     allocation->storageInfo = storageInfo;
 
     if (!createPhysicalAllocation(allocation.get())) {
@@ -1893,7 +1888,6 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalHostMemory(const Allocati
     }
 
     allocation->setCpuAddress(cpuPtr);
-    gmm.release();
     status = AllocationStatus::Success;
     return allocation.release();
 }

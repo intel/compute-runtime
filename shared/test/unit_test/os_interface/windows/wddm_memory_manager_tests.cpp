@@ -5768,7 +5768,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuV
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_FALSE(ret);
 }
@@ -5789,7 +5789,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
     wddm->destroyAllocation(&allocation, nullptr);
@@ -5811,7 +5811,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_FALSE(ret);
 }

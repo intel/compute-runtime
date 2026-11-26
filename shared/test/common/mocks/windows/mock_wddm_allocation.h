@@ -23,23 +23,8 @@ class MockWddmAllocation : public WddmAllocation {
             setHandle(ALLOCATION_HANDLE, i);
         }
     }
-    void clearGmms() {
-        for (auto gmm : gmms) {
-            delete gmm;
-        }
-        gmms.clear();
-    }
-    ~MockWddmAllocation() override {
-        clearGmms();
-    }
-    void resizeGmms(size_t newSize) {
-        clearGmms();
-        gmms.resize(newSize);
-        handles.resize(newSize);
-    }
     using GraphicsAllocation::parentAllocation;
     using WddmAllocation::cpuPtr;
-    using WddmAllocation::gmms;
     using WddmAllocation::handles;
     using WddmAllocation::memoryPool;
     using WddmAllocation::ntSecureHandle;

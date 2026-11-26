@@ -3455,7 +3455,7 @@ TEST_F(HeapSelectorTest, whenSelectingHeapForExternalAllocationWithoutPtrAndReso
     auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = true;
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
     EXPECT_EQ(HeapIndex::heapStandard64KB, memoryManager->selectHeap(&allocation, false, false));
 }
 
@@ -3468,7 +3468,7 @@ TEST_F(HeapSelectorTest, whenSelectingHeapForExternalAllocationWithoutPtrAndReso
     auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = false;
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
     EXPECT_EQ(HeapIndex::heapStandard, memoryManager->selectHeap(&allocation, false, false));
 }
 

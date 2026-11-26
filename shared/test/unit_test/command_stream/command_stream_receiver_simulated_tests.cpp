@@ -256,15 +256,15 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedAllocationWhenCloningPageTa
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    MockGmm gmm(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm.setCompressionEnabled(true);
+    auto gmm = std::make_unique<MockGmm>(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    gmm->setCompressionEnabled(true);
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, 1u /*num gmms*/, AllocationType::unknown,
                                           &dummy, 0, 0, sizeof(dummy), MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
 
-    graphicsAllocation.setDefaultGmm(&gmm);
+    graphicsAllocation.setDefaultGmm(std::move(gmm));
 
     csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
@@ -290,15 +290,15 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedAllocationWhenCloningPageTabl
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    MockGmm gmm(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, {}, gmmRequirements);
-    gmm.setCompressionEnabled(false);
+    auto gmm = std::make_unique<MockGmm>(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, StorageInfo{}, gmmRequirements);
+    gmm->setCompressionEnabled(false);
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, 1u /*num gmms*/, AllocationType::unknown,
                                           &dummy, 0, 0, sizeof(dummy), MemoryPool::memoryNull, MemoryManager::maxOsContextCount};
     graphicsAllocation.storageInfo.cloningOfPageTables = true;
 
-    graphicsAllocation.setDefaultGmm(&gmm);
+    graphicsAllocation.setDefaultGmm(std::move(gmm));
 
     csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
@@ -355,8 +355,8 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    MockGmm gmm(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm.setCompressionEnabled(true);
+    auto gmm = std::make_unique<MockGmm>(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    gmm->setCompressionEnabled(true);
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, 1u /*num gmms*/, AllocationType::unknown,
@@ -365,7 +365,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 0b11u;
 
-    graphicsAllocation.setDefaultGmm(&gmm);
+    graphicsAllocation.setDefaultGmm(std::move(gmm));
 
     csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 
@@ -398,8 +398,8 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedTileInstancedAllocationWhenWr
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    MockGmm gmm(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, {}, gmmRequirements);
-    gmm.setCompressionEnabled(false);
+    auto gmm = std::make_unique<MockGmm>(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, StorageInfo{}, gmmRequirements);
+    gmm->setCompressionEnabled(false);
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, 1u /*num gmms*/, AllocationType::unknown,
@@ -408,7 +408,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedTileInstancedAllocationWhenWr
     graphicsAllocation.storageInfo.tileInstanced = true;
     graphicsAllocation.storageInfo.memoryBanks = 0b11u;
 
-    graphicsAllocation.setDefaultGmm(&gmm);
+    graphicsAllocation.setDefaultGmm(std::move(gmm));
 
     csr->writeMemoryWithAubManager(graphicsAllocation, false, 0, 0);
 

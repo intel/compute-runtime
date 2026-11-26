@@ -7387,7 +7387,7 @@ class MockSharedHandleMemoryManager : public MockMemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
         if (failPeekInternalHandle && properties.allocationType == AllocationType::image) {
             auto allocation = new ExportImportMockGraphicsAllocation();
-            allocation->setDefaultGmm(MockGmm::queryImgParams(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo, false).release());
+            allocation->setDefaultGmm(MockGmm::queryImgParams(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo, false));
             return allocation;
         }
         return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);

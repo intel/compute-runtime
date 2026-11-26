@@ -41,13 +41,13 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
 using namespace NEO;
 
 namespace GmmHelperFunctions {
-Gmm *getGmm(void *ptr, size_t size, GmmHelper *gmmHelper) {
+std::unique_ptr<Gmm> getGmm(void *ptr, size_t size, GmmHelper *gmmHelper) {
     size_t alignedSize = alignSizeWholePage(ptr, size);
     void *alignedPtr = alignUp(ptr, 4096);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    Gmm *gmm = new Gmm(gmmHelper, alignedPtr, alignedSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(gmmHelper, alignedPtr, alignedSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     EXPECT_NE(gmm->gmmResourceInfo.get(), nullptr);
     return gmm;
 }
@@ -89,7 +89,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerAndCompressedResourceWhenMappingGpu
     auto gmmHelper = getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(fakePtr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, fakePtr, canonizedAddress, 0x2100, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
     allocation.getHandleToModify(0u) = ALLOCATION_HANDLE;
 
     EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation));
@@ -329,9 +329,7 @@ TEST_F(Wddm20Tests, WhenCreatingAllocationAndDestroyingAllocationThenCorrectResu
     auto ptr = mm.allocateSystemMemory(100, 0);
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, ptr, canonizedAddress, 100, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper());
-
-    allocation.setDefaultGmm(gmm);
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper()));
     auto status = wddm->createAllocation(&allocation);
 
     EXPECT_EQ(STATUS_SUCCESS, status);
@@ -339,8 +337,6 @@ TEST_F(Wddm20Tests, WhenCreatingAllocationAndDestroyingAllocationThenCorrectResu
 
     auto error = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(error);
-
-    delete gmm;
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
 
@@ -355,9 +351,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     auto gmmHelper = getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, ptr, canonizedAddress, 0x2100, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), getGmmHelper());
-
-    allocation.setDefaultGmm(gmm);
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), getGmmHelper()));
     auto status = wddm->createAllocation(&allocation);
 
     EXPECT_EQ(STATUS_SUCCESS, status);
@@ -371,8 +365,6 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 
     ret = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(ret);
-
-    delete gmm;
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParametersThenAddressInRangeIsReturend) {
@@ -438,13 +430,11 @@ TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmS
     auto gmmHelper = getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(fakePtr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, fakePtr, canonizedAddress, 100, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), getGmmHelper()));
-
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), getGmmHelper()));
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
 
-    auto mockResourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    auto mockResourceInfo = static_cast<MockGmmResourceInfo *>(allocation.getDefaultGmm()->gmmResourceInfo.get());
     mockResourceInfo->overrideReturnedSize(allocation.getAlignedSize() + (2 * MemoryConstants::pageSize));
 
     wddm->mapGpuVirtualAddress(&allocation);
@@ -565,9 +555,7 @@ TEST_F(Wddm20Tests, WhenMappingAndFreeingGpuVaThenReturnIsCorrect) {
     auto ptr = mm.allocateSystemMemory(100, 0);
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, ptr, canonizedAddress, 100, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper());
-
-    allocation.setDefaultGmm(gmm);
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper()));
     auto status = wddm->createAllocation(&allocation);
 
     EXPECT_EQ(STATUS_SUCCESS, status);
@@ -583,15 +571,12 @@ TEST_F(Wddm20Tests, WhenMappingAndFreeingGpuVaThenReturnIsCorrect) {
 
     error = wddm->destroyAllocation(&allocation, osContext.get());
     EXPECT_TRUE(error);
-    delete gmm;
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
 
 TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 100, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper()));
-
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper()));
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
 
@@ -608,8 +593,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
 TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenCreateResourceFlagIsEnabled) {
     init();
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
-    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
     auto passedCreateAllocation = getMockAllocationFcn();
@@ -623,9 +607,9 @@ TEST_F(WddmTestWithMockGdiDll, givenCompressedResourceWhenItIsCreatedThenItMayCo
     NEO::debugManager.flags.AllowNotZeroForCompressedOnWddm.set(1);
     init();
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
-    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
+    auto gmm = GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper());
     gmm->setCompressionEnabled(true);
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
     auto passedCreateAllocation = getMockAllocationFcn();
@@ -638,8 +622,7 @@ TEST_F(WddmTestWithMockGdiDll, givenNonCompressedResourceWhenItIsCreatedThenItCa
     NEO::debugManager.flags.AllowNotZeroForCompressedOnWddm.set(1);
     init();
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
-    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
     auto passedCreateAllocation = getMockAllocationFcn();
@@ -650,9 +633,9 @@ TEST_F(WddmTestWithMockGdiDll, givenNonCompressedResourceWhenItIsCreatedThenItCa
 TEST_F(WddmTestWithMockGdiDll, givenCompressedResourceWhenItIsCreatedThenItCannotContainNonZeroContent) {
     init();
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
-    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
+    auto gmm = GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper());
     gmm->setCompressionEnabled(true);
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
     auto passedCreateAllocation = getMockAllocationFcn();
@@ -668,8 +651,7 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     };
     MemoryManagerCreate<MockWddmMemoryManager> memoryManager(false, false, *executionEnvironment);
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
-    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
     auto status = memoryManager.createGpuAllocationsWithRetry(&allocation);
     EXPECT_TRUE(status);
     uint64_t handle = 0;
@@ -697,9 +679,7 @@ TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     auto ptr = mm.allocateSystemMemory(100, 0);
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, ptr, canonizedAddress, 100, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper());
-
-    allocation.setDefaultGmm(gmm);
+    allocation.setDefaultGmm(GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), getGmmHelper()));
     auto status = wddm->createAllocation(&allocation);
 
     EXPECT_EQ(STATUS_SUCCESS, status);
@@ -719,7 +699,6 @@ TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     error = wddm->destroyAllocation(&allocation, osContext.get());
 
     EXPECT_TRUE(error);
-    delete gmm;
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
 
@@ -1237,7 +1216,7 @@ TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), fakePtr, 100, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, fakePtr, canonizedAddress, 100, nullptr, MemoryPool::memoryNull, 0u, 1u);
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
 
     EXPECT_FALSE(wddm->createAllocation64k(&allocation));
 }
@@ -1262,13 +1241,12 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
     handleStorage.fragmentStorageData[0].freeTheFragment = false;
     handleStorage.fragmentStorageData[0].osHandleStorage = &handle;
     handleStorage.fragmentStorageData[0].residency = &residency;
-    handle.gmm = GmmHelperFunctions::getGmm(nullptr, 0, getGmmHelper());
+    auto gmm = GmmHelperFunctions::getGmm(nullptr, 0, getGmmHelper());
+    handle.gmm = gmm.get();
 
     NTSTATUS result = wddm->createAllocationsAndMapGpuVa(handleStorage);
 
     EXPECT_EQ(STATUS_GRAPHICS_NO_VIDEO_MEMORY, result);
-
-    delete handle.gmm;
 }
 
 TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCalled) {

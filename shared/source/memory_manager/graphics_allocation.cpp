@@ -110,8 +110,12 @@ void GraphicsAllocation::setDefaultGmm(std::unique_ptr<Gmm> gmm) {
 
 void GraphicsAllocation::setGmm(std::unique_ptr<Gmm> gmm, uint32_t handleId) {
     UNRECOVERABLE_IF(isView());
-    delete this->gmms[handleId];
-    this->setGmm(gmm.release(), handleId);
+    this->gmms[handleId] = std::move(gmm);
+}
+
+void GraphicsAllocation::resizeGmms(uint32_t size) {
+    UNRECOVERABLE_IF(isView());
+    this->gmms.resize(size);
 }
 
 bool GraphicsAllocation::isAllocationLockable() const {

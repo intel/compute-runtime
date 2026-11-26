@@ -497,21 +497,11 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
         if (mappedPhysicalAllocation) {
             return mappedPhysicalAllocation->getGmm(handleId);
         }
-        return gmms[handleId];
-    }
-    void setDefaultGmm(Gmm *gmm) {
-        setGmm(gmm, 0u);
+        return gmms[handleId].get();
     }
     void setDefaultGmm(std::unique_ptr<Gmm> gmm);
-    void setGmm(Gmm *gmm, uint32_t handleId) {
-        UNRECOVERABLE_IF(isView());
-        gmms[handleId] = gmm;
-    }
     void setGmm(std::unique_ptr<Gmm> gmm, uint32_t handleId);
-    void resizeGmms(uint32_t size) {
-        UNRECOVERABLE_IF(isView());
-        gmms.resize(size);
-    }
+    void resizeGmms(uint32_t size);
 
     uint32_t getNumGmms() const {
         if (parentAllocation) {
@@ -666,7 +656,7 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
 
   protected:
     std::vector<uint32_t> inspectionIds;
-    std::vector<Gmm *> gmms;
+    std::vector<std::unique_ptr<Gmm>> gmms;
     AubInfo aubInfo;
     SharingInfo sharingInfo;
     ReservedAddressRange reservedAddressRangeInfo;
