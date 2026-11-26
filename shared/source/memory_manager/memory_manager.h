@@ -471,6 +471,8 @@ class MemoryManager {
     // Parking and the count drop happen under one lock: once the count is zero the physical allocation, and
     // with it every parked mapping, may be released by another thread.
     PhysicalMappingRelease parkPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t size);
+    void unregisterPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation);
+    PhysicalMappingRelease dropLivePhysicalMemoryMappingLocked(GraphicsAllocation &physicalAllocation);
     GraphicsAllocation *takeParkedPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation, uint64_t gpuRange, size_t size);
     bool isLastLivePhysicalMemoryMapping(GraphicsAllocation &physicalAllocation);
     void destroyParkedPhysicalMemoryMappings(GraphicsAllocation &physicalAllocation);

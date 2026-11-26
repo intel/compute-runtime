@@ -383,11 +383,10 @@ void MemoryManager::registerPhysicalMemoryMapping(GraphicsAllocation &physicalAl
 }
 
 MemoryManager::PhysicalMappingRelease MemoryManager::parkPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t size) {
-    PhysicalMappingRelease release{};
     auto physicalAllocation = mappedAllocation.getMappedPhysicalAllocation();
     if (physicalAllocation == nullptr) {
         destroyParkedPhysicalMemoryMapping(mappedAllocation);
-        return release;
+        return {};
     }
     std::lock_guard lock{physicalMemoryMappingsMutex};
     auto &physicalMappingsInfo = physicalAllocation->getPhysicalMappingsInfo();
@@ -395,12 +394,29 @@ MemoryManager::PhysicalMappingRelease MemoryManager::parkPhysicalMemoryMapping(G
         this->physicalAllocationsWithParkedMappings.push_back(physicalAllocation);
     }
     physicalMappingsInfo.parkedMappings.push_back({&mappedAllocation, gpuRange, size});
+    return this->dropLivePhysicalMemoryMappingLocked(*physicalAllocation);
+}
+
+void MemoryManager::unregisterPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation) {
+    PhysicalMappingRelease release{};
+    {
+        std::lock_guard lock{physicalMemoryMappingsMutex};
+        release = this->dropLivePhysicalMemoryMappingLocked(*mappedAllocation.getMappedPhysicalAllocation());
+    }
+    if (release.physicalAllocationToRelease) {
+        this->freeGraphicsMemory(release.physicalAllocationToRelease);
+    }
+}
+
+MemoryManager::PhysicalMappingRelease MemoryManager::dropLivePhysicalMemoryMappingLocked(GraphicsAllocation &physicalAllocation) {
+    PhysicalMappingRelease release{};
+    auto &physicalMappingsInfo = physicalAllocation.getPhysicalMappingsInfo();
     // Read before the count drops: deferReleaseOfMappedPhysicalMemory checks for a zero count without
     // the lock, so from then on the physical allocation may be freed concurrently.
     const bool releasePending = physicalMappingsInfo.releasePending;
     const bool isLastMapping = --physicalMappingsInfo.liveMappingsCount == 0u;
     if (isLastMapping && releasePending) {
-        release.physicalAllocationToRelease = physicalAllocation;
+        release.physicalAllocationToRelease = &physicalAllocation;
     }
     return release;
 }

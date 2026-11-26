@@ -107,6 +107,7 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool isSvmReservation) override;
     HeapIndex selectHeapForPhysicalHostMemoryMapping(uint32_t rootDeviceIndex, uint64_t decanonizedGpuAddress);
     bool freePhysicalHostMemoryMapping(uint32_t rootDeviceIndex, Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS gpuAddress, size_t size);
+    bool destroyPhysicalHostMemoryMapping(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation &mappedAllocation, size_t size);
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override { return nullptr; }
 

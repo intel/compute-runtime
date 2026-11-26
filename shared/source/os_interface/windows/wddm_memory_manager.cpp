@@ -201,7 +201,7 @@ bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAl
         auto rootDeviceIndex = alloc->getRootDeviceIndex();
         auto &wddm = getWddm(rootDeviceIndex);
 
-        if (!freePhysicalHostMemoryMapping(rootDeviceIndex, physicalAllocation->getDefaultGmm(), alloc->getGpuAddress(), bufferSize)) {
+        if (!this->destroyPhysicalHostMemoryMapping(multiGraphicsAllocation, *alloc, bufferSize)) {
             success = false;
         }
 
@@ -220,11 +220,18 @@ bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAl
                 success = false;
             }
         }
-
-        multiGraphicsAllocation.removeAllocation(rootDeviceIndex);
-        delete alloc;
     }
     return success;
+}
+
+bool WddmMemoryManager::destroyPhysicalHostMemoryMapping(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation &mappedAllocation, size_t size) {
+    const auto rootDeviceIndex = mappedAllocation.getRootDeviceIndex();
+    const bool isGpuVaFreed = this->freePhysicalHostMemoryMapping(rootDeviceIndex, mappedAllocation.getDefaultGmm(), mappedAllocation.getGpuAddress(), size);
+    multiGraphicsAllocation.removeAllocation(rootDeviceIndex);
+    this->removeAllocationFromResidencyControllers(mappedAllocation);
+    this->unregisterPhysicalMemoryMapping(mappedAllocation);
+    delete &mappedAllocation;
+    return isGpuVaFreed;
 }
 
 bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
@@ -305,10 +312,7 @@ bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCo
     auto cleanupMappedAllocations = [&]() {
         for (auto alloc : multiGraphicsAllocation.getGraphicsAllocations()) {
             if (alloc) {
-                auto allocRootDeviceIndex = alloc->getRootDeviceIndex();
-                freePhysicalHostMemoryMapping(allocRootDeviceIndex, physicalGmm, alloc->getGpuAddress(), bufferSize);
-                multiGraphicsAllocation.removeAllocation(allocRootDeviceIndex);
-                delete alloc;
+                this->destroyPhysicalHostMemoryMapping(multiGraphicsAllocation, *alloc, bufferSize);
             }
         }
     };
@@ -389,7 +393,10 @@ bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCo
         mappingAlloc->setCpuPtrAndGpuAddress(static_cast<char *>(physicalAllocation->getUnderlyingBuffer()) + offset, mappedGpuAddress);
         mappingAlloc->setReservedAddressRange(reinterpret_cast<void *>(mappedGpuAddress), bufferSize);
         mappingAlloc->setMappedPhysicalMemoryReservation(true);
+        mappingAlloc->setSharedPhysicalMemoryMapping(true);
+        mappingAlloc->setMappedPhysicalAllocation(physicalAllocation);
 
+        this->registerPhysicalMemoryMapping(*physicalAllocation);
         multiGraphicsAllocation.addAllocation(mappingAlloc.release());
     }
 
