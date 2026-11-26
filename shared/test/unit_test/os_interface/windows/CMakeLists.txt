@@ -64,6 +64,7 @@ if(WIN32 OR(UNIX AND NOT DISABLE_WDDM_LINUX))
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_operations_handler_with_aub_dump_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_peer_paging_queue_tests.cpp
   )
 endif()
 

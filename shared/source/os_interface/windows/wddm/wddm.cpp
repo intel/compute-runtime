@@ -369,11 +369,40 @@ bool Wddm::createPagingQueue() {
         createPagingFenceLogger();
     }
 
-    return status == STATUS_SUCCESS;
+    if (status != STATUS_SUCCESS || numPhysicalAdapters <= 1u) {
+        return status == STATUS_SUCCESS;
+    }
+
+    peerPagingQueues = std::vector<PeerPagingQueue>(numPhysicalAdapters - 1u);
+    for (uint32_t peerIndex = 0u; peerIndex < peerPagingQueues.size(); peerIndex++) {
+        D3DKMT_CREATEPAGINGQUEUE createPeerPagingQueue = {};
+        createPeerPagingQueue.hDevice = device;
+        createPeerPagingQueue.Priority = D3DDDI_PAGINGQUEUE_PRIORITY_NORMAL;
+        createPeerPagingQueue.PhysicalAdapterIndex = peerIndex + 1u;
+
+        if (getGdi()->createPagingQueue(&createPeerPagingQueue) != STATUS_SUCCESS) {
+            return false;
+        }
+
+        auto &peerPagingQueue = peerPagingQueues[peerIndex];
+        peerPagingQueue.handle = createPeerPagingQueue.hPagingQueue;
+        peerPagingQueue.syncObject = createPeerPagingQueue.hSyncObject;
+        peerPagingQueue.fenceAddress = reinterpret_cast<UINT64 *>(createPeerPagingQueue.FenceValueCPUVirtualAddress);
+    }
+    return true;
 }
 
 bool Wddm::destroyPagingQueue() {
     D3DDDI_DESTROYPAGINGQUEUE destroyPagingQueue = {};
+    for (auto &peerPagingQueue : peerPagingQueues) {
+        if (peerPagingQueue.handle) {
+            D3DDDI_DESTROYPAGINGQUEUE destroyPeerPagingQueue = {};
+            destroyPeerPagingQueue.hPagingQueue = peerPagingQueue.handle;
+            [[maybe_unused]] NTSTATUS status = getGdi()->destroyPagingQueue(&destroyPeerPagingQueue);
+            DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+        }
+    }
+    peerPagingQueues.clear();
     if (pagingQueue) {
         destroyPagingQueue.hPagingQueue = pagingQueue;
 
@@ -512,6 +541,10 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
 }
 
 bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim, bool evictNeeded) {
+    return evictFromPagingQueues(handleList, numOfHandles, sizeToTrim, evictNeeded, 1u + peerPagingQueues.size());
+}
+
+bool Wddm::evictFromPagingQueues(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim, bool evictNeeded, size_t pagingQueueCount) {
     if (numOfHandles == 0) {
         return true;
     }
@@ -523,7 +556,12 @@ bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_
     evict.NumBytesToTrim = 0;
     evict.Flags.EvictOnlyIfNecessary = adjustEvictNeededParameter(evictNeeded) ? 0 : 1;
 
-    status = getGdi()->evict(&evict);
+    for (size_t pagingQueueIndex = 0u; pagingQueueIndex < pagingQueueCount; pagingQueueIndex++) {
+        auto evictStatus = getGdi()->evict(&evict);
+        if (evictStatus != STATUS_SUCCESS) {
+            status = evictStatus;
+        }
+    }
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
     sizeToTrim = evict.NumBytesToTrim;
@@ -562,6 +600,28 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
             *numberOfBytesToTrim = makeResident.NumBytesToTrim;
         }
         return false;
+    }
+
+    for (size_t peerIndex = 0u; peerIndex < peerPagingQueues.size(); peerIndex++) {
+        auto &peerPagingQueue = peerPagingQueues[peerIndex];
+        D3DDDI_MAKERESIDENT makeResidentOnPeer = {};
+        makeResidentOnPeer.AllocationList = handles;
+        makeResidentOnPeer.hPagingQueue = peerPagingQueue.handle;
+        makeResidentOnPeer.NumAllocations = count;
+        makeResidentOnPeer.PriorityList = &priority;
+        makeResidentOnPeer.Flags = makeResident.Flags;
+
+        status = getGdi()->makeResident(&makeResidentOnPeer);
+        if (status == STATUS_PENDING) {
+            NEO::MultiThreadHelpers::interlockedMax(peerPagingQueue.currentFenceValue, makeResidentOnPeer.PagingFenceValue);
+        } else if (status != STATUS_SUCCESS) {
+            uint64_t sizeToTrim = 0u;
+            evictFromPagingQueues(handles, count, sizeToTrim, true, 1u + peerIndex);
+            if (numberOfBytesToTrim != nullptr) {
+                *numberOfBytesToTrim = makeResidentOnPeer.NumBytesToTrim;
+            }
+            return false;
+        }
     }
 
     this->setNewResourceBoundToPageTable();
@@ -622,6 +682,14 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
         return false;
     }
 
+    if (!mapGpuVirtualAddressOnPeerAdapters(mapGPUVA, gmm)) {
+        if (preferredAddress == 0u) {
+            freeGmmGpuVirtualAddress(gmm, gpuPtr, size);
+            gpuPtr = 0;
+        }
+        return false;
+    }
+
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (gmm->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
         bool auxTablesUpdated = true;
@@ -652,6 +720,34 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
         }
     }
 
+    return true;
+}
+
+bool Wddm::mapGpuVirtualAddressOnPeerAdapters(const D3DDDI_MAPGPUVIRTUALADDRESS &mapGPUVA, Gmm *gmm) {
+    for (auto &peerPagingQueue : peerPagingQueues) {
+        D3DDDI_MAPGPUVIRTUALADDRESS mapGPUVAOnPeer = mapGPUVA;
+        mapGPUVAOnPeer.hPagingQueue = peerPagingQueue.handle;
+        mapGPUVAOnPeer.BaseAddress = mapGPUVA.VirtualAddress;
+        mapGPUVAOnPeer.VirtualAddress = 0u;
+        mapGPUVAOnPeer.PagingFenceValue = 0u;
+
+        D3DGPU_VIRTUAL_ADDRESS gpuPtrOnPeer = 0u;
+        MapGpuVirtualAddressGmm gmmMapGpuVa = {&mapGPUVAOnPeer, gmm->gmmResourceInfo.get(), &gpuPtrOnPeer, getGdi()};
+        auto status = rootDeviceEnvironment.getGmmClientContext()->mapGpuVirtualAddress(&gmmMapGpuVa);
+
+        if (status == STATUS_PENDING) {
+            NEO::MultiThreadHelpers::interlockedMax(peerPagingQueue.currentFenceValue, mapGPUVAOnPeer.PagingFenceValue);
+            status = STATUS_SUCCESS;
+        }
+        if (status != STATUS_SUCCESS) {
+            return false;
+        }
+        if (mapGPUVAOnPeer.VirtualAddress != mapGPUVA.VirtualAddress) {
+            D3DGPU_VIRTUAL_ADDRESS strayGpuPtr = mapGPUVAOnPeer.VirtualAddress;
+            freeGpuVirtualAddress(strayGpuPtr, mapGPUVAOnPeer.SizeInPages * MemoryConstants::pageSize);
+            return false;
+        }
+    }
     return true;
 }
 
@@ -1624,6 +1720,26 @@ void Wddm::waitOnPagingFenceFromCpu(uint64_t pagingFenceValueToWait, bool isKmdW
         }
         if (pagingFenceDelayTime > 0) {
             delayPagingFenceFromCpu(pagingFenceDelayTime);
+        }
+    }
+
+    for (auto &peerPagingQueue : peerPagingQueues) {
+        uint64_t peerPagingFenceValueToWait = peerPagingQueue.currentFenceValue.load();
+        if (peerPagingFenceValueToWait <= *getPeerPagingFenceAddress(peerPagingQueue)) {
+            continue;
+        }
+        if (isKmdWaitNeeded) {
+            D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
+            waitFromCpu.ObjectCount = 1;
+            waitFromCpu.ObjectHandleArray = &peerPagingQueue.syncObject;
+            waitFromCpu.FenceValueArray = &peerPagingFenceValueToWait;
+            waitFromCpu.hDevice = device;
+            waitFromCpu.hAsyncEvent = NULL_HANDLE;
+            [[maybe_unused]] auto status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
+            DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+        } else {
+            while (peerPagingFenceValueToWait > *getPeerPagingFenceAddress(peerPagingQueue)) {
+            }
         }
     }
 

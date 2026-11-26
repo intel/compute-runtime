@@ -46,8 +46,10 @@ class WddmMock : public Wddm {
     using Wddm::adjustEvictNeededParameter;
     using Wddm::checkDeviceState;
     using Wddm::createPagingFenceLogger;
+    using Wddm::createPagingQueue;
     using Wddm::currentPagingFenceValue;
     using Wddm::dedicatedVideoMemory;
+    using Wddm::destroyPagingQueue;
     using Wddm::device;
     using Wddm::deviceRegistryPath;
     using Wddm::enablePreemptionRegValue;
@@ -66,9 +68,11 @@ class WddmMock : public Wddm {
     using Wddm::lmemBarSize;
     using Wddm::mapGpuVirtualAddress;
     using Wddm::minAddress;
+    using Wddm::numPhysicalAdapters;
     using Wddm::pagingFenceAddress;
     using Wddm::pagingFenceDelayTime;
     using Wddm::pagingQueue;
+    using Wddm::peerPagingQueues;
     using Wddm::platformSupportsEvictIfNecessary;
     using Wddm::populateAdditionalAdapterInfoOptions;
     using Wddm::populateIpVersion;

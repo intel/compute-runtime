@@ -370,6 +370,16 @@ bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCo
             return false;
         }
 
+        if (!wddm.mapGpuVirtualAddressOnPeerAdapters(mapGPUVA, physicalGmm)) {
+            freePhysicalHostMemoryMapping(rootDeviceIndex, physicalGmm, mappedGpuAddress, bufferSize);
+            if (!isSvmReservation) {
+                uint64_t reservedAddress = 0u;
+                wddm.reserveGpuVirtualAddress(decanonizedAddress, minimumAddress, maximumAddress, bufferSize, &reservedAddress);
+            }
+            cleanupMappedAllocations();
+            return false;
+        }
+
         auto mappingAlloc = std::make_unique<WddmAllocation>(
             rootDeviceIndex, 1u, physicalAllocation->getAllocationType(),
             nullptr, 0, bufferSize, nullptr,

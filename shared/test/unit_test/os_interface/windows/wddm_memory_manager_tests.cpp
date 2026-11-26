@@ -3051,6 +3051,153 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryMappedAtDifferentAddr
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+constexpr D3DKMT_HANDLE peerPagingQueueHandleForHostMap = 0x300;
+D3DDDI_MAPGPUVIRTUALADDRESS primaryMapCallForHostMap = {};
+std::vector<D3DDDI_MAPGPUVIRTUALADDRESS> peerMapCallsForHostMap;
+bool failPeerMapForHostMap = false;
+
+NTSTATUS __stdcall mapGpuVirtualAddressWithPeerPagingQueueMock(D3DDDI_MAPGPUVIRTUALADDRESS *mapGpuVa) {
+    if (mapGpuVa->hPagingQueue != peerPagingQueueHandleForHostMap) {
+        primaryMapCallForHostMap = *mapGpuVa;
+        return originalMapGpuVirtualAddressForHostMap(mapGpuVa);
+    }
+    peerMapCallsForHostMap.push_back(*mapGpuVa);
+    if (failPeerMapForHostMap) {
+        return STATUS_UNSUCCESSFUL;
+    }
+    mapGpuVa->VirtualAddress = mapGpuVa->BaseAddress;
+    return STATUS_SUCCESS;
+}
+
+struct WddmMemoryManagerPeerPagingQueueHostMapTest : public WddmMemoryManagerSimpleTest {
+    void SetUp() override {
+        WddmMemoryManagerSimpleTest::SetUp();
+        primaryMapCallForHostMap = {};
+    }
+
+    void TearDown() override {
+        peerMapCallsForHostMap = decltype(peerMapCallsForHostMap){};
+        WddmMemoryManagerSimpleTest::TearDown();
+    }
+
+    MockGmmClientContextBase *getMockGmmClientContext(uint32_t rootDeviceIndex) {
+        return static_cast<MockGmmClientContextBase *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+    }
+
+    bool mapPhysicalHostMemory(GraphicsAllocation *&allocation, MultiGraphicsAllocation &multiGraphicsAllocations, uint64_t &gpuRange) {
+        return mapPhysicalHostMemory(allocation, multiGraphicsAllocations, gpuRange, 0u);
+    }
+
+    bool mapPhysicalHostMemory(GraphicsAllocation *&allocation, MultiGraphicsAllocation &multiGraphicsAllocations, uint64_t &gpuRange, uint32_t physicalRootDeviceIndex) {
+        return mapPhysicalHostMemory(allocation, multiGraphicsAllocations, gpuRange, physicalRootDeviceIndex, false);
+    }
+
+    bool mapPhysicalHostMemory(GraphicsAllocation *&allocation, MultiGraphicsAllocation &multiGraphicsAllocations, uint64_t &gpuRange, uint32_t physicalRootDeviceIndex, bool isSvmReservation) {
+        AllocationData allocationData;
+        allocationData.allFlags = 0;
+        allocationData.rootDeviceIndex = physicalRootDeviceIndex;
+        allocationData.size = MemoryConstants::pageSize64k;
+        allocationData.flags.allocateMemory = true;
+        allocationData.flags.useSystemMemory = true;
+        allocationData.flags.isUSMHostAllocation = true;
+
+        auto gfxPartition = memoryManager->getGfxPartition(0);
+        auto gpuAddress = isSvmReservation ? gfxPartition->getHeapMinimalAddress(HeapIndex::heapSvm) + MemoryConstants::pageSize2M
+                                           : gfxPartition->getHeapMinimalAddress(HeapIndex::heapStandard64KB) + MemoryConstants::pageSize64k;
+        gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(gpuAddress);
+
+        MemoryManager::AllocationStatus status;
+        allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
+        EXPECT_NE(nullptr, allocation);
+
+        auto &mapGpuVirtualAddressFunc = wddm->getGdi()->mapGpuVirtualAddress.mFunc;
+        VariableBackup<MapGpuVirtualAddressFunc> originalBackup(&originalMapGpuVirtualAddressForHostMap, mapGpuVirtualAddressFunc);
+        VariableBackup<MapGpuVirtualAddressFunc> gdiBackup(&mapGpuVirtualAddressFunc, &mapGpuVirtualAddressWithPeerPagingQueueMock);
+
+        wddm->peerPagingQueues = decltype(wddm->peerPagingQueues)(1);
+        wddm->peerPagingQueues[0].handle = peerPagingQueueHandleForHostMap;
+
+        for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < 2u; rootDeviceIndex++) {
+            clientContextMapCallsBeforeMap[rootDeviceIndex] = getMockGmmClientContext(rootDeviceIndex)->mapGpuVirtualAddressCalled;
+        }
+
+        RootDeviceIndicesContainer rootDeviceIndices;
+        rootDeviceIndices.pushUnique(0);
+        auto mapped = memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u, isSvmReservation);
+        wddm->peerPagingQueues = decltype(wddm->peerPagingQueues){};
+        return mapped;
+    }
+
+    uint32_t clientContextMapCallsBeforeMap[2] = {};
+};
+
+TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPhysicalHostMemoryOfOtherRootDeviceWhenMappingOnPeerThenClientContextOfTargetRootDeviceIsUsed) {
+    GraphicsAllocation *allocation = nullptr;
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    uint64_t gpuRange = 0u;
+    EXPECT_TRUE(mapPhysicalHostMemory(allocation, multiGraphicsAllocations, gpuRange, 1u));
+
+    EXPECT_EQ(1u, peerMapCallsForHostMap.size());
+    EXPECT_EQ(clientContextMapCallsBeforeMap[0] + 2u, getMockGmmClientContext(0u)->mapGpuVirtualAddressCalled);
+    EXPECT_EQ(clientContextMapCallsBeforeMap[1], getMockGmmClientContext(1u)->mapGpuVirtualAddressCalled);
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, MemoryConstants::pageSize64k, false));
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueWhenMappingPhysicalHostMemoryThenRangeIsMappedOnPeerAtSameAddress) {
+    GraphicsAllocation *allocation = nullptr;
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    uint64_t gpuRange = 0u;
+    EXPECT_TRUE(mapPhysicalHostMemory(allocation, multiGraphicsAllocations, gpuRange));
+
+    ASSERT_EQ(1u, peerMapCallsForHostMap.size());
+    EXPECT_EQ(rootDeviceEnvironment->getGmmHelper()->decanonize(gpuRange), peerMapCallsForHostMap[0].BaseAddress);
+    EXPECT_EQ(primaryMapCallForHostMap.SizeInPages, peerMapCallsForHostMap[0].SizeInPages);
+    EXPECT_EQ(primaryMapCallForHostMap.hAllocation, peerMapCallsForHostMap[0].hAllocation);
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, MemoryConstants::pageSize64k, false));
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueWhenMappingOnPeerFailsThenMappingIsFreedAndMapFails) {
+    VariableBackup<bool> failPeerMapBackup(&failPeerMapForHostMap, true);
+    auto freeGpuVirtualAddressCalledBefore = wddm->freeGpuVirtualAddressResult.called;
+    auto reserveGpuVirtualAddressCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
+
+    GraphicsAllocation *allocation = nullptr;
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    uint64_t gpuRange = 0u;
+    EXPECT_FALSE(mapPhysicalHostMemory(allocation, multiGraphicsAllocations, gpuRange));
+
+    EXPECT_EQ(1u, peerMapCallsForHostMap.size());
+    EXPECT_EQ(freeGpuVirtualAddressCalledBefore + 1u, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(reserveGpuVirtualAddressCalledBefore + 1u, wddm->reserveGpuVirtualAddressResult.called);
+    auto reserveArg = getLastCallReserveGpuVaArg();
+    ASSERT_NE(nullptr, reserveArg);
+    EXPECT_EQ(rootDeviceEnvironment->getGmmHelper()->decanonize(gpuRange), reserveArg->BaseAddress);
+    EXPECT_EQ(MemoryConstants::pageSize64k, reserveArg->Size);
+    EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueAndSvmReservationWhenMappingOnPeerFailsThenMappingIsFreedWithoutReservingGpuVirtualAddress) {
+    VariableBackup<bool> failPeerMapBackup(&failPeerMapForHostMap, true);
+    auto freeGpuVirtualAddressCalledBefore = wddm->freeGpuVirtualAddressResult.called;
+    auto reserveGpuVirtualAddressCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
+
+    GraphicsAllocation *allocation = nullptr;
+    MultiGraphicsAllocation multiGraphicsAllocations{1};
+    uint64_t gpuRange = 0u;
+    EXPECT_FALSE(mapPhysicalHostMemory(allocation, multiGraphicsAllocations, gpuRange, 0u, true));
+
+    EXPECT_EQ(1u, peerMapCallsForHostMap.size());
+    EXPECT_EQ(freeGpuVirtualAddressCalledBefore + 1u, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(reserveGpuVirtualAddressCalledBefore, wddm->reserveGpuVirtualAddressResult.called);
+    EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenHostUsmWithHostPtrWhenFragmentIsMappedAtDifferentGpuVaThanHostPtrThenAllocationFailsAndFragmentIsReleased) {
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize;

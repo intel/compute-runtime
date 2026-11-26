@@ -87,6 +87,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool createContext(OsContextWin &osContext);
     MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext);
     MOCKABLE_VIRTUAL void applyAdditionalMapGPUVAFields(D3DDDI_MAPGPUVIRTUALADDRESS &mapGPUVA, Gmm *gmm, AllocationType type);
+    bool mapGpuVirtualAddressOnPeerAdapters(const D3DDDI_MAPGPUVIRTUALADDRESS &mapGPUVA, Gmm *gmm);
     MOCKABLE_VIRTUAL uint64_t freeGmmGpuVirtualAddress(Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(const void *cpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle);
@@ -306,11 +307,22 @@ class Wddm : public DriverModel {
     };
     void releaseUnusedKmdWaitHandles();
 
+    struct PeerPagingQueue {
+        std::atomic<uint64_t> currentFenceValue{0};
+        volatile uint64_t *fenceAddress = nullptr;
+        D3DKMT_HANDLE handle = 0;
+        D3DKMT_HANDLE syncObject = 0;
+    };
+    MOCKABLE_VIRTUAL volatile uint64_t *getPeerPagingFenceAddress(const PeerPagingQueue &peerPagingQueue) {
+        return peerPagingQueue.fenceAddress;
+    }
+
     Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
     bool createDevice(PreemptionMode preemptionMode);
     bool createPagingQueue();
     bool destroyPagingQueue();
+    bool evictFromPagingQueues(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim, bool evictNeeded, size_t pagingQueueCount);
     bool destroyDevice();
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
     bool setLowPriorityContextParam(D3DKMT_HANDLE contextHandle);
@@ -377,10 +389,12 @@ class Wddm : public DriverModel {
     D3DKMT_HANDLE device = 0;
     D3DKMT_HANDLE pagingQueue = 0;
     D3DKMT_HANDLE pagingQueueSyncObject = 0;
+    std::vector<PeerPagingQueue> peerPagingQueues;
 
     uint32_t maxRenderFrequency = 0;
     uint32_t timestampFrequency = 0u;
     uint32_t additionalAdapterInfoOptions = 0u;
+    uint32_t numPhysicalAdapters = 0u;
     int32_t forceEvictOnlyIfNecessary = -1;
 
     uint8_t segmentId[3]{};
