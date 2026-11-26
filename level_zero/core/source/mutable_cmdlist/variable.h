@@ -111,7 +111,7 @@ struct SlmValueProperties {
     SlmOffset slmSize = 0;
     SlmOffset slmOffsetValue = 0;
     SlmOffset slmBaseOffset = undefined<SlmOffset>;
-    uint8_t slmAlignment = 0;
+    uint16_t slmAlignment = 0;
 };
 
 struct KernelDispatchProperties {

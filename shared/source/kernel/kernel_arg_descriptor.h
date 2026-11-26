@@ -52,7 +52,7 @@ struct ArgDescPointer final {
     CrossThreadDataOffset bufferOffset = undefined<CrossThreadDataOffset>;
     CrossThreadDataOffset bufferSize = undefined<CrossThreadDataOffset>;
     CrossThreadDataOffset slmOffset = undefined<CrossThreadDataOffset>;
-    uint8_t requiredSlmAlignment = 0;
+    uint16_t requiredSlmAlignment = 0;
     uint8_t pointerSize = 0;
     bool accessedUsingStatelessAddressingMode = true;
 

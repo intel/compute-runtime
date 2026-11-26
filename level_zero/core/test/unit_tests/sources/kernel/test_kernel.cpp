@@ -4338,7 +4338,7 @@ HWTEST_F(SetKernelArg, givenSlmPointerWhenSettingKernelArgThenPropertyIsSaved) {
         arg.stateless = undefined<SurfaceStateHeapOffset>;
         arg.bindless = undefined<SurfaceStateHeapOffset>;
         arg.bindful = undefined<SurfaceStateHeapOffset>;
-        arg.requiredSlmAlignment = 8;
+        arg.requiredSlmAlignment = 256;
         arg.slmOffset = 0x40;
     }
 
@@ -4350,7 +4350,7 @@ HWTEST_F(SetKernelArg, givenSlmPointerWhenSettingKernelArgThenPropertyIsSaved) {
 
     auto slmArgOffsetValues = mockKernel.getSlmArgOffsetValues();
     EXPECT_EQ(0u, slmArgOffsetValues[0]);
-    EXPECT_EQ(64u, slmArgOffsetValues[1]);
+    EXPECT_EQ(256u, slmArgOffsetValues[1]);
 
     auto slmArgSizes = mockKernel.getSlmArgSizes();
     EXPECT_EQ(64u, slmArgSizes[0]);
@@ -4360,7 +4360,7 @@ HWTEST_F(SetKernelArg, givenSlmPointerWhenSettingKernelArgThenPropertyIsSaved) {
     EXPECT_EQ(4u, argSlmAlignment);
 
     argSlmAlignment = mockKernel.getRequiredSlmAlignment(1);
-    EXPECT_EQ(8u, argSlmAlignment);
+    EXPECT_EQ(256u, argSlmAlignment);
 }
 
 HWTEST_F(SetKernelArg, givenSlmPointersSetInReverseOrderWhenSettingKernelArgThenSlmArgOffsetValuesAreComputedCorrectly) {

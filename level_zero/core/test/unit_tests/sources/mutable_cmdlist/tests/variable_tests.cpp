@@ -1034,6 +1034,29 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
+            givenSlmArgumentWithAlignmentAbove255WhenMutatingPreviousSlmArgumentThenOffsetIsAligned) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+
+    constexpr uint32_t slmAlignment = 256;
+    this->kernelArgSlmSecond.as<NEO::ArgDescPointer>().requiredSlmAlignment = slmAlignment;
+    createMutableComputeWalker<FamilyType, WalkerType>(0);
+
+    createVariableDispatch(false, false, false, true);
+    Variable *slmLastArgument = getVariable(L0::MCL::VariableType::slmBuffer);
+    createVariable(L0::MCL::VariableType::slmBuffer, true, -1, -1);
+    Variable *slmFirstArgument = this->variable.get();
+
+    slmFirstArgument->desc.slmValue.nextSlmVariable = slmLastArgument;
+
+    uint32_t slmFirstSize = MemoryConstants::kiloByte + 1;
+    auto ret = slmFirstArgument->setValue(slmFirstSize, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(slmAlignment, slmLastArgument->desc.slmValue.slmAlignment);
+    EXPECT_EQ(alignUp(slmFirstSize, slmAlignment), slmLastArgument->desc.slmValue.slmOffsetValue);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
             givenTwoSlmArgumentsWhenMutatingSlmArgumentsStartingSecondThenTotalSlmSizeChanged) {
     using WalkerType = typename FamilyType::PorWalkerType;
 

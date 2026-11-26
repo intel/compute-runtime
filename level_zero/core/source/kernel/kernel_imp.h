@@ -241,7 +241,7 @@ struct KernelImp : Kernel {
     const std::vector<uint32_t> &getSlmArgOffsetValues() {
         return privateState.slmArgOffsetValues;
     }
-    uint8_t getRequiredSlmAlignment(uint32_t argIndex) const;
+    uint16_t getRequiredSlmAlignment(uint32_t argIndex) const;
 
     const std::vector<KernelArgInfo> &getKernelArgInfos() const {
         return privateState.kernelArgInfos;

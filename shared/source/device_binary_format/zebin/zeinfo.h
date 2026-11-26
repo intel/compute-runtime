@@ -668,7 +668,7 @@ using ArgIndexT = int32_t;
 using AddrmodeT = MemoryAddressingMode;
 using AddrspaceT = AddressSpace;
 using AccessTypeT = AccessType;
-using SlmAlignmentT = uint8_t;
+using SlmAlignmentT = uint16_t;
 using SamplerIndexT = int32_t;
 using BtiValueT = int32_t;
 

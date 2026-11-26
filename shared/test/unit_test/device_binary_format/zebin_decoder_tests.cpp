@@ -5673,6 +5673,27 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeByPointerWithSlmAlignmentSetThen
     EXPECT_EQ(8, arg.requiredSlmAlignment);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeByPointerWithSlmAlignmentAbove255ThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+               - arg_type : arg_bypointer
+                 offset : 0
+                 size : 8
+                 arg_index	: 0
+                 addrmode	: slm
+                 slm_alignment: 8192
+)===";
+    auto res = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, res);
+    ASSERT_EQ(1u, kernelDescriptor->payloadMappings.explicitArgs.size());
+    const auto &arg = kernelDescriptor->payloadMappings.explicitArgs[0].as<ArgDescPointer>();
+    EXPECT_EQ(8192, arg.requiredSlmAlignment);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeEnqueuedLocalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
     uint32_t vectorSizes[] = {4, 8, 12};
 

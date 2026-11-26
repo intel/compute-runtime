@@ -1737,7 +1737,7 @@ bool KernelImp::checkKernelContainsStatefulAccess() {
     return containsStatefulAccess && isUserKernel && isGeneratedByIgc;
 }
 
-uint8_t KernelImp::getRequiredSlmAlignment(uint32_t argIndex) const {
+uint16_t KernelImp::getRequiredSlmAlignment(uint32_t argIndex) const {
     const auto &allArgs = getImmutableData()->getDescriptor().payloadMappings.explicitArgs;
     UNRECOVERABLE_IF(allArgs[argIndex].getTraits().getAddressQualifier() != NEO::KernelArgMetadata::AddrLocal);
     const auto &nextArg = allArgs[argIndex].as<NEO::ArgDescPointer>();
