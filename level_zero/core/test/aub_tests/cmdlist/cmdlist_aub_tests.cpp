@@ -277,7 +277,7 @@ struct BcsSplitAubFixture : public MulticontextL0AubFixture {
         debugManager.flags.SplitBcsTransferDirectionMask.set(~(1 << static_cast<int32_t>(TransferDirection::localToLocal)));
         debugManager.flags.ContextGroupSize.set(0);
 
-        if (static_cast<int32_t>(defaultHwInfo->featureTable.ftrBcsInfo.count()) < numEnabledEngines) {
+        if (numEnabledEngines < 2 || static_cast<int32_t>(defaultHwInfo->featureTable.ftrBcsInfo.count()) < numEnabledEngines) {
             GTEST_SKIP();
         }
 
