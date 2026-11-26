@@ -79,7 +79,7 @@ FabricVertex *FabricVertex::createFromVertexInfo(Device *device, const NEO::Fabr
     memcpy_s(fabricVertex->properties.uuid.id, ZE_MAX_UUID_SIZE, vertexInfo.uuid, sizeof(vertexInfo.uuid));
 
     fabricVertex->properties.type = static_cast<ze_fabric_vertex_exp_type_t>(vertexInfo.type);
-    fabricVertex->properties.remote = false;
+    fabricVertex->properties.remote = vertexInfo.remote;
     fabricVertex->device = device;
     fabricVertex->fabricId = vertexInfo.fabricId;
     fabricVertex->properties.address.domain = (vertexInfo.pciBdf >> 16) & 0xffff;
@@ -92,7 +92,8 @@ FabricVertex *FabricVertex::createFromVertexInfo(Device *device, const NEO::Fabr
 
 ze_result_t FabricVertex::getSubVertices(uint32_t *pCount, ze_fabric_vertex_handle_t *phSubvertices) {
 
-    if (device->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() == NEO::DeviceHierarchyMode::flat ||
+    if (isRemote() ||
+        device->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() == NEO::DeviceHierarchyMode::flat ||
         device->getNEODevice()->getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
         *pCount = 0;
         return ZE_RESULT_SUCCESS;
@@ -123,13 +124,22 @@ ze_result_t FabricVertex::getProperties(ze_fabric_vertex_exp_properties_t *pVert
 
 ze_result_t FabricVertex::getDevice(ze_device_handle_t *phDevice) const {
 
+    if (isRemote()) {
+        return ZE_RESULT_EXP_ERROR_REMOTE_DEVICE;
+    }
+
     *phDevice = device->toHandle();
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FabricVertex::edgeGet(ze_fabric_vertex_handle_t hVertexB,
                                   uint32_t *pCount, ze_fabric_edge_handle_t *phEdges) {
-    return device->getDriverHandle()->fabricEdgeGetExp(this->toHandle(), hVertexB, pCount, phEdges);
+    const auto *localVertex = isRemote() ? FabricVertex::fromHandle(hVertexB) : this;
+    if (localVertex->isRemote()) {
+        *pCount = 0;
+        return ZE_RESULT_SUCCESS;
+    }
+    return localVertex->device->getDriverHandle()->fabricEdgeGetExp(this->toHandle(), hVertexB, pCount, phEdges);
 }
 
 FabricEdge *FabricEdge::create(FabricVertex *vertexA, FabricVertex *vertexB, ze_fabric_edge_exp_properties_t &properties) {

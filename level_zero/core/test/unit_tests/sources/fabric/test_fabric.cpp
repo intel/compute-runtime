@@ -703,6 +703,68 @@ TEST_F(FabricVertexFixture, givenVertexInfoWhenCreateFromVertexInfoCalledThenPci
     delete fabricVertex;
 }
 
+TEST_F(FabricVertexFixture, givenRemoteVertexInfoWhenVertexIsQueriedThenVertexIsRemoteWithoutDeviceAndSubVertices) {
+    NEO::FabricVertexInfo vertexInfo{};
+    vertexInfo.fabricId = 9u;
+    vertexInfo.type = NEO::FabricVertexType::device;
+    vertexInfo.remote = true;
+
+    auto remoteVertex = FabricVertex::createFromVertexInfo(nullptr, vertexInfo);
+    ASSERT_NE(nullptr, remoteVertex);
+    EXPECT_TRUE(remoteVertex->isRemote());
+
+    ze_fabric_vertex_exp_properties_t props{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricVertexGetPropertiesExp(remoteVertex->toHandle(), &props));
+    EXPECT_TRUE(props.remote);
+    EXPECT_EQ(ZE_FABRIC_VERTEX_EXP_TYPE_DEVICE, props.type);
+
+    ze_device_handle_t hDevice = nullptr;
+    EXPECT_EQ(ZE_RESULT_EXP_ERROR_REMOTE_DEVICE, L0::zeFabricVertexGetDeviceExp(remoteVertex->toHandle(), &hDevice));
+    EXPECT_EQ(nullptr, hDevice);
+
+    uint32_t subVertexCount = 1u;
+    ze_fabric_vertex_handle_t hSubVertex = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricVertexGetSubVerticesExp(remoteVertex->toHandle(), &subVertexCount, &hSubVertex));
+    EXPECT_EQ(0u, subVertexCount);
+    EXPECT_EQ(nullptr, hSubVertex);
+
+    delete remoteVertex;
+}
+
+TEST_F(FabricVertexFixture, givenEdgeBetweenLocalAndRemoteVertexWhenZeFabricEdgeGetExpIsCalledThenEdgeIsReturnedForEitherVertexOrder) {
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->fabricVertexGetExp(&count, nullptr));
+
+    NEO::FabricVertexInfo vertexInfo{};
+    vertexInfo.type = NEO::FabricVertexType::device;
+    vertexInfo.remote = true;
+    auto remoteVertex = FabricVertex::createFromVertexInfo(nullptr, vertexInfo);
+    auto otherRemoteVertex = FabricVertex::createFromVertexInfo(nullptr, vertexInfo);
+    driverHandle->fabricVertices.push_back(remoteVertex);
+    driverHandle->fabricVertices.push_back(otherRemoteVertex);
+    auto localVertex = driverHandle->fabricVertices[0];
+
+    ze_fabric_edge_exp_properties_t dummyProperties = {};
+    auto edge = FabricEdge::create(localVertex, remoteVertex, dummyProperties);
+    driverHandle->fabricEdges.push_back(edge);
+
+    ze_fabric_edge_handle_t hEdge = nullptr;
+    count = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(localVertex->toHandle(), remoteVertex->toHandle(), &count, &hEdge));
+    EXPECT_EQ(1u, count);
+    EXPECT_EQ(edge->toHandle(), hEdge);
+
+    hEdge = nullptr;
+    count = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(remoteVertex->toHandle(), localVertex->toHandle(), &count, &hEdge));
+    EXPECT_EQ(1u, count);
+    EXPECT_EQ(edge->toHandle(), hEdge);
+
+    count = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetExp(remoteVertex->toHandle(), otherRemoteVertex->toHandle(), &count, nullptr));
+    EXPECT_EQ(0u, count);
+}
+
 TEST(FabricDeviceInterfaceTest, givenInterfaceTypeWhenGettingLinkTypeThenMatchingLinkTypeIsReturned) {
     EXPECT_EQ(NEO::FabricLinkTypes::xeLink, FabricDeviceInterface::getLinkType(FabricDeviceInterface::Type::iaf));
     EXPECT_EQ(NEO::FabricLinkTypes::mdfi, FabricDeviceInterface::getLinkType(FabricDeviceInterface::Type::mdfi));

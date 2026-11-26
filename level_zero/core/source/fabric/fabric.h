@@ -36,6 +36,7 @@ struct FabricVertex : _ze_fabric_vertex_handle_t {
     ze_result_t getSubVertices(uint32_t *pCount, ze_fabric_vertex_handle_t *phSubvertices);
     ze_result_t getProperties(ze_fabric_vertex_exp_properties_t *pVertexProperties) const;
     ze_result_t getDevice(ze_device_handle_t *phDevice) const;
+    bool isRemote() const { return properties.remote; }
     static FabricVertex *fromHandle(ze_fabric_vertex_handle_t handle) { return static_cast<FabricVertex *>(handle); }
     inline ze_fabric_vertex_handle_t toHandle() { return this; }
     ze_result_t edgeGet(ze_fabric_vertex_handle_t hVertexB,

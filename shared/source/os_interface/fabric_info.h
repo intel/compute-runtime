@@ -25,6 +25,7 @@ struct FabricVertexInfo {
     FabricVertexType type;
     uint8_t uuid[16];
     uint32_t pciBdf;
+    bool remote = false;
 };
 
 enum class FabricBandwidthUnit : uint8_t {
