@@ -21,7 +21,7 @@
 
 namespace L0 {
 
-bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled) {
+bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled, bool highPriority) {
     auto &productHelper = this->device.getProductHelper();
     this->splitSettings = productHelper.getBcsSplitSettings(this->device.getHwInfo());
 
@@ -43,20 +43,37 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnab
     NEO::debugManager.flags.SplitBcsPerEngineMaxSize.assignIfNotDefault(splitSettings.perEngineMaxSize);
     UNRECOVERABLE_IF(splitSettings.perEngineMaxSize == 0);
 
-    this->clientCount++;
-
-    if (!this->cmdLists.empty()) {
-        return true;
-    }
-
-    events.setAggregatedEventMode(NEO::debugManager.flags.SplitBcsAggregatedEventsMode.getIfNotDefault(device.getHwInfo().caps.bcsSplitAggregatedModeEnabled));
-
     setupEnginesMask();
 
-    return setupQueues();
+    const bool createRegularQueues = this->cmdLists.empty();
+    const bool createHighPriorityQueues = highPriority && splitSettings.highPriorityQueuesSupported && this->hpCmdLists.empty();
+
+    BcsSplitParams::CsrContainer regularCsrs;
+    if (createRegularQueues && !collectRegularCsrs(regularCsrs)) {
+        return false;
+    }
+
+    BcsSplitParams::CsrContainer highPriorityCsrs;
+    if (createHighPriorityQueues && !collectHighPriorityCsrs(highPriorityCsrs)) {
+        return false;
+    }
+
+    if (createRegularQueues) {
+        events.setAggregatedEventMode(NEO::debugManager.flags.SplitBcsAggregatedEventsMode.getIfNotDefault(device.getHwInfo().caps.bcsSplitAggregatedModeEnabled));
+        createCmdListsForCsrs(regularCsrs, this->cmdLists, this->h2dCmdLists, this->d2hCmdLists);
+    }
+
+    if (createHighPriorityQueues) {
+        this->hpCsrs = highPriorityCsrs;
+        createCmdListsForCsrs(highPriorityCsrs, this->hpCmdLists, this->hpH2dCmdLists, this->hpD2hCmdLists);
+    }
+
+    this->clientCount++;
+
+    return true;
 }
 
-void BcsSplit::populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, NEO::EngineUsage engineUsage) {
+void BcsSplit::populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, const EngineLookupFuncT &getEngine) {
     for (uint32_t tileId = 0; tileId < splitSettings.requiredTileCount; tileId++) {
         auto subDevice = this->device.getNEODevice()->getNearestGenericSubDevice(tileId);
 
@@ -64,7 +81,7 @@ void BcsSplit::populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, NEO::En
 
         for (uint32_t engineId = 0; engineId < NEO::bcsInfoMaskSize; engineId++) {
             if (splitSettings.allEngines.test(engineId)) {
-                if (auto engine = subDevice->tryGetEngine(NEO::EngineHelpers::getBcsEngineAtIdx(engineId), engineUsage)) {
+                if (auto engine = getEngine(*subDevice, NEO::EngineHelpers::getBcsEngineAtIdx(engineId))) {
                     csrs.push_back(engine->commandStreamReceiver);
                 }
             }
@@ -76,18 +93,33 @@ void BcsSplit::populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, NEO::En
     }
 }
 
-bool BcsSplit::setupQueues() {
-    BcsSplitParams::CsrContainer csrs;
-
-    populateCsrsForQueues(csrs, NEO::EngineUsage::regular);
+bool BcsSplit::collectRegularCsrs(BcsSplitParams::CsrContainer &csrs) {
+    populateCsrsForQueues(csrs, [](NEO::Device &subDevice, aub_stream::EngineType engineType) { return subDevice.tryGetEngine(engineType, NEO::EngineUsage::regular); });
 
     if (csrs.size() < splitSettings.minRequiredTotalCsrCount) {
-        populateCsrsForQueues(csrs, NEO::EngineUsage::highPriority);
+        populateCsrsForQueues(csrs, [](NEO::Device &subDevice, aub_stream::EngineType engineType) { return subDevice.tryGetEngine(engineType, NEO::EngineUsage::highPriority); });
         if (csrs.size() < splitSettings.minRequiredTotalCsrCount) {
             return false;
         }
     }
 
+    return true;
+}
+
+bool BcsSplit::collectHighPriorityCsrs(BcsSplitParams::CsrContainer &csrs) {
+    populateCsrsForQueues(csrs, [](NEO::Device &subDevice, aub_stream::EngineType engineType) { return subDevice.getSecondaryEngineCsr({engineType, NEO::EngineUsage::highPriority}, std::nullopt); });
+
+    if (csrs.size() < splitSettings.minRequiredTotalCsrCount) {
+        for (auto csr : csrs) {
+            csr->releaseQueueOwnership();
+        }
+        return false;
+    }
+
+    return true;
+}
+
+void BcsSplit::createCmdListsForCsrs(const BcsSplitParams::CsrContainer &csrs, std::vector<CommandList *> &allCmdLists, std::vector<CommandList *> &h2dLists, std::vector<CommandList *> &d2hLists) {
     ze_command_queue_flags_t flags = events.isAggregatedEventMode() ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;
     ze_command_queue_desc_t splitDesc = {.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, .flags = flags, .mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS};
 
@@ -117,20 +149,18 @@ bool BcsSplit::setupQueues() {
         cmdList->setForSubCopyBcsSplit();
         cmdList->setOrdinal(splitDesc.ordinal);
 
-        this->cmdLists.push_back(cmdList);
+        allCmdLists.push_back(cmdList);
 
         auto engineType = csr->getOsContext().getEngineType();
         auto bcsId = NEO::EngineHelpers::getBcsIndex(engineType);
 
         if (splitSettings.h2dEngines.test(bcsId)) {
-            this->h2dCmdLists.push_back(cmdList);
+            h2dLists.push_back(cmdList);
         }
         if (splitSettings.d2hEngines.test(bcsId)) {
-            this->d2hCmdLists.push_back(cmdList);
+            d2hLists.push_back(cmdList);
         }
     }
-
-    return true;
 }
 
 void BcsSplit::setupEnginesMask() {
@@ -151,11 +181,31 @@ void BcsSplit::releaseResources() {
         cmdLists.clear();
         d2hCmdLists.clear();
         h2dCmdLists.clear();
+        for (auto cmdList : hpCmdLists) {
+            cmdList->destroy();
+        }
+        hpCmdLists.clear();
+        hpD2hCmdLists.clear();
+        hpH2dCmdLists.clear();
+        for (auto csr : hpCsrs) {
+            csr->releaseQueueOwnership();
+        }
+        hpCsrs.clear();
         this->events.releaseResources();
     }
 }
 
-std::vector<CommandList *> &BcsSplit::selectCmdLists(NEO::TransferDirection direction) {
+std::vector<CommandList *> &BcsSplit::selectCmdLists(NEO::TransferDirection direction, bool highPriority) {
+    if (highPriority && splitSettings.highPriorityQueuesSupported) {
+        DEBUG_BREAK_IF(hpCmdLists.empty());
+        if (direction == NEO::TransferDirection::hostToLocal) {
+            return hpH2dCmdLists;
+        } else if (direction == NEO::TransferDirection::localToHost) {
+            return hpD2hCmdLists;
+        }
+        return hpCmdLists;
+    }
+
     if (direction == NEO::TransferDirection::hostToLocal) {
         return h2dCmdLists;
     } else if (direction == NEO::TransferDirection::localToHost) {
@@ -165,8 +215,8 @@ std::vector<CommandList *> &BcsSplit::selectCmdLists(NEO::TransferDirection dire
     return cmdLists;
 }
 
-BcsSplitParams::CmdListsForSplitContainer BcsSplit::getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize) {
-    auto &selectedCmdListType = selectCmdLists(direction);
+BcsSplitParams::CmdListsForSplitContainer BcsSplit::getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize, bool highPriority) {
+    auto &selectedCmdListType = selectCmdLists(direction, highPriority);
 
     size_t maxEnginesToUse = std::max(totalTransferSize / splitSettings.perEngineMaxSize, size_t(1));
     auto engineCount = std::min(selectedCmdListType.size(), maxEnginesToUse);

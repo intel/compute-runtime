@@ -5444,7 +5444,7 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListFixture {
 
         auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
 
-        cmdList->bcsSplitMode = bcsSplit->setupDevice(cmdList->getCsr(false), false) ? BcsSplitParams::BcsSplitMode::immediate : BcsSplitParams::BcsSplitMode::disabled;
+        cmdList->bcsSplitMode = bcsSplit->setupDevice(cmdList->getCsr(false), false, false) ? BcsSplitParams::BcsSplitMode::immediate : BcsSplitParams::BcsSplitMode::disabled;
 
         return cmdList;
     }

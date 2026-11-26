@@ -149,5 +149,6 @@ struct BcsSplitSettings {
     uint32_t minRequiredTotalCsrCount = 0;
     uint32_t requiredTileCount = 0;
     bool enabled = false;
+    bool highPriorityQueuesSupported = true;
 };
 } // namespace NEO

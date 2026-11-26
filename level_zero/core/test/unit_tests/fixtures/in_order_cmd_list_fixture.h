@@ -458,7 +458,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
         debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
         debugManager.flags.SplitBcsMask.set(0b11110);
         debugManager.flags.SplitBcsTransferDirectionMask.set(transferDirectionMask);
-        debugManager.flags.SkipHpBcsInitialization.set(0);
+        debugManager.flags.SkipHpBcsInitialization.set(skipHpBcsInitialization);
 
         createDevice();
         context = Context::fromHandle(driverHandle->getDefaultContext());
@@ -571,6 +571,7 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
 
     uint32_t expectedTileCount = 1;
     uint32_t expectedEnginesCount = 4;
+    int32_t skipHpBcsInitialization = 0;
     uint32_t expectedNumRootDevices = 1;
 };
 

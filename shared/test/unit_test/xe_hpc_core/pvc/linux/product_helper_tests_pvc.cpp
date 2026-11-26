@@ -95,6 +95,7 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsBlitSplitEnqueueWA
     EXPECT_EQ(static_cast<uint32_t>(bcsSplitSettings.allEngines.count()), bcsSplitSettings.minRequiredTotalCsrCount);
     EXPECT_EQ(1u, bcsSplitSettings.perEngineMaxSize);
     EXPECT_EQ(1u, bcsSplitSettings.requiredTileCount);
+    EXPECT_FALSE(bcsSplitSettings.highPriorityQueuesSupported);
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenOsInterfaceIsNullWhenGetDeviceMemoryMaxBandWidthInBytesPerSecondIsCalledThenReturnZero) {

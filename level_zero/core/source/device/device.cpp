@@ -2521,7 +2521,7 @@ uint32_t Device::getAggregatedCopyOffloadIncrementValue() {
         if (bcsSplit->cmdLists.empty()) {
             auto csr = getNEODevice()->tryGetRegularEngineGroup(NEO::EngineGroupType::copy)->engines[0].commandStreamReceiver;
             UNRECOVERABLE_IF(!csr);
-            bcsSplit->setupDevice(csr, false);
+            bcsSplit->setupDevice(csr, false, false);
             UNRECOVERABLE_IF(bcsSplit->cmdLists.empty());
         }
         bcsSplitEngines = static_cast<uint32_t>(bcsSplit->cmdLists.size());

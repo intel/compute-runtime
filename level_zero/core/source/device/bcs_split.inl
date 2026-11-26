@@ -26,7 +26,7 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto cmdListsForSplit = this->getCmdListsForSplit(direction, size);
+    auto cmdListsForSplit = this->getCmdListsForSplit(direction, size, cmdList->getImmediateQueuePriority() == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
     auto engineCount = cmdListsForSplit.size();
 
     const bool useSignalEventForSubcopy = aggregatedEventsMode && cmdList->isUsingAdditionalBlitProperties() && Event::isAggregatedEvent(signalEvent) &&

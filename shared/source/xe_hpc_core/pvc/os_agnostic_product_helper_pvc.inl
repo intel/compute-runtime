@@ -202,6 +202,7 @@ BcsSplitSettings ProductHelperHw<gfxProduct>::getBcsSplitSettings(const Hardware
         .minRequiredTotalCsrCount = static_cast<uint32_t>(oddLinkedCopyEnginesMask.count()),
         .requiredTileCount = 1,
         .enabled = true,
+        .highPriorityQueuesSupported = false,
     };
 }
 

@@ -76,6 +76,10 @@ class BcsSplit {
     std::vector<CommandList *> h2dCmdLists;
     std::vector<CommandList *> d2hCmdLists;
 
+    std::vector<CommandList *> hpCmdLists;
+    std::vector<CommandList *> hpH2dCmdLists;
+    std::vector<CommandList *> hpD2hCmdLists;
+
     template <GFXCORE_FAMILY gfxCoreFamily>
     ze_result_t appendImmediateSplitCall(CommandListCoreFamilyImmediate<gfxCoreFamily> *cmdList,
                                          const BcsSplitParams::CopyParams &copyParams,
@@ -100,20 +104,24 @@ class BcsSplit {
 
     void dispatchRecordedCmdLists(const std::vector<CommandList *> &recordedSubCmdLists);
 
-    bool setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled);
+    bool setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled, bool highPriority);
     void releaseResources();
     Device &getDevice() const { return device; }
 
-    BcsSplitParams::CmdListsForSplitContainer getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize);
+    BcsSplitParams::CmdListsForSplitContainer getCmdListsForSplit(NEO::TransferDirection direction, size_t totalTransferSize, bool highPriority);
 
     BcsSplit(Device &device) : events(*this), device(device) {};
 
   protected:
-    std::vector<CommandList *> &selectCmdLists(NEO::TransferDirection direction);
+    using EngineLookupFuncT = std::function<NEO::EngineControl *(NEO::Device &, aub_stream::EngineType)>;
+
+    std::vector<CommandList *> &selectCmdLists(NEO::TransferDirection direction, bool highPriority);
     uint64_t getAggregatedEventIncrementValForSplit(const Event *signalEvent, bool useSignalEventForSplit, size_t engineCountForSplit);
     void setupEnginesMask();
-    bool setupQueues();
-    void populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, NEO::EngineUsage engineUsage);
+    bool collectRegularCsrs(BcsSplitParams::CsrContainer &csrs);
+    bool collectHighPriorityCsrs(BcsSplitParams::CsrContainer &csrs);
+    void createCmdListsForCsrs(const BcsSplitParams::CsrContainer &csrs, std::vector<CommandList *> &allCmdLists, std::vector<CommandList *> &h2dLists, std::vector<CommandList *> &d2hLists);
+    void populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, const EngineLookupFuncT &getEngine);
 
     template <GFXCORE_FAMILY gfxCoreFamily>
     ze_result_t appendSubSplitCommon(CommandListCoreFamily<gfxCoreFamily> *mainCmdList,
@@ -142,6 +150,7 @@ class BcsSplit {
     Device &device;
     NEO::BcsSplitSettings splitSettings = {};
     uint32_t clientCount = 0u;
+    BcsSplitParams::CsrContainer hpCsrs;
 
     std::mutex mtx;
 };

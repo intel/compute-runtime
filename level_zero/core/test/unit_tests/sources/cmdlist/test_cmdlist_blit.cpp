@@ -1479,7 +1479,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenLimitedEnginesCountWhenCreatingBcsSplitT
 
     BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
 
-    bcsSplit.setupDevice(cmdList->getCsr(false), false);
+    bcsSplit.setupDevice(cmdList->getCsr(false), false, false);
 
     EXPECT_EQ(expectedEnginesCount, bcsSplit.cmdLists.size());
 
@@ -1490,7 +1490,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMaxCopySizePerEngineSetToOneWhenSelectin
     debugManager.flags.SplitBcsPerEngineMaxSize.set(1);
 
     BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
-    bcsSplit.setupDevice(cmdList->getCsr(false), false);
+    bcsSplit.setupDevice(cmdList->getCsr(false), false, false);
 
     constexpr TransferDirection direction = TransferDirection::hostToLocal;
     const auto numQueues = bcsSplit.h2dCmdLists.size();
@@ -1499,7 +1499,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMaxCopySizePerEngineSetToOneWhenSelectin
     const std::array<size_t, 4> sizes = {minimalSize, minimalSize * 2, minimalSize * numQueues, minimalSize * numQueues * 5};
 
     for (const auto size : sizes) {
-        auto queues = bcsSplit.getCmdListsForSplit(direction, size);
+        auto queues = bcsSplit.getCmdListsForSplit(direction, size, false);
         EXPECT_EQ(numQueues, queues.size());
     }
 
@@ -1512,7 +1512,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMaxCopySizePerEngineGreaterThanOneWhenSe
     debugManager.flags.SplitBcsMask.set(static_cast<int32_t>(0b11110));
 
     BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
-    bcsSplit.setupDevice(cmdList->getCsr(false), false);
+    bcsSplit.setupDevice(cmdList->getCsr(false), false, false);
 
     constexpr TransferDirection direction = TransferDirection::hostToLocal;
     const auto numQueues = bcsSplit.h2dCmdLists.size();
@@ -1522,27 +1522,27 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMaxCopySizePerEngineGreaterThanOneWhenSe
     minimalSize = static_cast<size_t>(MemoryConstants::megaByte * 2);
 
     {
-        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize);
+        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize, false);
         EXPECT_EQ(2u, queues.size());
     }
 
     {
-        auto queues = bcsSplit.getCmdListsForSplit(direction, 2 * minimalSize);
+        auto queues = bcsSplit.getCmdListsForSplit(direction, 2 * minimalSize, false);
         EXPECT_EQ(4u, queues.size());
     }
 
     {
-        auto queues = bcsSplit.getCmdListsForSplit(direction, (2 * minimalSize) + 2);
+        auto queues = bcsSplit.getCmdListsForSplit(direction, (2 * minimalSize) + 2, false);
         EXPECT_EQ(4u, queues.size());
     }
 
     {
-        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize * numQueues);
+        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize * numQueues, false);
         EXPECT_EQ(numQueues, queues.size());
     }
 
     {
-        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize * numQueues * 5);
+        auto queues = bcsSplit.getCmdListsForSplit(direction, minimalSize * numQueues * 5, false);
         EXPECT_EQ(numQueues, queues.size());
     }
 
@@ -1801,7 +1801,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenAggregatedSplitModeCapWhenInitializingTh
 
         BcsSplit bcsSplit(static_cast<L0::Device &>(*device));
 
-        bcsSplit.setupDevice(cmdList->getCsr(false), false);
+        bcsSplit.setupDevice(cmdList->getCsr(false), false, false);
 
         EXPECT_EQ(aggregatedModeEnabled, bcsSplit.events.isAggregatedEventMode());
 
@@ -2070,6 +2070,233 @@ HWTEST2_F(AggregatedBcsSplitTests, givenFullCmdBufferWhenAppendCalledThenAllocat
     }
 
     context->freeMem(ptr);
+}
+
+struct BcsSplitTestable : public BcsSplit {
+    using BcsSplit::BcsSplit;
+    using BcsSplit::clientCount;
+    using BcsSplit::collectRegularCsrs;
+    using BcsSplit::splitSettings;
+};
+
+HWTEST2_F(AggregatedBcsSplitTests, givenNoHighPrioritySecondaryEnginesWhenSetupDeviceWithHighPriorityThenFailWithoutCreatingCmdListsOrTakingClientReference, IsAtLeastXe2HpgCore) {
+    BcsSplitTestable testedBcsSplit(static_cast<L0::Device &>(*device));
+
+    EXPECT_FALSE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, true));
+    EXPECT_EQ(0u, testedBcsSplit.clientCount);
+    EXPECT_TRUE(testedBcsSplit.cmdLists.empty());
+    EXPECT_TRUE(testedBcsSplit.hpCmdLists.empty());
+
+    EXPECT_TRUE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, false));
+    EXPECT_EQ(1u, testedBcsSplit.clientCount);
+    EXPECT_EQ(expectedEnginesCount, testedBcsSplit.cmdLists.size());
+
+    testedBcsSplit.releaseResources();
+    EXPECT_TRUE(testedBcsSplit.cmdLists.empty());
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenHighPriorityQueuesNotSupportedWhenSetupDeviceWithHighPriorityThenOnlyRegularSplitCmdListsAreCreatedAndSelected, IsXeHpcCore) {
+    BcsSplitTestable testedBcsSplit(static_cast<L0::Device &>(*device));
+
+    EXPECT_TRUE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, true));
+    EXPECT_EQ(expectedEnginesCount, testedBcsSplit.cmdLists.size());
+    EXPECT_TRUE(testedBcsSplit.hpCmdLists.empty());
+
+    const size_t size = expectedEnginesCount * MemoryConstants::gigaByte;
+    EXPECT_EQ(testedBcsSplit.cmdLists.size(), testedBcsSplit.getCmdListsForSplit(TransferDirection::hostToHost, size, true).size());
+
+    testedBcsSplit.releaseResources();
+}
+
+struct HighPriorityBcsSplitTests : public AggregatedBcsSplitTests {
+    static constexpr uint32_t splitEnginesMask = 0b11110;
+
+    void SetUp() override {
+        debugManager.flags.ContextGroupSize.set(8);
+        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+        debugManager.flags.SplitBcsMaskH2D.set(splitEnginesMask);
+        debugManager.flags.SplitBcsMaskD2H.set(splitEnginesMask);
+        skipHpBcsInitialization = 1;
+        AggregatedBcsSplitTests::SetUp();
+    }
+
+    std::vector<NEO::SecondaryContexts *> getSplitSecondaryContexts() {
+        std::vector<NEO::SecondaryContexts *> splitSecondaryContexts;
+        auto &secondaryEngines = static_cast<NEO::MockDevice *>(device->getNEODevice())->secondaryEngines;
+        for (uint32_t engineId = 0; engineId < NEO::bcsInfoMaskSize; engineId++) {
+            if (!(splitEnginesMask & (1u << engineId))) {
+                continue;
+            }
+            auto it = secondaryEngines.find(NEO::EngineHelpers::getBcsEngineAtIdx(engineId));
+            splitSecondaryContexts.push_back(it == secondaryEngines.end() ? nullptr : &it->second);
+        }
+        return splitSecondaryContexts;
+    }
+
+    bool highPrioritySecondaryEnginesAvailable() {
+        auto splitSecondaryContexts = getSplitSecondaryContexts();
+        return std::all_of(splitSecondaryContexts.begin(), splitSecondaryContexts.end(), [](NEO::SecondaryContexts *secondaryContexts) {
+            return secondaryContexts && secondaryContexts->highPriorityEnginesTotal != 0;
+        });
+    }
+
+    std::vector<uint32_t> getSplitSecondaryCsrsOwningQueueCounts() {
+        std::vector<uint32_t> owningQueueCounts;
+        for (auto secondaryContexts : getSplitSecondaryContexts()) {
+            for (auto &engine : secondaryContexts->engines) {
+                owningQueueCounts.push_back(engine.commandStreamReceiver->getOwningQueueCount());
+            }
+        }
+        return owningQueueCounts;
+    }
+};
+
+HWTEST2_F(HighPriorityBcsSplitTests, givenHighPriorityRequestedWhenSetupDeviceThenHighPrioritySplitCmdListsAreCreatedOnHighPriorityCsrs, IsAtLeastXe2HpgCore) {
+    ASSERT_TRUE(highPrioritySecondaryEnginesAvailable());
+
+    BcsSplitTestable testedBcsSplit(static_cast<L0::Device &>(*device));
+
+    const auto owningQueueCountsBeforeSetup = getSplitSecondaryCsrsOwningQueueCounts();
+
+    EXPECT_TRUE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, true));
+    EXPECT_EQ(1u, testedBcsSplit.clientCount);
+
+    ASSERT_EQ(expectedEnginesCount, testedBcsSplit.cmdLists.size());
+    ASSERT_EQ(expectedEnginesCount, testedBcsSplit.hpCmdLists.size());
+
+    std::vector<NEO::CommandStreamReceiver *> hpCsrs;
+    for (auto hpCmdList : testedBcsSplit.hpCmdLists) {
+        hpCsrs.push_back(hpCmdList->getCsr(false));
+        EXPECT_EQ(1u, hpCsrs.back()->getOwningQueueCount());
+    }
+
+    for (uint32_t i = 0; i < expectedEnginesCount; i++) {
+        auto &regularOsContext = testedBcsSplit.cmdLists[i]->getCsr(false)->getOsContext();
+        auto &hpOsContext = testedBcsSplit.hpCmdLists[i]->getCsr(false)->getOsContext();
+
+        EXPECT_FALSE(regularOsContext.isHighPriority());
+        EXPECT_TRUE(hpOsContext.isHighPriority());
+        EXPECT_EQ(regularOsContext.getEngineType(), hpOsContext.getEngineType());
+    }
+
+    EXPECT_TRUE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, true));
+    EXPECT_EQ(2u, testedBcsSplit.clientCount);
+    EXPECT_EQ(expectedEnginesCount, testedBcsSplit.hpCmdLists.size());
+
+    testedBcsSplit.releaseResources();
+    EXPECT_EQ(expectedEnginesCount, testedBcsSplit.hpCmdLists.size());
+    for (auto hpCsr : hpCsrs) {
+        EXPECT_EQ(1u, hpCsr->getOwningQueueCount());
+    }
+
+    testedBcsSplit.releaseResources();
+    EXPECT_TRUE(testedBcsSplit.cmdLists.empty());
+    EXPECT_TRUE(testedBcsSplit.hpCmdLists.empty());
+    EXPECT_TRUE(testedBcsSplit.hpH2dCmdLists.empty());
+    EXPECT_TRUE(testedBcsSplit.hpD2hCmdLists.empty());
+    EXPECT_EQ(owningQueueCountsBeforeSetup, getSplitSecondaryCsrsOwningQueueCounts());
+}
+
+HWTEST2_F(HighPriorityBcsSplitTests, givenFewerHighPrioritySecondaryEnginesThanRequiredWhenSetupDeviceWithHighPriorityThenAcquiredHighPriorityCsrsAreReleased, IsAtLeastXe2HpgCore) {
+    ASSERT_TRUE(highPrioritySecondaryEnginesAvailable());
+
+    BcsSplitTestable testedBcsSplit(static_cast<L0::Device &>(*device));
+    ASSERT_TRUE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, false));
+
+    const auto owningQueueCountsBeforeHighPrioritySetup = getSplitSecondaryCsrsOwningQueueCounts();
+
+    debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount + 1);
+    EXPECT_FALSE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, true));
+    EXPECT_EQ(1u, testedBcsSplit.clientCount);
+    EXPECT_TRUE(testedBcsSplit.hpCmdLists.empty());
+    EXPECT_EQ(owningQueueCountsBeforeHighPrioritySetup, getSplitSecondaryCsrsOwningQueueCounts());
+
+    debugManager.flags.SplitBcsRequiredEnginesCount.set(expectedEnginesCount);
+    ASSERT_TRUE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, true));
+    ASSERT_EQ(expectedEnginesCount, testedBcsSplit.hpCmdLists.size());
+    for (auto hpCmdList : testedBcsSplit.hpCmdLists) {
+        EXPECT_EQ(1u, hpCmdList->getCsr(false)->getOwningQueueCount());
+    }
+
+    testedBcsSplit.releaseResources();
+    testedBcsSplit.releaseResources();
+}
+
+HWTEST2_F(HighPriorityBcsSplitTests, givenHighPrioritySplitWhenGettingCmdListsForSplitThenHighPriorityCmdListsAreSelectedOnlyForHighPriority, IsAtLeastXe2HpgCore) {
+    ASSERT_TRUE(highPrioritySecondaryEnginesAvailable());
+
+    BcsSplit testedBcsSplit(static_cast<L0::Device &>(*device));
+    ASSERT_TRUE(testedBcsSplit.setupDevice(cmdList->getCsr(false), false, true));
+
+    auto contains = [](const std::vector<L0::CommandList *> &cmdLists, L0::CommandList *cmdList) {
+        return std::find(cmdLists.begin(), cmdLists.end(), cmdList) != cmdLists.end();
+    };
+
+    const size_t size = expectedEnginesCount * MemoryConstants::gigaByte;
+
+    for (auto queue : testedBcsSplit.getCmdListsForSplit(TransferDirection::hostToLocal, size, true)) {
+        EXPECT_TRUE(contains(testedBcsSplit.hpH2dCmdLists, queue));
+    }
+    for (auto queue : testedBcsSplit.getCmdListsForSplit(TransferDirection::localToHost, size, true)) {
+        EXPECT_TRUE(contains(testedBcsSplit.hpD2hCmdLists, queue));
+    }
+    for (auto queue : testedBcsSplit.getCmdListsForSplit(TransferDirection::hostToHost, size, true)) {
+        EXPECT_TRUE(contains(testedBcsSplit.hpCmdLists, queue));
+    }
+    for (auto queue : testedBcsSplit.getCmdListsForSplit(TransferDirection::hostToLocal, size, false)) {
+        EXPECT_TRUE(contains(testedBcsSplit.h2dCmdLists, queue));
+    }
+    for (auto queue : testedBcsSplit.getCmdListsForSplit(TransferDirection::localToHost, size, false)) {
+        EXPECT_TRUE(contains(testedBcsSplit.d2hCmdLists, queue));
+    }
+    for (auto queue : testedBcsSplit.getCmdListsForSplit(TransferDirection::hostToHost, size, false)) {
+        EXPECT_TRUE(contains(testedBcsSplit.cmdLists, queue));
+    }
+
+    testedBcsSplit.releaseResources();
+}
+
+HWTEST2_F(HighPriorityBcsSplitTests, givenHighPriorityImmediateCmdListWithBcsSplitWhenAppendingCopyThenHighPrioritySplitCmdListsAreUsed, IsAtLeastXe2HpgCore) {
+    ASSERT_TRUE(highPrioritySecondaryEnginesAvailable());
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    desc.ordinal = queryCopyOrdinal();
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
+
+    DestroyableZeUniquePtr<L0::CommandList> hpCmdList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::copy, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    *hpCmdList->getInOrderExecInfo()->getBaseHostAddress() = std::numeric_limits<uint64_t>::max();
+
+    auto hpCmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(hpCmdList.get());
+    ASSERT_TRUE(hpCmdListHw->isBcsSplitEnabled());
+
+    ASSERT_EQ(expectedEnginesCount, bcsSplit->hpCmdLists.size());
+
+    std::vector<TaskCountType> regularTaskCounts;
+    std::vector<TaskCountType> hpTaskCounts;
+    for (uint32_t i = 0; i < expectedEnginesCount; i++) {
+        regularTaskCounts.push_back(bcsSplit->cmdLists[i]->getCsr(false)->peekTaskCount());
+        hpTaskCounts.push_back(bcsSplit->hpCmdLists[i]->getCsr(false)->peekTaskCount());
+    }
+
+    auto hostPtr = allocHostMem();
+    auto devicePtr = allocDeviceMem(device);
+
+    hpCmdListHw->appendMemoryCopy(devicePtr, hostPtr, copySize, nullptr, 0, nullptr, copyParams);
+
+    uint32_t usedHpEngines = 0;
+    for (uint32_t i = 0; i < expectedEnginesCount; i++) {
+        EXPECT_EQ(regularTaskCounts[i], bcsSplit->cmdLists[i]->getCsr(false)->peekTaskCount());
+        if (bcsSplit->hpCmdLists[i]->getCsr(false)->peekTaskCount() > hpTaskCounts[i]) {
+            usedHpEngines++;
+        }
+    }
+    EXPECT_NE(0u, usedHpEngines);
+
+    context->freeMem(hostPtr);
+    context->freeMem(devicePtr);
 }
 
 struct MultiRootAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
@@ -2343,13 +2570,6 @@ struct BcsSplitHpFallbackTests : public ::testing::Test {
         }
     };
 
-    struct BcsSplitTestable : public BcsSplit {
-        using BcsSplit::BcsSplit;
-        using BcsSplit::clientCount;
-        using BcsSplit::setupQueues;
-        using BcsSplit::splitSettings;
-    };
-
     void SetUp() override {
         debugManager.flags.SplitBcsAggregatedEventsMode.set(1);
         debugManager.flags.SplitBcsCopy.set(1);
@@ -2412,16 +2632,13 @@ HWTEST2_F(BcsSplitHpFallbackTests, givenRegularEnginesEqualToRequiredCountWhenCr
 
     auto bcsSplit = setupSplitSettings();
 
-    ASSERT_TRUE(bcsSplit->setupQueues());
-    EXPECT_EQ(4u, bcsSplit->cmdLists.size());
+    BcsSplitParams::CsrContainer csrs;
+    ASSERT_TRUE(bcsSplit->collectRegularCsrs(csrs));
+    EXPECT_EQ(4u, csrs.size());
 
-    for (auto cmd : bcsSplit->cmdLists) {
-        auto csr = static_cast<L0::CommandList *>(cmd)->getCsr(false);
+    for (auto csr : csrs) {
         EXPECT_TRUE(csr->getOsContext().isRegular());
     }
-
-    bcsSplit->clientCount = 1u;
-    bcsSplit->releaseResources();
 }
 
 HWTEST2_F(BcsSplitHpFallbackTests, givenRegularEnginesLessThanRequiredCountWhenCreatingBcsSplitThenHpEnginesAreUsed, IsAtLeastXeHpcCore) {
@@ -2429,20 +2646,17 @@ HWTEST2_F(BcsSplitHpFallbackTests, givenRegularEnginesLessThanRequiredCountWhenC
 
     auto bcsSplit = setupSplitSettings();
 
-    ASSERT_TRUE(bcsSplit->setupQueues());
-    EXPECT_EQ(4u, bcsSplit->cmdLists.size());
+    BcsSplitParams::CsrContainer csrs;
+    ASSERT_TRUE(bcsSplit->collectRegularCsrs(csrs));
+    EXPECT_EQ(4u, csrs.size());
 
     bool hasHpEngine = false;
-    for (auto cmd : bcsSplit->cmdLists) {
-        auto csr = static_cast<L0::CommandList *>(cmd)->getCsr(false);
+    for (auto csr : csrs) {
         if (csr->getOsContext().isHighPriority()) {
             hasHpEngine = true;
         }
     }
     EXPECT_TRUE(hasHpEngine);
-
-    bcsSplit->clientCount = 1u;
-    bcsSplit->releaseResources();
 }
 
 HWTEST2_F(BcsSplitHpFallbackTests, givenInsufficientTotalEnginesWhenCreatingBcsSplitThenSetupFails, IsAtLeastXeHpcCore) {
@@ -2452,10 +2666,8 @@ HWTEST2_F(BcsSplitHpFallbackTests, givenInsufficientTotalEnginesWhenCreatingBcsS
 
     auto bcsSplit = setupSplitSettings();
 
-    EXPECT_FALSE(bcsSplit->setupQueues());
-
-    bcsSplit->clientCount = 1u;
-    bcsSplit->releaseResources();
+    BcsSplitParams::CsrContainer csrs;
+    EXPECT_FALSE(bcsSplit->collectRegularCsrs(csrs));
 }
 
 } // namespace ult
