@@ -5,6 +5,9 @@
  *
  */
 
+// GENERATED FILE - do not edit.
+// Generator 0.6.0+g677f670f6, BXML r77687.
+
 #pragma pack(1)
 
 typedef struct tagBINDING_TABLE_STATE {
@@ -1824,7 +1827,7 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline RENDER_CACHE_READ_WRITE_MODE getRenderCacheReadWriteMode() const {
         return static_cast<RENDER_CACHE_READ_WRITE_MODE>(TheStructure.Common.RenderCacheReadWriteMode);
     }
-    inline void setEnableSamplerRouteToLsc(const bool value) { // patched
+    inline void setEnableSamplerRouteToLsc(const bool value) {
         UNRECOVERABLE_IF(value && getResourceMinLod() != 0u);
         TheStructure.Common.EnableSamplerRouteToLsc = value;
     }
@@ -4374,7 +4377,7 @@ typedef struct tag_3DSTATE_BTD {
     }
 } _3DSTATE_BTD;
 STATIC_ASSERT(24 == sizeof(_3DSTATE_BTD));
-STATIC_ASSERT(NEO::TypeTraits::isPodV<_3DSTATE_BTD>); // patched
+STATIC_ASSERT(NEO::TypeTraits::isPodV<_3DSTATE_BTD>);
 
 typedef struct tagGRF {
     union tagTheStructure {

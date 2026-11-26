@@ -5,6 +5,9 @@
  *
  */
 
+// GENERATED FILE - do not edit.
+// Generator 0.6.0+g677f670f6, BXML r77687.
+
 #pragma pack(1)
 
 typedef struct tagMEM_COPY {
@@ -4585,7 +4588,7 @@ typedef struct tag_3DSTATE_BTD {
     }
 } _3DSTATE_BTD;
 STATIC_ASSERT(24 == sizeof(_3DSTATE_BTD));
-STATIC_ASSERT(NEO::TypeTraits::isPodV<_3DSTATE_BTD>); // patched
+STATIC_ASSERT(NEO::TypeTraits::isPodV<_3DSTATE_BTD>);
 
 typedef struct tagGRF {
     union tagTheStructure {

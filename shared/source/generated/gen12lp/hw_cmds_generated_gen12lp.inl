@@ -5,7 +5,11 @@
  *
  */
 
+// GENERATED FILE - do not edit.
+// Generator 0.6.0+g677f670f6, BXML r77687.
+
 #pragma pack(1)
+
 typedef struct tagBINDING_TABLE_STATE {
     union tagTheStructure {
         struct tagCommon {
