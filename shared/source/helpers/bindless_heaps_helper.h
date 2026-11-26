@@ -101,13 +101,14 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
 
     size_t reuseSlotCountThreshold = 512;
     uint64_t reservedRangeBase = 0;
-    std::vector<bool> stateCacheDirtyForContext;
+    std::vector<std::atomic<bool>> stateCacheDirtyForContext;
     DeviceBitfield deviceBitfield;
     const size_t surfaceStateSize;
 
     const uint32_t rootDeviceIndex;
     uint32_t allocatePoolIndex = 0;
     uint32_t releasePoolIndex = 0;
+    uint32_t firstContextId = 0;
 
     bool allocateFromReusePool = false;
     bool globalBindlessDsh = false;

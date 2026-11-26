@@ -5225,7 +5225,7 @@ HWTEST2_F(ImageCreate, givenMainBindlessSlotReusedFromPoolWhenItsSurfaceStatesAr
 
     EXPECT_TRUE(imageHW->getAllocation()->getBindlessInfo().reusedFromPool);
     EXPECT_FALSE(imageHW->getBindlessSlot()->reusedFromPool);
-    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 }
 
 HWTEST2_F(ImageCreate, givenMainBindlessSlotFromFreshHeapSpaceWhenItsSurfaceStatesAreWrittenThenStateCacheIsNotDirty, ImageSupport) {
@@ -5249,7 +5249,7 @@ HWTEST2_F(ImageCreate, givenMainBindlessSlotFromFreshHeapSpaceWhenItsSurfaceStat
 
     EXPECT_FALSE(imageHW->getAllocation()->getBindlessInfo().reusedFromPool);
     EXPECT_FALSE(imageHW->getBindlessSlot()->reusedFromPool);
-    EXPECT_TRUE(std::none_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::none_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 }
 
 HWTEST2_F(ImageCreate, givenImageWhenGettingOrInitializingMediaBlockBindlessSlotThenSeparateSlotIsWrittenOnceWithMediaBlockState, ImageSupport) {

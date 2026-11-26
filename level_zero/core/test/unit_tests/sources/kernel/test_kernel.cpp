@@ -2793,11 +2793,11 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessSlotReusedFromPoolWhenBufferS
 
     mockKernel.setBufferSurfaceState(0, buffer, &mockAllocation);
     EXPECT_FALSE(mockAllocation.getBindlessInfo().reusedFromPool);
-    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 
     std::fill(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), false);
     mockKernel.setBufferSurfaceState(0, buffer, &mockAllocation);
-    EXPECT_TRUE(std::none_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::none_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

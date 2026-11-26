@@ -3232,7 +3232,7 @@ HWTEST2_F(KernelTest, givenBindlessSlotReusedFromPoolWhenPatchWithImplicitSurfac
     kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
 
     EXPECT_FALSE(mockAllocation.getBindlessInfo().reusedFromPool);
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 }
 
 TEST(KernelTest, givenDefaultKernelWhenItIsCreatedThenItReportsStatelessWrites) {

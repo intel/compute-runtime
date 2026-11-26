@@ -1092,7 +1092,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenImplicitArgBindlessSlotReusedFro
                                                      allocation.getBindlessInfo(), kernelDescriptor);
 
     EXPECT_FALSE(allocation.getBindlessInfo().reusedFromPool);
-    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 }
 
 HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsHeapfulRequiredAndAtLeastXeCore) {

@@ -532,7 +532,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenCreatedThenAllocateA
     EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
     EXPECT_EQ(0u, bindlessHeapHelper->releasePoolIndex);
 
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto it) { return it == false; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &it) { return it == false; }));
 }
 
 TEST_F(BindlessHeapsHelperTests, givenFreeSlotsExceedingThresholdInResuePoolWhenNewSlotsAllocatedThenSlotsAreAllocatedFromReusePool) {
@@ -563,7 +563,7 @@ TEST_F(BindlessHeapsHelperTests, givenFreeSlotsExceedingThresholdInResuePoolWhen
     EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
     EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
 
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto it) { return it == true; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &it) { return it == true; }));
 }
 
 TEST_F(BindlessHeapsHelperTests, givenReusePoolExhaustedWhenNewSlotsAllocatedThenSlotsAreNotResuedAndStateCacheDirtyFlagsAreNotSet) {
@@ -612,7 +612,7 @@ TEST_F(BindlessHeapsHelperTests, givenReusePoolExhaustedWhenNewSlotsAllocatedThe
 
     EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
 
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto it) { return it == false; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &it) { return it == false; }));
 
     EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][0].size(), 0u);
     EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 0u);
@@ -690,7 +690,7 @@ TEST_F(BindlessHeapsHelperTests, givenReleasedSlotsToSecondPoolWhenThresholdReac
 
     EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
     EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto it) { return it == true; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &it) { return it == true; }));
     EXPECT_TRUE(bindlessHeapHelper->allocateFromReusePool);
 
     allocatePoolIndex = bindlessHeapHelper->allocatePoolIndex;
@@ -768,7 +768,7 @@ TEST_F(BindlessHeapsHelperTests, givenSlotsAllocatedFromReusePoolWhenContextsInv
     EXPECT_TRUE(bindlessHeapHelper->allocateFromReusePool);
     EXPECT_EQ(ssInHeapInfos[3].ssPtr, secondReusedSlot.ssPtr);
 
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto it) { return it == true; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &it) { return it == true; }));
 }
 
 TEST_F(BindlessHeapsHelperTests, givenThresholdReachedWhenAllocatingSizeWithoutReusableSlotsThenNewSlotIsAllocatedAndStateCacheIsNotDirty) {
@@ -791,12 +791,12 @@ TEST_F(BindlessHeapsHelperTests, givenThresholdReachedWhenAllocatingSizeWithoutR
     EXPECT_TRUE(bindlessHeapHelper->allocateFromReusePool);
 
     ASSERT_FALSE(bindlessHeapHelper->stateCacheDirtyForContext.empty());
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto it) { return it == false; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &it) { return it == false; }));
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHelperWhenMarkingStateDirtyForAllContextsThenEveryContextIsDirty) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
-    bindlessHeapHelper->stateCacheDirtyForContext.assign(4, false);
+    bindlessHeapHelper->stateCacheDirtyForContext = std::vector<std::atomic<bool>>(4);
 
     bindlessHeapHelper->markStateDirtyForAllContexts();
 
@@ -807,23 +807,23 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHelperWhenMarkingStateDirtyForAllC
 
 TEST_F(BindlessHeapsHelperTests, givenSlotReusedFromPoolWhenMarkingStateDirtyAfterItsWriteThenContextsAreDirtyOnlyAfterFirstWrite) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
-    bindlessHeapHelper->stateCacheDirtyForContext.assign(4, false);
+    bindlessHeapHelper->stateCacheDirtyForContext = std::vector<std::atomic<bool>>(4);
 
     SurfaceStateInHeapInfo surfaceStateInfo{};
     surfaceStateInfo.reusedFromPool = true;
 
     bindlessHeapHelper->markStateDirtyAfterReusedSlotWrite(surfaceStateInfo);
     EXPECT_FALSE(surfaceStateInfo.reusedFromPool);
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 
-    bindlessHeapHelper->stateCacheDirtyForContext.assign(4, false);
+    bindlessHeapHelper->stateCacheDirtyForContext = std::vector<std::atomic<bool>>(4);
     bindlessHeapHelper->markStateDirtyAfterReusedSlotWrite(surfaceStateInfo);
-    EXPECT_TRUE(std::none_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::none_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 }
 
 TEST_F(BindlessHeapsHelperTests, givenAllocationWithSlotReusedFromPoolWhenMarkingStateDirtyAfterItsWriteThenContextsAreDirtyOnlyAfterFirstWrite) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
-    bindlessHeapHelper->stateCacheDirtyForContext.assign(4, false);
+    bindlessHeapHelper->stateCacheDirtyForContext = std::vector<std::atomic<bool>>(4);
 
     MockGraphicsAllocation allocation;
     SurfaceStateInHeapInfo surfaceStateInfo{};
@@ -832,16 +832,16 @@ TEST_F(BindlessHeapsHelperTests, givenAllocationWithSlotReusedFromPoolWhenMarkin
 
     bindlessHeapHelper->markStateDirtyAfterReusedSlotWrite(allocation);
     EXPECT_FALSE(allocation.getBindlessInfo().reusedFromPool);
-    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 
-    bindlessHeapHelper->stateCacheDirtyForContext.assign(4, false);
+    bindlessHeapHelper->stateCacheDirtyForContext = std::vector<std::atomic<bool>>(4);
     bindlessHeapHelper->markStateDirtyAfterReusedSlotWrite(allocation);
-    EXPECT_TRUE(std::none_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+    EXPECT_TRUE(std::none_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](const auto &dirty) { return dirty.load(); }));
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHelperWhenGettingAndClearingDirtyStateForContextThenCorrectFlagIsReturnedAndCleared) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
-    bindlessHeapHelper->stateCacheDirtyForContext.resize(4);
+    bindlessHeapHelper->stateCacheDirtyForContext = std::vector<std::atomic<bool>>(4);
 
     EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(1));
     bindlessHeapHelper->stateCacheDirtyForContext.at(3) = true;
@@ -849,6 +849,19 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHelperWhenGettingAndClearingDirtyS
 
     bindlessHeapHelper->clearStateDirtyForContext(3);
     EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(3));
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHelperWhenGettingAndClearingDirtyStateForContextThenOwnershipIsNotTaken) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+    bindlessHeapHelper->stateCacheDirtyForContext = std::vector<std::atomic<bool>>(4);
+    bindlessHeapHelper->stateCacheDirtyForContext.at(2) = true;
+    auto ownershipTaken = bindlessHeapHelper->obtainUniqueOwnershipCalled.load();
+
+    EXPECT_TRUE(bindlessHeapHelper->getStateDirtyForContext(2));
+    bindlessHeapHelper->clearStateDirtyForContext(2);
+    EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(2));
+
+    EXPECT_EQ(ownershipTaken, bindlessHeapHelper->obtainUniqueOwnershipCalled.load());
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenHeapsAreCreatedThenSshAllocationsAreResident) {

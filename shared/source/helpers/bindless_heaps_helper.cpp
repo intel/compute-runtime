@@ -55,7 +55,8 @@ BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsConte
                                                                                              rootDeviceIndex(rootDevice->getRootDeviceIndex()),
                                                                                              isMultiOsContextCapable(isMultiOsContextCapable) {
 
-    stateCacheDirtyForContext.resize(memManager->getRegisteredEngines(rootDeviceIndex).size(), false);
+    stateCacheDirtyForContext = std::vector<std::atomic<bool>>(memManager->getRegisteredEngines(rootDeviceIndex).size());
+    firstContextId = memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
 
     if (isReservedMemoryModeAvailable() &&
         !tryReservingMemoryForSpecialSsh(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k)) {
@@ -163,9 +164,7 @@ bool BindlessHeapsHelper::isReservedMemoryModeAvailable() {
 }
 
 void BindlessHeapsHelper::clearStateDirtyForContext(uint32_t osContextId) {
-    auto lock = this->obtainUniqueOwnership();
-
-    uint32_t contextIdShifted = osContextId - memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
+    uint32_t contextIdShifted = osContextId - firstContextId;
     DEBUG_BREAK_IF(contextIdShifted >= stateCacheDirtyForContext.size());
 
     stateCacheDirtyForContext.at(contextIdShifted) = false;
@@ -192,9 +191,7 @@ void BindlessHeapsHelper::markStateDirtyAfterReusedSlotWrite(GraphicsAllocation 
 }
 
 bool BindlessHeapsHelper::getStateDirtyForContext(uint32_t osContextId) {
-    auto lock = this->obtainUniqueOwnership();
-
-    uint32_t contextIdShifted = osContextId - memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
+    uint32_t contextIdShifted = osContextId - firstContextId;
     DEBUG_BREAK_IF(contextIdShifted >= stateCacheDirtyForContext.size());
 
     return stateCacheDirtyForContext.at(contextIdShifted);
