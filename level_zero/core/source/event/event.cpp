@@ -1145,14 +1145,15 @@ void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {
 }
 
 void Event::unsetCmdQueue() {
+    if (!latestUsedCmdQueue) {
+        return;
+    }
+
     for (auto &csr : csrs) {
         csr->unregisterClient(latestUsedCmdQueue);
     }
 
-    if (latestUsedCmdQueue) {
-        latestUsedCmdQueue->setCsrClientRegistered(false);
-    }
-
+    latestUsedCmdQueue->setCsrClientRegistered(false);
     latestUsedCmdQueue = nullptr;
 }
 

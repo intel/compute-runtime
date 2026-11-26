@@ -2943,6 +2943,30 @@ TEST_F(EventSynchronizeTest, GivenEventCompletedAndForceGpuStatusCheckThenHostSy
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+HWTEST_F(EventSynchronizeTest, GivenCompletedEventWithoutCmdQueueWhenHostSynchronizeIsCalledThenNoCsrClientIsUnregistered) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    event->csrs[0] = &csr;
+    *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(0));
+    EXPECT_EQ(0u, csr.unregisterClientCalled);
+}
+
+HWTEST_F(EventSynchronizeTest, GivenCompletedEventWithCmdQueueWhenHostSynchronizeIsCalledThenCmdQueueIsUnregisteredOnce) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    Mock<CommandQueue> cmdQueue(device, &csr);
+    csr.registerClient(&cmdQueue);
+    auto numClients = csr.getNumClients();
+
+    event->csrs[0] = &csr;
+    event->setLatestUsedCmdQueue(&cmdQueue);
+    *static_cast<uint32_t *>(event->getHostAddress()) = Event::STATE_SIGNALED;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(0));
+    EXPECT_EQ(1u, csr.unregisterClientCalled);
+    EXPECT_EQ(numClients - 1, csr.getNumClients());
+}
+
 TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = false;

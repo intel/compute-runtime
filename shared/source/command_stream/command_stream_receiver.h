@@ -569,7 +569,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return this->numClients.load();
     }
     void registerClient(void *client);
-    void unregisterClient(void *client);
+    MOCKABLE_VIRTUAL void unregisterClient(void *client);
 
     void retainQueueOwnership() {
         owningQueueCount.fetch_add(1);

@@ -414,6 +414,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         }
     }
 
+    void unregisterClient(void *client) override {
+        unregisterClientCalled++;
+        BaseClass::unregisterClient(client);
+    }
+
     WaitStatus waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, TaskCountType taskCountToWait) {
         return waitForCompletionWithTimeout(WaitParams{false, enableTimeout, false, timeoutMicroseconds}, taskCountToWait);
     }
@@ -830,6 +835,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t blitBufferCalled = 0;
     uint32_t initDirectSubmissionCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
+    uint32_t unregisterClientCalled = 0;
     uint32_t pollForCompletionCalled = 0;
     uint32_t pollForAubCompletionCalled = 0;
     uint32_t initializeDeviceWithFirstSubmissionCalled = 0;

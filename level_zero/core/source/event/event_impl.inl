@@ -584,7 +584,6 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
         downloadAllTbxAllocations();
     }
     this->setIsCompleted();
-    unsetCmdQueue();
 
     if (!isCounterBased()) {
         // Temporary assignment. If in-order CmdList required to use Event allocation for HW commands chaining, we need to wait for the counter.
