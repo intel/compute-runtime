@@ -25,6 +25,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_kernel_argument.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
@@ -60,6 +61,37 @@ bool areMclCmdBufferAllocationsWritableForSimulation(MutableCommandList &mutable
     return std::all_of(cmdBufferAllocations.begin(), cmdBufferAllocations.end(), [](NEO::GraphicsAllocation *cmdBufferAllocation) {
         return cmdBufferAllocation->isTbxWritable(NEO::GraphicsAllocation::allBanks);
     });
+}
+
+TEST(MutableCommandListKernelArgumentTest, givenKernelArgumentDescriptorsWhenCheckingIfArgumentIsMutableThenOnlyValuesAndBufferAndSlmPointersAreMutable) {
+    auto makePointerArgument = [](NEO::KernelArgMetadata::AddressSpaceQualifier addressQualifier) {
+        NEO::ArgDescriptor argDescriptor{NEO::ArgDescriptor::argTPointer};
+        argDescriptor.getTraits().addressQualifier = addressQualifier;
+        return argDescriptor;
+    };
+
+    EXPECT_TRUE(L0::MCL::isMutableKernelArgument(NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue}));
+    EXPECT_TRUE(L0::MCL::isMutableKernelArgument(makePointerArgument(NEO::KernelArgMetadata::AddrGlobal)));
+    EXPECT_TRUE(L0::MCL::isMutableKernelArgument(makePointerArgument(NEO::KernelArgMetadata::AddrConstant)));
+    EXPECT_TRUE(L0::MCL::isMutableKernelArgument(makePointerArgument(NEO::KernelArgMetadata::AddrUnknown)));
+    EXPECT_TRUE(L0::MCL::isMutableKernelArgument(makePointerArgument(NEO::KernelArgMetadata::AddrLocal)));
+    EXPECT_FALSE(L0::MCL::isMutableKernelArgument(makePointerArgument(NEO::KernelArgMetadata::AddrPrivate)));
+    EXPECT_FALSE(L0::MCL::isMutableKernelArgument(NEO::ArgDescriptor{NEO::ArgDescriptor::argTImage}));
+    EXPECT_FALSE(L0::MCL::isMutableKernelArgument(NEO::ArgDescriptor{NEO::ArgDescriptor::argTSampler}));
+    EXPECT_FALSE(L0::MCL::isMutableKernelArgument(NEO::ArgDescriptor{NEO::ArgDescriptor::argTUnknown}));
+}
+
+TEST(MutableCommandListKernelArgumentTest, givenKernelArgumentDescriptorsWhenCheckingIfArgumentIsSlmThenOnlyLocalPointersAreSlm) {
+    NEO::ArgDescriptor localPointerArgument{NEO::ArgDescriptor::argTPointer};
+    localPointerArgument.getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+    NEO::ArgDescriptor globalPointerArgument{NEO::ArgDescriptor::argTPointer};
+    globalPointerArgument.getTraits().addressQualifier = NEO::KernelArgMetadata::AddrGlobal;
+    NEO::ArgDescriptor valueArgument{NEO::ArgDescriptor::argTValue};
+    valueArgument.getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+
+    EXPECT_TRUE(L0::MCL::isSlmKernelArgument(localPointerArgument));
+    EXPECT_FALSE(L0::MCL::isSlmKernelArgument(globalPointerArgument));
+    EXPECT_FALSE(L0::MCL::isSlmKernelArgument(valueArgument));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -366,6 +398,54 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(4u, groupSize[0]);
     EXPECT_EQ(2u, groupSize[1]);
     EXPECT_EQ(1u, groupSize[2]);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWhenApplyingGraphNodeMutationsThenKernelArgumentGroupCountGroupSizeAndGlobalOffsetAreUpdated) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(0u, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+
+    uint32_t value1 = 2;
+    uint32_t value2 = 4;
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::value, kernelAllMask);
+    result = kernel->setArgImmediate(0, sizeof(value1), &value1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->applyGraphNodeMutation(L0::MCL::KernelArgumentMutationDescriptor{.commandId = commandId, .argIndex = 0, .argSize = sizeof(value2), .argValue = &value2}));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->applyGraphNodeMutation(L0::MCL::GroupCountMutationDescriptor{.commandId = commandId, .groupCount = {8, 2, 2}}));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->applyGraphNodeMutation(L0::MCL::GroupSizeMutationDescriptor{.commandId = commandId, .groupSize = {4, 2, 1}}));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->applyGraphNodeMutation(L0::MCL::GlobalOffsetMutationDescriptor{.commandId = commandId, .globalOffset = {1, 2, 3}}));
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto valueVariable = mutation.variables.kernelArguments[0].kernelArgumentVariable;
+    auto immediatePatchFullAddress = reinterpret_cast<void *>(valueVariable->getValueUsages().statelessWithoutOffset[0]);
+    uint32_t valueVariablePatchValue = 0;
+    memcpy(&valueVariablePatchValue, immediatePatchFullAddress, sizeof(uint32_t));
+    EXPECT_EQ(value2, valueVariablePatchValue);
+
+    auto &groupCount = mutation.variables.groupCount->getDesc().kernelDispatch.groupCount;
+    EXPECT_EQ(8u, groupCount[0]);
+    EXPECT_EQ(2u, groupCount[1]);
+    EXPECT_EQ(2u, groupCount[2]);
+
+    auto &groupSize = mutation.variables.groupSize->getDesc().kernelDispatch.groupSize;
+    EXPECT_EQ(4u, groupSize[0]);
+    EXPECT_EQ(2u, groupSize[1]);
+    EXPECT_EQ(1u, groupSize[2]);
+
+    auto &globalOffset = mutation.variables.globalOffset->getDesc().kernelDispatch.globalOffset;
+    EXPECT_EQ(1u, globalOffset[0]);
+    EXPECT_EQ(2u, globalOffset[1]);
+    EXPECT_EQ(3u, globalOffset[2]);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

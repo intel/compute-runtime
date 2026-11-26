@@ -214,6 +214,10 @@ struct MutableCommandList {
     virtual ze_result_t updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) = 0;
     virtual ze_result_t updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t updateMutableCommandKernels(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) = 0;
+    virtual auto applyGraphNodeMutation(const KernelArgumentMutationDescriptor &mutation) -> ze_result_t = 0;
+    virtual auto applyGraphNodeMutation(const GroupCountMutationDescriptor &mutation) -> ze_result_t = 0;
+    virtual auto applyGraphNodeMutation(const GroupSizeMutationDescriptor &mutation) -> ze_result_t = 0;
+    virtual auto applyGraphNodeMutation(const GlobalOffsetMutationDescriptor &mutation) -> ze_result_t = 0;
 
     virtual void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) = 0;
     virtual void addToResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) = 0;

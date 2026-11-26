@@ -235,6 +235,8 @@ struct RecordedApiCommands {
 };
 
 struct GraphNode : _ze_graph_node_handle_t {
+    using CurrentKernelArguments = StackVec<KernelArgumentValue, decltype(NEO::KernelDescriptor::PayloadMappings::explicitArgs)::onStackCaps>;
+
     GraphNode(ze_graph_node_exp_type_t type, ze_mutable_graph_node_exp_flags_t flags)
         : flags(flags),
           type(type) {
@@ -342,21 +344,7 @@ struct GraphNode : _ze_graph_node_handle_t {
         return this->externalStorage->getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), this->argumentsId);
     }
 
-    auto getCurrentKernelArgument(uint32_t argIndex) -> KernelArgumentValue {
-        UNRECOVERABLE_IF(nullptr == this->kernel);
-        if (ClosureExternalStorage::invalidKernelArgumentsId == this->argumentsId) {
-            if (this->immediateValueBuffers.empty()) {
-                this->immediateValueBuffers.resize(this->kernel->getKernelDescriptor().payloadMappings.explicitArgs.size());
-            }
-            return this->kernel->getArgumentValue(argIndex, this->immediateValueBuffers[argIndex]);
-        }
-        const auto &argDescriptor = this->kernel->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
-        const auto storedArgument = this->getStoredKernelArguments()[argIndex];
-        if (isSlmArgument(argDescriptor)) {
-            return {nullptr, *static_cast<const size_t *>(storedArgument)};
-        }
-        return {storedArgument, argDescriptor.getTraits().argByValSize};
-    }
+    auto getCurrentKernelArguments() -> CurrentKernelArguments;
 
     auto updateGlobalOffset(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) -> ze_result_t {
         UNRECOVERABLE_IF(nullptr == this->kernel);
@@ -369,11 +357,6 @@ struct GraphNode : _ze_graph_node_handle_t {
     }
 
   protected:
-    static auto isSlmArgument(const NEO::ArgDescriptor &argDescriptor) -> bool {
-        return argDescriptor.is<NEO::ArgDescriptor::argTPointer>() &&
-               (argDescriptor.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal);
-    }
-
     ze_mutable_graph_node_exp_flags_t flags;
     ze_graph_node_exp_type_t type;
     uint32_t index = 0u;
@@ -982,6 +965,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
                                GraphSegmentsCrossSync *segmentsCrossSync);
 
     auto updateNodes(uint32_t numNodes, ze_graph_node_handle_t *phNodes, const void **ppUpdateDescs) -> ze_result_t;
+    auto update(const Graph &sourceGraph) -> ze_result_t;
 
     WeaklyShared<ExternalCbEventInfoContainer> getExternalCbEventInfoContainer() {
         return externalCbEventStorage;
@@ -1022,6 +1006,8 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     auto executeOnTarget(L0::CommandList *executionTarget, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) -> ze_result_t;
     auto waitForLastExecution() -> ze_result_t;
     auto commitUpdatedNodeCommandLists() -> void;
+    auto applyCurrentNodeState(GraphNode &graphNode) -> ze_result_t;
+    auto addUpdatedNodeCommandList(L0::CommandList *commandList) -> void;
 
     Graph *src = nullptr;
     L0::CommandList *executionTarget = nullptr;

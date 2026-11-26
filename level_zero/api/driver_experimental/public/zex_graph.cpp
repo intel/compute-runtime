@@ -115,8 +115,11 @@ ze_result_t ZE_APICALL zeExecutableGraphNodesUpdateExp(ze_executable_graph_handl
     return L0::ExecutableGraph::fromHandle(hExecutableGraph)->updateNodes(numNodes, phNodes, ppUpdateDescs);
 }
 
-ze_result_t ZE_APICALL zeExecutableGraphUpdateExp([[maybe_unused]] ze_executable_graph_handle_t hExecutableGraph, [[maybe_unused]] ze_graph_handle_t hSourceGraph, [[maybe_unused]] const void *pNext) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t ZE_APICALL zeExecutableGraphUpdateExp(ze_executable_graph_handle_t hExecutableGraph, ze_graph_handle_t hSourceGraph, [[maybe_unused]] const void *pNext) {
+    if ((nullptr == hExecutableGraph) || (nullptr == hSourceGraph)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return L0::ExecutableGraph::fromHandle(hExecutableGraph)->update(*L0::Graph::fromHandle(hSourceGraph));
 }
 
 } // namespace L0

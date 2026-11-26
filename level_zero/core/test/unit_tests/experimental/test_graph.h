@@ -134,11 +134,36 @@ struct CommandIdRecordingCommandList : Mock<CommandList> {
             return updateMutableCommandForGraphNodeResult;
         }
 
+        auto applyGraphNodeMutation(const MCL::KernelArgumentMutationDescriptor &mutation) -> ze_result_t override {
+            recordedKernelArgumentMutations.push_back(mutation);
+            return applyGraphNodeMutationResult;
+        }
+
+        auto applyGraphNodeMutation(const MCL::GroupCountMutationDescriptor &mutation) -> ze_result_t override {
+            recordedGroupCountMutations.push_back(mutation);
+            return applyGraphNodeMutationResult;
+        }
+
+        auto applyGraphNodeMutation(const MCL::GroupSizeMutationDescriptor &mutation) -> ze_result_t override {
+            recordedGroupSizeMutations.push_back(mutation);
+            return applyGraphNodeMutationResult;
+        }
+
+        auto applyGraphNodeMutation(const MCL::GlobalOffsetMutationDescriptor &mutation) -> ze_result_t override {
+            recordedGlobalOffsetMutations.push_back(mutation);
+            return applyGraphNodeMutationResult;
+        }
+
         uint64_t getNextCommandIdCalled = 0;
         std::vector<ze_mutable_graph_node_exp_flags_t> recordedFlags;
         ze_result_t getNextCommandIdResult = ZE_RESULT_SUCCESS;
         std::vector<GraphNodeUpdate> recordedGraphNodeUpdates;
         ze_result_t updateMutableCommandForGraphNodeResult = ZE_RESULT_SUCCESS;
+        std::vector<MCL::KernelArgumentMutationDescriptor> recordedKernelArgumentMutations;
+        std::vector<MCL::GroupCountMutationDescriptor> recordedGroupCountMutations;
+        std::vector<MCL::GroupSizeMutationDescriptor> recordedGroupSizeMutations;
+        std::vector<MCL::GlobalOffsetMutationDescriptor> recordedGlobalOffsetMutations;
+        ze_result_t applyGraphNodeMutationResult = ZE_RESULT_SUCCESS;
     } mutableCommandList;
 
     explicit CommandIdRecordingCommandList(L0::Device *device) {

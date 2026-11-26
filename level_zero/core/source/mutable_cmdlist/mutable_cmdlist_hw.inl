@@ -26,6 +26,7 @@
 #include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist_hw.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_kernel_argument.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_load_register_imm_hw.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_pipe_control_hw.h"
@@ -837,21 +838,10 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
         for (const auto &arg : kernelArgs) {
             KernelArgumentVariableDescriptor mutableKernelArgumentDesc = {};
             mutableKernelArgumentDesc.argIndex = argCount;
-            bool captureArgument = false;
-            bool slmArgument = false;
-            bool immediateArgument = arg.type == NEO::ArgDescriptor::argTValue;
-            bool isBufferArg = false;
-            if (arg.type == NEO::ArgDescriptor::argTPointer) {
-                captureArgument = arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrGlobal ||
-                                  arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrConstant ||
-                                  arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrUnknown ||
-                                  arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal;
-
-                slmArgument = arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal;
-                isBufferArg = !slmArgument;
-            }
-            captureArgument |= immediateArgument;
-            if (captureArgument) {
+            if (isMutableKernelArgument(arg)) {
+                const bool immediateArgument = arg.is<NEO::ArgDescriptor::argTValue>();
+                const bool slmArgument = isSlmKernelArgument(arg);
+                const bool isBufferArg = (false == immediateArgument) && (false == slmArgument);
                 Variable *variable = nullptr;
                 InterfaceVariableDescriptor varDesc = {};
 

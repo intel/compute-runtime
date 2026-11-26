@@ -126,6 +126,18 @@ struct MutableCommandListImp : public MutableCommandList {
     ze_result_t updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) override;
     ze_result_t updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t updateMutableCommandKernels(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) override;
+    auto applyGraphNodeMutation(const KernelArgumentMutationDescriptor &mutation) -> ze_result_t override {
+        return this->applyMutation(mutation);
+    }
+    auto applyGraphNodeMutation(const GroupCountMutationDescriptor &mutation) -> ze_result_t override {
+        return this->applyMutation(mutation);
+    }
+    auto applyGraphNodeMutation(const GroupSizeMutationDescriptor &mutation) -> ze_result_t override {
+        return this->applyMutation(mutation);
+    }
+    auto applyGraphNodeMutation(const GlobalOffsetMutationDescriptor &mutation) -> ze_result_t override {
+        return this->applyMutation(mutation);
+    }
 
     void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) override {
         if (allocation == nullptr) {

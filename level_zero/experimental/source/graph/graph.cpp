@@ -25,6 +25,7 @@
 #include "level_zero/core/source/helpers/pnext.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_kernel_argument.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
@@ -463,6 +464,33 @@ auto GraphNode::updateKernelArgument(const ClosureExternalStorage::KernelArgumen
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     return CommandList::setKernelStateArgument(explicitArgs[argIndex], storedKernelArguments[argIndex], argSize, argValue);
+}
+
+auto GraphNode::getCurrentKernelArguments() -> CurrentKernelArguments {
+    UNRECOVERABLE_IF(nullptr == this->kernel);
+    const auto &explicitArgs = this->kernel->getKernelDescriptor().payloadMappings.explicitArgs;
+    const auto numKernelArguments = static_cast<uint32_t>(explicitArgs.size());
+    CurrentKernelArguments currentArguments;
+    currentArguments.reserve(numKernelArguments);
+    if (ClosureExternalStorage::invalidKernelArgumentsId == this->argumentsId) {
+        if (this->immediateValueBuffers.empty()) {
+            this->immediateValueBuffers.resize(numKernelArguments);
+        }
+        for (uint32_t argIndex = 0u; argIndex < numKernelArguments; ++argIndex) {
+            currentArguments.push_back(this->kernel->getArgumentValue(argIndex, this->immediateValueBuffers[argIndex]));
+        }
+        return currentArguments;
+    }
+    const auto storedArguments = this->getStoredKernelArguments();
+    for (uint32_t argIndex = 0u; argIndex < numKernelArguments; ++argIndex) {
+        const auto &argDescriptor = explicitArgs[argIndex];
+        if (L0::MCL::isSlmKernelArgument(argDescriptor)) {
+            currentArguments.push_back({nullptr, *static_cast<const size_t *>(storedArguments[argIndex])});
+        } else {
+            currentArguments.push_back({storedArguments[argIndex], argDescriptor.getTraits().argByValSize});
+        }
+    }
+    return currentArguments;
 }
 
 auto Graph::getNodes(uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraphNodes) -> ze_result_t {
@@ -2214,15 +2242,88 @@ auto ExecutableGraph::updateNodes(uint32_t numNodes, ze_graph_node_handle_t *phN
         const auto graphNode = GraphNode::fromHandle(phNodes[i]);
         const auto &nodeCommand = (*this->nodeCommands)[graphNode->getIndex()];
         auto mutableCommandList = static_cast<L0::MCL::MutableCommandList *>(nodeCommand.commandList->asMutable());
-        if (this->updatedNodeCommandLists.end() == std::find(this->updatedNodeCommandLists.begin(), this->updatedNodeCommandLists.end(), nodeCommand.commandList)) {
-            this->updatedNodeCommandLists.push_back(nodeCommand.commandList);
-        }
+        this->addUpdatedNodeCommandList(nodeCommand.commandList);
         auto result = mutableCommandList->updateMutableCommandForGraphNode(nodeCommand.commandId, graphNode->getFlags(), ppUpdateDescs[i]);
         if (ZE_RESULT_SUCCESS != result) {
             return result;
         }
     }
     return ZE_RESULT_SUCCESS;
+}
+
+auto ExecutableGraph::update(const Graph &sourceGraph) -> ze_result_t {
+    if (&sourceGraph != this->src) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    for (const auto &graphNode : sourceGraph.getGraphNodes()) {
+        auto result = this->applyCurrentNodeState(*graphNode);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+auto ExecutableGraph::applyCurrentNodeState(GraphNode &graphNode) -> ze_result_t {
+    const auto &nodeCommand = (*this->nodeCommands)[graphNode.getIndex()];
+    auto mutableCommandList = static_cast<L0::MCL::MutableCommandList *>(nodeCommand.commandList->asMutable());
+    const auto nodeFlags = graphNode.getEffectiveFlags();
+    this->addUpdatedNodeCommandList(nodeCommand.commandList);
+
+    if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT)) {
+        const auto &explicitArgs = graphNode.getKernel()->getKernelDescriptor().payloadMappings.explicitArgs;
+        const auto currentArguments = graphNode.getCurrentKernelArguments();
+        for (uint32_t argIndex = 0u; argIndex < static_cast<uint32_t>(explicitArgs.size()); ++argIndex) {
+            if (false == L0::MCL::isMutableKernelArgument(explicitArgs[argIndex])) {
+                continue;
+            }
+            auto result = mutableCommandList->applyGraphNodeMutation(L0::MCL::KernelArgumentMutationDescriptor{
+                .commandId = nodeCommand.commandId,
+                .argIndex = argIndex,
+                .argSize = currentArguments[argIndex].argSize,
+                .argValue = currentArguments[argIndex].argValue,
+            });
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
+            }
+        }
+    }
+    if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT)) {
+        auto result = mutableCommandList->applyGraphNodeMutation(L0::MCL::GroupCountMutationDescriptor{
+            .commandId = nodeCommand.commandId,
+            .groupCount = graphNode.getCurrentGroupCount(),
+        });
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+    }
+    if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE)) {
+        const auto groupSize = graphNode.getCurrentGroupSize();
+        auto result = mutableCommandList->applyGraphNodeMutation(L0::MCL::GroupSizeMutationDescriptor{
+            .commandId = nodeCommand.commandId,
+            .groupSize = {groupSize.groupSizeX, groupSize.groupSizeY, groupSize.groupSizeZ},
+        });
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+    }
+    if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET)) {
+        const auto globalOffset = graphNode.getCurrentGlobalOffset();
+        auto result = mutableCommandList->applyGraphNodeMutation(L0::MCL::GlobalOffsetMutationDescriptor{
+            .commandId = nodeCommand.commandId,
+            .globalOffset = {globalOffset[0], globalOffset[1], globalOffset[2]},
+        });
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+auto ExecutableGraph::addUpdatedNodeCommandList(L0::CommandList *commandList) -> void {
+    if (this->updatedNodeCommandLists.end() == std::find(this->updatedNodeCommandLists.begin(), this->updatedNodeCommandLists.end(), commandList)) {
+        this->updatedNodeCommandLists.push_back(commandList);
+    }
 }
 
 auto ExecutableGraph::commitUpdatedNodeCommandLists() -> void {

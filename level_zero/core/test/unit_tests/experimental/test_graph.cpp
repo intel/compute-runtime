@@ -9754,15 +9754,6 @@ TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenValidCallbacksThenInvokesTh
     EXPECT_EQ(3U, userData);
 }
 
-TEST(GraphTestMutableGraphNodeExp, GivenMutableGraphNodeExpFunctionsWhenCalledThenUnsupportedFeatureIsReturned) {
-    GraphsCleanupGuard graphCleanup;
-    ContextStubMock ctx;
-    MockGraph graph{&ctx, true, false};
-    ze_executable_graph_handle_t hExecutableGraph = reinterpret_cast<ze_executable_graph_handle_t>(0x1234);
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeExecutableGraphUpdateExp(hExecutableGraph, graph.toHandle(), nullptr));
-}
-
 TEST(GraphNodeTest, GivenGraphNodeWithTypeAndFlagsWhenGettingPropertiesThenCreationTypeAndFlagsAreReturned) {
     const ze_mutable_graph_node_exp_flags_t flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT;
     L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, flags};
@@ -9884,17 +9875,15 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithStoredKernelArgumentsWhe
     node.setExternalStorage(&storage);
     node.setArgumentsId(argumentsId);
 
-    auto currentValueArgument = node.getCurrentKernelArgument(0U);
-    ASSERT_NE(nullptr, currentValueArgument.argValue);
-    EXPECT_EQ(capturedValue, *static_cast<const uint32_t *>(currentValueArgument.argValue));
-    EXPECT_EQ(sizeof(uint32_t), currentValueArgument.argSize);
-    auto currentPointerArgument = node.getCurrentKernelArgument(1U);
-    ASSERT_NE(nullptr, currentPointerArgument.argValue);
-    EXPECT_EQ(capturedPointer, *static_cast<void *const *>(currentPointerArgument.argValue));
-    EXPECT_EQ(sizeof(void *), currentPointerArgument.argSize);
-    auto currentSlmArgument = node.getCurrentKernelArgument(2U);
-    EXPECT_EQ(nullptr, currentSlmArgument.argValue);
-    EXPECT_EQ(capturedSlmSize, currentSlmArgument.argSize);
+    auto currentArguments = node.getCurrentKernelArguments();
+    ASSERT_NE(nullptr, currentArguments[0].argValue);
+    EXPECT_EQ(capturedValue, *static_cast<const uint32_t *>(currentArguments[0].argValue));
+    EXPECT_EQ(sizeof(uint32_t), currentArguments[0].argSize);
+    ASSERT_NE(nullptr, currentArguments[1].argValue);
+    EXPECT_EQ(capturedPointer, *static_cast<void *const *>(currentArguments[1].argValue));
+    EXPECT_EQ(sizeof(void *), currentArguments[1].argSize);
+    EXPECT_EQ(nullptr, currentArguments[2].argValue);
+    EXPECT_EQ(capturedSlmSize, currentArguments[2].argSize);
 
     const uint32_t newValue = 2U;
     void *const newPointer = reinterpret_cast<void *>(0x2000);
@@ -9903,17 +9892,15 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithStoredKernelArgumentsWhe
     EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(node.getStoredKernelArguments(), &newPointer, sizeof(newPointer), 1U));
     EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(node.getStoredKernelArguments(), nullptr, newSlmSize, 2U));
 
-    currentValueArgument = node.getCurrentKernelArgument(0U);
-    ASSERT_NE(nullptr, currentValueArgument.argValue);
-    EXPECT_EQ(newValue, *static_cast<const uint32_t *>(currentValueArgument.argValue));
-    EXPECT_EQ(sizeof(uint32_t), currentValueArgument.argSize);
-    currentPointerArgument = node.getCurrentKernelArgument(1U);
-    ASSERT_NE(nullptr, currentPointerArgument.argValue);
-    EXPECT_EQ(newPointer, *static_cast<void *const *>(currentPointerArgument.argValue));
-    EXPECT_EQ(sizeof(void *), currentPointerArgument.argSize);
-    currentSlmArgument = node.getCurrentKernelArgument(2U);
-    EXPECT_EQ(nullptr, currentSlmArgument.argValue);
-    EXPECT_EQ(newSlmSize, currentSlmArgument.argSize);
+    currentArguments = node.getCurrentKernelArguments();
+    ASSERT_NE(nullptr, currentArguments[0].argValue);
+    EXPECT_EQ(newValue, *static_cast<const uint32_t *>(currentArguments[0].argValue));
+    EXPECT_EQ(sizeof(uint32_t), currentArguments[0].argSize);
+    ASSERT_NE(nullptr, currentArguments[1].argValue);
+    EXPECT_EQ(newPointer, *static_cast<void *const *>(currentArguments[1].argValue));
+    EXPECT_EQ(sizeof(void *), currentArguments[1].argSize);
+    EXPECT_EQ(nullptr, currentArguments[2].argValue);
+    EXPECT_EQ(newSlmSize, currentArguments[2].argSize);
 
     auto storedArguments = storage.getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), argumentsId);
     EXPECT_EQ(newValue, *static_cast<uint32_t *>(storedArguments[0]));
@@ -9921,10 +9908,10 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithStoredKernelArgumentsWhe
     EXPECT_EQ(newSlmSize, *static_cast<size_t *>(storedArguments[2]));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(node.getStoredKernelArguments(), nullptr, sizeof(void *), 1U));
-    currentPointerArgument = node.getCurrentKernelArgument(1U);
-    ASSERT_NE(nullptr, currentPointerArgument.argValue);
-    EXPECT_EQ(nullptr, *static_cast<void *const *>(currentPointerArgument.argValue));
-    EXPECT_EQ(sizeof(void *), currentPointerArgument.argSize);
+    currentArguments = node.getCurrentKernelArguments();
+    ASSERT_NE(nullptr, currentArguments[1].argValue);
+    EXPECT_EQ(nullptr, *static_cast<void *const *>(currentArguments[1].argValue));
+    EXPECT_EQ(sizeof(void *), currentArguments[1].argSize);
 }
 
 TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithStoredKernelArgumentsWhenUpdatingValueArgumentWithLargerSizeThenValueIsTruncatedToArgumentSize) {
@@ -10076,7 +10063,7 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutStoredKernelArguments
     EXPECT_EQ(newValue, *reinterpret_cast<const uint32_t *>(kernel.passedArgumentValues[0].data()));
 }
 
-TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutStoredKernelArgumentsWhenGettingCurrentKernelArgumentThenValueIsReturnedFromKernel) {
+TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutStoredKernelArgumentsWhenGettingCurrentKernelArgumentsThenValuesAreReturnedFromKernel) {
     Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
     kernel.setModule(&module);
@@ -10106,12 +10093,13 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutStoredKernelArguments
     L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT};
     node.setKernel(&kernel);
 
-    auto slmArgument = node.getCurrentKernelArgument(0U);
+    const auto currentArguments = node.getCurrentKernelArguments();
+    const auto &slmArgument = currentArguments[0];
     EXPECT_EQ(nullptr, slmArgument.argValue);
     EXPECT_EQ(64U, slmArgument.argSize);
 
-    auto firstImmediateArgument = node.getCurrentKernelArgument(1U);
-    auto secondImmediateArgument = node.getCurrentKernelArgument(2U);
+    const auto &firstImmediateArgument = currentArguments[1];
+    const auto &secondImmediateArgument = currentArguments[2];
     ASSERT_NE(nullptr, firstImmediateArgument.argValue);
     ASSERT_NE(nullptr, secondImmediateArgument.argValue);
     EXPECT_NE(firstImmediateArgument.argValue, secondImmediateArgument.argValue);
@@ -10124,8 +10112,8 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutStoredKernelArguments
     EXPECT_EQ(secondImmediateParts[0], secondImmediateValue[0]);
     EXPECT_EQ(secondImmediateParts[1], secondImmediateValue[1]);
 
-    auto repeatedFirstImmediateArgument = node.getCurrentKernelArgument(1U);
-    EXPECT_EQ(firstImmediateArgument.argValue, repeatedFirstImmediateArgument.argValue);
+    const auto repeatedArguments = node.getCurrentKernelArguments();
+    EXPECT_EQ(firstImmediateArgument.argValue, repeatedArguments[1].argValue);
 }
 
 TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWhenUpdatingGlobalOffsetThenKernelGlobalOffsetIsSetAndReturnedAsCurrent) {

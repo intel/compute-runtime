@@ -25,6 +25,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_interface_types.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel_argument.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel_group.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel_group.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel_dispatch.h
