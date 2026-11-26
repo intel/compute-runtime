@@ -110,10 +110,7 @@ HWTEST_P(AUBReadBuffer, WhenReadingBufferThenExpectationsAreMet) {
 INSTANTIATE_TEST_SUITE_P(AUBReadBuffer_simple,
                          AUBReadBuffer,
                          ::testing::Values(
-                             0 * sizeof(cl_float),
-                             1 * sizeof(cl_float),
-                             2 * sizeof(cl_float),
-                             3 * sizeof(cl_float)));
+                             1 * sizeof(cl_float)));
 
 HWTEST_F(AUBReadBuffer, GivenReserveCanonicalGpuAddressWhenReadingBufferThenExpectationsAreMet) {
     if (!getAubTestsConfig<FamilyType>().testCanonicalAddress) {

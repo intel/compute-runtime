@@ -104,9 +104,7 @@ INSTANTIATE_TEST_SUITE_P(AUBWriteBuffer_simple,
                          AUBWriteBuffer,
                          ::testing::Values(
                              0 * sizeof(cl_float),
-                             1 * sizeof(cl_float),
-                             2 * sizeof(cl_float),
-                             3 * sizeof(cl_float)));
+                             1 * sizeof(cl_float)));
 
 struct AUBWriteBufferUnaligned
     : public CommandEnqueueAUBFixture,

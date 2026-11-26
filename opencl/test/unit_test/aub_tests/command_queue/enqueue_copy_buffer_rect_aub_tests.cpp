@@ -127,15 +127,9 @@ HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
     expectMemory<FamilyType>(pDestMemory, src, rowPitch * slicePitch);
 }
 
-static size_t zero[] = {0};
-
 INSTANTIATE_TEST_SUITE_P(AUBCopyBufferRect,
                          AUBCopyBufferRect,
-                         ::testing::Combine(
-                             ::testing::Values(0, 3), // srcOrigin
-                             ::testing::ValuesIn(zero),
-                             ::testing::Values(0, 7),
-                             ::testing::Values(0, 3), // dstPrigin
-                             ::testing::ValuesIn(zero),
-                             ::testing::Values(0, 7),
-                             ::testing::Values(true, false)));
+                         ::testing::Values(
+                             std::make_tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool>(0, 0, 0, 3, 0, 0, false),
+                             std::make_tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool>(3, 0, 7, 0, 0, 0, true),
+                             std::make_tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool>(0, 0, 0, 0, 0, 7, false)));

@@ -14,9 +14,16 @@
 namespace L0 {
 namespace ult {
 
-struct AUBImageCopyRegionL0 : public ImageAubTestL0<::testing::TestWithParam<std::tuple<uint32_t, uint32_t, bool>>> {
+struct ImageAubCopyRegionOffsets {
+    uint32_t srcOffset;
+    uint32_t dstOffset;
+};
+
+inline constexpr ImageAubCopyRegionOffsets imageAubCopyRegionOffsets[] = {{0u, 0u}, {1u, 2u}, {2u, 1u}};
+
+struct AUBImageCopyRegionL0 : public ImageAubTestL0<::testing::TestWithParam<std::tuple<ImageAubCopyRegionOffsets, bool>>> {
     void SetUp() override {
-        ImageAubFixtureL0::setUp(std::get<2>(GetParam()), ZE_IMAGE_TYPE_2D);
+        ImageAubFixtureL0::setUp(std::get<1>(GetParam()), ZE_IMAGE_TYPE_2D);
     }
 };
 
@@ -47,8 +54,8 @@ HWTEST2_P(AUBImageCopyRegionL0, givenImagesWhenCopyingImageRegionThenExpectation
     ASSERT_NE(nullptr, srcImage);
     ASSERT_NE(nullptr, dstImage);
 
-    const uint32_t srcOffset = std::get<0>(GetParam());
-    const uint32_t dstOffset = std::get<1>(GetParam());
+    const uint32_t srcOffset = std::get<0>(GetParam()).srcOffset;
+    const uint32_t dstOffset = std::get<0>(GetParam()).dstOffset;
     const ze_image_region_t srcRegion = {srcOffset, srcOffset, 0, imageDimension / 2, imageDimension / 2, 1};
     const ze_image_region_t dstRegion = {dstOffset, dstOffset, 0, imageDimension / 2, imageDimension / 2, 1};
 
@@ -77,8 +84,7 @@ HWTEST2_P(AUBImageCopyRegionL0, givenImagesWhenCopyingImageRegionThenExpectation
 INSTANTIATE_TEST_SUITE_P(AUBImageCopyRegionL0,
                          AUBImageCopyRegionL0,
                          ::testing::Combine(
-                             ::testing::Values(0u, 1u, 2u),
-                             ::testing::Values(0u, 1u, 2u),
+                             ::testing::ValuesIn(imageAubCopyRegionOffsets),
                              ::testing::Bool()));
 
 } // namespace ult

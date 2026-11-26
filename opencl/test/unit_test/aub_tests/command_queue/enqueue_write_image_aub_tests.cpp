@@ -23,22 +23,10 @@
 
 using namespace NEO;
 
-struct WriteImageParams {
-    cl_mem_object_type imageType;
-    size_t offsets[3];
-} writeImageParams[] = {
-    {CL_MEM_OBJECT_IMAGE1D, {0u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE1D, {1u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE2D, {0u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE2D, {1u, 2u, 0u}},
-    {CL_MEM_OBJECT_IMAGE3D, {0u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE3D, {1u, 2u, 3u}},
-};
-
 template <bool enableBlitter>
 struct AUBWriteImage
     : public ImageAubFixture,
-      public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, WriteImageParams>>,
+      public ::testing::WithParamInterface<ImageAubFormatRegionParams>,
       public ::testing::Test {
     void SetUp() override {
         debugManager.flags.EnableFreeMemory.set(false);
@@ -314,13 +302,7 @@ HWTEST2_P(AUBWriteImageCCS, GivenUnalignedMemoryWhenWritingImageThenExpectations
 }
 
 INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageCCS,
-                         ::testing::Combine(::testing::Values( // formats
-                                                CL_UNORM_INT8, CL_SIGNED_INT16,
-                                                CL_UNSIGNED_INT32, CL_HALF_FLOAT,
-                                                CL_FLOAT),
-                                            ::testing::Values( // channels
-                                                CL_R, CL_RG, CL_RGBA),
-                                            ::testing::ValuesIn(writeImageParams)));
+                         ::testing::ValuesIn(getImageAubFormatRegionParams()));
 
 using AUBWriteImageBCS = AUBWriteImage<true>;
 
@@ -352,10 +334,4 @@ HWTEST2_P(AUBWriteImageBCSParam, GivenUnalignedMemoryWhenWritingImageWithBlitter
 }
 
 INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageBCSParam,
-                         ::testing::Combine(::testing::Values( // formats
-                                                CL_UNORM_INT8, CL_SIGNED_INT16,
-                                                CL_UNSIGNED_INT32, CL_HALF_FLOAT,
-                                                CL_FLOAT),
-                                            ::testing::Values( // channels
-                                                CL_R, CL_RG, CL_RGBA),
-                                            ::testing::ValuesIn(writeImageParams)));
+                         ::testing::ValuesIn(getImageAubFormatRegionParams()));

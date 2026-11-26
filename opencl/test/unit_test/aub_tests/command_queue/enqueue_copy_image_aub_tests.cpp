@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,13 +178,11 @@ HWTEST2_P(AUBCopyImageCCS, WhenCopyingThenExpectationsMet, ImageSupport) {
     runAubTest<FamilyType>();
 }
 
+const std::tuple<uint32_t, uint32_t> copyImageOffsets[] = {{0u, 0u}, {1u, 2u}, {2u, 1u}};
+
 INSTANTIATE_TEST_SUITE_P(AUBCopyImage_simple,
                          AUBCopyImageCCS,
-                         ::testing::Combine(
-                             ::testing::Values( // srcOffset
-                                 0u, 1u, 2u),
-                             ::testing::Values( // dstOffset
-                                 0u, 1u, 2u)));
+                         ::testing::ValuesIn(copyImageOffsets));
 
 using AUBCopyImageBCS = AUBCopyImage<true>;
 
@@ -195,8 +193,4 @@ HWTEST2_P(AUBCopyImageBCS, WhenCopyingWithBlitterEnabledThenExpectationsMet, Ima
 
 INSTANTIATE_TEST_SUITE_P(AUBCopyImage_simple,
                          AUBCopyImageBCS,
-                         ::testing::Combine(
-                             ::testing::Values( // srcOffset
-                                 0u, 1u, 2u),
-                             ::testing::Values( // dstOffset
-                                 0u, 1u, 2u)));
+                         ::testing::ValuesIn(copyImageOffsets));

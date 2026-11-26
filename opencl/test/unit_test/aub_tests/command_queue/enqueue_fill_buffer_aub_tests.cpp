@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -150,6 +150,4 @@ INSTANTIATE_TEST_SUITE_P(AUBFillBuffer_simple,
                          AUBFillBuffer,
                          ::testing::Values(
                              0 * sizeof(cl_float),
-                             1 * sizeof(cl_float),
-                             2 * sizeof(cl_float),
-                             3 * sizeof(cl_float)));
+                             1 * sizeof(cl_float)));

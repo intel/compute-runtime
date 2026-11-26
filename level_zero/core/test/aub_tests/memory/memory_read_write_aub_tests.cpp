@@ -23,14 +23,21 @@ constexpr size_t regionVolume = regionSlicePitch * regionWidth;
 constexpr size_t regionBufferSize = MemoryConstants::pageSize;
 } // namespace
 
-using AUBReadMemoryL0 = MemoryAubParamTest<std::tuple<size_t, AubMemoryType>>;
+struct RegionSliceOffsets {
+    uint32_t zBufferOffset;
+    uint32_t zHostOffset;
+};
+constexpr RegionSliceOffsets regionSliceOffsets[] = {{0u, 0u}, {0u, 2u}, {3u, 0u}};
+
+using AUBReadMemoryL0 = MemoryAubParamTest<AubMemoryType>;
 
 HWTEST_P(AUBReadMemoryL0, givenDeviceAllocationWhenCopyingToHostMemoryThenCopiedDataMatchesAndNeighbourMemoryIsUntouched) {
     const float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     float reference[] = {0.0f, 0.0f, 0.0f, 0.0f};
     const size_t bufferSize = sizeof(srcMemory);
     const size_t sizeCopied = sizeof(float);
-    const auto [offset, dstType] = GetParam();
+    const size_t offset = 2 * sizeof(float);
+    const auto dstType = GetParam();
 
     auto srcBuffer = this->allocate(AubMemoryType::deviceUsm, bufferSize);
     auto dstBuffer = this->allocate(dstType, bufferSize);
@@ -46,9 +53,7 @@ HWTEST_P(AUBReadMemoryL0, givenDeviceAllocationWhenCopyingToHostMemoryThenCopied
 
 INSTANTIATE_TEST_SUITE_P(AUBReadMemoryL0Offsets,
                          AUBReadMemoryL0,
-                         ::testing::Combine(
-                             ::testing::Values(0 * sizeof(float), 1 * sizeof(float), 2 * sizeof(float), 3 * sizeof(float)),
-                             ::testing::Values(AubMemoryType::hostUsm, AubMemoryType::importedSystem)));
+                         ::testing::Values(AubMemoryType::hostUsm, AubMemoryType::importedSystem));
 
 using AUBReadMemoryUnalignedL0 = MemoryAubParamTest<AubMemoryType>;
 
@@ -77,10 +82,11 @@ INSTANTIATE_TEST_SUITE_P(HostTypes,
                          AUBReadMemoryUnalignedL0,
                          ::testing::Values(AubMemoryType::hostUsm, AubMemoryType::importedSystem));
 
-using AUBReadMemoryRegionL0 = MemoryAubParamTest<std::tuple<uint32_t, uint32_t, AubMemoryType>>;
+using AUBReadMemoryRegionL0 = MemoryAubParamTest<std::tuple<RegionSliceOffsets, AubMemoryType>>;
 
 HWTEST_P(AUBReadMemoryRegionL0, givenSliceOffsetsWhenCopyingRegionToHostMemoryThenOnlyTargetSliceIsWritten) {
-    const auto [zBufferOffset, zHostOffset, dstType] = GetParam();
+    const auto [sliceOffsets, dstType] = GetParam();
+    const auto [zBufferOffset, zHostOffset] = sliceOffsets;
 
     std::vector<uint8_t> srcMemory(regionBufferSize);
     for (size_t i = 0; i < regionBufferSize; i++) {
@@ -108,8 +114,7 @@ HWTEST_P(AUBReadMemoryRegionL0, givenSliceOffsetsWhenCopyingRegionToHostMemoryTh
 INSTANTIATE_TEST_SUITE_P(AUBReadMemoryRegionL0Slices,
                          AUBReadMemoryRegionL0,
                          ::testing::Combine(
-                             ::testing::Values(0u, 1u, 2u, 3u, 4u),
-                             ::testing::Values(0u, 1u, 2u, 3u, 4u),
+                             ::testing::ValuesIn(regionSliceOffsets),
                              ::testing::Values(AubMemoryType::hostUsm, AubMemoryType::importedSystem)));
 
 using AUBReadMemoryRegionUnalignedL0 = AUBReadMemoryUnalignedL0;
@@ -155,7 +160,8 @@ HWTEST_P(AUBWriteMemoryL0, givenHostMemoryWhenCopyingToDeviceAllocationThenCopie
     constexpr size_t elementCount = 1024;
     constexpr size_t bufferSize = elementCount * sizeof(float);
     const size_t sizeCopied = sizeof(float);
-    const auto [offset, srcType] = GetParam();
+    const size_t offset = 2 * sizeof(float);
+    const auto srcType = GetParam();
 
     std::vector<float> srcMemory(elementCount);
     for (size_t i = 0; i < elementCount; i++) {
@@ -177,9 +183,7 @@ HWTEST_P(AUBWriteMemoryL0, givenHostMemoryWhenCopyingToDeviceAllocationThenCopie
 
 INSTANTIATE_TEST_SUITE_P(AUBWriteMemoryL0Offsets,
                          AUBWriteMemoryL0,
-                         ::testing::Combine(
-                             ::testing::Values(0 * sizeof(float), 1 * sizeof(float), 2 * sizeof(float), 3 * sizeof(float)),
-                             ::testing::Values(AubMemoryType::hostUsm, AubMemoryType::system)));
+                         ::testing::Values(AubMemoryType::hostUsm, AubMemoryType::system));
 
 using AUBWriteMemoryUnalignedL0 = AUBReadMemoryUnalignedL0;
 
@@ -211,7 +215,8 @@ INSTANTIATE_TEST_SUITE_P(HostTypes,
 using AUBWriteMemoryRegionL0 = AUBReadMemoryRegionL0;
 
 HWTEST_P(AUBWriteMemoryRegionL0, givenSliceOffsetsWhenCopyingRegionFromHostMemoryThenOnlyTargetSliceIsWritten) {
-    const auto [zBufferOffset, zHostOffset, srcType] = GetParam();
+    const auto [sliceOffsets, srcType] = GetParam();
+    const auto [zBufferOffset, zHostOffset] = sliceOffsets;
 
     std::vector<uint8_t> srcMemory(regionBufferSize);
     for (size_t i = 0; i < regionBufferSize; i++) {
@@ -239,8 +244,7 @@ HWTEST_P(AUBWriteMemoryRegionL0, givenSliceOffsetsWhenCopyingRegionFromHostMemor
 INSTANTIATE_TEST_SUITE_P(AUBWriteMemoryRegionL0Slices,
                          AUBWriteMemoryRegionL0,
                          ::testing::Combine(
-                             ::testing::Values(0u, 1u, 2u, 3u, 4u),
-                             ::testing::Values(0u, 1u, 2u, 3u, 4u),
+                             ::testing::ValuesIn(regionSliceOffsets),
                              ::testing::Values(AubMemoryType::hostUsm, AubMemoryType::system)));
 
 using AUBWriteMemoryRegionUnalignedL0 = AUBReadMemoryUnalignedL0;

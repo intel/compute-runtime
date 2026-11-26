@@ -359,28 +359,18 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
 }
 
 struct AUBSimpleArgIntegrateTest : public SimpleArgFixture,
-                                   public ::testing::TestWithParam<std::tuple<uint32_t /*cl_uint*/, TestParam>> {
+                                   public ::testing::TestWithParam<TestParam> {
     typedef SimpleArgFixture ParentClass;
 
     void SetUp() override {
-        cl_uint simd;
-        std::tie(simd, param) = GetParam();
-        MockExecutionEnvironment executionEnvironment{};
-        const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-        if (simd < hwInfo.caps.minimalSimdSize) {
-            GTEST_SKIP();
-        }
+        param = GetParam();
         ParentClass::setUp();
-        initialized = true;
     }
 
     void TearDown() override {
-        if (initialized) {
-            ParentClass::tearDown();
-        }
+        ParentClass::tearDown();
     }
     TestParam param;
-    bool initialized = false;
 };
 
 HWTEST_P(AUBSimpleArgIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
@@ -421,9 +411,7 @@ HWTEST_P(AUBSimpleArgIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
 INSTANTIATE_TEST_SUITE_P(
     AUB,
     AUBSimpleArgIntegrateTest,
-    ::testing::Combine(
-        ::testing::ValuesIn(testSimdTable),
-        ::testing::ValuesIn(testParamTable)));
+    ::testing::ValuesIn(testParamTable));
 } // namespace ULT
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {

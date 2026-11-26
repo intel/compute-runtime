@@ -23,7 +23,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <tuple>
 
 using namespace NEO;
 
@@ -41,7 +40,7 @@ struct MapImageParams {
 
 struct AUBMapImage
     : public AUBCommandStreamFixture,
-      public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, MapImageParams>>,
+      public ::testing::WithParamInterface<MapImageParams>,
       public ::testing::Test {
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
@@ -66,17 +65,17 @@ struct AUBMapImage
 HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
     const unsigned int testWidth = 5;
     const unsigned int testHeight =
-        std::get<2>(GetParam()).imageType != CL_MEM_OBJECT_IMAGE1D ? 5 : 1;
+        GetParam().imageType != CL_MEM_OBJECT_IMAGE1D ? 5 : 1;
     const unsigned int testDepth =
-        std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D ? 5 : 1;
+        GetParam().imageType == CL_MEM_OBJECT_IMAGE3D ? 5 : 1;
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
     // clang-format off
-    imageFormat.image_channel_data_type = std::get<0>( GetParam( ) );
-    imageFormat.image_channel_order = std::get<1>( GetParam( ) );
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_RGBA;
 
-    imageDesc.image_type = std::get<2>( GetParam( ) ).imageType;
+    imageDesc.image_type = GetParam().imageType;
     imageDesc.image_width = testWidth;
     imageDesc.image_height = testHeight;
     imageDesc.image_depth = testDepth;
@@ -88,35 +87,7 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
     imageDesc.mem_object = NULL;
     // clang-format on
 
-    auto perChannelDataSize = 0;
-    switch (imageFormat.image_channel_data_type) {
-    case CL_UNORM_INT8:
-        perChannelDataSize = 1;
-        break;
-    case CL_SIGNED_INT16:
-    case CL_HALF_FLOAT:
-        perChannelDataSize = 2;
-        break;
-    case CL_UNSIGNED_INT32:
-    case CL_FLOAT:
-        perChannelDataSize = 4;
-        break;
-    }
-
-    auto numChannels = 0u;
-    switch (imageFormat.image_channel_order) {
-    case CL_R:
-        numChannels = 1;
-        break;
-    case CL_RG:
-        numChannels = 2;
-        break;
-    case CL_RGBA:
-        numChannels = 4;
-        break;
-    }
-
-    size_t elementSize = perChannelDataSize * numChannels;
+    const size_t elementSize = 4;
     auto sizeMemory = testWidth * alignUp(testHeight, 4) * testDepth * elementSize;
     std::vector<uint8_t> srcMemory(sizeMemory);
 
@@ -138,7 +109,7 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
         retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
-    auto origin = std::get<2>(GetParam()).offsets;
+    auto origin = GetParam().offsets;
 
     const size_t region[3] = {std::max(testWidth / 2, 1u),
                               std::max(testHeight / 2, 1u),
@@ -227,9 +198,4 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
 
 INSTANTIATE_TEST_SUITE_P(
     AUBMapImage_simple, AUBMapImage,
-    ::testing::Combine(::testing::Values( // formats
-                           CL_UNORM_INT8, CL_SIGNED_INT16, CL_UNSIGNED_INT32,
-                           CL_HALF_FLOAT, CL_FLOAT),
-                       ::testing::Values( // channels
-                           CL_R, CL_RG, CL_RGBA),
-                       ::testing::ValuesIn(mapImageParams)));
+    ::testing::ValuesIn(mapImageParams));

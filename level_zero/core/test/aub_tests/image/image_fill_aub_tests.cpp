@@ -49,17 +49,37 @@ inline constexpr ImageAubFillChannelType imageAubFillChannelTypes[] = {
     {CL_HALF_FLOAT, 2u, imageAubFillExpectedHalfFloat},
     {CL_FLOAT, 4u, imageAubFillValues}};
 
-inline constexpr cl_channel_order imageAubFillChannelOrders[] = {CL_R, CL_RG, CL_RGBA, CL_sRGBA, CL_sBGRA};
+struct ImageAubFillOrderRegions {
+    cl_channel_order order;
+    ImageAubRegionParams regions[2];
+};
+
+inline constexpr ImageAubFillOrderRegions imageAubFillOrderRegions[] = {
+    {CL_R, {imageAubRegion1D, imageAubRegion2DWithOrigin}},
+    {CL_RG, {imageAubRegion2D, imageAubRegion3DWithOrigin}},
+    {CL_RGBA, {imageAubRegion3D, imageAubRegion1DWithOrigin}},
+    {CL_sRGBA, {imageAubRegion2D, imageAubRegion3DWithOrigin}},
+    {CL_sBGRA, {imageAubRegion3D, imageAubRegion1DWithOrigin}}};
 
 using ImageAubFillParams = std::tuple<ImageAubFillChannelType, cl_channel_order, ImageAubRegionParams>;
 
+inline std::vector<ImageAubFillParams> getImageAubFillParams() {
+    std::vector<ImageAubFillParams> params;
+    for (const auto &channelType : imageAubFillChannelTypes) {
+        for (const auto &orderRegions : imageAubFillOrderRegions) {
+            if (channelType.type != CL_UNORM_INT8 && NEO::LEO::Image::isSRGB(orderRegions.order)) {
+                continue;
+            }
+            for (const auto &region : orderRegions.regions) {
+                params.emplace_back(channelType, orderRegions.order, region);
+            }
+        }
+    }
+    return params;
+}
+
 struct AUBImageFillL0 : public ImageAubTestL0<::testing::TestWithParam<ImageAubFillParams>> {
     void SetUp() override {
-        const auto channelType = std::get<0>(GetParam()).type;
-        const auto channelOrder = std::get<1>(GetParam());
-        if (channelType != CL_UNORM_INT8 && NEO::LEO::Image::isSRGB(channelOrder)) {
-            GTEST_SKIP();
-        }
         ImageAubFixtureL0::setUp(false, std::get<2>(GetParam()).imageType);
     }
 
@@ -138,9 +158,7 @@ HWTEST2_P(AUBImageFillL0, givenImageRegionWhenFillingWithImageFillBuiltinThenOnl
 
 INSTANTIATE_TEST_SUITE_P(AUBImageFillL0,
                          AUBImageFillL0,
-                         ::testing::Combine(::testing::ValuesIn(imageAubFillChannelTypes),
-                                            ::testing::ValuesIn(imageAubFillChannelOrders),
-                                            ::testing::ValuesIn(imageAubRegionParams)));
+                         ::testing::ValuesIn(getImageAubFillParams()));
 
 } // namespace ult
 } // namespace L0

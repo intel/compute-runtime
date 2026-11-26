@@ -15,6 +15,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/image_aub_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -22,19 +23,9 @@
 #include <memory>
 #include <new>
 #include <tuple>
+#include <vector>
 
 using namespace NEO;
-
-struct FillImageParams {
-    cl_mem_object_type imageType;
-    size_t offsets[3];
-} imageParams[] = {
-    {CL_MEM_OBJECT_IMAGE1D, {0u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE1D, {1u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE2D, {0u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE2D, {1u, 2u, 0u}},
-    {CL_MEM_OBJECT_IMAGE3D, {0u, 0u, 0u}},
-    {CL_MEM_OBJECT_IMAGE3D, {1u, 2u, 3u}}};
 
 static const uint32_t fillValues[4] = {0x3f800000, 0x00000000, 0x3f555555, 0x3f2aaaaa};
 
@@ -78,9 +69,33 @@ struct FillChannelType {
     {CL_HALF_FLOAT, expectedHalfFloat},
     {CL_FLOAT, expectedFloat}};
 
+const ImageAubOrderRegions fillImageOrderRegions[] = {
+    imageAubOrderRegions[0],
+    imageAubOrderRegions[1],
+    imageAubOrderRegions[2],
+    {CL_sRGBA, {imageAubRegion2D, imageAubRegion3DWithOrigin}},
+    {CL_sBGRA, {imageAubRegion3D, imageAubRegion1DWithOrigin}}};
+
+using FillImageTestParams = std::tuple<FillChannelType, uint32_t /*cl_channel_order*/, ImageAubRegion>;
+
+static std::vector<FillImageTestParams> getFillImageTestParams() {
+    std::vector<FillImageTestParams> params;
+    for (const auto &channelType : fillChannelTypes) {
+        for (const auto &orderRegions : fillImageOrderRegions) {
+            if (channelType.type != CL_UNORM_INT8 && (orderRegions.order == CL_sRGBA || orderRegions.order == CL_sBGRA)) {
+                continue;
+            }
+            for (const auto &region : orderRegions.regions) {
+                params.emplace_back(channelType, orderRegions.order, region);
+            }
+        }
+    }
+    return params;
+}
+
 struct AubFillImage
     : public AUBCommandStreamFixture,
-      public ::testing::WithParamInterface<std::tuple<FillChannelType, uint32_t /*cl_channel_order*/, FillImageParams>>,
+      public ::testing::WithParamInterface<FillImageTestParams>,
       public ::testing::Test {
 
     using AUBCommandStreamFixture::setUp;
@@ -91,14 +106,6 @@ struct AubFillImage
         if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
-        auto dataType = std::get<0>(GetParam()).type;
-        auto channelOrder = std::get<1>(GetParam());
-
-        if (dataType != CL_UNORM_INT8 && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
-            // sRGBA and sBGRA support only unorm int8 type
-            GTEST_SKIP();
-        }
-
         CommandStreamFixture::setUp();
     }
 
@@ -260,12 +267,4 @@ HWTEST_P(AubFillImage, WhenFillingThenExpectationsMet) {
 
 INSTANTIATE_TEST_SUITE_P(AubFillImage_simple,
                          AubFillImage,
-                         ::testing::Combine(
-                             ::testing::ValuesIn(fillChannelTypes),
-                             ::testing::Values( // channels
-                                 CL_R,
-                                 CL_RG,
-                                 CL_RGBA,
-                                 CL_sRGBA,
-                                 CL_sBGRA),
-                             ::testing::ValuesIn(imageParams)));
+                         ::testing::ValuesIn(getFillImageTestParams()));

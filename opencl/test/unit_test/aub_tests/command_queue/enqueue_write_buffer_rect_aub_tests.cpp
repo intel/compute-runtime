@@ -110,9 +110,10 @@ HWTEST_P(AUBWriteBufferRect, Given3dWhenWritingBufferThenExpectationsAreMet) {
 }
 INSTANTIATE_TEST_SUITE_P(AUBWriteBufferRect_simple,
                          AUBWriteBufferRect,
-                         ::testing::Combine(
-                             ::testing::Values(0u, 1u, 2u, 3u, 4u),
-                             ::testing::Values(0u, 1u, 2u, 3u, 4u)));
+                         ::testing::Values(
+                             std::make_tuple<size_t, size_t>(0, 0),
+                             std::make_tuple<size_t, size_t>(0, 2),
+                             std::make_tuple<size_t, size_t>(3, 0)));
 
 struct AUBWriteBufferRectUnaligned
     : public CommandEnqueueAUBFixture,

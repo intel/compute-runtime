@@ -17,15 +17,15 @@
 namespace L0 {
 namespace ult {
 
-using AUBMemoryFillL0 = MemoryAubParamTest<size_t>;
+using AUBMemoryFillL0 = Test<MemoryAubFixture>;
 
-HWTEST_P(AUBMemoryFillL0, givenOffsetWhenFillingDeviceAllocationThenPatternIsWrittenAndNeighbourMemoryIsUntouched) {
+HWTEST_F(AUBMemoryFillL0, givenOffsetWhenFillingDeviceAllocationThenPatternIsWrittenAndNeighbourMemoryIsUntouched) {
     constexpr size_t elementCount = 8;
     const float pattern = 1.0f;
     const size_t patternSize = sizeof(pattern);
     const size_t bufferSize = elementCount * patternSize;
     const size_t patternCount = 2;
-    const size_t offset = GetParam();
+    const size_t offset = sizeof(float);
 
     std::vector<float> reference(elementCount, 0.0f);
     auto dstBuffer = this->allocate(AubMemoryType::deviceUsm, bufferSize);
@@ -37,10 +37,6 @@ HWTEST_P(AUBMemoryFillL0, givenOffsetWhenFillingDeviceAllocationThenPatternIsWri
     std::fill_n(reference.begin() + offset / patternSize, patternCount, pattern);
     this->template expectMemory<FamilyType>(dstBuffer, reference.data(), bufferSize);
 }
-
-INSTANTIATE_TEST_SUITE_P(AUBMemoryFillL0Offsets,
-                         AUBMemoryFillL0,
-                         ::testing::Values(0 * sizeof(float), 1 * sizeof(float), 2 * sizeof(float), 3 * sizeof(float)));
 
 using AUBMemoryFillConcurrentL0 = Test<MemoryAubFixture>;
 

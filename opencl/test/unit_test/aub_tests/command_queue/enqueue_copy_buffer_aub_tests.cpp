@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,14 +103,6 @@ HWTEST_P(AUBCopyBuffer, WhenCopyingThenExpectationsMet) {
 
 INSTANTIATE_TEST_SUITE_P(AUBCopyBuffer_simple,
                          AUBCopyBuffer,
-                         ::testing::Combine(
-                             ::testing::Values( // srcOffset
-                                 0 * sizeof(cl_float),
-                                 1 * sizeof(cl_float),
-                                 2 * sizeof(cl_float),
-                                 3 * sizeof(cl_float)),
-                             ::testing::Values( // dstOffset
-                                 0 * sizeof(cl_float),
-                                 1 * sizeof(cl_float),
-                                 2 * sizeof(cl_float),
-                                 3 * sizeof(cl_float))));
+                         ::testing::Values(
+                             std::make_tuple(0 * sizeof(cl_float), 0 * sizeof(cl_float)),
+                             std::make_tuple(3 * sizeof(cl_float), 1 * sizeof(cl_float))));

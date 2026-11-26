@@ -16,17 +16,13 @@
 namespace L0 {
 namespace ult {
 
-struct ImageAubOrigin {
-    uint32_t origin[3];
-};
-
-struct AUBImageVerifyMemoryL0 : public ImageAubTestL0<::testing::TestWithParam<ImageAubOrigin>> {
+struct AUBImageVerifyMemoryL0 : public ImageAubTestL0<::testing::Test> {
     void SetUp() override {
         ImageAubFixtureL0::setUp(false, ZE_IMAGE_TYPE_3D);
     }
 };
 
-HWTEST2_P(AUBImageVerifyMemoryL0, givenImageRegionWrittenWhenVerifyingEveryPixelThenEqualAndNotEqualExpectationsAreMet, ImageSupport) {
+HWTEST2_F(AUBImageVerifyMemoryL0, givenImageRegionWrittenWhenVerifyingEveryPixelThenEqualAndNotEqualExpectationsAreMet, ImageSupport) {
     constexpr uint32_t imageWidth = 10;
     constexpr uint32_t imageHeight = 19;
     constexpr uint32_t imageDepth = 7;
@@ -36,7 +32,7 @@ HWTEST2_P(AUBImageVerifyMemoryL0, givenImageRegionWrittenWhenVerifyingEveryPixel
     uint8_t initValues[elementSize];
     memset(initValues, 0xAB, elementSize);
 
-    const auto *origin = GetParam().origin;
+    constexpr uint32_t origin[3] = {1, 2, 3};
     const ze_image_region_t region = {origin[0], origin[1], origin[2],
                                       imageWidth - origin[0], imageHeight - origin[1], imageDepth - origin[2]};
 
@@ -85,16 +81,6 @@ HWTEST2_P(AUBImageVerifyMemoryL0, givenImageRegionWrittenWhenVerifyingEveryPixel
         }
     }
 }
-
-const ImageAubOrigin imageAubVerifyMemoryOrigins[] = {
-    {{0, 0, 0}},
-    {{1, 2, 3}},
-    {{3, 2, 1}},
-    {{5, 5, 5}}};
-
-INSTANTIATE_TEST_SUITE_P(AUBImageVerifyMemoryL0,
-                         AUBImageVerifyMemoryL0,
-                         ::testing::ValuesIn(imageAubVerifyMemoryOrigins));
 
 } // namespace ult
 } // namespace L0

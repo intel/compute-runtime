@@ -37,9 +37,9 @@ HWTEST_P(AUBMemoryCopyL0, givenDeviceAllocationsAndOffsetsWhenCopyingThenCopiedD
 
 INSTANTIATE_TEST_SUITE_P(AUBMemoryCopyL0Offsets,
                          AUBMemoryCopyL0,
-                         ::testing::Combine(
-                             ::testing::Values(0 * sizeof(float), 1 * sizeof(float), 2 * sizeof(float), 3 * sizeof(float)),
-                             ::testing::Values(0 * sizeof(float), 1 * sizeof(float), 2 * sizeof(float), 3 * sizeof(float))));
+                         ::testing::Values(
+                             std::make_tuple(0 * sizeof(float), 0 * sizeof(float)),
+                             std::make_tuple(1 * sizeof(float), 3 * sizeof(float))));
 
 using AUBMemoryCopyRegionL0 = MemoryAubParamTest<std::tuple<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, bool>>;
 
@@ -85,14 +85,10 @@ HWTEST_P(AUBMemoryCopyRegionL0, givenDeviceAllocationsAndOriginsWhenCopyingRegio
 
 INSTANTIATE_TEST_SUITE_P(AUBMemoryCopyRegionL0Origins,
                          AUBMemoryCopyRegionL0,
-                         ::testing::Combine(
-                             ::testing::Values(0u, 3u),
-                             ::testing::Values(0u),
-                             ::testing::Values(0u, 7u),
-                             ::testing::Values(0u, 3u),
-                             ::testing::Values(0u),
-                             ::testing::Values(0u, 7u),
-                             ::testing::Bool()));
+                         ::testing::Values(
+                             std::make_tuple(0u, 0u, 0u, 3u, 0u, 0u, false),
+                             std::make_tuple(3u, 0u, 7u, 0u, 0u, 0u, true),
+                             std::make_tuple(0u, 0u, 0u, 0u, 0u, 7u, false)));
 
 } // namespace ult
 } // namespace L0

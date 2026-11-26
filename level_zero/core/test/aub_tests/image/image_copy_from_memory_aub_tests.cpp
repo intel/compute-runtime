@@ -107,10 +107,7 @@ HWTEST2_P(AUBImageCopyFromMemoryParamL0, givenUnalignedHostMemoryWhenCopyingMemo
 
 INSTANTIATE_TEST_SUITE_P(AUBImageCopyFromMemoryL0,
                          AUBImageCopyFromMemoryParamL0,
-                         ::testing::Combine(::testing::ValuesIn(imageAubChannelTypes),
-                                            ::testing::ValuesIn(imageAubChannelCounts),
-                                            ::testing::ValuesIn(imageAubRegionParams),
-                                            ::testing::Bool()));
+                         ::testing::ValuesIn(getImageAubUnalignedCopyParams()));
 
 } // namespace ult
 } // namespace L0

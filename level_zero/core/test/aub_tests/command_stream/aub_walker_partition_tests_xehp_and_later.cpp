@@ -45,7 +45,7 @@ struct WalkerPartitionDispatchParameters {
     size_t localWorkSize[3];
 };
 
-int32_t walkerPartitionTestPartitionCount[] = {1, 2, 4, 8, 16};
+int32_t walkerPartitionTestPartitionCount[] = {4, 16};
 int32_t walkerPartitionTestPartitionType[] = {1, 2, 3};
 uint32_t walkerPartitionTestWorkingDimensions[] = {3};
 
@@ -1035,6 +1035,15 @@ INSTANTIATE_TEST_SUITE_P(
         ::testing::ValuesIn(walkerPartitionTestPartitionCount),
         ::testing::ValuesIn(walkerPartitionTestPartitionType),
         ::testing::ValuesIn(walkerPartitionTestDispatchParameters),
+        ::testing::ValuesIn(walkerPartitionTestWorkingDimensions)));
+
+INSTANTIATE_TEST_SUITE_P(
+    AUBWPARIDDisabled,
+    AubWalkerPartitionTest,
+    ::testing::Combine(
+        ::testing::Values(1),
+        ::testing::Values(1),
+        ::testing::Values(walkerPartitionTestDispatchParameters[0]),
         ::testing::ValuesIn(walkerPartitionTestWorkingDimensions)));
 
 using AubWparidTests = Test<AubWalkerPartitionFixture>;

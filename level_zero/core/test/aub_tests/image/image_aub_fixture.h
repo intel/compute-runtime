@@ -51,15 +51,22 @@ inline constexpr ImageAubChannelType imageAubChannelTypes[] = {
     {ZE_IMAGE_FORMAT_TYPE_FLOAT, 2u},
     {ZE_IMAGE_FORMAT_TYPE_FLOAT, 4u}};
 
-inline constexpr uint32_t imageAubChannelCounts[] = {1u, 2u, 4u};
+inline constexpr ImageAubRegionParams imageAubRegion1D = {ZE_IMAGE_TYPE_1D, {0u, 0u, 0u}};
+inline constexpr ImageAubRegionParams imageAubRegion1DWithOrigin = {ZE_IMAGE_TYPE_1D, {1u, 0u, 0u}};
+inline constexpr ImageAubRegionParams imageAubRegion2D = {ZE_IMAGE_TYPE_2D, {0u, 0u, 0u}};
+inline constexpr ImageAubRegionParams imageAubRegion2DWithOrigin = {ZE_IMAGE_TYPE_2D, {1u, 2u, 0u}};
+inline constexpr ImageAubRegionParams imageAubRegion3D = {ZE_IMAGE_TYPE_3D, {0u, 0u, 0u}};
+inline constexpr ImageAubRegionParams imageAubRegion3DWithOrigin = {ZE_IMAGE_TYPE_3D, {1u, 2u, 3u}};
 
-inline constexpr ImageAubRegionParams imageAubRegionParams[] = {
-    {ZE_IMAGE_TYPE_1D, {0u, 0u, 0u}},
-    {ZE_IMAGE_TYPE_1D, {1u, 0u, 0u}},
-    {ZE_IMAGE_TYPE_2D, {0u, 0u, 0u}},
-    {ZE_IMAGE_TYPE_2D, {1u, 2u, 0u}},
-    {ZE_IMAGE_TYPE_3D, {0u, 0u, 0u}},
-    {ZE_IMAGE_TYPE_3D, {1u, 2u, 3u}}};
+struct ImageAubChannelCountRegions {
+    uint32_t numChannels;
+    ImageAubRegionParams regions[2];
+};
+
+inline constexpr ImageAubChannelCountRegions imageAubChannelCountRegions[] = {
+    {1u, {imageAubRegion1D, imageAubRegion2DWithOrigin}},
+    {2u, {imageAubRegion2D, imageAubRegion3DWithOrigin}},
+    {4u, {imageAubRegion3D, imageAubRegion1DWithOrigin}}};
 
 inline ze_image_format_layout_t getImageAubFormatLayout(uint32_t bytesPerChannel, uint32_t numChannels) {
     const ze_image_format_layout_t layouts[3][3] = {
@@ -212,6 +219,20 @@ struct ImageAubCopyEngineTestL0 : public ImageAubTestL0<::testing::TestWithParam
 };
 
 using ImageAubUnalignedCopyParams = std::tuple<ImageAubChannelType, uint32_t, ImageAubRegionParams, bool>;
+
+inline std::vector<ImageAubUnalignedCopyParams> getImageAubUnalignedCopyParams() {
+    std::vector<ImageAubUnalignedCopyParams> params;
+    for (const auto &channelType : imageAubChannelTypes) {
+        for (const auto &channelCountRegions : imageAubChannelCountRegions) {
+            for (const auto &region : channelCountRegions.regions) {
+                for (const bool useCopyEngine : {false, true}) {
+                    params.emplace_back(channelType, channelCountRegions.numChannels, region, useCopyEngine);
+                }
+            }
+        }
+    }
+    return params;
+}
 
 struct ImageAubUnalignedCopyTestL0 : public ImageAubTestL0<::testing::TestWithParam<ImageAubUnalignedCopyParams>> {
     void SetUp() override {

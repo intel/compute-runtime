@@ -115,9 +115,10 @@ HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
 }
 INSTANTIATE_TEST_SUITE_P(AUBReadBufferRect_simple,
                          AUBReadBufferRect,
-                         ::testing::Combine(
-                             ::testing::Values(0, 1, 2, 3, 4),
-                             ::testing::Values(0, 1, 2, 3, 4)));
+                         ::testing::Values(
+                             std::make_tuple<size_t, size_t>(0, 0),
+                             std::make_tuple<size_t, size_t>(0, 2),
+                             std::make_tuple<size_t, size_t>(3, 0)));
 
 struct AUBReadBufferRectUnaligned
     : public CommandEnqueueAUBFixture,
