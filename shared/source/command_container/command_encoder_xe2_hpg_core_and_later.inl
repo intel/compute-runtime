@@ -66,8 +66,6 @@ template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
 
-    const uint32_t threadGroupCountSharingSubsliceSlm = EncodeDispatchKernel<Family>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
-
     const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     const uint32_t alignedSlmSizePerThreadGroup = EncodeDispatchKernel<Family>::alignSlmSizePerThreadGroup(slmArgs.slmTotalSizePerThreadGroup, releaseHelper);
 
@@ -80,7 +78,9 @@ void EncodeDispatchKernel<Family>::encodeSlmSizePerSubSlice(InterfaceDescriptorT
     case SlmPolicy::slmPolicyLargeSlm:
         [[fallthrough]];
     default:
-        slmSizePerSubslice = alignedSlmSizePerThreadGroup * threadGroupCountSharingSubsliceSlm;
+        if (alignedSlmSizePerThreadGroup != 0u) {
+            slmSizePerSubslice = alignedSlmSizePerThreadGroup * EncodeDispatchKernel<Family>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
+        }
         break;
     }
 

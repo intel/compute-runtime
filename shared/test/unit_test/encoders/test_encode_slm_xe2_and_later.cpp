@@ -198,3 +198,24 @@ HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmPoliciesWhenCallingEnco
 HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenSlmSizePerSubsliceAtPreferredSlmRangeLimitsWhenCallingEncodeSlmSizePerSubSliceThenProgramsValueOfTheMatchingRange, IsAtLeastXe2HpgCore) {
     verifyPreferredSlmValueRanges<FamilyType>();
 }
+
+HWTEST2_F(CommandEncodeStatesSlmTestXe2AndLater, GivenNoSlmOrLargeDataPolicyWhenCallingEncodeSlmSizePerSubSliceThenThreadGroupCountSharingSubsliceSlmIsNotComputed, IsAtLeastXe2HpgCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
+
+    auto &rootDeviceEnvironment = getRootDeviceEnvironment();
+
+    for (auto [slmTotalSizePerThreadGroup, slmPolicy] : {std::pair{0u, NEO::SlmPolicy::slmPolicyNone},
+                                                         std::pair{0u, NEO::SlmPolicy::slmPolicyLargeSlm},
+                                                         std::pair{static_cast<uint32_t>(MemoryConstants::kiloByte), NEO::SlmPolicy::slmPolicyLargeData}}) {
+        auto idd = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = 0,
+            .workloadThreadGroupCount = 1,
+            .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+            .grfCount = GrfConfig::defaultGrfNumber,
+            .slmPolicy = slmPolicy};
+
+        EXPECT_NO_THROW(NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs));
+    }
+}
