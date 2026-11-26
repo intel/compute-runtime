@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 
@@ -26,6 +27,10 @@ struct ImageHelper {
     static uint64_t getMultisampleControlSurfaceAddress(const GraphicsAllocation &imageAllocation, const GraphicsAllocation *mcsAllocation, bool isUnifiedMcsSurface);
     static bool getReducedMultisampleSurfaceLayout(const Gmm *gmm, uint64_t surfaceAddress, uint64_t mcsSurfaceAddress, ReducedMultisampleSurfaceLayout &layout);
     static bool isMultisampleControlSurfaceLayoutSupported(const GraphicsAllocation &imageAllocation, const GraphicsAllocation *mcsAllocation, bool isUnifiedMcsSurface, uint64_t surfaceOffset);
+
+    static uint32_t getVolumeDepthForMipView(uint32_t maxDepth, uint32_t viewDepth, uint32_t mipLevel) {
+        return static_cast<uint32_t>(std::min<uint64_t>(maxDepth, static_cast<uint64_t>(viewDepth) << mipLevel));
+    }
 };
 
 } // namespace NEO
