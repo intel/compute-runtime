@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_os_context.h"
@@ -8684,6 +8685,34 @@ HWTEST_F(EventTemporaryAllocationCleanupTest,
     EXPECT_EQ(laterAllocation, temporaryAllocations.peekFront());
 
     csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
+}
+
+HWTEST_F(EventTemporaryAllocationCleanupTest, givenNoTemporaryAllocationsWhenHandleSuccessfulHostSynchronizationThenTemporaryAllocationListIsNotCleaned) {
+    struct MockCleanupEvent : public L0::EventImp<uint32_t> {
+        MockCleanupEvent(int index, L0::Device *device) : EventImp(index, device, false) {}
+        using L0::EventImp<uint32_t>::handleSuccessfulHostSynchronization;
+    };
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto storage = new MockInternalAllocationStorage(csr);
+    csr.internalAllocationStorage.reset(storage);
+    auto memoryManager = neoDevice->getMemoryManager();
+
+    auto mockEvent = std::make_unique<MockCleanupEvent>(0, device);
+    mockEvent->setCsr(&csr, true);
+
+    ASSERT_TRUE(storage->getTemporaryAllocations().peekIsEmpty());
+    mockEvent->handleSuccessfulHostSynchronization();
+    EXPECT_EQ(0u, storage->cleanAllocationsCalled);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(
+        NEO::MockAllocationProperties{neoDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    storage->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(allocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 1u);
+
+    mockEvent->handleSuccessfulHostSynchronization();
+    EXPECT_EQ(1u, storage->cleanAllocationsCalled);
+
+    storage->getTemporaryAllocations().freeAllGraphicsAllocations(neoDevice);
 }
 
 } // namespace ult

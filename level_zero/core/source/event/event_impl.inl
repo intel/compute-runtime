@@ -592,6 +592,10 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
         unsetInOrderExecInfo();
     }
     for (auto &csr : csrs) {
+        auto internalAllocationStorage = csr->getInternalAllocationStorage();
+        if (internalAllocationStorage->getTemporaryAllocations().peekIsEmpty()) {
+            continue;
+        }
         // Prefer this event's own completed task count, captured on the signaling CSR at signal
         // time. Reading *csr->getTagAddress() directly can sample the tag before the GPU's write
         // is visible, under-reporting completion and leaving still-referenced temporary
@@ -601,7 +605,7 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
         if (!this->getCleanupTaskCount(csr, cleanupTaskCount)) {
             cleanupTaskCount = csr->getTagAddress() ? *csr->getTagAddress() : 0;
         }
-        csr->getInternalAllocationStorage()->cleanAllocationList(cleanupTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+        internalAllocationStorage->cleanAllocationList(cleanupTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
 
     inOrderExecHelper.releaseNotUsedTempTimestampNodes();
