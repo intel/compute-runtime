@@ -49,21 +49,19 @@ Image::Image(Context *context, MemoryProperties &properties, cl_mem_flags flags,
 }
 
 Image::~Image() {
+    std::vector<ze_image_handle_t> imageHandlesToDestroy;
     if (!externalHandle && this->imageHandle) {
-        UNRECOVERABLE_IF(zeImageDestroy(this->imageHandle) != ZE_RESULT_SUCCESS);
+        imageHandlesToDestroy.push_back(this->imageHandle);
     }
     if (!externalHandle) {
         for (auto &[rootDeviceIndex, handle] : this->perDeviceImageHandles) {
-            UNRECOVERABLE_IF(zeImageDestroy(handle) != ZE_RESULT_SUCCESS);
+            imageHandlesToDestroy.push_back(handle);
         }
     }
     if (this->baseImageHandle) {
-        UNRECOVERABLE_IF(zeImageDestroy(this->baseImageHandle) != ZE_RESULT_SUCCESS);
+        imageHandlesToDestroy.push_back(this->baseImageHandle);
     }
-    // Must follow zeImageDestroy above - the parent owns the storage backing this image.
-    if (this->associatedMemObject) {
-        this->associatedMemObject->decRefInternal();
-    }
+    this->context->destroyImageHandles(std::move(imageHandlesToDestroy), this->associatedMemObject);
 }
 
 ze_image_type_t Image::clToL0ImageType(cl_mem_object_type clType) {

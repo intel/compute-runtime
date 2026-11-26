@@ -17,6 +17,8 @@
 #include <atomic>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <vector>
 
 namespace L0 {
 struct CommandList;
@@ -34,6 +36,7 @@ using CreateImmediateFunc = L0::CommandList *(*)(L0::Device * device, const ze_c
 extern CreateImmediateFunc createImmediate;
 } // namespace InternalCmdListFunctions
 
+class MemObj;
 class RegularEventsManager;
 
 template <>
@@ -141,7 +144,22 @@ class Context : public BaseObject<_cl_context> {
     ze_context_handle_t getL0ContextHandle() const { return this->contextHandle; };
     L0::Context *getL0Object() const;
 
+    void destroyImageHandles(std::vector<ze_image_handle_t> &&imageHandles, MemObj *parentMemObj);
+    void destroyCompletedImageHandles();
+    void destroyPendingImageHandles();
+    bool hasPendingImageDestroys() const { return this->numPendingImageDestroys != 0u; }
+
   protected:
+    struct PendingImageDestroy {
+        std::vector<ze_image_handle_t> imageHandles;
+        MemObj *parentMemObj = nullptr;
+    };
+
+    bool areImageHandlesInUse(const std::vector<ze_image_handle_t> &imageHandles) const;
+    void waitForImageHandlesCompletion(const std::vector<ze_image_handle_t> &imageHandles) const;
+    void waitAndDestroyImageHandles(const PendingImageDestroy &pendingImageDestroy) const;
+    static void destroyImageHandlesNow(const PendingImageDestroy &pendingImageDestroy);
+
     void storeProperties(const cl_context_properties *properties);
     void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
     ze_result_t createInternalCmdList(ClDevice &clDevice, ze_command_queue_flags_t cmdListFlags, NEO::EngineGroupType engineGroupType, std::map<uint32_t, ze_command_list_handle_t> &internalCmdLists);
@@ -163,6 +181,9 @@ class Context : public BaseObject<_cl_context> {
     std::map<uint32_t, ze_command_list_handle_t> internalComputeCmdLists{};
     std::mutex internalCopyMtx;
     std::mutex internalComputeMtx;
+    std::mutex pendingImageDestroysMtx;
+    std::vector<PendingImageDestroy> pendingImageDestroys;
+    std::atomic<size_t> numPendingImageDestroys = 0u;
 
     bool interopUserSync = false;
     std::atomic<bool> executionTerminated = false;

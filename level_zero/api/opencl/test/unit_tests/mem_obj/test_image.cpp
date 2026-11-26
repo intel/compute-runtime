@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
@@ -13,7 +14,9 @@
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_context.h"
+#include "level_zero/api/opencl/test/common/fixtures/image_destroy_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 
 #include "CL/cl.h"
 
@@ -24,41 +27,6 @@
 namespace NEO {
 namespace LEO {
 namespace ult {
-
-struct ImageDestructorTest : public Test<OclFixture> {
-    void SetUp() override {
-        Test<OclFixture>::SetUp();
-        clDevice = platform->getDevices()[0].get();
-        cl_device_id clDeviceId = clDevice;
-        capturingContext = std::make_unique<CapturingContext>(driverHandle.get(), clDevice->getL0Handle());
-        leoContext = std::make_unique<Context>(nullptr, capturingContext->toHandle(), 1, &clDeviceId, true);
-    }
-
-    void TearDown() override {
-        leoContext.reset();
-        capturingContext.reset();
-        Test<OclFixture>::TearDown();
-    }
-
-    Buffer *createBuffer(void *usmPtr) {
-        auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &clDevice->getDevice());
-        return new Buffer(leoContext.get(), memoryProperties, CL_MEM_READ_WRITE, usmPtr, nullptr, sizeof(dummyStorage), false);
-    }
-
-    Image *createImageFrom(MemObj *parent) {
-        auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &clDevice->getDevice());
-        cl_image_format format{CL_R, CL_UNORM_INT8};
-        // Null handle - the destructor then skips zeImageDestroy.
-        return new Image(leoContext.get(), memoryProperties, CL_MEM_READ_WRITE, nullptr, nullptr, nullptr, false,
-                         format, static_cast<cl_mem>(parent));
-    }
-
-    ClDevice *clDevice = nullptr;
-    std::unique_ptr<CapturingContext> capturingContext;
-    std::unique_ptr<Context> leoContext;
-
-    uint64_t dummyStorage = 0u;
-};
 
 TEST_F(ImageDestructorTest, givenImageCreatedFromBufferWhenImageIsDestroyedThenParentBufferIsReleased) {
     auto buffer = createBuffer(&dummyStorage);
@@ -98,6 +66,203 @@ TEST_F(ImageDestructorTest, givenParentBufferWithSharingHandlerWhenImageIsCreate
     // Keeps ~Buffer on the plain USM free branch instead of alloc-data teardown.
     buffer->setSharingHandler(nullptr);
     delete buffer;
+}
+
+TEST_F(ImageDeferredDestroyTest, givenImageAllocationNotUsedBySubmittedWorkWhenImageIsReleasedThenL0ImageIsDestroyedImmediately) {
+    completeSubmission();
+    auto image = createImage(nullptr);
+
+    image->decRefApi();
+
+    EXPECT_EQ(1u, destroyCount);
+}
+
+TEST_F(ImageDeferredDestroyTest, givenImageAllocationUsedByPendingSubmissionWhenImageIsReleasedThenL0ImageIsDestroyedOnlyAfterSubmissionCompletes) {
+    auto image = createImage(nullptr);
+
+    image->decRefApi();
+    EXPECT_EQ(0u, destroyCount);
+
+    leoContext->destroyCompletedImageHandles();
+    EXPECT_EQ(0u, destroyCount);
+
+    completeSubmission();
+    leoContext->destroyCompletedImageHandles();
+    EXPECT_EQ(1u, destroyCount);
+}
+
+TEST_F(ImageDeferredDestroyTest, givenPendingImageDestroyWhenAnotherImageIsReleasedAfterSubmissionCompletesThenBothL0ImagesAreDestroyed) {
+    auto firstImage = createImage(nullptr);
+    auto secondImage = createImage(nullptr);
+
+    firstImage->decRefApi();
+    EXPECT_EQ(0u, destroyCount);
+
+    completeSubmission();
+    secondImage->decRefApi();
+    EXPECT_EQ(2u, destroyCount);
+}
+
+TEST_F(ImageDeferredDestroyTest, givenImageFromBufferUsedByPendingSubmissionWhenImageIsReleasedThenParentBufferIsReleasedOnlyAfterL0ImageIsDestroyed) {
+    auto buffer = createBuffer(&dummyStorage);
+    const auto refCountWithoutImage = buffer->getRefInternalCount();
+    auto image = createImage(buffer);
+
+    image->decRefApi();
+    EXPECT_EQ(0u, destroyCount);
+    EXPECT_EQ(refCountWithoutImage + 1, buffer->getRefInternalCount());
+
+    completeSubmission();
+    leoContext->destroyCompletedImageHandles();
+    EXPECT_EQ(1u, destroyCount);
+    EXPECT_EQ(refCountWithoutImage, buffer->getRefInternalCount());
+
+    delete buffer;
+}
+
+HWTEST_F(ImageDeferredDestroyTest, givenPendingImageDestroyWhenDestroyingPendingImagesThenSubmissionIsAwaitedAndL0ImageIsDestroyed) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    auto image = createImage(nullptr);
+    image->decRefApi();
+    EXPECT_EQ(0u, destroyCount);
+
+    leoContext->destroyPendingImageHandles();
+
+    EXPECT_EQ(1u, csr.waitForCompletionWithTimeoutTaskCountCalled);
+    EXPECT_EQ(1u, destroyCount);
+}
+
+HWTEST_F(ImageDeferredDestroyTest, givenTerminatedContextWhenDestroyingPendingImagesThenL0ImageIsDestroyedWithoutWaiting) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    auto image = createImage(nullptr);
+    image->decRefApi();
+    leoContext->terminateExecution();
+
+    leoContext->destroyPendingImageHandles();
+
+    EXPECT_EQ(0u, csr.waitForCompletionWithTimeoutTaskCountCalled);
+    EXPECT_EQ(1u, destroyCount);
+}
+
+TEST_F(ImageDeferredDestroyTest, givenPendingImageDestroyWhenContextIsDestroyedThenL0ImageIsDestroyed) {
+    auto image = createImage(nullptr);
+    image->decRefApi();
+    EXPECT_EQ(0u, destroyCount);
+
+    completeSubmission();
+    leoContext.reset();
+
+    EXPECT_EQ(1u, destroyCount);
+}
+
+HWTEST_F(ImageDeferredDestroyTest, givenReleasedContextWhenImageFromBufferUsedByPendingSubmissionIsReleasedThenSubmissionIsAwaitedAndL0ImageIsDestroyed) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    auto buffer = createBuffer(&dummyStorage);
+    auto image = createImage(buffer);
+    auto context = leoContext.release();
+    context->decRefApi();
+
+    image->decRefApi();
+
+    EXPECT_EQ(1u, csr.waitForCompletionWithTimeoutTaskCountCalled);
+    EXPECT_EQ(1u, destroyCount);
+    buffer->decRefApi();
+}
+
+struct FailingFirstImageCreateL0Context : public L0::ult::ContextStubMock {
+    using L0::Context::devices;
+
+    ze_result_t createImage(ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) override {
+        ++this->createImageCalls;
+        *phImage = nullptr;
+        if (this->createImageCalls == 1u) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+        this->destroyCountAtRetry = *this->destroyCount;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint32_t createImageCalls = 0u;
+    uint32_t destroyCountAtRetry = 0u;
+    uint32_t *destroyCount = nullptr;
+};
+
+struct ImageDeferredDestroyCreateRetryTest : public ImageDeferredDestroyTest {
+    void SetUp() override {
+        ImageDeferredDestroyTest::SetUp();
+        auto &capabilityTable = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
+        supportsImagesBackup = capabilityTable.supportsImages;
+        capabilityTable.supportsImages = true;
+        failingL0Context.devices[clDevice->getRootDeviceIndex()] = clDevice->getL0Handle();
+        failingL0Context.destroyCount = &destroyCount;
+        cl_device_id clDeviceId = clDevice;
+        leoContext = std::make_unique<Context>(nullptr, failingL0Context.toHandle(), 1, &clDeviceId, true);
+    }
+
+    void TearDown() override {
+        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.supportsImages = supportsImagesBackup;
+        ImageDeferredDestroyTest::TearDown();
+    }
+
+    cl_mem createClImage(cl_int &retVal) {
+        cl_image_format imageFormat{CL_R, CL_UNORM_INT8};
+        cl_image_desc imageDesc{};
+        imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        imageDesc.image_width = 4;
+        imageDesc.image_height = 4;
+        return clCreateImage(leoContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    }
+
+    FailingFirstImageCreateL0Context failingL0Context{};
+    bool supportsImagesBackup = false;
+};
+
+TEST_F(ImageDeferredDestroyCreateRetryTest, givenPendingImageDestroyWithCompletedSubmissionWhenImageCreationFailsThenCompletedImagesAreDestroyedAndCreationIsRetried) {
+    auto image = createImage(nullptr);
+    image->decRefApi();
+    completeSubmission();
+
+    cl_int retVal = CL_OUT_OF_RESOURCES;
+    auto newImage = createClImage(retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, failingL0Context.createImageCalls);
+    EXPECT_EQ(1u, failingL0Context.destroyCountAtRetry);
+    clReleaseMemObject(newImage);
+}
+
+TEST_F(ImageDeferredDestroyCreateRetryTest, givenNoPendingImageDestroyWhenImageCreationFailsThenCreationIsNotRetried) {
+    cl_int retVal = CL_SUCCESS;
+    auto newImage = createClImage(retVal);
+
+    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, newImage);
+    EXPECT_EQ(1u, failingL0Context.createImageCalls);
+}
+
+TEST_F(ImageDeferredDestroyTest, givenPendingImageDestroyWhenContextIsReleasedButStillRetainedThenL0ImageIsNotDestroyed) {
+    auto image = createImage(nullptr);
+    image->decRefApi();
+    leoContext->incRefApi();
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseContext(leoContext.get()));
+
+    EXPECT_EQ(0u, destroyCount);
+}
+
+HWTEST_F(ImageDeferredDestroyTest, givenPendingImageDestroyWhenLastContextReferenceIsReleasedThenSubmissionIsAwaitedAndL0ImageIsDestroyed) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    auto image = createImage(nullptr);
+    image->decRefApi();
+
+    EXPECT_EQ(CL_SUCCESS, clReleaseContext(leoContext.release()));
+
+    EXPECT_EQ(1u, csr.waitForCompletionWithTimeoutTaskCountCalled);
+    EXPECT_EQ(1u, destroyCount);
 }
 
 struct ImageHostPtrSizeTest : public Test<OclFixture> {

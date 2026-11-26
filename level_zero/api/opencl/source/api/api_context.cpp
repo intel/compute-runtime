@@ -128,7 +128,14 @@ cl_int CL_API_CALL clReleaseContext(cl_context context) {
         return tracingScope.exit(retVal);
     }
 
+    pContext->incRefInternal();
+    // NOLINTBEGIN(clang-analyzer-cplusplus.NewDelete)
     pContext->decRefApi();
+    if (pContext->getReference() == 0) {
+        pContext->destroyPendingImageHandles();
+    }
+    pContext->decRefInternal();
+    // NOLINTEND(clang-analyzer-cplusplus.NewDelete)
     return tracingScope.exit(CL_SUCCESS);
 }
 

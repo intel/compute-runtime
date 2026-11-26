@@ -446,6 +446,13 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                                 device,
                                 &l0imageDesc,
                                 &imageHandle);
+            if (ret != ZE_RESULT_SUCCESS && pContext->hasPendingImageDestroys()) {
+                pContext->destroyCompletedImageHandles();
+                ret = zeImageCreate(pContext->getL0ContextHandle(),
+                                    device,
+                                    &l0imageDesc,
+                                    &imageHandle);
+            }
 
             if (ret == ZE_RESULT_SUCCESS && !pContext->isSingleDeviceContext()) {
                 const auto primaryRootDeviceIndex = pContext->getL0Object()->getDevices().begin()->first;

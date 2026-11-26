@@ -7,9 +7,11 @@
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
 
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/event/regular_events_manager.h"
@@ -17,13 +19,16 @@
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_surface_formats.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/image/image.h"
 #include <level_zero/ze_api.h>
 
+#include <algorithm>
 #include <ranges>
 #include <set>
 
@@ -58,6 +63,8 @@ Context::Context(const cl_context_properties *properties, ze_context_handle_t co
 }
 
 Context::~Context() {
+    this->destroyPendingImageHandles();
+
     for (auto &[rootDeviceIndex, cmdList] : this->internalComputeCmdLists) {
         zeCommandListDestroy(cmdList);
     }
@@ -73,6 +80,95 @@ Context::~Context() {
 
     for (auto callback : std::ranges::reverse_view(callbacks)) {
         callback.first(this, callback.second);
+    }
+}
+
+void Context::destroyImageHandles(std::vector<ze_image_handle_t> &&imageHandles, MemObj *parentMemObj) {
+    this->destroyCompletedImageHandles();
+
+    PendingImageDestroy pendingImageDestroy{std::move(imageHandles), parentMemObj};
+    if (!this->areImageHandlesInUse(pendingImageDestroy.imageHandles)) {
+        destroyImageHandlesNow(pendingImageDestroy);
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(this->pendingImageDestroysMtx);
+        if (this->getReference() != 0) {
+            this->pendingImageDestroys.push_back(std::move(pendingImageDestroy));
+            this->numPendingImageDestroys = this->pendingImageDestroys.size();
+            return;
+        }
+    }
+    this->waitAndDestroyImageHandles(pendingImageDestroy);
+}
+
+void Context::destroyCompletedImageHandles() {
+    if (!this->hasPendingImageDestroys()) {
+        return;
+    }
+
+    std::vector<PendingImageDestroy> completedImageDestroys;
+    {
+        std::lock_guard<std::mutex> lock(this->pendingImageDestroysMtx);
+        const auto firstInUse = std::stable_partition(this->pendingImageDestroys.begin(), this->pendingImageDestroys.end(), [this](const PendingImageDestroy &pendingImageDestroy) {
+            return !this->areImageHandlesInUse(pendingImageDestroy.imageHandles);
+        });
+        completedImageDestroys.assign(std::make_move_iterator(this->pendingImageDestroys.begin()), std::make_move_iterator(firstInUse));
+        this->pendingImageDestroys.erase(this->pendingImageDestroys.begin(), firstInUse);
+        this->numPendingImageDestroys = this->pendingImageDestroys.size();
+    }
+
+    for (const auto &completedImageDestroy : completedImageDestroys) {
+        destroyImageHandlesNow(completedImageDestroy);
+    }
+}
+
+void Context::destroyPendingImageHandles() {
+    std::vector<PendingImageDestroy> imageDestroys;
+    {
+        std::lock_guard<std::mutex> lock(this->pendingImageDestroysMtx);
+        imageDestroys.swap(this->pendingImageDestroys);
+        this->numPendingImageDestroys = 0u;
+    }
+
+    for (const auto &imageDestroy : imageDestroys) {
+        this->waitAndDestroyImageHandles(imageDestroy);
+    }
+}
+
+bool Context::areImageHandlesInUse(const std::vector<ze_image_handle_t> &imageHandles) const {
+    auto memoryManager = this->getClDevice()->getDevice().getMemoryManager();
+    return std::ranges::any_of(imageHandles, [memoryManager](ze_image_handle_t imageHandle) {
+        auto allocation = L0::Image::fromHandle(imageHandle)->getAllocation();
+        return allocation != nullptr && memoryManager->allocInUse(*allocation);
+    });
+}
+
+void Context::waitForImageHandlesCompletion(const std::vector<ze_image_handle_t> &imageHandles) const {
+    auto memoryManager = this->getClDevice()->getDevice().getMemoryManager();
+    for (const auto imageHandle : imageHandles) {
+        auto allocation = L0::Image::fromHandle(imageHandle)->getAllocation();
+        if (allocation != nullptr) {
+            memoryManager->waitForEnginesCompletion(*allocation);
+        }
+    }
+}
+
+void Context::waitAndDestroyImageHandles(const PendingImageDestroy &pendingImageDestroy) const {
+    if (!this->isTerminated()) {
+        this->waitForImageHandlesCompletion(pendingImageDestroy.imageHandles);
+    }
+    destroyImageHandlesNow(pendingImageDestroy);
+}
+
+void Context::destroyImageHandlesNow(const PendingImageDestroy &pendingImageDestroy) {
+    for (const auto imageHandle : pendingImageDestroy.imageHandles) {
+        UNRECOVERABLE_IF(zeImageDestroy(imageHandle) != ZE_RESULT_SUCCESS);
+    }
+    // Must follow zeImageDestroy above - the parent owns the storage backing this image.
+    if (pendingImageDestroy.parentMemObj) {
+        pendingImageDestroy.parentMemObj->decRefInternal();
     }
 }
 
