@@ -1236,6 +1236,49 @@ TEST_F(MemoryTest, givenUsmHostPtrFragmentsEnabledWhenAllocatingHostMemoryWithUn
     alignedFree(buffer);
 }
 
+TEST_F(MemoryTest, givenUsmHostPtrFragmentsEnabledWhenAllocatingHostMemoryWithUnalignedExternalMemmapAndSizeDifferentFromDescriptorSizeThenInvalidArgumentIsReturnedRegardlessOfForceExtendedUsmBufferSize) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUsmHostPtrFragments.set(1);
+    auto buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    const std::pair<void *, size_t> unalignedRanges[] = {{ptrOffset(buffer, 0x40), MemoryConstants::pageSize}, {buffer, 100u}};
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+
+    for (const int32_t extendedUsmBufferPages : {0, 1}) {
+        debugManager.flags.ForceExtendedUSMBufferSize.set(extendedUsmBufferPages);
+        for (const auto &[systemMemory, size] : unalignedRanges) {
+            sysMemDesc.pSystemMemory = systemMemory;
+            sysMemDesc.size = size;
+            void *ptr = nullptr;
+            EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->allocHostMem(&hostDesc, size + 1, 0u, &ptr));
+            EXPECT_EQ(nullptr, ptr);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 0u, &ptr));
+            EXPECT_EQ(systemMemory, ptr);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+        }
+    }
+    alignedFree(buffer);
+}
+
+TEST_F(MemoryTest, givenPageAlignedExternalMemmapOrUsmHostPtrFragmentsDisabledWhenAllocatingHostMemoryWithSizeDifferentFromDescriptorSizeThenAllocationIsNotRejected) {
+    DebugManagerStateRestore restorer;
+    auto buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    ze_external_memmap_sysmem_ext_desc_t sysMemDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMMAP_SYSMEM_EXT_DESC, nullptr, nullptr, MemoryConstants::pageSize};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.pNext = &sysMemDesc;
+
+    for (const int32_t usmHostPtrFragments : {0, 1}) {
+        debugManager.flags.EnableUsmHostPtrFragments.set(usmHostPtrFragments);
+        sysMemDesc.pSystemMemory = usmHostPtrFragments == 1 ? buffer : ptrOffset(buffer, 0x40);
+        void *ptr = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 2 * MemoryConstants::pageSize, 0u, &ptr));
+        EXPECT_EQ(sysMemDesc.pSystemMemory, ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    }
+    alignedFree(buffer);
+}
+
 TEST_F(MemoryTest, whenAllocatingSharedMemoryWithUseHostPtrFlagThenExternalHostPtrIsSet) {
     size_t size = 10;
     size_t alignment = 1u;

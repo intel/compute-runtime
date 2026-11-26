@@ -122,6 +122,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
                                   size_t alignment,
                                   void **ptr) {
 
+    const size_t requestedSize = size;
     if (NEO::debugManager.flags.ForceExtendedUSMBufferSize.get() >= 1) {
         size += (MemoryConstants::pageSize * NEO::debugManager.flags.ForceExtendedUSMBufferSize.get());
     }
@@ -218,6 +219,9 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
             }
             if (alignment != 0) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT;
+            }
+            if (requestedSize != lookupTable.externalMemmapSystem.size) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
         }
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(lookupTable.externalMemmapSystem.systemMemory);
