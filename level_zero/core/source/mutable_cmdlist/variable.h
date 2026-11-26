@@ -23,6 +23,7 @@ class InOrderExecEventHelper;
 } // namespace NEO
 
 namespace L0 {
+struct CommandList;
 struct Event;
 } // namespace L0
 
@@ -135,6 +136,7 @@ struct VariableDescriptor {
     GpuAddress bufferGpuAddress = undefined<GpuAddress>;
     NEO::GraphicsAllocation *bufferAlloc = nullptr;
     const void *argValue = reinterpret_cast<void *>(undefined<size_t>);
+    CommandList *copyOffloadSubCmdList = nullptr;
 
     EventValueProperties eventValue;
     SlmValueProperties slmValue;
@@ -153,7 +155,6 @@ struct VariableDescriptor {
     bool immediateValueChunks = false;
     bool apiVariable = false;
     bool asyncMutation = false;
-    bool copyOffloadActive = false;
 };
 
 struct Variable : public VariableHandle {

@@ -123,7 +123,7 @@ ze_result_t MutableCommandListImp::tempMemSet(const void *pTempMem) {
         return result;
     }
 
-    addToResidencyContainer(alloc, false);
+    addToResidencyContainer(alloc, nullptr);
 
     OffsetT allocOffset = 0U;
     for (auto &var : tempMem.variables) {

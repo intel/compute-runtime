@@ -20,6 +20,7 @@ struct SvmAllocationData;
 } // namespace NEO
 
 namespace L0 {
+struct CommandList;
 
 // Caches allocations found during obtainAllocData
 // to avoid redundant lookups in resolveAlignedAllocation
@@ -34,6 +35,7 @@ struct CmdListMemoryCopyParams {
     uint64_t forceAggregatedEventIncValue = 0;
     const void *bcsSplitBaseSrcPtr = nullptr;
     void *bcsSplitBaseDstPtr = nullptr;
+    CommandList *copyOffloadSubCmdList = nullptr;
     size_t bcsSplitTotalSrcSize = 0;
     size_t bcsSplitTotalDstSize = 0;
     bool relaxedOrderingDispatch = false;
@@ -42,7 +44,6 @@ struct CmdListMemoryCopyParams {
     bool taskCountUpdateRequired = false;
     bool bscSplitEnabled = false;
     bool isDstSystemOrRemote = false;
-    bool copyOffloadStreamRecordingActive = false;
     bool copyOffloadDisallowed = false;
     CmdListMemoryCopyParamsExt paramsExt{};
     CmdListWaitEventParameters waitEventsParameters{};

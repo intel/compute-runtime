@@ -823,10 +823,10 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
 
     if (desc.asyncMutation) {
         for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
-            this->cmdList->addAsyncMutationElement(mutableSemWait->getGpuDestinationAddress(), mutableSemWait->getCommandView(), mutableSemWait->getCommandSize(), desc.copyOffloadActive);
+            this->cmdList->addAsyncMutationElement(mutableSemWait->getGpuDestinationAddress(), mutableSemWait->getCommandView(), mutableSemWait->getCommandSize(), desc.copyOffloadSubCmdList);
         }
         for (auto &mutableLri : this->desc.eventValue.loadRegImmCmds) {
-            this->cmdList->addAsyncMutationElement(mutableLri->getGpuDestinationAddress(), mutableLri->getCommandView(), mutableLri->getCommandSize(), desc.copyOffloadActive);
+            this->cmdList->addAsyncMutationElement(mutableLri->getGpuDestinationAddress(), mutableLri->getCommandView(), mutableLri->getCommandSize(), desc.copyOffloadSubCmdList);
         }
     }
 
@@ -1006,8 +1006,8 @@ void Variable::commitVariable() {
 
 void Variable::updateAllocationResidency(NEO::GraphicsAllocation *oldAllocation, NEO::GraphicsAllocation *newAllocation) {
     if (oldAllocation != newAllocation) {
-        cmdList->addToResidencyContainer(newAllocation, desc.copyOffloadActive);
-        cmdList->removeFromResidencyContainer(oldAllocation, desc.copyOffloadActive);
+        cmdList->addToResidencyContainer(newAllocation, desc.copyOffloadSubCmdList);
+        cmdList->removeFromResidencyContainer(oldAllocation, desc.copyOffloadSubCmdList);
     }
 }
 

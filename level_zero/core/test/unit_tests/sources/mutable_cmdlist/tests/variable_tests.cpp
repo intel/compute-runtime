@@ -2213,7 +2213,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // adding counter allocation to residency container is done at MCL level
-    mutableCommandList->addToResidencyContainer(&counterAlloc, false);
+    mutableCommandList->addToResidencyContainer(&counterAlloc, nullptr);
 
     auto &eventValue = this->variable->getDesc().eventValue;
     EXPECT_TRUE(eventValue.isExternalFlag);
@@ -2287,7 +2287,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // adding counter allocation to residency container is done at MCL level
-    mutableCommandList->addToResidencyContainer(&counterAlloc, false);
+    mutableCommandList->addToResidencyContainer(&counterAlloc, nullptr);
 
     auto &eventValue = this->variable->getDesc().eventValue;
     EXPECT_TRUE(eventValue.isExternalFlag);
@@ -2382,7 +2382,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // adding counter allocation to residency container is done at MCL level
-    mutableCommandList->addToResidencyContainer(&counterAlloc, false);
+    mutableCommandList->addToResidencyContainer(&counterAlloc, nullptr);
 
     auto &eventValue = this->variable->getDesc().eventValue;
     EXPECT_TRUE(eventValue.isExternalFlag);
@@ -2485,7 +2485,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto ret = this->variable->setAsWaitEvent(waitEventVarDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     // adding counter allocation to residency container is done at MCL level
-    mutableCommandList->addToResidencyContainer(&counterAlloc, false);
+    mutableCommandList->addToResidencyContainer(&counterAlloc, nullptr);
 
     auto &eventValue = this->variable->getDesc().eventValue;
     EXPECT_TRUE(eventValue.isExternalFlag);

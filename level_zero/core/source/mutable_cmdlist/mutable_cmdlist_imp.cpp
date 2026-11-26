@@ -814,7 +814,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernels(uint32_t numKerne
             oldMutableKernel->updateResidencySnapshotContainer();
             auto &residencyContainer = oldMutableKernel->getKernelResidencySnapshotContainer();
             for (auto resource : residencyContainer) {
-                removeFromResidencyContainer(resource, false);
+                removeFromResidencyContainer(resource, nullptr);
             }
         }
         // remove old kernel arguments (buffers) from mutable residency and reset variables
@@ -827,7 +827,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernels(uint32_t numKerne
                 auto &varDescriptor = kernelArgVarDesc.kernelArgumentVariable->getDesc();
                 if (varDescriptor.type == VariableType::buffer) {
                     if (varDescriptor.bufferAlloc != nullptr) {
-                        removeFromResidencyContainer(varDescriptor.bufferAlloc, false);
+                        removeFromResidencyContainer(varDescriptor.bufferAlloc, nullptr);
                     }
                     kernelArgVarDesc.kernelArgumentVariable->resetBufferVariable();
                 }
@@ -885,7 +885,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernels(uint32_t numKerne
             newMutableKernel->makeKernelResidencySnapshotContainer(false);
             auto &residencyContainer = newMutableKernel->getKernelResidencySnapshotContainer();
             for (auto resource : residencyContainer) {
-                addToResidencyContainer(resource, false);
+                addToResidencyContainer(resource, nullptr);
             }
         }
 
@@ -901,13 +901,9 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernels(uint32_t numKerne
     return ZE_RESULT_SUCCESS;
 }
 
-void MutableCommandListImp::addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, bool redirectToCopyOffload) {
-    if (redirectToCopyOffload) {
-        auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
-        UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
-        auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
-        UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
-        mutableCopyOffloadSubCmdList->addAsyncMutationElement(gpuDestination, hostSource, size, false);
+void MutableCommandListImp::addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, CommandList *copyOffloadSubCmdList) {
+    if (copyOffloadSubCmdList != nullptr) {
+        asMutableCopyOffloadSubCmdList(copyOffloadSubCmdList)->addAsyncMutationElement(gpuDestination, hostSource, size, nullptr);
     } else {
         base->getAsyncPatchContainer().push_back({gpuDestination, hostSource, size});
     }

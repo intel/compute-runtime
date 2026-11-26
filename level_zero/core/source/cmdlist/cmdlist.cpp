@@ -1041,9 +1041,7 @@ void CommandList::enableCopyOperationOffload() {
 }
 
 void CommandList::enableCopyOffloadWriteStream() {
-    // Mutations of copy offload operations are redirected to single copy offload stream.
-    this->copyOffloadWriteStreamAllowed = isRegularDualStreamCopyOffloadOperation(true) && (asMutable() == nullptr) &&
-                                          isCopyOffloadWriteEngineAllowed(device->getCopyEngineOrdinal());
+    this->copyOffloadWriteStreamAllowed = isRegularDualStreamCopyOffloadOperation(true) && isCopyOffloadWriteEngineAllowed(device->getCopyEngineOrdinal());
 }
 
 bool CommandList::isCopyOffloadCmdQImmediate(const CommandQueue *cmdQ) const {

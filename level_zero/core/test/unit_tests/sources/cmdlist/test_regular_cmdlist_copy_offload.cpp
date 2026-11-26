@@ -1636,19 +1636,6 @@ HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenCopyOffloadWriteEngine
     EXPECT_FALSE(cmdList->copyOffloadWriteStreamAllowed);
 }
 
-HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenMutableCmdListWhenEnablingWriteStreamThenWriteStreamIsNotAllowed, IsCRI) {
-    struct MutableRegularCmdList : public RegularCmdList<FamilyType::gfxCoreFamily> {
-        void *asMutable() override { return this; }
-    };
-
-    auto cmdList = makeZeUniquePtr<MutableRegularCmdList>();
-    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->initialize(device, NEO::EngineGroupType::renderCompute, ZE_COMMAND_LIST_FLAG_IN_ORDER));
-    cmdList->enableCopyOffloadWriteStream();
-
-    EXPECT_EQ(CopyOffloadModes::dualStream, cmdList->copyOffloadMode);
-    EXPECT_FALSE(cmdList->copyOffloadWriteStreamAllowed);
-}
-
 HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenOutOfOrderRegularCmdListWhenEnablingWriteStreamThenWriteStreamIsNotAllowed, IsCRI) {
     auto cmdList = makeZeUniquePtr<RegularCmdList<FamilyType::gfxCoreFamily>>();
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0));

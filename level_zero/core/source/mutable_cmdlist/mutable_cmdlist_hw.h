@@ -36,6 +36,7 @@ struct MutableAppendLaunchKernelWithParams {
 struct MutableAppendEvents {
     CommandToPatchInCmdList signalCmd = {PatchSignalEventPostSyncPipeControl{}};
     CommandToPatchContainer *mutableCmdPatchlistContainer = nullptr;
+    CommandList *copyOffloadSubCmdList = nullptr;
 
     bool waitEvents = false;
     bool signalEvent = false;
@@ -48,7 +49,6 @@ struct MutableAppendEvents {
     bool inOrderIncrementEvent = false;
     bool omitWaitEventResidency = false;
     bool apiRequestGraphExternal = false;
-    bool copyOffloadActive = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>

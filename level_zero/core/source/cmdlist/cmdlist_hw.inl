@@ -87,7 +87,7 @@ namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 CommandListCoreFamily<gfxCoreFamily>::CopyOffloadStreamScope::CopyOffloadStreamScope(CommandListCoreFamily &cmdList, CmdListMemoryCopyParams &memoryCopyParams, bool writeOutsideOfDevice)
     : cmdList(cmdList), active(cmdList.beginCopyOffloadStreamRecording(memoryCopyParams.copyOffloadAllowed, writeOutsideOfDevice)) {
-    memoryCopyParams.copyOffloadStreamRecordingActive = active;
+    memoryCopyParams.copyOffloadSubCmdList = active ? cmdList.copyOffloadSubCmdLists[cmdList.activeCopyOffloadQueueIndex] : nullptr;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

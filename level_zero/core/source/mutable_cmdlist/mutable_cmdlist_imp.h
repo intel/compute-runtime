@@ -139,31 +139,23 @@ struct MutableCommandListImp : public MutableCommandList {
         return this->applyMutation(mutation);
     }
 
-    void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) override {
+    void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation, CommandList *copyOffloadSubCmdList) override {
         if (allocation == nullptr) {
             return;
         }
-        if (redirectToCopyOffload) {
-            auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
-            UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
-            auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
-            UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
-            mutableCopyOffloadSubCmdList->removeFromResidencyContainer(allocation, false);
+        if (copyOffloadSubCmdList != nullptr) {
+            asMutableCopyOffloadSubCmdList(copyOffloadSubCmdList)->removeFromResidencyContainer(allocation, nullptr);
         } else {
             this->mutableAllocations.removeAllocation(allocation);
             this->finalizeCommandListResidency = true;
         }
     }
-    void addToResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) override {
+    void addToResidencyContainer(NEO::GraphicsAllocation *allocation, CommandList *copyOffloadSubCmdList) override {
         if (allocation == nullptr || allocation->isUserManagedResidency()) {
             return;
         }
-        if (redirectToCopyOffload) {
-            auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex);
-            UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
-            auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
-            UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
-            mutableCopyOffloadSubCmdList->addToResidencyContainer(allocation, false);
+        if (copyOffloadSubCmdList != nullptr) {
+            asMutableCopyOffloadSubCmdList(copyOffloadSubCmdList)->addToResidencyContainer(allocation, nullptr);
         } else {
             this->mutableAllocations.addAllocation(allocation);
             this->finalizeCommandListResidency = true;
@@ -188,7 +180,7 @@ struct MutableCommandListImp : public MutableCommandList {
         return (0u == flags) ? (MutableFlag::all & (~MutableFlag::kernelInstruction)) : flags;
     }
 
-    void addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, bool redirectToCopyOffload) override;
+    void addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, CommandList *copyOffloadSubCmdList) override;
 
   protected:
     auto getNextCommandIdImpl(const MutableCommandIdDescriptor &commandIdDesc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) -> ze_result_t;
@@ -207,6 +199,12 @@ struct MutableCommandListImp : public MutableCommandList {
     bool readKernelIsaFromAllocations();
     void createNativeBinary(ArrayRef<const uint8_t> module);
     KernelData *getKernelData(L0::Kernel *kernel);
+
+    static MutableCommandList *asMutableCopyOffloadSubCmdList(CommandList *copyOffloadSubCmdList) {
+        auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
+        UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
+        return mutableCopyOffloadSubCmdList;
+    }
 
     KernelVariableDescriptor *getVariableDescriptorContainer(AppendKernelMutation &selectedAppend) {
         if (selectedAppend.kernelGroup != nullptr) {

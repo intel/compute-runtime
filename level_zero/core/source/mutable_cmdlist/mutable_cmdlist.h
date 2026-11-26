@@ -219,8 +219,8 @@ struct MutableCommandList {
     virtual auto applyGraphNodeMutation(const GroupSizeMutationDescriptor &mutation) -> ze_result_t = 0;
     virtual auto applyGraphNodeMutation(const GlobalOffsetMutationDescriptor &mutation) -> ze_result_t = 0;
 
-    virtual void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) = 0;
-    virtual void addToResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) = 0;
+    virtual void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation, CommandList *copyOffloadSubCmdList) = 0;
+    virtual void addToResidencyContainer(NEO::GraphicsAllocation *allocation, CommandList *copyOffloadSubCmdList) = 0;
     virtual void processResidencyContainer(bool baseCmdListClosed) = 0;
 
     virtual void setBufferSurfaceState(void *address, NEO::GraphicsAllocation *alloc, Variable *variable) = 0;
@@ -242,7 +242,7 @@ struct MutableCommandList {
     virtual void fillCmdListNoopPatchData(size_t noopPatchIndex, void *&cpuPtr, size_t &patchSize, size_t &offset, uint64_t &gpuAddress) = 0;
     virtual void disableAddressNoopPatch(size_t noopPatchIndex) = 0;
     virtual void addVariableToCommitList(Variable *variable) = 0;
-    virtual void addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, bool redirectToCopyOffload) = 0;
+    virtual void addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, CommandList *copyOffloadSubCmdList) = 0;
 
     virtual void toggleCommandListUpdated() = 0;
 };

@@ -256,7 +256,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLa
 
     auto &residencyContainer = kernel->getArgumentsResidencyContainer();
     for (auto resource : residencyContainer) {
-        addToResidencyContainer(resource, false);
+        addToResidencyContainer(resource, nullptr);
     }
 
     ret = appendLaunchKernelWithParams(kernel, threadGroupDimensions,

@@ -118,8 +118,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     userManagedAllocation.setUserManagedResidency(true);
     NEO::MockGraphicsAllocation driverManagedAllocation;
 
-    mutableCommandList->addToResidencyContainer(&userManagedAllocation, false);
-    mutableCommandList->addToResidencyContainer(&driverManagedAllocation, false);
+    mutableCommandList->addToResidencyContainer(&userManagedAllocation, nullptr);
+    mutableCommandList->addToResidencyContainer(&driverManagedAllocation, nullptr);
 
     auto &addedAllocations = static_cast<L0::ult::WhiteBoxMutableResidencyAllocations &>(mutableCommandList->mutableAllocations).addedAllocations;
     auto isAdded = [&addedAllocations](const NEO::GraphicsAllocation *allocation) {
@@ -5794,13 +5794,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     constexpr uint64_t computeGpuDestination = 0x10000;
     constexpr uint64_t copyGpuDestination = 0x20000;
 
-    this->mutableCommandList->addAsyncMutationElement(computeGpuDestination, computeHostSource, sizeof(computeHostSource), false);
+    this->mutableCommandList->addAsyncMutationElement(computeGpuDestination, computeHostSource, sizeof(computeHostSource), nullptr);
     ASSERT_EQ(1u, computeAsyncPatchContainer.size());
     EXPECT_EQ(0u, copyAsyncPatchContainer.size());
     EXPECT_EQ(computeGpuDestination, computeAsyncPatchContainer[0].gpuDestinationAddress);
     EXPECT_EQ(computeHostSource, computeAsyncPatchContainer[0].hostSourceAddress);
 
-    this->mutableCommandList->addAsyncMutationElement(copyGpuDestination, copyHostSource, sizeof(copyHostSource), true);
+    this->mutableCommandList->addAsyncMutationElement(copyGpuDestination, copyHostSource, sizeof(copyHostSource), copyOffloadSubCmdList);
     EXPECT_EQ(1u, computeAsyncPatchContainer.size());
     ASSERT_EQ(1u, copyAsyncPatchContainer.size());
     EXPECT_EQ(copyGpuDestination, copyAsyncPatchContainer[0].gpuDestinationAddress);
@@ -5868,6 +5868,175 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(0u, computeAsyncPatchContainer.size());
     ASSERT_EQ(expectedHostSources.size(), copyAsyncPatchContainer.size());
     for (auto &patch : copyAsyncPatchContainer) {
+        EXPECT_NE(expectedHostSources.end(), std::find(expectedHostSources.begin(), expectedHostSources.end(), patch.hostSourceAddress));
+    }
+}
+
+struct MutableCommandListDualStreamCopyOffloadWriteStreamFixture : public MutableCommandListDualStreamCopyOffloadFixture {
+    void setUp() {
+        NEO::debugManager.flags.CopyOffloadWriteEngine.set(1);
+        MutableCommandListDualStreamCopyOffloadFixture::setUp();
+
+        this->createCopyOffload = true;
+        this->mutableCommandList = createMutableCmdList();
+        this->mutableCommandList->getBase()->enableCopyOffloadWriteStream();
+    }
+
+    void *allocateHostUsm(size_t size) {
+        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        void *hostUsm = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, size, 4096u, &hostUsm));
+        deviceUsmAllocations.push_back(hostUsm);
+        return hostUsm;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    MutableCommandListCoreFamily<gfxCoreFamily> *getMutableCopyOffloadSubCmdList(size_t queueIndex) {
+        auto copyOffloadSubCmdList = this->mutableCommandList->getBase()->getCopyOffloadSubCmdList(queueIndex);
+        if (copyOffloadSubCmdList == nullptr) {
+            return nullptr;
+        }
+        return static_cast<MutableCommandListCoreFamily<gfxCoreFamily> *>(copyOffloadSubCmdList->asMutable());
+    }
+
+    static bool isResident(L0::CommandList &cmdList, const NEO::GraphicsAllocation *allocation) {
+        auto &residencyContainer = cmdList.getCmdContainer().getResidencyContainer();
+        return std::find(residencyContainer.begin(), residencyContainer.end(), allocation) != residencyContainer.end();
+    }
+};
+
+using MutableCommandListDualStreamCopyOffloadWriteStreamTest = Test<MutableCommandListDualStreamCopyOffloadWriteStreamFixture>;
+
+HWTEST2_F(MutableCommandListDualStreamCopyOffloadWriteStreamTest,
+          givenWriteStreamEnabledOnMutableCmdListWhenAppendingCopiesThenCopyToHostIsRecordedIntoMutableWriteStreamAndCopyToDeviceIntoMutableReadStream, IsCRI) {
+    constexpr size_t size = 8;
+    void *hostUsm = allocateHostUsm(size);
+    void *deviceUsm = allocateDeviceUsm(size);
+    ASSERT_NE(nullptr, deviceUsm);
+
+    auto baseCmdList = this->mutableCommandList->getBase();
+
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendMemoryCopy(hostUsm, deviceUsm, size, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(copyParams.copyOffloadAllowed);
+
+    auto writeCmdList = getMutableCopyOffloadSubCmdList<FamilyType::gfxCoreFamily>(DualStreamCopyOffload::copyOffloadWriteIndex);
+    ASSERT_NE(nullptr, writeCmdList);
+    EXPECT_EQ(baseCmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadWriteIndex), copyParams.copyOffloadSubCmdList);
+    EXPECT_EQ(nullptr, baseCmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+
+    copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendMemoryCopy(deviceUsm, hostUsm, size, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(copyParams.copyOffloadAllowed);
+
+    auto readCmdList = getMutableCopyOffloadSubCmdList<FamilyType::gfxCoreFamily>(DualStreamCopyOffload::copyOffloadReadIndex);
+    ASSERT_NE(nullptr, readCmdList);
+    EXPECT_NE(writeCmdList, readCmdList);
+    EXPECT_EQ(baseCmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex), copyParams.copyOffloadSubCmdList);
+}
+
+HWTEST2_F(MutableCommandListDualStreamCopyOffloadWriteStreamTest,
+          givenWriteStreamEnabledOnMutableCmdListWhenMutatingWaitEventOfCopyToHostThenWaitEventResidencyIsKeptInWriteStream, IsCRI) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    constexpr size_t size = 8;
+    void *hostUsm = allocateHostUsm(size);
+    void *deviceUsm = allocateDeviceUsm(size);
+    ASSERT_NE(nullptr, deviceUsm);
+
+    this->eventsInPoolCount = 1;
+    auto originalEvent = createTestEvent(false, false, false, false, false);
+    auto mutatedEvent = createTestEvent(false, false, false, false, false);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
+
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendMemoryCopy(hostUsm, deviceUsm, size, nullptr, 1, &this->eventHandles[0], copyParams));
+    EXPECT_TRUE(copyParams.copyOffloadAllowed);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto baseCmdList = this->mutableCommandList->getBase();
+    auto writeCmdList = getMutableCopyOffloadSubCmdList<FamilyType::gfxCoreFamily>(DualStreamCopyOffload::copyOffloadWriteIndex);
+    ASSERT_NE(nullptr, writeCmdList);
+    EXPECT_EQ(nullptr, baseCmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+
+    auto originalEventAllocation = originalEvent->getAllocation(this->device);
+    EXPECT_TRUE(isResident(*writeCmdList, originalEventAllocation));
+    EXPECT_FALSE(isResident(*baseCmdList, originalEventAllocation));
+
+    auto &selectedEventAppend = mutableCommandList->eventMutations[(commandId - 1)];
+    ASSERT_NE(0u, selectedEventAppend.waitEvents.size());
+    auto waitEventVar = selectedEventAppend.waitEvents[0].eventVariable;
+    ASSERT_NE(nullptr, waitEventVar);
+    EXPECT_EQ(writeCmdList, waitEventVar->getDesc().copyOffloadSubCmdList);
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+    auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(waitEventVar->getSemWaitList()[0])->semWait);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &this->eventHandles[1]));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto mutatedEventAllocation = mutatedEvent->getAllocation(this->device);
+    EXPECT_TRUE(isResident(*writeCmdList, mutatedEventAllocation));
+    EXPECT_FALSE(isResident(*baseCmdList, mutatedEventAllocation));
+    EXPECT_EQ(nullptr, baseCmdList->getCopyOffloadSubCmdList(DualStreamCopyOffload::copyOffloadReadIndex));
+    EXPECT_EQ(mutatedEvent->getCompletionFieldGpuAddress(this->device), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+}
+
+HWTEST2_F(MutableCommandListDualStreamCopyOffloadWriteStreamTest,
+          givenWriteStreamEnabledOnMutableCmdListWithPatchPreambleWhenMutatingCbWaitEventOfCopyToHostThenAsyncPatchesLandInWriteStream, IsCRI) {
+    this->mutableCommandList->getBase()->setupPatchPreambleEnabled(true);
+
+    constexpr size_t size = 8;
+    void *hostUsm = allocateHostUsm(size);
+    void *deviceUsm = allocateDeviceUsm(size);
+    ASSERT_NE(nullptr, deviceUsm);
+
+    createTestEvent(true, false, false, false, false);
+    createTestEvent(true, false, false, false, false);
+
+    CmdListWaitEventParameters waitEventsParameters = {};
+    CmdListSignalEventParameters signalEventParameters = {};
+    auto originalCommandList = this->createMutableCmdList();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, originalCommandList->appendBarrier(this->eventHandles[0], 0, nullptr, waitEventsParameters, signalEventParameters));
+    auto mutatedCommandList = this->createMutableCmdList();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutatedCommandList->appendBarrier(this->eventHandles[1], 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
+
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendMemoryCopy(hostUsm, deviceUsm, size, nullptr, 1, &this->eventHandles[0], copyParams));
+    EXPECT_TRUE(copyParams.copyOffloadAllowed);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    auto baseCmdList = this->mutableCommandList->getBase();
+    auto writeCmdList = getMutableCopyOffloadSubCmdList<FamilyType::gfxCoreFamily>(DualStreamCopyOffload::copyOffloadWriteIndex);
+    ASSERT_NE(nullptr, writeCmdList);
+    EXPECT_TRUE(writeCmdList->isPatchPreambleEnabled());
+
+    auto &computeAsyncPatchContainer = baseCmdList->getAsyncPatchContainer();
+    auto &writeAsyncPatchContainer = writeCmdList->getAsyncPatchContainer();
+    computeAsyncPatchContainer.clear();
+    writeAsyncPatchContainer.clear();
+
+    auto &selectedEventAppend = mutableCommandList->eventMutations[(commandId - 1)];
+    ASSERT_NE(0u, selectedEventAppend.waitEvents.size());
+    auto waitEventVar = selectedEventAppend.waitEvents[0].eventVariable;
+    ASSERT_NE(nullptr, waitEventVar);
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+
+    std::vector<void *> expectedHostSources;
+    expectedHostSources.push_back(static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(waitEventVar->getSemWaitList()[0])->commandView);
+    for (auto &mutableLri : waitEventVar->getLoadRegImmList()) {
+        expectedHostSources.push_back(static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri)->commandView);
+    }
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &this->eventHandles[1]));
+
+    EXPECT_EQ(0u, computeAsyncPatchContainer.size());
+    ASSERT_EQ(expectedHostSources.size(), writeAsyncPatchContainer.size());
+    for (auto &patch : writeAsyncPatchContainer) {
         EXPECT_NE(expectedHostSources.end(), std::find(expectedHostSources.begin(), expectedHostSources.end(), patch.hostSourceAddress));
     }
 }
