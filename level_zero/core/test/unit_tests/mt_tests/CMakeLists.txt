@@ -29,7 +29,6 @@ if(NOT NEO_SKIP_MT_UNIT_TESTS)
                  ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_sip_listener.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
-                 ${NEO_SOURCE_DIR}/level_zero/core/test/common/test_modules/gen_kernel.cmake
                  ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_specific_config_l0.cpp
                  ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_config_listener_l0.cpp
                  ${NEO_SOURCE_DIR}/level_zero/core/test/common/ult_config_listener_l0.h

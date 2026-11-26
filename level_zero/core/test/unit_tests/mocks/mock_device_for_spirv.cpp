@@ -1,14 +1,11 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
-
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
 
 namespace L0 {
 struct ModuleBuildLog;

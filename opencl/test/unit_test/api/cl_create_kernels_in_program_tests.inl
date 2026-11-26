@@ -5,9 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_kernel_info.h"
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 

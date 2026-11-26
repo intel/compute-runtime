@@ -10,7 +10,6 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_main_helpers.h"
 #include "shared/test/common/helpers/ult_output_guard_listener.h"
 #include "shared/test/common/libult/signal_utils.h"
@@ -106,13 +105,11 @@ int main(int argc, char **argv) {
         }
     }
 
-    uint16_t revision = 0;
     for (unsigned int productId = 0; productId < NEO::maxProductEnumValue; ++productId) {
         if (NEO::hardwarePrefix[productId] && (0 == strcmp(devicePrefix.c_str(), NEO::hardwarePrefix[productId]))) {
             if (NEO::hardwareInfoTable[productId]) {
                 renderCoreFamily = NEO::hardwareInfoTable[productId]->platform.eRenderCoreFamily;
                 productFamily = NEO::hardwareInfoTable[productId]->platform.eProductFamily;
-                revision = NEO::hardwareInfoTable[productId]->platform.usRevId;
                 break;
             }
         }
@@ -127,19 +124,6 @@ int main(int argc, char **argv) {
             break;
         }
     }
-
-    // we look for test files always relative to binary location
-    // this simplifies multi-process execution and using different
-    // working directories
-    std::string nTestFiles = getRunPath();
-    nTestFiles.append("/");
-    nTestFiles.append(devicePrefix);
-    nTestFiles.append("/");
-    nTestFiles.append(std::to_string(revision));
-    nTestFiles.append("/");
-    nTestFiles.append(testFiles);
-    testFiles = nTestFiles;
-    binaryNameSuffix.append(devicePrefix);
 
 #if defined(_WIN32)
 #include <direct.h>

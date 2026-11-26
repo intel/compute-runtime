@@ -105,7 +105,6 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture_os.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils_common.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/ult_output_guard.cpp

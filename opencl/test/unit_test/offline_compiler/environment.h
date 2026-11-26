@@ -60,9 +60,6 @@ class Environment : public ::testing::Environment {
     NEO::MockCompilerDebugVars fclDebugVars;
     char mockDeviceBinary[1] = {8};
 
-    void (*igcSetDebugVarsFPtr)(NEO::MockCompilerDebugVars &debugVars);
-    void (*fclSetDebugVarsFPtr)(NEO::MockCompilerDebugVars &debugVars);
-
     NEO::MockCompilerEnableGuard mockCompilerGuard;
     NEO::MockIgaDllGuard mockIgaDllGuard;
 

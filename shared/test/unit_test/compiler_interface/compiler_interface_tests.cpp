@@ -1452,31 +1452,6 @@ TEST_F(CompilerInterfaceTest, givenCompilerInterfaceWhenGetSpecializationConstan
     EXPECT_EQ(TranslationErrorCode::success, err);
 }
 
-struct UnknownInterfaceCIFMain : MockCIFMain {
-    CIF::InterfaceId_t FindIncompatibleImpl(CIF::InterfaceId_t entryPointInterface, CIF::CompatibilityDataHandle handle) const override {
-        return CIF::UnknownInterface;
-    }
-};
-struct MockCompilerInterfaceWithUnknownInterfaceCIFMain : MockCompilerInterface {
-    bool loadFcl() override {
-        CompilerInterface::loadFcl();
-        fcl.entryPoint.reset(new UnknownInterfaceCIFMain());
-        if (failLoadFcl) {
-            return false;
-        }
-        return true;
-    }
-
-    bool loadIgc() {
-        CompilerInterface::loadIgcBasedCompiler(defaultIgc, Os::igcDllName);
-        defaultIgc.entryPoint.reset(new UnknownInterfaceCIFMain());
-        if (failLoadIgc) {
-            return false;
-        }
-        return true;
-    }
-};
-
 TEST(TranslationOutput, givenNonEmptyPointerAndSizeWhenMakingCopyThenCloneInputData) {
     MockCIFBuffer src;
     src.data.assign({2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37});

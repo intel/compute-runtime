@@ -22,7 +22,6 @@
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
