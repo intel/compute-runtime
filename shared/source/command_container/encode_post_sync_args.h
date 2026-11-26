@@ -30,7 +30,6 @@ struct EncodePostSyncArgs {
     NEO::TagNodeBase *tsNode = nullptr;
     bool dcFlushEnable = false;
     bool interruptEvent = false;
-    bool isCounterBasedEvent = false;
     bool isFlushL3ForExternalAllocationRequired = false;
     bool isFlushL3ForHostUsmRequired = false;
     bool isHostScopeSignalEvent = false;

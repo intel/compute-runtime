@@ -974,7 +974,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParamete
 
     L0::CmdListKernelLaunchParams launchParams = {};
 
-    auto result = this->obtainLaunchParamsFromExtensions(reinterpret_cast<const ze_base_desc_t *>(pNext), launchParams, hKernel);
+    auto result = this->obtainLaunchParamsFromExtensions(reinterpret_cast<const ze_base_desc_t *>(pNext), launchParams);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }

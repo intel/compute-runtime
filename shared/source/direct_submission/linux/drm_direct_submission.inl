@@ -262,10 +262,6 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(Residen
 
 template <typename GfxFamily, typename Dispatcher>
 uint64_t DrmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool requireMonitorFence) {
-    if (requireMonitorFence) {
-        this->currentTagValue++;
-        this->ringBuffers[this->currentRingBuffer].completionFence = this->currentTagValue;
-    }
     return boHandleForExec;
 }
 

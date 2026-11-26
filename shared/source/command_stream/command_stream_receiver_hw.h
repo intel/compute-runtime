@@ -350,7 +350,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                                            Device &device);
 
     inline void handleImmediateFlushAllocationsResidency(Device &device,
-                                                         LinearStream &immediateCommandStream,
                                                          ImmediateFlushData &flushData,
                                                          LinearStream &csrStream);
 

@@ -61,7 +61,6 @@ class CommandEncodeStatesFixture : public DeviceFixture {
                 .tsNode = nullptr,
                 .dcFlushEnable = false,
                 .interruptEvent = false,
-                .isCounterBasedEvent = false,
                 .isFlushL3ForExternalAllocationRequired = false,
                 .isFlushL3ForHostUsmRequired = false,
                 .isHostScopeSignalEvent = false,

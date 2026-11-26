@@ -420,7 +420,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     dispatchImmediateFlushClientBufferCommands(dispatchFlags, immediateCommandStream, flushData);
 
     handleImmediateFlushAllocationsResidency(device,
-                                             immediateCommandStream,
                                              flushData,
                                              csrCommandStream);
 
@@ -2394,7 +2393,6 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushSWTagsCommands(Li
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidency(Device &device,
-                                                                                  LinearStream &immediateCommandStream,
                                                                                   ImmediateFlushData &flushData,
                                                                                   LinearStream &csrStream) {
     this->makeResident(*tagAllocation);

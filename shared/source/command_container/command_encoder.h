@@ -136,8 +136,6 @@ struct EncodeDispatchKernelArgs {
     bool isHeaplessModeEnabled = false;
     bool immediateScratchAddressPatching = false;
     bool makeCommandView = false;
-    bool isFlushL3AfterPostSyncForExternalAllocationRequired = false;
-    bool isFlushL3AfterPostSyncForHostUsmRequired = false;
     bool kernelUsesRayTracing = false;
     bool threadDataCacheHitOnPrefetch = false;
 };

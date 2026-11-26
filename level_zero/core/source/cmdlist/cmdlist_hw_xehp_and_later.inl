@@ -301,7 +301,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     bool inOrderExecSignalRequired = false;
     bool inOrderNonWalkerSignalling = false;
-    bool isCounterBasedEvent = false;
 
     uint64_t inOrderCounterValue = 0;
     uint64_t inOrderAtomicSignallingValue = 1;
@@ -331,8 +330,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     this->inOrderExecInfo->setProgrammedCounterValue(inOrderCounterValue);
                 }
                 if (event && event->isCounterBased()) {
-                    isCounterBasedEvent = true;
-
                     if (interruptEvent && !NEO::ImplicitScalingHelper::isImplicitScalingEnabled(neoDevice->getDeviceBitfield(), true)) {
                         inOrderExecInfo->setupInterruptFence();
                     }
@@ -391,7 +388,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             .tsNode = nullptr,
             .dcFlushEnable = this->dcFlushSupport,
             .interruptEvent = interruptEvent,
-            .isCounterBasedEvent = isCounterBasedEvent,
             .isFlushL3ForExternalAllocationRequired = isFlushL3ForExternalAllocationRequired,
             .isFlushL3ForHostUsmRequired = isFlushL3ForHostUsmRequired,
             .isHostScopeSignalEvent = isHostSignalScopeEvent,

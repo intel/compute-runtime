@@ -2059,7 +2059,7 @@ HWTEST_F(CommandListCreateTests, givenGraphNodeDescriptorWhenObtainingLaunchPara
     L0::CmdListKernelLaunchParams launchParams = {};
     EXPECT_FALSE(launchParams.isGraphNodePresent);
 
-    auto result = commandList->obtainLaunchParamsFromExtensions(reinterpret_cast<ze_base_desc_t *>(&graphNodeDesc), launchParams, nullptr);
+    auto result = commandList->obtainLaunchParamsFromExtensions(reinterpret_cast<ze_base_desc_t *>(&graphNodeDesc), launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(launchParams.isGraphNodePresent);
 }

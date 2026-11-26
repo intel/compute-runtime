@@ -614,7 +614,7 @@ HWTEST_F(CommandListTest, givenCooperativeDescriptorWithTrueValueWhenObtainLaunc
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    ze_result_t result = commandList->obtainLaunchParamsFromExtensions(desc, launchParams, nullptr);
+    ze_result_t result = commandList->obtainLaunchParamsFromExtensions(desc, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(launchParams.isCooperative);
 }
@@ -633,7 +633,7 @@ HWTEST_F(CommandListTest, givenUnrecognizedDescriptorWhenObtainLaunchParamsFromE
     {
         DebugManagerStateRestore restorer{};
         debugManager.flags.PrintDebugMessages.set(true);
-        ze_result_t result = commandList->obtainLaunchParamsFromExtensions(&baseDesc, launchParams, nullptr);
+        ze_result_t result = commandList->obtainLaunchParamsFromExtensions(&baseDesc, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
     std::string output = capture.getCapturedStderr();
