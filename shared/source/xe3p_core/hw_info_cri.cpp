@@ -9,9 +9,7 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/cache_policy_from_xe3p_and_later.inl"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/enable_product.inl"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
@@ -121,16 +119,4 @@ void CRI::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 }
 
 void (*CRI::setupHardwareInfo)(HardwareInfo *, bool) = CRI::setupHardwareInfoImpl;
-
-template <>
-uint32_t L1CachePolicyHelper<IGFX_CRI>::getDefaultL1CachePolicy(bool isDebuggerActive) {
-    using GfxFamily = HwMapper<IGFX_CRI>::GfxFamily;
-    if (isDebuggerActive) {
-        return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
-    }
-    return GfxFamily::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WS;
-}
-
-template struct L1CachePolicyHelper<IGFX_CRI>;
-template EnableGfxProductHw<IGFX_CRI>::EnableGfxProductHw();
 } // namespace NEO

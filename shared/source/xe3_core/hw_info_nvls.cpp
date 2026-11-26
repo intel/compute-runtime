@@ -9,9 +9,7 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/cache_policy_from_xe_hpg_to_xe3.inl"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/enable_product.inl"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/xe3_core/hw_cmds_nvls.h"
 
@@ -114,16 +112,4 @@ void NVLS::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAnd
 }
 
 void (*NVLS::setupHardwareInfo)(HardwareInfo *, bool) = NVLS::setupHardwareInfoImpl;
-
-template <>
-uint32_t L1CachePolicyHelper<IGFX_NVL_XE3G>::getDefaultL1CachePolicy(bool isDebuggerActive) {
-    using GfxFamily = HwMapper<IGFX_NVL_XE3G>::GfxFamily;
-    if (isDebuggerActive) {
-        return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP;
-    }
-    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB;
-}
-
-template struct L1CachePolicyHelper<IGFX_NVL_XE3G>;
-template EnableGfxProductHw<IGFX_NVL_XE3G>::EnableGfxProductHw();
 } // namespace NEO

@@ -7,6 +7,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/xe_hpg_core/hw_cmds.h"
 
 namespace NEO {
 

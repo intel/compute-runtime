@@ -7,9 +7,7 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/cache_policy_from_xe_hpg_to_xe3.inl"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/enable_product.inl"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
@@ -138,7 +136,4 @@ void PVC::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 };
 
 void (*PVC::setupHardwareInfo)(HardwareInfo *, bool) = PVC::setupHardwareInfoImpl;
-
-template struct L1CachePolicyHelper<IGFX_PVC>;
-template EnableGfxProductHw<IGFX_PVC>::EnableGfxProductHw();
 } // namespace NEO

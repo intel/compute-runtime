@@ -9,9 +9,7 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_rkl.h"
-#include "shared/source/helpers/cache_policy_gen12lp.inl"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/enable_product.inl"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 
 #include "aubstream/engine_node.h"
@@ -138,7 +136,4 @@ void RKL::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 };
 
 void (*RKL::setupHardwareInfo)(HardwareInfo *, bool) = RKL::setupHardwareInfoImpl;
-
-template struct L1CachePolicyHelper<IGFX_ROCKETLAKE>;
-template EnableGfxProductHw<IGFX_ROCKETLAKE>::EnableGfxProductHw();
 } // namespace NEO
