@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/mock_sip_listener.h"
+#include "shared/test/common/helpers/skipped_aub_test_file_remover.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/ult_main_helpers.h"
@@ -409,6 +410,9 @@ int main(int argc, char **argv) {
 
             listeners.Append(new MockSipListener);
             appendCommonUltListeners(listeners);
+            if (testMode == TestMode::aubTests || testMode == TestMode::aubTestsWithTbx) {
+                listeners.Append(new SkippedAubTestFileRemover);
+            }
 
             addUltListener(listeners);
             ultListenersInitialized = true;

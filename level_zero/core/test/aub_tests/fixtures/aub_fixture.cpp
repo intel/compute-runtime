@@ -17,6 +17,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/helpers/skipped_aub_test_file_remover.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/tests_configuration.h"
@@ -80,6 +81,7 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
 
     this->csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    NEO::SkippedAubTestFileRemover::recordAubFile(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     if (!this->csr->getPreemptionAllocation()) {
         ASSERT_TRUE(this->csr->createPreemptionAllocation());
     }

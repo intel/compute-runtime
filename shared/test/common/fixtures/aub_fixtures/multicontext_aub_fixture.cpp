@@ -12,6 +12,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/skipped_aub_test_file_remover.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -109,6 +110,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
 
     createDevices(localHwInfo, numberOfTiles);
+    SkippedAubTestFileRemover::recordAubFile(getRootCsr()->peekRootDeviceEnvironment());
 }
 
 void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(HardwareInfo &localHwInfo) {

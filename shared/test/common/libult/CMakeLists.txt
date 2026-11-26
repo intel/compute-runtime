@@ -104,6 +104,8 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_product_helper_hw.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_product_helper_hw.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/skipped_aub_test_file_remover.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/skipped_aub_test_file_remover.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/stream_capture_os.h

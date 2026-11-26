@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -31,10 +32,10 @@ struct VerifyMemoryImageHw
       public ::testing::TestWithParam<TestOffset> {
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::setUp();
-        if (!pDevice->getDeviceInfo().imageSupport) {
+        if (!defaultHwInfo->capabilityTable.supportsImages) {
             GTEST_SKIP();
         }
+        CommandEnqueueAUBFixture::setUp();
     }
 
     void TearDown() override {

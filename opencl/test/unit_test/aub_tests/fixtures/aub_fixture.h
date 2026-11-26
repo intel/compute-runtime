@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/test/common/helpers/skipped_aub_test_file_remover.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
@@ -55,6 +56,7 @@ class AUBFixture : public CommandQueueHwFixture {
         device = static_cast<MockClDevice *>(platform(pDevice->getExecutionEnvironment())->getClDevice(0));
 
         this->csr = pDevice->getDefaultEngine().commandStreamReceiver;
+        SkippedAubTestFileRemover::recordAubFile(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
         CommandQueueHwFixture::setUp(AUBFixture::device, cl_command_queue_properties(0));
     }
