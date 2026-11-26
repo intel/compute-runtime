@@ -1669,7 +1669,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, WhenAskedButNotAllowedHostPtrThenDoNotP
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, WhenUnreferenceIsCalledThenCallSucceeds) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
-    BufferObject *bo = memoryManager->allocUserptr(1234, (size_t)1024, AllocationType::externalHostPtr, rootDeviceIndex);
+    BufferObject *bo = memoryManager->allocUserptrWithTemporaryGmm(1234, (size_t)1024, AllocationType::externalHostPtr, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
     memoryManager->unreference(bo, false);
 }
@@ -1683,7 +1683,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPrintBOCreateDestroyResultIsSetAndA
 
     StreamCapture capture;
     capture.captureStdout();
-    BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, AllocationType::externalHostPtr, rootDeviceIndex);
+    BufferObject *bo = memoryManager->allocUserptrWithTemporaryGmm(0, (size_t)1024, AllocationType::externalHostPtr, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
 
     debugManager.flags.PrintBOCreateDestroyResult.set(false);
@@ -2417,7 +2417,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenBoWaitFailureThenExpectThrow) {
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, AllocationType::externalHostPtr, rootDeviceIndex);
+    BufferObject *bo = memoryManager->allocUserptrWithTemporaryGmm(0, (size_t)1024, AllocationType::externalHostPtr, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
     mock->ioctlRes = -EIO;
     EXPECT_THROW(bo->wait(-1), std::exception);
@@ -3796,7 +3796,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPatIndexProgrammingSupportedWhenAl
     auto mockClientContext = static_cast<MockGmmClientContextBase *>(drm.getRootDeviceEnvironment().getGmmClientContext());
     mockClientContext->passedResourceInfoForGetPatIndexQuery = nullptr;
 
-    BufferObject *bo = memoryManager->allocUserptr(0x1000, MemoryConstants::pageSize, AllocationType::externalHostPtr, rootDeviceIndex);
+    BufferObject *bo = memoryManager->allocUserptrWithTemporaryGmm(0x1000, MemoryConstants::pageSize, AllocationType::externalHostPtr, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
 
     EXPECT_NE(nullptr, mockClientContext->passedResourceInfoForGetPatIndexQuery);
@@ -3823,7 +3823,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUserptrCoherencyRequiredAndUncache
     auto mockClientContext = static_cast<MockGmmClientContextBase *>(drm.getRootDeviceEnvironment().getGmmClientContext());
     mockClientContext->passedResourceInfoForGetPatIndexQuery = nullptr;
 
-    BufferObject *bo = memoryManager->allocUserptr(0x1000, MemoryConstants::pageSize, AllocationType::externalHostPtr, rootDeviceIndex);
+    BufferObject *bo = memoryManager->allocUserptrWithTemporaryGmm(0x1000, MemoryConstants::pageSize, AllocationType::externalHostPtr, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
 
     EXPECT_NE(nullptr, mockClientContext->passedResourceInfoForGetPatIndexQuery);
@@ -4036,6 +4036,31 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenSvmCpuUsmHostA
     ASSERT_NE(nullptr, bo);
     EXPECT_EQ(0x41u, alloc->getAllocationOffset());
     EXPECT_EQ(getCachelineMisalignedUserPtrPatIndex(memoryManager->getDrm(rootDeviceIndex), AllocationType::svmCpu), bo->peekPatIndex());
+
+    memoryManager->freeGraphicsMemoryImpl(alloc);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenSvmCpuUsmHostAllocationWithCachelineMisalignedExternalHostPtrWhenAllocatingThenAllocationKeepsCachelineMisalignedUserPtrGmm) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemClose = 1;
+    for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
+        rootDeviceEnvironment->getMutableHardwareInfo()->caps.misalignedUserPtr2WayCoherent = true;
+    }
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isUSMHostAllocation = true;
+    allocationData.type = AllocationType::svmCpu;
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x41);
+    auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
+    ASSERT_NE(nullptr, alloc);
+
+    const auto &rootDeviceEnvironment = memoryManager->getDrm(rootDeviceIndex).getRootDeviceEnvironment();
+    const auto expectedUsage = CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, allocationData.hostPtr, allocationData.size, *rootDeviceEnvironment.getHardwareInfo(), rootDeviceEnvironment.getReleaseHelper());
+    EXPECT_NE(CacheSettingsHelper::getGmmUsageType(AllocationType::svmCpu, false, rootDeviceEnvironment.getProductHelper(), *rootDeviceEnvironment.getHardwareInfo()), expectedUsage);
+    ASSERT_NE(nullptr, alloc->getDefaultGmm());
+    EXPECT_EQ(expectedUsage, alloc->getDefaultGmm()->getResourceUsageType());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
 }
@@ -5616,7 +5641,7 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAlloca
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerBasic, givenPatIndexProgrammingNotSupportedWhenAllocatingNonSvmHostPtrThenPatIndexIsQueriedWithoutResourceInfo) {
+TEST_F(DrmMemoryManagerBasic, givenPatIndexProgrammingNotSupportedWhenAllocatingNonSvmHostPtrThenPatIndexIsQueriedWithResourceInfoOfAllocationGmm) {
     AllocationData allocationData;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
 
@@ -5635,9 +5660,116 @@ TEST_F(DrmMemoryManagerBasic, givenPatIndexProgrammingNotSupportedWhenAllocating
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_EQ(queriesBefore + 1u, mockClientContext->getPatIndexQueryCalled);
-    EXPECT_EQ(nullptr, mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    ASSERT_NE(nullptr, allocation->getDefaultGmm());
+    EXPECT_EQ(allocation->getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+class DrmMemoryManagerUserptrGmmTests : public DrmMemoryManagerBasic {
+  public:
+    void SetUp() override {
+        DrmMemoryManagerBasic::SetUp();
+        memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, executionEnvironment);
+        memoryManager->reinitGfxPartition(MemoryConstants::max48BitAddress);
+        static_cast<DrmMock &>(memoryManager->getDrm(rootDeviceIndex)).vmBindPatIndexProgrammingSupported = true;
+        mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+        mockClientContext->passedResourceInfoForGetPatIndexQuery = nullptr;
+        allocationData.rootDeviceIndex = rootDeviceIndex;
+        allocationData.size = MemoryConstants::pageSize;
+    }
+
+    void TearDown() override {
+        memoryManager.reset();
+        DrmMemoryManagerBasic::TearDown();
+    }
+
+    void expectBufferGmm(GraphicsAllocation &allocation) const {
+        auto gmm = allocation.getDefaultGmm();
+        ASSERT_NE(nullptr, gmm);
+        const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+        EXPECT_EQ(CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, rootDeviceEnvironment.getProductHelper(), *rootDeviceEnvironment.getHardwareInfo()), gmm->getResourceUsageType());
+    }
+
+    void expectBufferGmmUsedForPatIndex(GraphicsAllocation &allocation) const {
+        expectBufferGmm(allocation);
+        ASSERT_NE(nullptr, allocation.getDefaultGmm());
+        EXPECT_EQ(allocation.getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    }
+
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager;
+    MockGmmClientContextBase *mockClientContext = nullptr;
+    AllocationData allocationData;
+};
+
+TEST_F(DrmMemoryManagerUserptrGmmTests, givenBoMmapCreateDisabledWhenAllocatingWithAlignmentThenAllocationKeepsBufferGmmUsedForPatIndex) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableBOMmapCreate.set(0);
+    allocationData.type = AllocationType::buffer;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    expectBufferGmmUsedForPatIndex(*allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUserptrGmmTests, givenHostPtrWhenAllocatingUsmHostMemoryThenAllocationKeepsBufferGmmUsedForPatIndex) {
+    auto hostPtr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    allocationData.type = AllocationType::bufferHostMemory;
+    allocationData.hostPtr = hostPtr;
+    allocationData.flags.isUSMHostAllocation = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemory(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    expectBufferGmmUsedForPatIndex(*allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+    alignedFree(hostPtr);
+}
+
+TEST_F(DrmMemoryManagerUserptrGmmTests, givenGpuVaWhenAllocatingThenAllocationKeepsBufferGmmUsedForPatIndex) {
+    allocationData.type = AllocationType::buffer;
+    allocationData.gpuAddress = 0x2000;
+
+    auto allocation = memoryManager->allocateGraphicsMemory(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    expectBufferGmmUsedForPatIndex(*allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUserptrGmmTests, givenNoHostPtrWhenAllocating32BitMemoryThenAllocationKeepsBufferGmmUsedForPatIndex) {
+    allocationData.type = AllocationType::internalHeap;
+
+    auto allocation = memoryManager->allocateGraphicsMemory(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    expectBufferGmmUsedForPatIndex(*allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUserptrGmmTests, givenHostPtrWhenAllocating32BitMemoryThenAllocationKeepsBufferGmmUsedForPatIndex) {
+    auto hostPtr = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    allocationData.type = AllocationType::internalHeap;
+    allocationData.hostPtr = hostPtr;
+
+    auto allocation = memoryManager->allocateGraphicsMemory(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    expectBufferGmmUsedForPatIndex(*allocation);
+
+    memoryManager->freeGraphicsMemory(allocation);
+    alignedFree(hostPtr);
+}
+
+TEST_F(DrmMemoryManagerUserptrGmmTests, givenOsHandleStorageWhenCreatingAllocationThenAllocationKeepsBufferGmm) {
+    OsHandleStorage handleStorage;
+    allocationData.type = AllocationType::externalHostPtr;
+    allocationData.hostPtr = reinterpret_cast<void *>(0x1000);
+
+    std::unique_ptr<GraphicsAllocation> allocation(memoryManager->createGraphicsAllocation(handleStorage, allocationData));
+    ASSERT_NE(nullptr, allocation);
+    expectBufferGmm(*allocation);
 }
 
 TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredAndDebugFlagWhenAllocateGraphicsMemoryThenSetCorrectPatIndex) {

@@ -142,7 +142,9 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL uint64_t acquireGpuRangeWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex);
     MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
 
-    BufferObject *allocUserptr(uintptr_t address, size_t size, const AllocationType allocationType, uint32_t rootDeviceIndex);
+    BufferObject *allocUserptrWithTemporaryGmm(uintptr_t address, size_t size, const AllocationType allocationType, uint32_t rootDeviceIndex);
+    BufferObject *allocUserptr(uintptr_t address, size_t size, Gmm *gmm, const AllocationType allocationType, uint32_t rootDeviceIndex);
+    std::unique_ptr<Gmm> createUserptrGmm(AllocationType allocationType, size_t size, uint32_t rootDeviceIndex);
     size_t getUserptrAlignment();
 
     void drainGemCloseWorker() const override;

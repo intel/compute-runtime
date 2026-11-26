@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
@@ -189,6 +192,28 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCreateMultiHostDebugSurfaceAllocati
         }
     }
     EXPECT_GE(validBufferObjectCount, 3u); // At least 3 valid buffer objects
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultipleMemoryBanksWhenCreatingMultiHostDebugSurfaceAllocationThenEachTileKeepsBufferGmm) {
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::debugContextSaveArea;
+    allocationData.rootDeviceIndex = 0;
+    allocationData.storageInfo.memoryBanks = 0b11;
+    allocationData.gpuAddress = 0x1000;
+
+    auto allocation = memoryManager->createMultiHostDebugSurfaceAllocation(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(2u, allocation->getNumGmms());
+    const auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    const auto expectedUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::debugContextSaveArea, false, rootDeviceEnvironment.getProductHelper(), *rootDeviceEnvironment.getHardwareInfo());
+    for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
+        auto gmm = allocation->getGmm(handleId);
+        ASSERT_NE(nullptr, gmm);
+        EXPECT_EQ(expectedUsage, gmm->getResourceUsageType());
+    }
 
     memoryManager->freeGraphicsMemory(allocation);
 }

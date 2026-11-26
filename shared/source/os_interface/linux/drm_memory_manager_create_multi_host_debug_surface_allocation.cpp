@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
@@ -84,7 +85,8 @@ DrmAllocation *DrmMemoryManager::createMultiHostDebugSurfaceAllocation(const All
         }
         PRINT_DEBUGGER_INFO_LOG("Inside for loop allocation tile %u", tile);
         auto boHostPtrPerTile = static_cast<uint8_t *>(cpuBasePointer) + tile * sizePerTile;
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, nullptr, allocationData.type,
+        auto gmm = drm.createBufferGmm(allocationData.type, CachePolicy::writeBack, false, sizePerTile);
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, gmm.get(), allocationData.type,
                                                                                                        gpuAddress, sizePerTile, 0u, maxOsContextCount, -1,
                                                                                                        false /*System Memory Pool*/, allocationData.flags.isUSMHostAllocation, deferBacking));
         if (!bo) {
@@ -108,6 +110,7 @@ DrmAllocation *DrmMemoryManager::createMultiHostDebugSurfaceAllocation(const All
         DEBUG_BREAK_IF(retPtr != boHostPtrPerTile);
 
         allocation->getBufferObjectToModify(currentBank) = bo.release();
+        allocation->setGmm(std::move(gmm), tile);
     }
 
     this->registerLocalMemAlloc(allocation.get(), allocationData.rootDeviceIndex);
