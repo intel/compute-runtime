@@ -37,7 +37,13 @@ bool L0GfxCoreHelperHw<Family>::forceDefaultUsmCompressionSupport() const {
 
 template <typename Family>
 ze_record_replay_graph_ext_flags_t L0GfxCoreHelperHw<Family>::getPlatformRecordReplayGraphCapabilities() const {
-    return ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH;
+    return ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH | ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_MUTABLE_GRAPH;
+}
+
+template <typename Family>
+ze_mutable_graph_node_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformMutableGraphCapabilities() const {
+    return ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT |
+           ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET;
 }
 
 template <typename Family>

@@ -50,6 +50,11 @@ ze_record_replay_graph_ext_flags_t L0GfxCoreHelperHw<Family>::getPlatformRecordR
 }
 
 template <typename Family>
+ze_mutable_graph_node_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformMutableGraphCapabilities() const {
+    return 0u;
+}
+
+template <typename Family>
 void L0GfxCoreHelperHw<Family>::p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, DriverHandle *driverHandle) const {
 }
 

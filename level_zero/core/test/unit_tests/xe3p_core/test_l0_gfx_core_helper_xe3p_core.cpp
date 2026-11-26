@@ -144,12 +144,15 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenGettingCmdlistUpdateCapabi
 
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenGettingRecordReplayGraphCapabilityThenReturnCorrectValue) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(1u, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
+    constexpr ze_record_replay_graph_ext_flags_t expectedFlags = ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH | ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_MUTABLE_GRAPH;
+    EXPECT_EQ(expectedFlags, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
 }
 
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenGettingMutableGraphCapabilityThenReturnCorrectValue) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformMutableGraphCapabilities());
+    constexpr ze_mutable_graph_node_exp_flags_t expectedFlags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT |
+                                                                ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET;
+    EXPECT_EQ(expectedFlags, l0GfxCoreHelper.getPlatformMutableGraphCapabilities());
 }
 
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenCallingThreadResumeRequiresUnlockThenReturnTrue) {
