@@ -20,6 +20,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -46,14 +47,16 @@ struct NumGrfsForIddXe3p {
     REGISTERS_PER_THREAD valueForIdd;
 };
 
-constexpr std::array<NumGrfsForIddXe3p, 8> validNumGrfsForIdd{{{32u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_32},
-                                                               {64u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_64},
-                                                               {96u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_96},
-                                                               {128u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_128},
-                                                               {160u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_160},
-                                                               {192u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_192},
-                                                               {256u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_256},
-                                                               {512u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_512}}};
+constexpr std::array<NumGrfsForIddXe3p, 10> validNumGrfsForIdd{{{32u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_32},
+                                                                {64u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_64},
+                                                                {96u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_96},
+                                                                {128u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_128},
+                                                                {160u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_160},
+                                                                {192u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_192},
+                                                                {256u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_256},
+                                                                {320u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_320},
+                                                                {448u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_448},
+                                                                {512u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_512}}};
 
 static std::vector<NumGrfsForIddXe3p> getSupportedNumGrfsForIdd(const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &productHelper = rootDeviceEnvironment.template getHelper<ProductHelper>();
@@ -62,6 +65,7 @@ static std::vector<NumGrfsForIddXe3p> getSupportedNumGrfsForIdd(const RootDevice
     std::vector<NumGrfsForIddXe3p> supportedNumGrfsForIdd;
     for (const auto &supportedNumGrf : supportedNumGrfs) {
         auto value = std::find(validNumGrfsForIdd.begin(), validNumGrfsForIdd.end(), supportedNumGrf);
+        EXPECT_NE(validNumGrfsForIdd.end(), value) << supportedNumGrf;
         if (value != validNumGrfsForIdd.end()) {
             supportedNumGrfsForIdd.push_back(*value);
         }
@@ -89,6 +93,36 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenGrfSizeWhenProgrammingIddThenSe
 
     EXPECT_THROW(EncodeDispatchKernel<FamilyType>::setGrfInfo(&idd, 1024, emptyValue, emptyValue, rootDeviceEnvironment),
                  std::exception);
+}
+
+XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenSupported320And448GrfsWhenProgrammingIddThenSetRegistersPerThread320And448) {
+    struct ProductHelperWith320And448Grfs : public NEO::ProductHelperHw<IGFX_UNKNOWN> {
+        const SupportedNumGrfs getSupportedNumGrfs(const NEO::ReleaseHelper &releaseHelper) const override {
+            return {32u, 64u, 96u, 128u, 160u, 192u, 256u, 320u, 448u, 512u};
+        }
+    };
+
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    RAIIProductHelperFactory<ProductHelperWith320And448Grfs> productHelperBackup{*mockExecutionEnvironment.rootDeviceEnvironments[0]};
+    const auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+
+    INTERFACE_DESCRIPTOR_DATA_2 idd = FamilyType::cmdInitInterfaceDescriptorData2;
+    size_t emptyValue = 0;
+
+    const std::array<NumGrfsForIddXe3p, 6> expectedValues{{{257u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_320},
+                                                           {320u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_320},
+                                                           {321u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_448},
+                                                           {448u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_448},
+                                                           {449u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_512},
+                                                           {512u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_512}}};
+
+    for (const auto &value : expectedValues) {
+        EncodeDispatchKernel<FamilyType>::setGrfInfo(&idd, value.numGrf, emptyValue, emptyValue, rootDeviceEnvironment);
+
+        EXPECT_EQ(value.valueForIdd, idd.getRegistersPerThread());
+    }
 }
 
 using Xe3pCoreCommandEncoderTests = Test<CommandEncodeStatesFixture>;

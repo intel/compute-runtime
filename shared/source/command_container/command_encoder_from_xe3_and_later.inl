@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/utilities/stackvec.h"
 
 namespace NEO {
 
@@ -30,14 +31,20 @@ void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfac
         REGISTERS_PER_THREAD valueForIdd;
     };
 
-    const std::array<NumGrfsForIdd, 8> validNumGrfsForIdd{{{32u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_32},
-                                                           {64u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_64},
-                                                           {96u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_96},
-                                                           {128u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_128},
-                                                           {160u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_160},
-                                                           {192u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_192},
-                                                           {256u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_256},
-                                                           {512u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_512}}};
+    StackVec<NumGrfsForIdd, 10> validNumGrfsForIdd{{32u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_32},
+                                                   {64u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_64},
+                                                   {96u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_96},
+                                                   {128u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_128},
+                                                   {160u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_160},
+                                                   {192u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_192},
+                                                   {256u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_256}};
+    if constexpr (requires { REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_320; }) {
+        validNumGrfsForIdd.push_back({320u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_320});
+    }
+    if constexpr (requires { REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_448; }) {
+        validNumGrfsForIdd.push_back({448u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_448});
+    }
+    validNumGrfsForIdd.push_back({512u, REGISTERS_PER_THREAD::REGISTERS_PER_THREAD_REGISTERS_512});
 
     const auto &productHelper = rootDeviceEnvironment.template getHelper<ProductHelper>();
     const auto supportedNumGrfs = productHelper.getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
