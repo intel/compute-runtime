@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -2870,9 +2871,9 @@ HWTEST_F(CommandListMappedTimestampTest, givenEventIsAddedToMappedEventListWhenS
 template <GFXCORE_FAMILY gfxCoreFamily, typename BaseMock>
 class MockCommandListCoreFamilyIfPrivateNeeded : public BaseMock {
   public:
-    void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, PrivateAllocsToReuseContainer &privateAllocsToReuse) override {
+    ze_result_t allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, PrivateAllocsToReuseContainer &privateAllocsToReuse) override {
         passedContainer = &privateAllocsToReuse;
-        BaseMock::allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, privateAllocsToReuse);
+        return BaseMock::allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, privateAllocsToReuse);
     }
     PrivateAllocsToReuseContainer *passedContainer;
 };
@@ -3131,6 +3132,68 @@ HWTEST_F(CommandListCreate, givenImmediateCmdListWhenPrivateAllocationIsReusedAf
     EXPECT_EQ(1u, csrOwnedPrivateAllocs.size());
     EXPECT_EQ(1u, getResidencyOccurrences(residencyContainer, &mockGA));
 
+    csrOwnedPrivateAllocs.clear();
+}
+
+HWTEST_F(CommandListCreate, givenPrivatePerDispatchEnabledAndPrivateSurfaceAllocationFailsWhenAllocatingPrivateMemoryThenOutOfDeviceMemoryIsReturnedAndFailureIsNotCached) {
+    auto commandList = std::make_unique<MockCommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
+    commandList->device = this->device;
+
+    uint32_t sizePerHwThread = 0x1000;
+    Mock<Module> mockModule(this->device, nullptr);
+    mockModule.allocatePrivateMemoryPerDispatch = true;
+    Mock<KernelImp> mockKernel;
+    const_cast<uint32_t &>(mockKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
+    mockKernel.module = &mockModule;
+
+    std::unique_ptr<NEO::MemoryManager> failMemoryManager = std::make_unique<NEO::FailMemoryManager>(0, *neoDevice->getExecutionEnvironment());
+    neoDevice->getExecutionEnvironment()->memoryManager.swap(failMemoryManager);
+    auto result = commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, sizePerHwThread);
+    neoDevice->getExecutionEnvironment()->memoryManager.swap(failMemoryManager);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    EXPECT_EQ(0u, commandList->ownedPrivateAllocations.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, sizePerHwThread));
+    ASSERT_EQ(1u, commandList->ownedPrivateAllocations.size());
+    EXPECT_NE(nullptr, commandList->ownedPrivateAllocations[0].second);
+}
+
+HWTEST_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledAndPrivateSurfaceAllocationFailsWhenAllocatingPrivateMemoryThenOutOfDeviceMemoryIsReturnedAndFailureIsNotCached) {
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, &mockCommandStreamReceiver, &queueDesc);
+
+    auto commandList = std::make_unique<MockCommandListImmediateHw<FamilyType::gfxCoreFamily>>();
+    commandList->cmdQImmediate = queue.get();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
+
+    uint32_t sizePerHwThread = 0x1000;
+    Mock<Module> mockModule(this->device, nullptr);
+    mockModule.allocatePrivateMemoryPerDispatch = true;
+    Mock<KernelImp> mockKernel;
+    const_cast<uint32_t &>(mockKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
+    mockKernel.module = &mockModule;
+
+    auto &csrOwnedPrivateAllocs = mockCommandStreamReceiver.getOwnedPrivateAllocations();
+
+    std::unique_ptr<NEO::MemoryManager> failMemoryManager = std::make_unique<NEO::FailMemoryManager>(0, *neoDevice->getExecutionEnvironment());
+    neoDevice->getExecutionEnvironment()->memoryManager.swap(failMemoryManager);
+    auto result = commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, sizePerHwThread);
+    neoDevice->getExecutionEnvironment()->memoryManager.swap(failMemoryManager);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    EXPECT_EQ(0u, csrOwnedPrivateAllocs.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&mockKernel, sizePerHwThread));
+    ASSERT_EQ(1u, csrOwnedPrivateAllocs.size());
+    EXPECT_NE(nullptr, csrOwnedPrivateAllocs[0].second);
+
+    neoDevice->getMemoryManager()->freeGraphicsMemory(csrOwnedPrivateAllocs[0].second);
     csrOwnedPrivateAllocs.clear();
 }
 

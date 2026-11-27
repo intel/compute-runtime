@@ -476,8 +476,8 @@ struct CommandListCoreFamily : public CommandList {
     bool eventSignalPipeControl(bool splitKernel, bool dcFlush) const {
         return splitKernel || compactL3FlushEvent(dcFlush);
     }
-    MOCKABLE_VIRTUAL void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse);
-    virtual void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
+    MOCKABLE_VIRTUAL ze_result_t allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse);
+    virtual ze_result_t allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
     CmdListEventOperation estimateEventPostSync(Event *event, uint32_t operations);
     void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition, void **outCmdBuffer);
     void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition, void **outCmdBuffer);
@@ -530,7 +530,7 @@ struct CommandListCoreFamily : public CommandList {
     virtual uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const;
     std::pair<NEO::GraphicsAllocation *, size_t> getIohAllocationAndOffsetForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace, bool isThreadDataMapAllowed, bool &outThreadDataCacheHit);
     virtual size_t ensureCmdBufferSpaceForPrefetch(const NEO::GraphicsAllocation &iohAllocation, size_t iohOffset) { return 0; }
-    void patchKernelProperties(CmdListKernelLaunchParams &launchParams, Kernel &kernel, const ze_group_count_t &threadGroupDimensions);
+    ze_result_t patchKernelProperties(CmdListKernelLaunchParams &launchParams, Kernel &kernel, const ze_group_count_t &threadGroupDimensions);
     bool transferDirectionRequiresBcsSplit(NEO::TransferDirection direction, bool isRemoteRead) const;
     std::optional<SWTagScope<GfxFamily>> emplaceSWTagScope(const char *callName, NEO::SWTags::CounterType counterType = NEO::SWTags::CounterType::none);
     size_t getDefaultMinBcsSplitSize() const;

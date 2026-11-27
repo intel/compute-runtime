@@ -811,18 +811,22 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                       uint64_t srcOffset,
                       uint64_t size, Event *signalEvent, CmdListMemoryCopyParams &memoryCopyParams));
 
-    ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemory,
-                         false,
-                         (L0::Kernel * kernel,
-                          uint32_t sizePerHwThread,
-                          NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse),
-                         (kernel, sizePerHwThread, privateAllocsToReuse));
+    ADDMETHOD(allocateOrReuseKernelPrivateMemory,
+              ze_result_t,
+              false,
+              ZE_RESULT_SUCCESS,
+              (L0::Kernel * kernel,
+               uint32_t sizePerHwThread,
+               NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse),
+              (kernel, sizePerHwThread, privateAllocsToReuse));
 
-    ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemoryIfNeeded,
-                         false,
-                         (L0::Kernel * kernel,
-                          uint32_t sizePerHwThread),
-                         (kernel, sizePerHwThread));
+    ADDMETHOD(allocateOrReuseKernelPrivateMemoryIfNeeded,
+              ze_result_t,
+              false,
+              ZE_RESULT_SUCCESS,
+              (L0::Kernel * kernel,
+               uint32_t sizePerHwThread),
+              (kernel, sizePerHwThread));
 
     ADDMETHOD(appendWaitOnEvents, ze_result_t, true, ZE_RESULT_SUCCESS,
               (uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventsParameters),
@@ -963,18 +967,22 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
         checkAssertCalled++;
     }
 
-    ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemory,
-                         false,
-                         (L0::Kernel * kernel,
-                          uint32_t sizePerHwThread,
-                          NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse),
-                         (kernel, sizePerHwThread, privateAllocsToReuse));
+    ADDMETHOD(allocateOrReuseKernelPrivateMemory,
+              ze_result_t,
+              false,
+              ZE_RESULT_SUCCESS,
+              (L0::Kernel * kernel,
+               uint32_t sizePerHwThread,
+               NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse),
+              (kernel, sizePerHwThread, privateAllocsToReuse));
 
-    ADDMETHOD_VOIDRETURN(allocateOrReuseKernelPrivateMemoryIfNeeded,
-                         false,
-                         (L0::Kernel * kernel,
-                          uint32_t sizePerHwThread),
-                         (kernel, sizePerHwThread));
+    ADDMETHOD(allocateOrReuseKernelPrivateMemoryIfNeeded,
+              ze_result_t,
+              false,
+              ZE_RESULT_SUCCESS,
+              (L0::Kernel * kernel,
+               uint32_t sizePerHwThread),
+              (kernel, sizePerHwThread));
 
     ze_result_t appendStagingImageTransfer(ze_image_handle_t hImage, const void *ptr, const ze_image_region_t *pRegion,
                                            size_t rowPitch, size_t slicePitch, bool isRead,

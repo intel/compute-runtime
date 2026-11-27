@@ -32,6 +32,7 @@
 #include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -1627,6 +1628,30 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMemo
     const auto &slmInlineSize = kernel.immutableData.kernelDescriptor->kernelAttributes.slmInlineSize;
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenPrivatePerDispatchEnabledAndPrivateSurfaceAllocationFailsWhenAppendLaunchKernelWithParamsIsCalledThenOutOfDeviceMemoryIsReturned) {
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::make_unique<Mock<Module>>(device, nullptr);
+    mockModule->allocatePrivateMemoryPerDispatch = true;
+    kernel.setModule(mockModule.get());
+    kernel.immutableData.kernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize = 0x1000;
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
+    std::unique_ptr<NEO::MemoryManager> failMemoryManager = std::make_unique<NEO::FailMemoryManager>(0, *executionEnvironment);
+    executionEnvironment->memoryManager.swap(failMemoryManager);
+    auto result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
+    executionEnvironment->memoryManager.swap(failMemoryManager);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    EXPECT_FALSE(launchParams.isKernelPatched);
+    EXPECT_EQ(0u, commandList->getOwnedPrivateAllocationsSize());
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogetherExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledOnlyThenAllocationHappens) {

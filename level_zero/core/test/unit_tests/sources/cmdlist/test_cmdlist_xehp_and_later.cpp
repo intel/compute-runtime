@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_command_encoder.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
@@ -3320,6 +3321,43 @@ struct IOHCacheCommandListFixture : public Test<ModuleFixture> {
 };
 
 using IOHCacheCommandListTest = IOHCacheCommandListFixture;
+
+HWTEST2_F(IOHCacheCommandListTest,
+          givenIOHCacheEnabledAndPrivatePerDispatchEnabledAndPrivateSurfaceAllocationFailsWhenAppendLaunchKernelIsCalledThenOutOfDeviceMemoryIsReturnedWithoutRetryingAllocation,
+          IsAtLeastXeCore) {
+    class MockCmdListCountingPrivateAllocations : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
+      public:
+        using BaseClass = WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
+        ze_result_t allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override {
+            allocateOrReuseKernelPrivateMemoryIfNeededCalled++;
+            return BaseClass::allocateOrReuseKernelPrivateMemoryIfNeeded(kernel, sizePerHwThread);
+        }
+        uint32_t allocateOrReuseKernelPrivateMemoryIfNeededCalled = 0u;
+    };
+
+    createKernel();
+    module->allocatePrivateMemoryPerDispatch = true;
+    const_cast<NEO::KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.perHwThreadPrivateMemorySize = 0x1000;
+    ASSERT_NE(0u, kernel->getIndirectSize());
+    ASSERT_EQ(nullptr, kernel->getImplicitArgs());
+
+    auto commandList = std::make_unique<MockCmdListCountingPrivateAllocations>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    ASSERT_TRUE(commandList->commandContainer.getIOHCacheEnabled());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto executionEnvironment = device->getNEODevice()->getExecutionEnvironment();
+    std::unique_ptr<NEO::MemoryManager> failMemoryManager = std::make_unique<NEO::FailMemoryManager>(0, *executionEnvironment);
+    executionEnvironment->memoryManager.swap(failMemoryManager);
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    executionEnvironment->memoryManager.swap(failMemoryManager);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    EXPECT_FALSE(launchParams.isKernelPatched);
+    EXPECT_EQ(1u, commandList->allocateOrReuseKernelPrivateMemoryIfNeededCalled);
+}
 
 HWTEST2_F(IOHCacheCommandListTest,
           givenIOHCacheDisabledWhenGetIohAllocationAndOffsetForPrefetchCalledThenRegularIOHAllocationReturned,

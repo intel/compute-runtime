@@ -594,7 +594,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     {
         const bool isThreadDataMapAllowed = commandContainer.getIOHCacheEnabled() && (kernel->getIndirectSize() != 0u) && (kernel->getImplicitArgs() == nullptr);
         if (isThreadDataMapAllowed) {
-            this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
+            result = this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
         }
         auto [iohAllocation, iohOffset] = getIohAllocationAndOffsetForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace, isThreadDataMapAllowed,
                                                                                launchParams.threadDataCacheHitOnPrefetch);
@@ -5601,15 +5604,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalExternalSemaphores
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
     L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     if (sizePerHwThread != 0U && kernelImp->getParentModule().shouldAllocatePrivateMemoryPerDispatch()) {
-        allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, ownedPrivateAllocations);
+        return allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, ownedPrivateAllocations);
     }
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse) {
     L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     NEO::GraphicsAllocation *privateAlloc = nullptr;
 
@@ -5624,10 +5628,14 @@ void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Ke
     }
     if (!allocToReuseFound) {
         privateAlloc = kernelImp->allocatePrivateMemoryGraphicsAllocation();
+        if (privateAlloc == nullptr) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
         privateAllocsToReuse.push_back({sizePerHwThread, privateAlloc});
     }
     this->commandContainer.addToResidencyContainer(privateAlloc);
     kernel->patchCrossthreadDataWithPrivateAllocation(privateAlloc);
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -6153,11 +6161,14 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFlagsForBcsSplit(CmdListMemoryCo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::patchKernelProperties(CmdListKernelLaunchParams &launchParams, Kernel &kernel, const ze_group_count_t &threadGroupDimensions) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::patchKernelProperties(CmdListKernelLaunchParams &launchParams, Kernel &kernel, const ze_group_count_t &threadGroupDimensions) {
     if (!launchParams.isKernelPatched) {
         kernel.patchGlobalOffset();
         kernel.patchRegionParams(launchParams, threadGroupDimensions);
-        this->allocateOrReuseKernelPrivateMemoryIfNeeded(&kernel, kernel.getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+        auto result = this->allocateOrReuseKernelPrivateMemoryIfNeeded(&kernel, kernel.getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
 
         if (launchParams.isIndirect) {
             prepareIndirectParams(&threadGroupDimensions);
@@ -6171,6 +6182,7 @@ void CommandListCoreFamily<gfxCoreFamily>::patchKernelProperties(CmdListKernelLa
         }
         launchParams.isKernelPatched = true;
     }
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

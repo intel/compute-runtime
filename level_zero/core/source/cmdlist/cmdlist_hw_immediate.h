@@ -281,7 +281,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void releasePreviousCsrCompletionTarget();
     bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const;
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
-    void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
+    ze_result_t allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
     CommandQueue *getCmdQImmediate(CopyOffloadMode copyOffloadMode) const;
     size_t selectCopyOffloadQueueIndex(const void *dstPtr, size_t dstSize, const NEO::GraphicsAllocation *explicitDstAlloc, std::optional<NEO::SvmAllocationData *> &dstSvmAlloc) const;
 

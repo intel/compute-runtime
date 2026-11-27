@@ -180,7 +180,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
     this->midThreadPreemptionKernelAppended |= (kernelPreemptionMode == NEO::PreemptionMode::MidThread);
 
-    this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
+    auto result = this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
 
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;
