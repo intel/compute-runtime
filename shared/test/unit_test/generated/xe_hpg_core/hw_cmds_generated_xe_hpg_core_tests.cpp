@@ -2595,6 +2595,17 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenCfeStateWhenSetterUsedThenGetterRe
     EXPECT_EQ(0xffffu, cmd.getMaximumNumberOfThreads());
 }
 
+XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenCfeStateWhenScratchSpaceBufferDoesNotFitThenSetterThrows) {
+    using CFE_STATE = NEO::XeHpgCoreFamily::CFE_STATE;
+    CFE_STATE cmd;
+    cmd.init();
+
+    cmd.setScratchSpaceBuffer(0xfffffc0u);
+    EXPECT_EQ(0xfffffc0u, cmd.getScratchSpaceBuffer());
+
+    EXPECT_THROW(cmd.setScratchSpaceBuffer(0x10000000u), std::exception);
+}
+
 XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenMiArbCheckWhenInitCalledThenFieldsSetToDefault) {
     using MI_ARB_CHECK = NEO::XeHpgCoreFamily::MI_ARB_CHECK;
     MI_ARB_CHECK cmd;

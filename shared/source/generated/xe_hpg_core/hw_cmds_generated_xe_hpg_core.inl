@@ -6,7 +6,7 @@
  */
 
 // GENERATED FILE - do not edit.
-// Generator 0.6.0+g677f670f6, BXML r77687.
+// Generator 0.8.2+gdf9fab3d7, BXML r78859.
 
 #pragma pack(1)
 
@@ -5125,6 +5125,7 @@ typedef struct tagCFE_STATE {
         return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setScratchSpaceBuffer(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffffu);
         TheStructure.Common.ScratchSpaceBuffer = value >> SCRATCHSPACEBUFFER_BIT_SHIFT;
     }
     inline uint32_t getScratchSpaceBuffer() const {

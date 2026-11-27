@@ -2766,6 +2766,17 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenCfeStateWhenSetterUsedThenGetter
     EXPECT_EQ(0x3ffu, cmd.getWalkerNumberDebugkey());
 }
 
+XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenCfeStateWhenScratchSpaceBufferDoesNotFitThenSetterThrows) {
+    using CFE_STATE = NEO::Xe2HpgCoreFamily::CFE_STATE;
+    CFE_STATE cmd;
+    cmd.init();
+
+    cmd.setScratchSpaceBuffer(0xfffffc0u);
+    EXPECT_EQ(0xfffffc0u, cmd.getScratchSpaceBuffer());
+
+    EXPECT_THROW(cmd.setScratchSpaceBuffer(0x10000000u), std::exception);
+}
+
 XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenMiArbCheckWhenInitCalledThenFieldsSetToDefault) {
     using MI_ARB_CHECK = NEO::Xe2HpgCoreFamily::MI_ARB_CHECK;
     MI_ARB_CHECK cmd;

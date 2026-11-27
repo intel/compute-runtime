@@ -6,7 +6,7 @@
  */
 
 // GENERATED FILE - do not edit.
-// Generator 0.6.0+g677f670f6, BXML r77687.
+// Generator 0.8.2+gdf9fab3d7, BXML r78859.
 
 #pragma pack(1)
 
@@ -5016,8 +5016,8 @@ typedef struct tagCOMPUTE_WALKER {
         WALK_ORDER_WALK_012 = 0x0,
         WALK_ORDER_WALK_021 = 0x1,
         WALK_ORDER_WALK_102 = 0x2,
-        WALK_ORDER_WALK_120 = 0x3,
-        WALK_ORDER_WALK_201 = 0x4,
+        WALK_ORDER_WALK_201 = 0x3,
+        WALK_ORDER_WALK_120 = 0x4,
         WALK_ORDER_WALK_210 = 0x5,
     } WALK_ORDER;
     typedef enum tagEMIT_LOCAL {
