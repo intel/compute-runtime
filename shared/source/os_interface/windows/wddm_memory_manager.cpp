@@ -1229,13 +1229,13 @@ void WddmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
 }
 
 bool WddmMemoryManager::tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle, uint32_t rootDeviceIndex, AllocationType type) {
+    bool status = true;
     if (deferredDeleter) {
-        std::unique_ptr<DeferrableDeletion> deletion(DeferrableDeletion::create(&getWddm(rootDeviceIndex), handles, allocationCount, resourceHandle, type));
-        if (deferredDeleter->deferDeletionIfHasClients(deletion)) {
-            return true;
-        }
+        deferredDeleter->deferDeletion(DeferrableDeletion::create(&getWddm(rootDeviceIndex), handles, allocationCount, resourceHandle, type));
+    } else {
+        status = getWddm(rootDeviceIndex).destroyAllocations(handles, allocationCount, resourceHandle);
     }
-    return getWddm(rootDeviceIndex).destroyAllocations(handles, allocationCount, resourceHandle);
+    return status;
 }
 
 bool WddmMemoryManager::isMemoryBudgetExhausted() const {

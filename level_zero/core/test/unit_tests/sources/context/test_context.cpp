@@ -18,7 +18,6 @@
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
@@ -967,32 +966,6 @@ TEST_F(ContextTest, givenAsyncDeleterEnabledOrDisabledWhenCreatingAndDestroyingC
     }
 
     driverHandle->setMemoryManager(savedMemoryManager);
-}
-
-TEST(ContextDeferredDeleterTest, givenAsyncDeleterEnabledWhenDriverIsCreatedThenDefaultContextIsNotDeferredDeleterClientAndExplicitContextIs) {
-    auto executionEnvironment = new MockExecutionEnvironment(NEO::defaultHwInfo.get());
-    auto mockMemoryManager = new MockMemoryManager(*executionEnvironment);
-    auto deleter = new MockDeferredDeleter();
-    mockMemoryManager->setDeferredDeleter(deleter);
-    mockMemoryManager->overrideAsyncDeleterFlag(true);
-    executionEnvironment->memoryManager.reset(mockMemoryManager);
-
-    NEO::DeviceVector devices;
-    devices.push_back(std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, 0u)));
-
-    ze_result_t returnValue = ZE_RESULT_ERROR_UNKNOWN;
-    std::unique_ptr<L0::DriverHandle> driverHandle(L0::DriverHandle::create(std::move(devices), &returnValue));
-    ASSERT_NE(nullptr, driverHandle);
-    EXPECT_NE(nullptr, driverHandle->getDefaultContext());
-    EXPECT_EQ(0, deleter->getClientsNum());
-
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-    ze_context_handle_t hContext;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&desc, 0u, nullptr, &hContext));
-    EXPECT_EQ(1, deleter->getClientsNum());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Context::fromHandle(hContext)->destroy());
-    EXPECT_EQ(0, deleter->getClientsNum());
 }
 
 TEST_F(ContextTest, givenEmptyCacheWhenTryGetCachedImportHandleIsCalledThenReturnsFalse) {

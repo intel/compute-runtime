@@ -6862,17 +6862,9 @@ struct WddmMemoryManagerWithAsyncDeleterTest : public ::testing::Test {
 };
 
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenCanDeferDeletions) {
-    deleter->addClient();
     EXPECT_EQ(0, deleter->deferDeletionCalled);
     memoryManager->tryDeferDeletions(nullptr, 0, 0, 0, AllocationType::unknown);
     EXPECT_EQ(1, deleter->deferDeletionCalled);
-    EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
-    deleter->removeClient();
-}
-
-TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenAsyncDeleterWithoutClientsWhenTryDeferDeletionsThenAllocationsAreDestroyedImmediately) {
-    memoryManager->tryDeferDeletions(nullptr, 0, 0, 0, AllocationType::unknown);
-    EXPECT_EQ(0, deleter->deferDeletionCalled);
     EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
 }
 

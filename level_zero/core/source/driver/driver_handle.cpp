@@ -53,17 +53,6 @@ ze_result_t DriverHandle::createContext(const ze_context_desc_t *desc,
                                         uint32_t numDevices,
                                         ze_device_handle_t *phDevices,
                                         ze_context_handle_t *phContext) {
-    const auto result = this->createContextImpl(desc, numDevices, phDevices, phContext);
-    if (result == ZE_RESULT_SUCCESS) {
-        Context::fromHandle(*phContext)->registerDeferredDeleterClient();
-    }
-    return result;
-}
-
-ze_result_t DriverHandle::createContextImpl(const ze_context_desc_t *desc,
-                                            uint32_t numDevices,
-                                            ze_device_handle_t *phDevices,
-                                            ze_context_handle_t *phContext) {
     Context *context = new Context(this);
     if (nullptr == context) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -388,7 +377,7 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
     for (auto &deviceToExpose : this->devicesToExpose) {
         Device::fromHandle(deviceToExpose)->setIdentifier(deviceIdentifier++);
     }
-    this->createContextImpl(&DefaultDescriptors::contextDesc, static_cast<uint32_t>(this->devicesToExpose.size()), this->devicesToExpose.data(), &defaultContext);
+    createContext(&DefaultDescriptors::contextDesc, static_cast<uint32_t>(this->devicesToExpose.size()), this->devicesToExpose.data(), &defaultContext);
     this->stagingBufferManager = std::make_unique<NEO::StagingBufferManager>(svmAllocsManager, this->rootDeviceIndices, this->deviceBitfields, false);
     return ZE_RESULT_SUCCESS;
 }
