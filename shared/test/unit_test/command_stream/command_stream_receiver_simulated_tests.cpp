@@ -10,8 +10,10 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -308,6 +310,32 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedAllocationWhenCloningPageTabl
     EXPECT_EQ(1u, mockManager->storedAllocationParams.size());
     EXPECT_FALSE(mockManager->storedAllocationParams[0].additionalParams.compressionEnabled);
     EXPECT_TRUE(mockManager->storedAllocationParams[0].additionalParams.uncached);
+}
+
+HWTEST_F(CommandStreamSimulatedTests, givenMemoryManagerAllocationsWhenCloningPageTableIsRequiredThenUncachedFollowsAllocationType) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceNonCoherentModeForTimestamps.set(0);
+    auto mockManager = std::make_unique<MockAubManager>();
+    mockManager->storeAllocationParams = true;
+
+    auto csr = std::make_unique<MockSimulatedCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr->aubManager = mockManager.get();
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(osContext);
+    csr->initializeEngine();
+
+    for (const auto &[allocationType, expectedUncached] : {std::make_pair(AllocationType::timestampPacketTagBuffer, true), std::make_pair(AllocationType::buffer, false)}) {
+        auto allocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(AllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, allocationType, pDevice->getDeviceBitfield()});
+        ASSERT_NE(nullptr, allocation);
+        allocation->storageInfo.cloningOfPageTables = true;
+        mockManager->storedAllocationParams.clear();
+
+        csr->writeMemoryWithAubManager(*allocation, false, 0, 0);
+
+        ASSERT_EQ(1u, mockManager->storedAllocationParams.size());
+        EXPECT_EQ(expectedUncached, mockManager->storedAllocationParams[0].additionalParams.uncached);
+        pDevice->getMemoryManager()->freeGraphicsMemory(allocation);
+    }
 }
 
 HWTEST_F(CommandStreamSimulatedTests, givenTileInstancedAllocationWhenWriteMemoryWithAubManagerThenEachHardwareContextGetsDifferentMemoryBank) {

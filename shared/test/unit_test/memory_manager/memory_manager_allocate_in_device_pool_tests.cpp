@@ -345,7 +345,7 @@ TEST(BaseMemoryManagerTest, givenDebugVariableSetWhenCompressedBufferIsCreatedTh
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     auto allocationBuffer = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBuffer, nullptr);
     auto allocationBufferCompressed = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBufferCompressed, nullptr);
-    EXPECT_EQ(nullptr, allocationBuffer->getDefaultGmm());
+    EXPECT_FALSE(allocationBuffer->getDefaultGmm()->isCompressionEnabled());
     EXPECT_NE(nullptr, allocationBufferCompressed->getDefaultGmm());
     EXPECT_TRUE(allocationBufferCompressed->getDefaultGmm()->isCompressionEnabled());
     memoryManager.freeGraphicsMemory(allocationBuffer);
@@ -354,8 +354,8 @@ TEST(BaseMemoryManagerTest, givenDebugVariableSetWhenCompressedBufferIsCreatedTh
     debugManager.flags.RenderCompressedBuffersEnabled.set(0);
     allocationBuffer = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBuffer, nullptr);
     allocationBufferCompressed = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBufferCompressed, nullptr);
-    EXPECT_EQ(nullptr, allocationBuffer->getDefaultGmm());
-    EXPECT_EQ(nullptr, allocationBufferCompressed->getDefaultGmm());
+    EXPECT_FALSE(allocationBuffer->getDefaultGmm()->isCompressionEnabled());
+    EXPECT_FALSE(allocationBufferCompressed->getDefaultGmm()->isCompressionEnabled());
     memoryManager.freeGraphicsMemory(allocationBuffer);
     memoryManager.freeGraphicsMemory(allocationBufferCompressed);
 }

@@ -34,6 +34,17 @@ namespace NEO {
 struct OsHandleOsAgnostic : OsHandle {
 };
 
+namespace {
+constexpr bool systemMemoryPlacement = true;
+constexpr bool localMemoryPlacement = false;
+constexpr bool userPtrCpuCacheable = true;
+
+std::unique_ptr<Gmm> createHostMemoryBufferGmm(GmmHelper &gmmHelper, AllocationType allocationType, size_t size) {
+    constexpr bool forceUncached = false;
+    return gmmHelper.createBufferGmm(allocationType, forceUncached, systemMemoryPlacement, size);
+}
+} // namespace
+
 OsAgnosticMemoryManager::OsAgnosticMemoryManager(bool aubUsage, ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment) {
     initialize(aubUsage);
 }
@@ -67,6 +78,14 @@ bool OsAgnosticMemoryManager::is64kbPagesEnabled(const HardwareInfo *hwInfo) {
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
+    auto allocation = this->allocateSystemMemoryWithAlignment(allocationData);
+    if (allocation && !allocation->getDefaultGmm()) {
+        allocation->setDefaultGmm(this->getGmmHelper(allocationData.rootDeviceIndex)->createBufferGmm(allocationData.type, allocationData.flags.uncacheable, systemMemoryPlacement, allocation->getUnderlyingBufferSize()));
+    }
+    return allocation;
+}
+
+GraphicsAllocation *OsAgnosticMemoryManager::allocateSystemMemoryWithAlignment(const AllocationData &allocationData) {
     auto alignment = alignUpNonZero(allocationData.alignment, getMinimalSystemMemoryAlignment(allocationData.rootDeviceIndex));
     auto sizeAligned = alignUp(allocationData.size, alignment);
     MemoryAllocation *memoryAllocation = nullptr;
@@ -183,6 +202,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
                                                    MemoryPool::system4KBPages, allocationData.rootDeviceIndex, false);
 
     memoryAllocation->setAllocationOffset(offsetInPage);
+    const auto &rootDeviceEnvironment = *this->executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+    const auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, *rootDeviceEnvironment.getHardwareInfo(), rootDeviceEnvironment.getReleaseHelper());
+    memoryAllocation->setDefaultGmm(rootDeviceEnvironment.getGmmHelper()->createBufferGmm(usageType, userPtrCpuCacheable, systemMemoryPlacement, allocationData.size));
 
     return memoryAllocation;
 }
@@ -206,7 +228,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
                                   ? MemoryConstants::megaByte
                                   : MemoryConstants::pageSize64k;
     allocationDataAlign.alignment = std::max(allocationData.alignment, minimalAlignment);
-    auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationDataAlign);
+    auto memoryAllocation = this->allocateSystemMemoryWithAlignment(allocationDataAlign);
     if (memoryAllocation) {
         static_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::system64KBPages);
         if (memoryAllocation->getDefaultGmm() == nullptr) {
@@ -249,6 +271,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
         memAlloc->set32BitAllocation(true);
         memAlloc->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heap)));
         memAlloc->sizeToFree = allocationSize;
+        memAlloc->setDefaultGmm(createHostMemoryBufferGmm(*this->getGmmHelper(allocationData.rootDeviceIndex), allocationData.type, allocationData.size));
 
         return memAlloc;
     }
@@ -276,6 +299,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
         memoryAllocation->set32BitAllocation(true);
         memoryAllocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heap)));
         memoryAllocation->sizeToFree = allocationSize;
+        memoryAllocation->setDefaultGmm(createHostMemoryBufferGmm(*this->getGmmHelper(allocationData.rootDeviceIndex), allocationData.type, allocationData.size));
     }
     counter++;
     return memoryAllocation;
@@ -298,6 +322,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedH
 
     if (properties.imgInfo) {
         graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo, createStorageInfoFromProperties(properties), false));
+    } else {
+        graphicsAllocation->setDefaultGmm(this->getGmmHelper(properties.rootDeviceIndex)->createBufferGmm(properties.allocationType, properties.flags.uncacheable, systemMemoryPlacement, graphicsAllocation->getUnderlyingBufferSize()));
     }
 
     return graphicsAllocation;
@@ -391,6 +417,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleSt
                                              MemoryPool::system4KBPages, allocationData.rootDeviceIndex, false);
 
     allocation->fragmentsStorage = std::make_unique<OsHandleStorage>(handleStorage);
+    allocation->setDefaultGmm(createHostMemoryBufferGmm(*this->getGmmHelper(allocationData.rootDeviceIndex), allocationData.type, allocationData.size));
     return allocation;
 }
 
@@ -512,6 +539,7 @@ bool OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceInd
     // gpuRange for SVM tracking. The real offset semantics are exercised on DRM/WDDM only.
     for (size_t i = 0; i < rootDeviceIndices.size(); i++) {
         auto allocation = new GraphicsAllocation(rootDeviceIndices[i], 1u, AllocationType::bufferHostMemory, addrToPtr(gpuRange), bufferSize, physicalAllocation->peekSharedHandle(), MemoryPool::systemCpuInaccessible, 1, gpuRange);
+        allocation->setDefaultGmm(createHostMemoryBufferGmm(*this->getGmmHelper(rootDeviceIndices[i]), AllocationType::bufferHostMemory, bufferSize));
         if (i == 0) {
             allocation->setGpuPtr(gpuRange);
             allocation->setReservedAddressRange(addrToPtr(gpuRange), bufferSize);
@@ -648,7 +676,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
     GraphicsAllocation *alloc = nullptr;
 
     if (allocationData.imgInfo->linearStorage && allocationData.imgInfo->mipCount == 0) {
-        alloc = allocateGraphicsMemoryWithAlignment(allocationData);
+        alloc = this->allocateSystemMemoryWithAlignment(allocationData);
         if (alloc) {
             alloc->setDefaultGmm(std::move(gmm));
         }
@@ -788,6 +816,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                              allocationData.storageInfo,
                                              gmmRequirements);
             allocation->setDefaultGmm(std::move(gmm));
+        } else {
+            allocation->setDefaultGmm(gmmHelper->createBufferGmm(allocationData.type, allocationData.flags.uncacheable, localMemoryPlacement, sizeAligned));
         }
     } else {
         std::unique_ptr<Gmm> gmm;
@@ -849,6 +879,9 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                           canonizedGpuAddress, sizeAligned, counter.fetch_add(1),
                                           MemoryPool::localMemory, false, maxOsContextCount);
 
+        if (!gmm) {
+            gmm = gmmHelper->createBufferGmm(allocationData.type, allocationData.flags.uncacheable, localMemoryPlacement, sizeAligned);
+        }
         allocation->setDefaultGmm(std::move(gmm));
         allocation->sizeToFree = sizeOfHeapChunk;
         if (use32Allocator) {

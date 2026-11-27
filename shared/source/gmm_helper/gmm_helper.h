@@ -16,6 +16,7 @@
 namespace NEO {
 class Gmm;
 class GmmClientContext;
+enum class AllocationType;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
 
@@ -34,6 +35,7 @@ class GmmHelper {
     uint32_t getHeapMOCS() const;
     void initMocsDefaults();
     std::unique_ptr<Gmm> createBufferGmm(GmmResourceUsageType usageType, bool cpuCacheable, bool isSystemMemory, size_t size);
+    std::unique_ptr<Gmm> createBufferGmm(AllocationType allocationType, bool forceUncached, bool isSystemMemory, size_t size);
 
     static void applyMocsEncryptionBit(uint32_t &index);
     void forceAllResourcesUncached();

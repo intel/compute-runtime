@@ -1776,8 +1776,7 @@ uint64_t Drm::getDecompressPatIndex(Gmm &gmm) const {
 
 std::unique_ptr<Gmm> Drm::createBufferGmm(AllocationType allocationType, CachePolicy cachePolicy, bool isSystemMemory, size_t size) const {
     const bool forceUncached = (cachePolicy == CachePolicy::uncached);
-    const auto usageType = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, rootDeviceEnvironment.getProductHelper(), *getHardwareInfo());
-    return createBufferGmm(usageType, !CacheSettingsHelper::isUncachedType(usageType), isSystemMemory, size);
+    return rootDeviceEnvironment.getGmmHelper()->createBufferGmm(allocationType, forceUncached, isSystemMemory, size);
 }
 
 std::unique_ptr<Gmm> Drm::createBufferGmm(GmmResourceUsageType usageType, bool cpuCacheable, bool isSystemMemory, size_t size) const {

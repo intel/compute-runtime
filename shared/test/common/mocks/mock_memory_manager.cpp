@@ -204,6 +204,10 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithAlignment(const
     if (returnMockGAFromHostPool) {
         return mockGa;
     }
+    return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
+}
+
+GraphicsAllocation *MockMemoryManager::allocateSystemMemoryWithAlignment(const AllocationData &allocationData) {
     if (failInAllocateWithSizeAndAlignment) {
         return nullptr;
     }
@@ -212,7 +216,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithAlignment(const
         allocationCreated = true;
         alignAllocationData = allocationData;
     }
-    return OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(allocationData);
+    return OsAgnosticMemoryManager::allocateSystemMemoryWithAlignment(allocationData);
 }
 
 GraphicsAllocation *MockMemoryManager::allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, AllocationType allocationType) {

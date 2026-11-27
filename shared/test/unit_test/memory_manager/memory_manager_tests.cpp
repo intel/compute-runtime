@@ -653,7 +653,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWithoutVirtualMemoryAccessFlagsWhenUpd
 }
 
 TEST(MemoryManagerTest, givenHostGraphicsAllocationWhenMapCalledThenDontResetCpuAddress) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
     MockMemoryManager memoryManager(false, false, executionEnvironment);
 
     uint8_t allocationStorage = 0;
@@ -664,14 +664,14 @@ TEST(MemoryManagerTest, givenHostGraphicsAllocationWhenMapCalledThenDontResetCpu
     rootDeviceIndices.pushUnique(0);
     rootDeviceIndices.pushUnique(1);
     MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
-    EXPECT_TRUE(memoryManager.mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, &allocation, 0x12300, 0, 0u, true));
+    EXPECT_TRUE(memoryManager.mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, &allocation, 0x12300, MemoryConstants::pageSize, 0u, true));
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
     EXPECT_NE(0x12300u, allocation.getGpuAddress());
     for (size_t i = 0; i < rootDeviceIndices.size(); i++) {
         EXPECT_NE(multiGraphicsAllocation.getGraphicsAllocation(static_cast<uint32_t>(i)), nullptr);
     }
 
-    EXPECT_TRUE(memoryManager.unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, static_cast<GraphicsAllocation *>(&allocation), 0x12300, 0, true));
+    EXPECT_TRUE(memoryManager.unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, static_cast<GraphicsAllocation *>(&allocation), 0x12300, MemoryConstants::pageSize, true));
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
     EXPECT_NE(0x12300u, allocation.getGpuAddress());
     for (size_t i = 0; i < rootDeviceIndices.size(); i++) {
@@ -2254,7 +2254,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
         using OsAgnosticMemoryManager::allocateGraphicsMemory64kb;
         MockOsAgnosticManagerWithFailingAllocate(bool enable64kbPages, ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(enable64kbPages, false, executionEnvironment) {}
 
-        GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
+        GraphicsAllocation *allocateSystemMemoryWithAlignment(const AllocationData &allocationData) override {
             return nullptr;
         }
     };

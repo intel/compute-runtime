@@ -87,6 +87,11 @@ std::unique_ptr<Gmm> GmmHelper::createBufferGmm(GmmResourceUsageType usageType, 
     return std::make_unique<Gmm>(this, nullptr, size, alignment, usageType, storageInfo, gmmRequirements);
 }
 
+std::unique_ptr<Gmm> GmmHelper::createBufferGmm(AllocationType allocationType, bool forceUncached, bool isSystemMemory, size_t size) {
+    const auto usageType = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, this->rootDeviceEnvironment.getProductHelper(), *this->rootDeviceEnvironment.getHardwareInfo());
+    return this->createBufferGmm(usageType, !CacheSettingsHelper::isUncachedType(usageType), isSystemMemory, size);
+}
+
 uint32_t GmmHelper::getL1EnabledMOCS() const {
     return mocsL1Enabled;
 }

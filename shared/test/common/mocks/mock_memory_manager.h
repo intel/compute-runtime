@@ -56,6 +56,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::useNonSvmHostPtrAlloc;
     using MemoryManager::usmReuseInfo;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
+    using OsAgnosticMemoryManager::allocateGraphicsMemoryWithGpuVa;
     using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
     using MemoryManager::customHeapAllocators;
     using MemoryManager::enable64kbpages;
@@ -100,6 +101,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateSystemMemoryWithAlignment(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override;
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) override;
     GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override;
