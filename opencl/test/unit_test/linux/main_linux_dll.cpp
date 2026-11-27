@@ -886,6 +886,11 @@ TEST(SysCalls, givenInvalidFileDescriptorWhenSysCallsFtruncateCalledThenCallIsRe
     EXPECT_EQ(-1, result);
 }
 
+TEST(SysCalls, givenUnalignedAddressWhenSysCallsMadviseCollapseCalledThenCallIsRedirectedToOsAndErrorIsReturned) {
+    auto result = NEO::SysCalls::madviseCollapse(reinterpret_cast<void *>(1), MemoryConstants::pageSize);
+    EXPECT_EQ(-1, result);
+}
+
 TEST(SysCalls, WhenSysCallsGetNumThreadsCalledThenCallIsRedirectedToOs) {
     auto result = NEO::SysCalls::getNumThreads();
     EXPECT_GT(result, 0u);

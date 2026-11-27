@@ -78,6 +78,7 @@ extern int (*sysCallsDup)(int oldfd);
 extern int (*sysCallsFcntl)(int fd, int cmd, int arg);
 extern void *(*sysCallsMmap)(void *addr, size_t size, int prot, int flags, int fd, off_t off);
 extern int (*sysCallsMunmap)(void *addr, size_t size);
+extern int (*sysCallsMadviseCollapse)(void *addr, size_t size);
 extern void *(*sysCallsMremapFixed)(void *oldAddress, size_t size, void *newAddress);
 extern void *(*sysCallsMmapFixedNoReplace)(void *address, size_t size);
 extern pid_t (*sysCallsGetpid)();
@@ -145,6 +146,7 @@ extern bool mmapCaptureExtendedPointers;
 extern bool mmapAllowExtendedPointers;
 extern uint32_t mmapFuncCalled;
 extern uint32_t munmapFuncCalled;
+extern uint32_t madviseCollapseFuncCalled;
 extern uint32_t mremapFixedFuncCalled;
 extern uint32_t mmapFixedNoReplaceFuncCalled;
 

@@ -1599,6 +1599,99 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+namespace {
+void *madviseCollapseCapturedAddress = nullptr;
+size_t madviseCollapseCapturedSize = 0u;
+
+int captureMadviseCollapse(void *addr, size_t size) {
+    madviseCollapseCapturedAddress = addr;
+    madviseCollapseCapturedSize = size;
+    return 0;
+}
+
+uint32_t allocateNonSvmHostPtrAndCountCollapses(TestedDrmMemoryManager &memoryManager, AllocationData &allocationData) {
+    VariableBackup<decltype(SysCalls::sysCallsMadviseCollapse)> madviseCollapseBackup(&SysCalls::sysCallsMadviseCollapse, captureMadviseCollapse);
+    VariableBackup<uint32_t> madviseCollapseCalledBackup(&SysCalls::madviseCollapseFuncCalled, 0u);
+    auto allocation = memoryManager.allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    memoryManager.freeGraphicsMemory(allocation);
+    return SysCalls::madviseCollapseFuncCalled;
+}
+} // namespace
+
+TEST_F(DrmMemoryManagerBasic, givenImportedHostPtrWith2MBAlignedStartWhenAllocatingNonSvmHostPtrThenWhole2MBPagesAreCollapsed) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    allocationData.size = 5 * MemoryConstants::megaByte + MemoryConstants::pageSize;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x40000000);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isImportedHostPtr = true;
+
+    EXPECT_EQ(1u, allocateNonSvmHostPtrAndCountCollapses(*memoryManager, allocationData));
+    EXPECT_EQ(allocationData.hostPtr, madviseCollapseCapturedAddress);
+    EXPECT_EQ(4 * MemoryConstants::megaByte, madviseCollapseCapturedSize);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenHugePageCollapseFailsWhenAllocatingImportedNonSvmHostPtrThenAllocationIsCreated) {
+    VariableBackup<decltype(SysCalls::sysCallsMadviseCollapse)> madviseCollapseBackup(&SysCalls::sysCallsMadviseCollapse, [](void *, size_t) -> int { return -1; });
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    allocationData.size = 8 * MemoryConstants::megaByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x40000000);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isImportedHostPtr = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    EXPECT_NE(nullptr, allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenImportedHostPtrWithStartNot2MBAlignedWhenAllocatingNonSvmHostPtrThenNothingIsCollapsed) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    allocationData.size = 8 * MemoryConstants::megaByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x40001000);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isImportedHostPtr = true;
+
+    EXPECT_EQ(0u, allocateNonSvmHostPtrAndCountCollapses(*memoryManager, allocationData));
+}
+
+TEST_F(DrmMemoryManagerBasic, givenImportedHostPtrSmallerThan2MBWhenAllocatingNonSvmHostPtrThenNothingIsCollapsed) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    allocationData.size = MemoryConstants::megaByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x40000000);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isImportedHostPtr = true;
+
+    EXPECT_EQ(0u, allocateNonSvmHostPtrAndCountCollapses(*memoryManager, allocationData));
+}
+
+TEST_F(DrmMemoryManagerBasic, givenHostPtrNotImportedWhenAllocatingNonSvmHostPtrThenNothingIsCollapsed) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    allocationData.size = 8 * MemoryConstants::megaByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x40000000);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isImportedHostPtr = false;
+
+    EXPECT_EQ(0u, allocateNonSvmHostPtrAndCountCollapses(*memoryManager, allocationData));
+}
+
+TEST_F(DrmMemoryManagerBasic, givenHugePageCollapseDisabledWhenAllocatingImportedNonSvmHostPtrThenNothingIsCollapsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableImportedHostPtrHugePageCollapse.set(0);
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    allocationData.size = 8 * MemoryConstants::megaByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x40000000);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isImportedHostPtr = true;
+
+    EXPECT_EQ(0u, allocateNonSvmHostPtrAndCountCollapses(*memoryManager, allocationData));
+}
+
 TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocatingGreaterThan2GBThenCreateMoreThanOneBo) {
     AllocationData allocationData;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));

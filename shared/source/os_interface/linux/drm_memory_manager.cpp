@@ -914,6 +914,14 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     auto gmm = getDrm(rootDeviceIndex).createBufferGmm(usageType, userPtrCpuCacheable, userPtrSystemMemory, realAllocationSize);
     const auto patIndex = static_cast<uint32_t>(getUserPtrPatIndex(getDrm(rootDeviceIndex), *gmm));
 
+    // The IOMMU maps a 2MB page only where the IO address and the physical address share the 2MB offset,
+    // and the userptr IO address starts at its first page, so huge pages help only from a 2MB aligned start.
+    auto collapseSize = alignDown(realAllocationSize, MemoryConstants::pageSize2M);
+    if (allocationData.flags.isImportedHostPtr && debugManager.flags.EnableImportedHostPtrHugePageCollapse.get() != 0 &&
+        isAligned<MemoryConstants::pageSize2M>(alignedPtr) && collapseSize > 0) {
+        SysCalls::madviseCollapse(const_cast<void *>(alignedPtr), collapseSize);
+    }
+
     auto bos = createBufferObjectsForNonSvmHostPtr(realAllocationSize, alignedPtr, gpuVirtualAddress, allocationData, rootDeviceIndex, patIndex, alignedSize);
     if (bos.empty()) {
         return nullptr;

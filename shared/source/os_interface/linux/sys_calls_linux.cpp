@@ -166,6 +166,12 @@ int munmap(void *addr, size_t size) noexcept {
     return ::munmap(addr, size);
 }
 
+int madviseCollapse(void *addr, size_t size) noexcept {
+    // MADV_COLLAPSE from the Linux uAPI, not defined by glibc before 2.37
+    constexpr int madviseCollapseAdvice = 25;
+    return ::madvise(addr, size, madviseCollapseAdvice);
+}
+
 void *mremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept {
     return ::mremap(oldAddress, size, size, MREMAP_MAYMOVE | MREMAP_FIXED, newAddress);
 }

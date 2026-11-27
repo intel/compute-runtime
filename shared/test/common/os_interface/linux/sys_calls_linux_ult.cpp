@@ -102,6 +102,7 @@ bool mmapAllowExtendedPointers = false;
 bool failMmap = false;
 uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
+uint32_t madviseCollapseFuncCalled = 0u;
 bool failMunmap = false;
 uint32_t mremapFixedFuncCalled = 0u;
 uint32_t mmapFixedNoReplaceFuncCalled = 0u;
@@ -155,6 +156,7 @@ int (*sysCallsDup)(int oldfd) = nullptr;
 int (*sysCallsFcntl)(int fd, int cmd, int arg) = nullptr;
 void *(*sysCallsMmap)(void *addr, size_t size, int prot, int flags, int fd, off_t off) = nullptr;
 int (*sysCallsMunmap)(void *addr, size_t size) = nullptr;
+int (*sysCallsMadviseCollapse)(void *addr, size_t size) = nullptr;
 void *(*sysCallsMremapFixed)(void *oldAddress, size_t size, void *newAddress) = nullptr;
 void *(*sysCallsMmapFixedNoReplace)(void *address, size_t size) = nullptr;
 int (*sysCallsGetpid)() = nullptr;
@@ -473,6 +475,14 @@ int munmap(void *addr, size_t size) noexcept {
     if (ptrIt != mmapVector.end()) {
         mmapVector.erase(ptrIt);
         alignedFree(addr);
+    }
+    return 0;
+}
+
+int madviseCollapse(void *addr, size_t size) noexcept {
+    madviseCollapseFuncCalled++;
+    if (sysCallsMadviseCollapse != nullptr) {
+        return sysCallsMadviseCollapse(addr, size);
     }
     return 0;
 }
