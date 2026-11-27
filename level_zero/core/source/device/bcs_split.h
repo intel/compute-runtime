@@ -142,12 +142,12 @@ class BcsSplit {
                                      AppendCallFuncT<gfxCoreFamily> appendCall);
 
     template <GFXCORE_FAMILY gfxCoreFamily>
-    void appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainCmdList,
-                               StackVec<ze_event_handle_t, 16> &subCopyEvents,
-                               Event *signalEvent,
-                               Event *markerEvent,
-                               bool useSignalEventForSubCopy,
-                               bool hasRelaxedOrderingDependencies);
+    ze_result_t appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainCmdList,
+                                      StackVec<ze_event_handle_t, 16> &subCopyEvents,
+                                      Event *signalEvent,
+                                      Event *markerEvent,
+                                      bool useSignalEventForSubCopy,
+                                      bool hasRelaxedOrderingDependencies);
 
     Device &device;
     NEO::BcsSplitSettings splitSettings = {};

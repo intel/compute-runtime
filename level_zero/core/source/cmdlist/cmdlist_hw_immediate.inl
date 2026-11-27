@@ -1252,7 +1252,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMetricCommandsA
         return ret;
     }
     if (this->isInOrderExecutionEnabled()) {
-        this->handleInOrderImplicitDependencies(false, false);
+        bool inOrderDependenciesSent = false;
+        this->handleInOrderImplicitDependencies(false, false, inOrderDependenciesSent);
     }
     CmdListWaitEventParameters waitEventsParameters{
         .outWaitCmds = nullptr,
@@ -2704,7 +2705,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::handlePostStagingTran
     ze_result_t ret = ZE_RESULT_SUCCESS;
     if (event && !isSingleTransfer) {
         if (this->isInOrderExecutionEnabled()) {
-            this->flushInOrderCounterSignal();
+            ret = this->flushInOrderCounterSignal();
+            if (ret != ZE_RESULT_SUCCESS) {
+                return ret;
+            }
         }
         if (event->isCounterBased() && event->getInOrderIncrementValue(this->partitionCount) == 0) {
             this->assignInOrderExecInfoToEvent(event, false);

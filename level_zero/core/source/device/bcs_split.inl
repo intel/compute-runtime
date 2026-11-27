@@ -82,7 +82,10 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
                 .skipAddingWaitEventsToResidency = false,
                 .dualStreamCopyOffloadOperation = false,
             };
-            subCmdList->addEventsToCmdList(1u, &barrierEventHandle, waitEventsParameters);
+            const auto waitResult = subCmdList->addEventsToCmdList(1u, &barrierEventHandle, waitEventsParameters);
+            if (waitResult != ZE_RESULT_SUCCESS) {
+                return waitResult;
+            }
         }
 
         ze_event_handle_t eventHandle;
@@ -106,18 +109,21 @@ ze_result_t BcsSplit::appendImmediateSplitCall(CommandListCoreFamilyImmediate<gf
         }
     }
 
-    appendPostSubCopySync<gfxCoreFamily>(cmdList, eventHandles, signalEvent, markerEvent, useSignalEventForSubcopy, hasRelaxedOrderingDependencies);
+    const auto postSubCopySyncResult = this->appendPostSubCopySync<gfxCoreFamily>(cmdList, eventHandles, signalEvent, markerEvent, useSignalEventForSubcopy, hasRelaxedOrderingDependencies);
+    if (postSubCopySyncResult != ZE_RESULT_SUCCESS) {
+        return postSubCopySyncResult;
+    }
 
     return result;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainCmdList,
-                                     StackVec<ze_event_handle_t, 16> &subCopyEvents,
-                                     Event *signalEvent,
-                                     Event *markerEvent,
-                                     bool useSignalEventForSubCopy,
-                                     bool hasRelaxedOrderingDependencies) {
+ze_result_t BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainCmdList,
+                                            StackVec<ze_event_handle_t, 16> &subCopyEvents,
+                                            Event *signalEvent,
+                                            Event *markerEvent,
+                                            bool useSignalEventForSubCopy,
+                                            bool hasRelaxedOrderingDependencies) {
 
     const bool dualStreamCopyOffload = mainCmdList->isImmediateType() && mainCmdList->isDualStreamCopyOffloadOperation(mainCmdList->isCopyOffloadEnabled());
 
@@ -141,7 +147,10 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
             .skipAddingWaitEventsToResidency = false,
             .dualStreamCopyOffloadOperation = dualStreamCopyOffload,
         };
-        mainCmdList->addEventsToCmdList(static_cast<uint32_t>(subCopyEvents.size()), subCopyEvents.data(), waitEventsParameters);
+        const auto waitResult = mainCmdList->addEventsToCmdList(static_cast<uint32_t>(subCopyEvents.size()), subCopyEvents.data(), waitEventsParameters);
+        if (waitResult != ZE_RESULT_SUCCESS) {
+            return waitResult;
+        }
     }
 
     const auto isCopyCmdList = mainCmdList->isCopyOnly(dualStreamCopyOffload);
@@ -168,6 +177,8 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
         auto lock = events.obtainLock();
         mainCmdList->assignInOrderExecInfoToEvent(markerEvent, false);
     }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

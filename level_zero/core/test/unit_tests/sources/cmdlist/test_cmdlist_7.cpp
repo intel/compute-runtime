@@ -93,18 +93,70 @@ HWTEST_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectVal
     }
 }
 
-HWTEST_F(CommandListCreate, givenInOrderCounterSignalFlushFailureWhenHandlingImplicitDependenciesThenNoDependencyIsReportedAsSent) {
-    struct FailingCounterSignalCommandList : public WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> {
-        using BaseClass = WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>;
-        using BaseClass::handleInOrderImplicitDependencies;
-        ze_result_t flushInOrderCounterSignal() override { return ZE_RESULT_ERROR_DEVICE_LOST; }
-    };
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct FailingCounterSignalCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+    using BaseClass = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
+    using BaseClass::handleInOrderImplicitDependencies;
+    ze_result_t flushInOrderCounterSignal() override { return ZE_RESULT_ERROR_DEVICE_LOST; }
+    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override { return this->relaxedOrderingAllowed; }
+    bool relaxedOrderingAllowed = false;
+};
 
-    FailingCounterSignalCommandList commandList;
+HWTEST_F(CommandListCreate, givenInOrderCounterSignalFlushFailureWhenHandlingImplicitDependenciesThenErrorIsReturnedAndNoDependencyIsReportedAsSent) {
+    FailingCounterSignalCommandList<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
-    EXPECT_FALSE(commandList.handleInOrderImplicitDependencies(true, false));
-    EXPECT_FALSE(commandList.handleInOrderImplicitDependencies(false, true));
+    bool inOrderDependenciesSent = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList.handleInOrderImplicitDependencies(true, false, inOrderDependenciesSent));
+    EXPECT_FALSE(inOrderDependenciesSent);
+
+    inOrderDependenciesSent = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList.handleInOrderImplicitDependencies(false, true, inOrderDependenciesSent));
+    EXPECT_FALSE(inOrderDependenciesSent);
+}
+
+HWTEST_F(CommandListCreate, givenInOrderCounterSignalFlushFailureWhenAddingEventsToCmdListThenErrorIsReturned) {
+    FailingCounterSignalCommandList<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    waitEventsParameters.relaxedOrderingAllowed = true;
+    waitEventsParameters.waitForImplicitInOrderDependency = true;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList.addEventsToCmdList(0, nullptr, waitEventsParameters));
+}
+
+HWTEST_F(CommandListCreate, givenInOrderCounterSignalFlushFailureWhenAppendingWaitOnEventsThenErrorIsReturned) {
+    FailingCounterSignalCommandList<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+    commandList.copyOffloadMode = CopyOffloadModes::dualStream;
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    waitEventsParameters.apiRequest = true;
+    waitEventsParameters.dualStreamCopyOffloadOperation = true;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList.appendWaitOnEvents(0, nullptr, waitEventsParameters));
+}
+
+HWTEST_F(CommandListCreate, givenInOrderCounterSignalFlushFailureWhenAppendingSignalOrResetOfEventThenErrorIsReturned) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+    ze_event_desc_t eventDesc = {};
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    std::unique_ptr<L0::Event> event(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+
+    FailingCounterSignalCommandList<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+    commandList.relaxedOrderingAllowed = true;
+
+    CmdListSignalEventParameters signalEventParameters{};
+    signalEventParameters.relaxedOrderingDispatch = true;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList.appendSignalEvent(event->toHandle(), signalEventParameters));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList.appendEventReset(event->toHandle()));
 }
 
 HWTEST_F(CommandListCreate, GivenSingleTileDeviceWhenCommandListIsResetThenPartitionCountIsReversedToOne) {
@@ -2553,7 +2605,9 @@ HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedBefor
     immediateCommandList->releasePreviousCsrCompletionTarget();
     EXPECT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
 
-    EXPECT_TRUE(immediateCommandList->handleInOrderImplicitDependencies(false, false));
+    bool inOrderDependenciesSent = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->handleInOrderImplicitDependencies(false, false, inOrderDependenciesSent));
+    EXPECT_TRUE(inOrderDependenciesSent);
     ASSERT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
 
     const auto previousCsrWaitsBefore = initialUltCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
@@ -3507,7 +3561,9 @@ HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListWithPendingWork
 
     auto cmdStream = commandList->commandContainer.getCommandStream();
     const auto offset = cmdStream->getUsed();
-    EXPECT_TRUE(immediateCommandList->handleInOrderImplicitDependencies(false, false));
+    bool inOrderDependenciesSent = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->handleInOrderImplicitDependencies(false, false, inOrderDependenciesSent));
+    EXPECT_TRUE(inOrderDependenciesSent);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
@@ -3541,7 +3597,9 @@ HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithA
     inOrderExecInfo->setLastWaitedCounterValue(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
     auto cmdStream = commandList->commandContainer.getCommandStream();
     const auto usedBefore = cmdStream->getUsed();
-    EXPECT_FALSE(immediateCommandList->handleInOrderImplicitDependencies(false, false));
+    bool inOrderDependenciesSent = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->handleInOrderImplicitDependencies(false, false, inOrderDependenciesSent));
+    EXPECT_FALSE(inOrderDependenciesSent);
     EXPECT_EQ(usedBefore, cmdStream->getUsed());
     EXPECT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
 
@@ -3568,7 +3626,9 @@ HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWitho
     EXPECT_NE(initialCsr, commandList->getCsr(false));
     ASSERT_TRUE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
 
-    EXPECT_FALSE(immediateCommandList->handleInOrderImplicitDependencies(false, false));
+    bool inOrderDependenciesSent = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->handleInOrderImplicitDependencies(false, false, inOrderDependenciesSent));
+    EXPECT_FALSE(inOrderDependenciesSent);
     EXPECT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
 
     ultCsr->isTagReachedReturnValue.reset();

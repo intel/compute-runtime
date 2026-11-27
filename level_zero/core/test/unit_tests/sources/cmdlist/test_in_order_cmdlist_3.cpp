@@ -2162,5 +2162,69 @@ HWTEST2_F(InOrderImplicitDependencySkipTests, givenImplicitDependencySkippedWhen
     EXPECT_NE(0u, syncCommands.semaphores);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+class FailingCounterSignalCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
+  public:
+    using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
+    using BaseClass::BaseClass;
+    using BaseClass::handlePostStagingTransferSync;
+
+    ze_result_t flushInOrderCounterSignal() override { return ZE_RESULT_ERROR_DEVICE_LOST; }
+};
+
+HWTEST_F(InOrderCmdListTests, givenInOrderCounterSignalFlushFailureWhenHandlingPostStagingTransferSyncThenErrorIsReturned) {
+    auto immCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, FailingCounterSignalCmdList<FamilyType::gfxCoreFamily>>(false);
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->handlePostStagingTransferSync(events[0].get(), false, events[0]->toHandle(), false));
+}
+
+HWTEST_F(InOrderCmdListTests, givenSubCmdListCounterSignalFlushFailureWhenAppendingImmediateSplitCallWithBarrierThenErrorIsReturned) {
+    auto mainCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(false, false);
+    mainCmdList->setCmdListContext(context->toHandle());
+    auto subCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, FailingCounterSignalCmdList<FamilyType::gfxCoreFamily>>(false);
+
+    auto csr = mainCmdList->getCsr(false);
+    csr->getNextBarrierCount();
+    *csr->getBarrierCountTagAddress() = 0;
+    ASSERT_TRUE(mainCmdList->isBarrierRequired());
+
+    auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
+    VariableBackup<std::vector<L0::CommandList *>> cmdListsBackup(&bcsSplit->cmdLists, std::vector<L0::CommandList *>{subCmdList.get()});
+
+    uint32_t appendCallCount = 0;
+    BcsSplit::AppendCallFuncT<FamilyType::gfxCoreFamily> appendCall = [&](L0::CommandListCoreFamily<FamilyType::gfxCoreFamily> *, const BcsSplitParams::CopyParams &, size_t, ze_event_handle_t, uint64_t) {
+        appendCallCount++;
+        return ZE_RESULT_SUCCESS;
+    };
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, bcsSplit->appendImmediateSplitCall<FamilyType::gfxCoreFamily>(mainCmdList.get(), BcsSplitParams::MemCopy{}, MemoryConstants::pageSize, nullptr, 0, nullptr,
+                                                                                                         false, true, NEO::TransferDirection::localToLocal, 0, appendCall));
+    EXPECT_EQ(0u, appendCallCount);
+
+    bcsSplit->events.releaseResources();
+}
+
+HWTEST_F(InOrderCmdListTests, givenMainCmdListCounterSignalFlushFailureWhenAppendingImmediateSplitCallThenErrorIsReturnedAfterSubCopies) {
+    auto mainCmdList = createImmCmdListImpl<FamilyType::gfxCoreFamily, FailingCounterSignalCmdList<FamilyType::gfxCoreFamily>>(false);
+    mainCmdList->setCmdListContext(context->toHandle());
+    auto subCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto bcsSplit = static_cast<Device *>(device)->bcsSplit.get();
+    VariableBackup<std::vector<L0::CommandList *>> cmdListsBackup(&bcsSplit->cmdLists, std::vector<L0::CommandList *>{subCmdList.get()});
+
+    uint32_t appendCallCount = 0;
+    BcsSplit::AppendCallFuncT<FamilyType::gfxCoreFamily> appendCall = [&](L0::CommandListCoreFamily<FamilyType::gfxCoreFamily> *, const BcsSplitParams::CopyParams &, size_t, ze_event_handle_t, uint64_t) {
+        appendCallCount++;
+        return ZE_RESULT_SUCCESS;
+    };
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, bcsSplit->appendImmediateSplitCall<FamilyType::gfxCoreFamily>(mainCmdList.get(), BcsSplitParams::MemCopy{}, MemoryConstants::pageSize, nullptr, 0, nullptr,
+                                                                                                         false, true, NEO::TransferDirection::localToLocal, 0, appendCall));
+    EXPECT_EQ(1u, appendCallCount);
+
+    bcsSplit->events.releaseResources();
+}
+
 } // namespace ult
 } // namespace L0

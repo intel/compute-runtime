@@ -498,7 +498,7 @@ struct CommandListCoreFamily : public CommandList {
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) { return false; }
     virtual void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {}
     bool canSkipInOrderEventWait(Event &event, bool ignorCbEventBoundToCmdList) const;
-    bool handleInOrderImplicitDependencies(bool relaxedOrderingAllowed, bool dualStreamCopyOffloadOperation);
+    ze_result_t handleInOrderImplicitDependencies(bool relaxedOrderingAllowed, bool dualStreamCopyOffloadOperation, bool &inOrderDependenciesSent);
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     void appendFullSynchronizedDispatchInit();

@@ -1000,7 +1000,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     auto swTagScope = emplaceSWTagScope("zeCommandListAppendEventReset");
 
     if (this->isInOrderExecutionEnabled()) {
-        handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0, false), false);
+        bool inOrderDependenciesSent = false;
+        const auto ret = this->handleInOrderImplicitDependencies(this->isRelaxedOrderingDispatchAllowed(0, false), false, inOrderDependenciesSent);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
 
     appendSynchronizedDispatchInitializationSection();
@@ -3924,10 +3928,13 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(bool relaxedOrderingAllowed, bool dualStreamCopyOffloadOperation) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(bool relaxedOrderingAllowed, bool dualStreamCopyOffloadOperation, bool &inOrderDependenciesSent) {
+    inOrderDependenciesSent = false;
+
     if (dualStreamCopyOffloadOperation || relaxedOrderingAllowed) {
-        if (this->flushInOrderCounterSignal() != ZE_RESULT_SUCCESS) {
-            return false;
+        const auto ret = this->flushInOrderCounterSignal();
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
         }
     }
 
@@ -3935,7 +3942,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
         if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
             this->latestOperationHasCbEventWithProfiling = false;
             this->implicitDependencyOnPreviousCsrPending = false;
-            return false;
+            return ZE_RESULT_SUCCESS;
         }
 
         if (relaxedOrderingAllowed) {
@@ -3952,12 +3959,13 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
 
         this->latestOperationHasCbEventWithProfiling = false;
         this->implicitDependencyOnPreviousCsrPending = false;
-        return true;
+        inOrderDependenciesSent = true;
+        return ZE_RESULT_SUCCESS;
     }
 
     this->latestOperationHasCbEventWithProfiling = false;
     this->implicitDependencyOnPreviousCsrPending = false;
-    return false;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3970,7 +3978,10 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
     }
 
     if (waitEventsParameters.waitForImplicitInOrderDependency) {
-        inOrderDependenciesSent = handleInOrderImplicitDependencies(waitEventsParameters.relaxedOrderingAllowed, waitEventsParameters.dualStreamCopyOffloadOperation);
+        const auto ret = this->handleInOrderImplicitDependencies(waitEventsParameters.relaxedOrderingAllowed, waitEventsParameters.dualStreamCopyOffloadOperation, inOrderDependenciesSent);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
 
     if (waitEventsParameters.relaxedOrderingAllowed && numWaitEvents > 0 && !inOrderDependenciesSent) {
@@ -4006,7 +4017,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        handleInOrderImplicitDependencies(signalEventParameters.relaxedOrderingDispatch, false);
+        bool inOrderDependenciesSent = false;
+        const auto ret = this->handleInOrderImplicitDependencies(signalEventParameters.relaxedOrderingDispatch, false, inOrderDependenciesSent);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
 
     event->resetPacketsUsedCount();
@@ -4270,7 +4285,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(waitEventParams.dualStreamCopyOffloadOperation);
 
     if (this->isInOrderExecutionEnabled() && waitEventParams.apiRequest) {
-        handleInOrderImplicitDependencies(false, dualStreamCopyOffload);
+        bool inOrderDependenciesSent = false;
+        const auto ret = this->handleInOrderImplicitDependencies(false, dualStreamCopyOffload, inOrderDependenciesSent);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
 
     for (uint32_t i = 0; i < numEvents; i++) {
@@ -5402,7 +5421,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     UNRECOVERABLE_IF(srcAllocationStruct.alloc == nullptr);
 
     if (this->isInOrderExecutionEnabled()) {
-        handleInOrderImplicitDependencies(false, false);
+        bool inOrderDependenciesSent = false;
+        this->handleInOrderImplicitDependencies(false, false, inOrderDependenciesSent);
     }
 
     if (!handleCounterBasedEventOperations(signalEvent, false)) {
@@ -5486,7 +5506,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     commandContainer.addToResidencyContainer(dstAllocationStruct.alloc);
 
     if (this->isInOrderExecutionEnabled()) {
-        handleInOrderImplicitDependencies(false, false);
+        bool inOrderDependenciesSent = false;
+        this->handleInOrderImplicitDependencies(false, false, inOrderDependenciesSent);
     }
 
     const uint64_t gpuAddress = static_cast<uint64_t>(dstAllocationStruct.alignedAllocationPtr);
