@@ -12,5 +12,5 @@
 CrtAssertReportSuppression::CrtAssertReportSuppression() : previousReportMode(_CrtSetReportMode(_CRT_ASSERT, 0)) {}
 
 CrtAssertReportSuppression::~CrtAssertReportSuppression() {
-    static_cast<void>(_CrtSetReportMode(_CRT_ASSERT, previousReportMode));
+    _CrtSetReportMode(_CRT_ASSERT, previousReportMode);
 }
