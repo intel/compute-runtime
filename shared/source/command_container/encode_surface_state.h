@@ -45,6 +45,7 @@ struct EncodeSurfaceState {
     static void encodeExtraBufferParams(EncodeSurfaceStateArgs &args);
     static void encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args);
     static void appendBufferSurfaceState(EncodeSurfaceStateArgs &args);
+    static uint32_t getBufferMocsForCachePolicy(const EncodeSurfaceStateArgs &args, uint32_t mocs);
 
     static constexpr uintptr_t getSurfaceBaseAddressAlignmentMask() {
         return ~(getSurfaceBaseAddressAlignment() - 1);

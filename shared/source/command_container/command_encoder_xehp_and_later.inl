@@ -850,24 +850,22 @@ template <typename Family>
 inline void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container, IndirectHeap *childDsh) {}
 
 template <typename Family>
+uint32_t EncodeSurfaceState<Family>::getBufferMocsForCachePolicy(const EncodeSurfaceStateArgs &args, uint32_t mocs) {
+    const bool isConstantSurface = args.allocation && args.allocation->getAllocationType() == AllocationType::constantSurface;
+    const bool isL1CachingForced = mocs == args.gmmHelper->getL3EnabledMOCS() && debugManager.flags.ForceL1Caching.get() != 0;
+    if (isConstantSurface || isL1CachingForced) {
+        return args.gmmHelper->getL1EnabledMOCS();
+    }
+    return mocs;
+}
+
+template <typename Family>
 void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
     Gmm *gmm = args.allocation ? args.allocation->getDefaultGmm() : nullptr;
     uint32_t compressionFormat = 0;
 
-    bool setConstCachePolicy = false;
-    if (args.allocation && args.allocation->getAllocationType() == AllocationType::constantSurface) {
-        setConstCachePolicy = true;
-    }
-
-    if (surfaceState->getMemoryObjectControlState() == args.gmmHelper->getL3EnabledMOCS() &&
-        debugManager.flags.ForceL1Caching.get() != 0) {
-        setConstCachePolicy = true;
-    }
-
-    if (setConstCachePolicy == true) {
-        surfaceState->setMemoryObjectControlState(args.gmmHelper->getL1EnabledMOCS());
-    }
+    surfaceState->setMemoryObjectControlState(getBufferMocsForCachePolicy(args, surfaceState->getMemoryObjectControlState()));
 
     encodeExtraCacheSettings(surfaceState, args);
 

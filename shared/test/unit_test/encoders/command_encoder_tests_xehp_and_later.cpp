@@ -14,7 +14,10 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/resource_mocs_query_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/state_base_address_tests.h"
 
@@ -326,4 +329,48 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenEncodeDataInMe
         EncodeDataMemory<FamilyType>::programFrontEndState(memoryPtr, dstGpuAddress, rootDeviceEnvironment, 0x0, scratchAddress, maxFrontEndThreads, properties);
         EXPECT_EQ(ptrOffset(baseMemoryPtr, offset), memoryPtr);
     }
+}
+
+HWTEST2_F(XeHPAndLaterHardwareCommandsTest, givenConstantSurfaceAllocationWhenGettingBufferMocsForCachePolicyThenL1EnabledMocsIsReturned, IsAtLeastXeCore) {
+    ResourceMocsQueryEnvironment mocsQueryEnvironment;
+    auto gmmHelper = mocsQueryEnvironment.getGmmHelper();
+    ASSERT_NE(gmmHelper->getL1EnabledMOCS(), gmmHelper->getUncachedMOCS());
+
+    MockGraphicsAllocation allocation;
+    allocation.setAllocationType(AllocationType::constantSurface);
+
+    EncodeSurfaceStateArgs args;
+    args.gmmHelper = gmmHelper;
+    args.allocation = &allocation;
+
+    EXPECT_EQ(gmmHelper->getL1EnabledMOCS(), EncodeSurfaceState<FamilyType>::getBufferMocsForCachePolicy(args, gmmHelper->getUncachedMOCS()));
+}
+
+HWTEST2_F(XeHPAndLaterHardwareCommandsTest, givenL3EnabledMocsWhenGettingBufferMocsForCachePolicyThenL1EnabledMocsIsReturnedUnlessL1CachingIsDisabled, IsAtLeastXeCore) {
+    DebugManagerStateRestore restorer;
+    ResourceMocsQueryEnvironment mocsQueryEnvironment;
+    auto gmmHelper = mocsQueryEnvironment.getGmmHelper();
+    ASSERT_NE(gmmHelper->getL1EnabledMOCS(), gmmHelper->getL3EnabledMOCS());
+
+    EncodeSurfaceStateArgs args;
+    args.gmmHelper = gmmHelper;
+
+    EXPECT_EQ(gmmHelper->getL1EnabledMOCS(), EncodeSurfaceState<FamilyType>::getBufferMocsForCachePolicy(args, gmmHelper->getL3EnabledMOCS()));
+
+    debugManager.flags.ForceL1Caching.set(0);
+    EXPECT_EQ(gmmHelper->getL3EnabledMOCS(), EncodeSurfaceState<FamilyType>::getBufferMocsForCachePolicy(args, gmmHelper->getL3EnabledMOCS()));
+}
+
+HWTEST2_F(XeHPAndLaterHardwareCommandsTest, givenNonL3MocsAndNonConstantSurfaceAllocationWhenGettingBufferMocsForCachePolicyThenMocsIsNotChanged, IsAtLeastXeCore) {
+    ResourceMocsQueryEnvironment mocsQueryEnvironment;
+    auto gmmHelper = mocsQueryEnvironment.getGmmHelper();
+
+    MockGraphicsAllocation allocation;
+    allocation.setAllocationType(AllocationType::buffer);
+
+    EncodeSurfaceStateArgs args;
+    args.gmmHelper = gmmHelper;
+    args.allocation = &allocation;
+
+    EXPECT_EQ(gmmHelper->getUncachedMOCS(), EncodeSurfaceState<FamilyType>::getBufferMocsForCachePolicy(args, gmmHelper->getUncachedMOCS()));
 }
