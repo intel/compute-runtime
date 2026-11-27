@@ -5056,41 +5056,6 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropert
     EXPECT_EQ(packetData[2].globalEnd, event->globalEndTS);
 }
 
-TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSet) {
-    typename MockTimestampPackets32::Packet packetData[2];
-    event->setPacketsInUse(2u);
-
-    packetData[0].contextStart = 1u;
-    packetData[0].contextEnd = 2u;
-    packetData[0].globalStart = 3u;
-    packetData[0].globalEnd = 4u;
-
-    packetData[1].contextStart = 5u;
-    packetData[1].contextEnd = 6u;
-    packetData[1].globalStart = 7u;
-    packetData[1].globalEnd = 8u;
-
-    event->hostAddressFromPool = packetData;
-
-    ze_kernel_timestamp_result_t results[2];
-    uint32_t pCount = 2;
-
-    for (uint32_t packetId = 0; packetId < pCount; packetId++) {
-        event->kernelEventCompletionData.assignDataToAllTimestamps(packetId, event->hostAddressFromPool);
-        event->hostAddressFromPool = ptrOffset(event->hostAddressFromPool, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
-    }
-
-    auto result = event->queryTimestampsExp(device, &pCount, results);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    for (uint32_t i = 0; i < pCount; i++) {
-        EXPECT_EQ(packetData[i].contextStart, results[i].context.kernelStart);
-        EXPECT_EQ(packetData[i].contextEnd, results[i].context.kernelEnd);
-        EXPECT_EQ(packetData[i].globalStart, results[i].global.kernelStart);
-        EXPECT_EQ(packetData[i].globalEnd, results[i].global.kernelEnd);
-    }
-}
-
 TEST_F(TimestampEventUsedPacketSignalCreate, givenNonAggregatedStorageEventWhenCallingQueryTimestampsExpThenAllPacketsAreReported) {
     ASSERT_FALSE(Event::isAggregatedEvent(event.get()));
 
