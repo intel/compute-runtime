@@ -163,7 +163,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         this->imageFromBuffer = true;
-    } else if (desc->type == ZE_IMAGE_TYPE_BUFFER) {
+    } else if (desc->type == ZE_IMAGE_TYPE_BUFFER && !(lookupTable.isSharedHandle && lookupTable.glTextureExt.present)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -338,7 +338,9 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         const uint32_t gmmArrayIndex = lookupTable.d3dTextureExt.present
                                            ? lookupTable.d3dTextureExt.arrayIndex
                                            : 0u;
-        gmm->updateImgInfoAndDesc(imgInfo, gmmArrayIndex, yuvPlaneType);
+        if (desc->type != ZE_IMAGE_TYPE_BUFFER) {
+            gmm->updateImgInfoAndDesc(imgInfo, gmmArrayIndex, yuvPlaneType);
+        }
 
         if (yuvPlaneType == NEO::ImagePlane::planeUV) {
             // Callers pass frame dimensions per plane - copy bounds read this descriptor.

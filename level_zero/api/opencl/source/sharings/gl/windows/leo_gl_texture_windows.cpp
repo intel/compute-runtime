@@ -24,6 +24,7 @@
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/helpers/leo_gmm_types_converter.h"
+#include "level_zero/api/opencl/source/helpers/leo_surface_formats.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_texture.h"
@@ -78,7 +79,24 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     auto clType = getClMemObjectType(target);
     l0imageDesc.type = Image::clToL0ImageType(clType);
 
-    if (gmmResInfo) {
+    cl_image_format imgFormat{};
+    if (!setClImageFormat(texInfo.glInternalFormat, imgFormat)) {
+        ErrorCodeHelper errorCode(errcodeRet, CL_INVALID_GL_OBJECT);
+        return nullptr;
+    }
+    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
+    if (surfaceFormat == nullptr) {
+        ErrorCodeHelper errorCode(errcodeRet, CL_INVALID_GL_OBJECT);
+        return nullptr;
+    }
+    Image::clToL0ImageFormat(l0imageDesc.format, imgFormat.image_channel_order, imgFormat.image_channel_data_type);
+
+    if (target == GL_TEXTURE_BUFFER) {
+        l0imageDesc.width = static_cast<uint64_t>(texInfo.textureBufferWidth) * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
+        l0imageDesc.height = 1u;
+        l0imageDesc.depth = 1u;
+        l0imageDesc.arraylevels = 0u;
+    } else if (gmmResInfo) {
         auto gmmResourceInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfo));
         l0imageDesc.width = gmmResourceInfo->getBaseWidth();
         l0imageDesc.height = static_cast<uint32_t>(gmmResourceInfo->getBaseHeight());
@@ -88,15 +106,11 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
                                                   (texInfo.globalShareHandleMCS == 0) &&
                                                   gmmResourceInfo->isMCS();
     } else {
-        l0imageDesc.width = (texInfo.textureBufferWidth != 0) ? texInfo.textureBufferWidth : 1u;
+        l0imageDesc.width = 1u;
         l0imageDesc.height = 1u;
         l0imageDesc.depth = 1u;
         l0imageDesc.arraylevels = 0u;
     }
-
-    cl_image_format imgFormat{};
-    setClImageFormat(texInfo.glInternalFormat, imgFormat);
-    Image::clToL0ImageFormat(l0imageDesc.format, imgFormat.image_channel_order, imgFormat.image_channel_data_type);
 
     ze_srgb_ext_desc_t srgbExtDesc{ZE_STRUCTURE_TYPE_SRGB_EXT_DESC, l0imageDesc.pNext, Image::isSRGB(imgFormat.image_channel_order)};
     l0imageDesc.pNext = &srgbExtDesc;
@@ -116,6 +130,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     ze_image_handle_t imageHandle{};
     auto result = zeImageCreate(context->getL0ContextHandle(), context->getClDevice()->getL0Handle(), &l0imageDesc, &imageHandle);
     if (result != ZE_RESULT_SUCCESS) {
+        ErrorCodeHelper errorCode(errcodeRet, CL_INVALID_GL_OBJECT);
         return nullptr;
     }
 
@@ -194,7 +209,7 @@ uint32_t GlTexture::getClObjectType(cl_GLenum glType, bool returnClGlObjectType)
         retValue = returnClGlObjectType ? CL_GL_OBJECT_TEXTURE3D : CL_MEM_OBJECT_IMAGE3D;
         break;
     case GL_TEXTURE_BUFFER:
-        retValue = returnClGlObjectType ? CL_GL_OBJECT_TEXTURE_BUFFER : CL_MEM_OBJECT_IMAGE1D;
+        retValue = returnClGlObjectType ? CL_GL_OBJECT_TEXTURE_BUFFER : CL_MEM_OBJECT_IMAGE1D_BUFFER;
         break;
     case GL_RENDERBUFFER_EXT:
         retValue = returnClGlObjectType ? CL_GL_OBJECT_RENDERBUFFER : CL_MEM_OBJECT_IMAGE2D;

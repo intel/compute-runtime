@@ -151,17 +151,6 @@ class MockD3D11TextureSharingFunctions : public D3DSharingFunctions<D3DTypesHelp
     uint32_t createTexture3dCalled = 0u;
 };
 
-struct ImageDescCapturingContext : public CapturingContext {
-    using CapturingContext::CapturingContext;
-
-    ze_result_t createImage(ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) override {
-        capturedImageDescs.push_back(*desc);
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    std::vector<ze_image_desc_t> capturedImageDescs;
-};
-
 struct D3D11TextureCreateTest : public Test<OclFixture> {
     void SetUp() override {
         Test<OclFixture>::SetUp();

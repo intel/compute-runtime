@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
@@ -15,6 +16,7 @@
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/image/internal_core_image_ext.h"
@@ -40,12 +42,18 @@ class MemoryManagerGlExtNTHandleMock : public NEO::OsAgnosticMemoryManager {
         constexpr size_t importedGmmSize = 1u;
         constexpr size_t importedGmmAlignment = 0u;
         auto importedGmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, importedGmmSize, importedGmmAlignment, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+        if (importedGmmBaseWidth != 0u) {
+            auto mockResourceInfo = static_cast<MockGmmResourceInfo *>(importedGmm->gmmResourceInfo.get());
+            mockResourceInfo->mockResourceCreateParams.BaseWidth = importedGmmBaseWidth;
+            mockResourceInfo->overrideReturnedRenderPitch(importedGmmBaseWidth);
+        }
         this->importedGmms.push_back(importedGmm.get());
         graphicsAllocation->setDefaultGmm(std::move(importedGmm));
         return graphicsAllocation;
     }
 
     std::vector<Gmm *> importedGmms;
+    uint32_t importedGmmBaseWidth = 0u;
 };
 
 class ImageCreateGlTextureExtFixture : public DeviceFixtureWithCustomMemoryManager<MemoryManagerGlExtNTHandleMock> {
@@ -434,6 +442,65 @@ HWTEST_F(ImageCreateGlTextureExtTest, givenDmaBufFdWithoutImageTilingExtDescWhen
     EXPECT_NE(256u, imageHW->imgInfo.imgDesc.imageRowPitch);
 
     imageHW.reset(nullptr);
+}
+
+HWTEST2_F(ImageCreateGlTextureExtTest, givenGlTextureBufferImportWithGmmWidthInBytesWhenCreatingBufferImageThenBufferSurfaceStateEncodesTexelCountFromDescriptor, SupportsLegacyRenderSurfaceState) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto memoryManager = static_cast<MemoryManagerGlExtNTHandleMock *>(execEnv->memoryManager.get());
+    memoryManager->importedGmmBaseWidth = 32768u;
+
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+
+    constexpr uint64_t textureBufferOffset = 64u;
+    ze_external_gl_texture_ext_desc_t glTextureExtDesc = {};
+    glTextureExtDesc.pNext = &importNTHandle;
+    glTextureExtDesc.textureBufferOffset = textureBufferOffset;
+
+    constexpr uint32_t texelCount = 10u;
+    constexpr uint32_t texelSize = 4u;
+    desc.type = ZE_IMAGE_TYPE_BUFFER;
+    desc.width = texelCount * texelSize;
+    desc.height = 1u;
+    desc.depth = 1u;
+    desc.pNext = &glTextureExtDesc;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    EXPECT_EQ(NEO::ImageType::image1DBuffer, imageHW->imgInfo.imgDesc.imageType);
+    EXPECT_EQ(texelCount, imageHW->imgInfo.imgDesc.imageWidth);
+
+    NEO::SurfaceStateBufferLength length = {};
+    length.length = texelCount - 1u;
+    const auto &surfaceState = imageHW->getSurfaceState();
+    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceState.getSurfaceType());
+    EXPECT_EQ(length.surfaceState.width + 1u, surfaceState.getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, surfaceState.getHeight());
+    EXPECT_EQ(length.surfaceState.depth + 1u, surfaceState.getDepth());
+    EXPECT_EQ(texelSize, surfaceState.getSurfacePitch());
+
+    EXPECT_EQ(textureBufferOffset, imageHW->getAllocation()->getAllocationOffset());
+    EXPECT_EQ(imageHW->getAllocation()->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
+}
+
+HWTEST_F(ImageCreateGlTextureExtTest, givenNtHandleImportWithoutGlTextureExtDescWhenCreatingBufferImageWithoutPitchedPtrThenInvalidArgumentIsReturned) {
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+
+    desc.type = ZE_IMAGE_TYPE_BUFFER;
+    desc.width = 40u;
+    desc.height = 1u;
+    desc.depth = 1u;
+    desc.pNext = &importNTHandle;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, imageHW->initialize(device, &desc));
 }
 
 } // namespace ult

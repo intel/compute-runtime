@@ -11,6 +11,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include <level_zero/ze_api.h>
 
+#include <vector>
+
 namespace NEO {
 namespace LEO {
 namespace ult {
@@ -81,6 +83,17 @@ struct CapturingContext : public L0::ult::Mock<L0::Context> {
     void *allocDeviceMemPtr = nullptr;
     ze_result_t allocDeviceMemResult = ZE_RESULT_SUCCESS;
     ze_result_t freeMemExtResult = ZE_RESULT_SUCCESS;
+};
+
+struct ImageDescCapturingContext : public CapturingContext {
+    using CapturingContext::CapturingContext;
+
+    ze_result_t createImage(ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) override {
+        capturedImageDescs.push_back(*desc);
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    std::vector<ze_image_desc_t> capturedImageDescs;
 };
 
 } // namespace ult
