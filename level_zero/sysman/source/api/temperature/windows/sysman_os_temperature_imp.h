@@ -18,6 +18,7 @@ class WddmTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableCl
   public:
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;
     ze_result_t getSensorTemperature(double *pTemperature) override;
+    ze_result_t getCriticalTemperature(double *pCriticalTemperature) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
     bool isTempModuleSupported() override;
     void reInit() override {}
     void setSensorType(zes_temp_sensors_t sensorType);

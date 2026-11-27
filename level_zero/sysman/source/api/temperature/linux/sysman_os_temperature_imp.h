@@ -23,6 +23,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
   public:
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;
     ze_result_t getSensorTemperature(double *pTemperature) override;
+    ze_result_t getCriticalTemperature(double *pCriticalTemperature) override;
     bool isTempModuleSupported() override;
     void reInit() override;
     void setSensorType(zes_temp_sensors_t sensorType);
@@ -35,6 +36,7 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
 
   private:
+    ze_result_t readHwmonTemperature(const std::string &temperatureFile, double &temperature);
     ze_result_t getMaxTemperature(double &temperature);
     const std::string &getMaxTemperatureFile() const;
     bool isHwmonTemperatureFileAvailable(NodeName temperatureNode);
@@ -46,6 +48,8 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     SysmanProductHelper *pSysmanProductHelper = nullptr;
     std::string packageMaxTemperatureFile = {};
     std::string memoryMaxTemperatureFile = {};
+    std::string gpuCriticalTemperatureFile = {};
+    std::string memoryCriticalTemperatureFile = {};
 };
 
 } // namespace Sysman

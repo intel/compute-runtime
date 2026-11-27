@@ -45,21 +45,35 @@ const std::string &LinuxTemperatureImp::getMaxTemperatureFile() const {
     return packageMaxTemperatureFile;
 }
 
-ze_result_t LinuxTemperatureImp::getMaxTemperature(double &temperature) {
-    const std::string &maxTemperatureFile = getMaxTemperatureFile();
-    if (maxTemperatureFile.empty()) {
+ze_result_t LinuxTemperatureImp::readHwmonTemperature(const std::string &temperatureFile, double &temperature) {
+    if (temperatureFile.empty()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    int32_t maxTemperature = 0;
-    auto result = pFsAccess->read(maxTemperatureFile, maxTemperature);
+    int32_t rawTemperature = 0;
+    auto result = pFsAccess->read(temperatureFile, rawTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, maxTemperatureFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, temperatureFile.c_str(), result);
         return result;
     }
 
-    temperature = static_cast<double>(maxTemperature) / milliFactor;
+    temperature = static_cast<double>(rawTemperature) / milliFactor;
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxTemperatureImp::getMaxTemperature(double &temperature) {
+    return readHwmonTemperature(getMaxTemperatureFile(), temperature);
+}
+
+ze_result_t LinuxTemperatureImp::getCriticalTemperature(double *pCriticalTemperature) {
+    switch (this->type) {
+    case ZES_TEMP_SENSORS_GPU:
+        return readHwmonTemperature(this->gpuCriticalTemperatureFile, *pCriticalTemperature);
+    case ZES_TEMP_SENSORS_MEMORY:
+        return readHwmonTemperature(this->memoryCriticalTemperatureFile, *pCriticalTemperature);
+    default:
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 }
 
 ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
@@ -136,12 +150,16 @@ void LinuxTemperatureImp::setSensorType(zes_temp_sensors_t sensorType) {
 void LinuxTemperatureImp::reInit() {
     packageMaxTemperatureFile.clear();
     memoryMaxTemperatureFile.clear();
+    gpuCriticalTemperatureFile.clear();
+    memoryCriticalTemperatureFile.clear();
     init();
 }
 
 void LinuxTemperatureImp::init() {
     packageMaxTemperatureFile = pLinuxSysmanImp->getIntelGraphicsHwmonFile(subdeviceId, isSubdevice, NodeName::packageTemperatureEmergency);
     memoryMaxTemperatureFile = pLinuxSysmanImp->getIntelGraphicsHwmonFile(subdeviceId, isSubdevice, NodeName::memoryTemperatureEmergency);
+    gpuCriticalTemperatureFile = pLinuxSysmanImp->getIntelGraphicsHwmonFile(subdeviceId, isSubdevice, NodeName::packageTemperatureCritical);
+    memoryCriticalTemperatureFile = pLinuxSysmanImp->getIntelGraphicsHwmonFile(subdeviceId, isSubdevice, NodeName::memoryTemperatureCritical);
 }
 
 void OsTemperature::getSupportedSensors(OsSysman *pOsSysman, std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) {

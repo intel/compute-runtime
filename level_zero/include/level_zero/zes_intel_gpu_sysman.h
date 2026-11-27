@@ -505,6 +505,38 @@ typedef struct _zes_intel_mem_page_offline_properties_exp_t {
 } zes_intel_mem_page_offline_properties_exp_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_TEMP_CRITICAL_EXP_PROPERTIES_NAME
+/// @brief Temperature critical properties extension name
+#define ZES_INTEL_TEMP_CRITICAL_EXP_PROPERTIES_NAME "ZES_intel_experimental_temperature_critical_properties"
+#endif // ZES_INTEL_TEMP_CRITICAL_EXP_PROPERTIES_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Temperature critical properties extension Version(s)
+typedef enum _zes_intel_temp_critical_exp_properties_version_t {
+    ZES_INTEL_TEMP_CRITICAL_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZES_INTEL_TEMP_CRITICAL_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZES_INTEL_TEMP_CRITICAL_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_temp_critical_exp_properties_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Temperature critical properties
+///
+/// @details
+///     - This structure can be passed in the 'pNext' of ::zes_temp_properties_t
+///     - The critical temperature is reported for ::ZES_TEMP_SENSORS_GPU and
+///       ::ZES_TEMP_SENSORS_MEMORY sensors.
+typedef struct _zes_intel_temp_critical_exp_properties_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES
+    void *pNext;                    ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    double criticalTemperature;     ///< [out] Severe overheating threshold in degrees Celsius of the domain
+                                    ///< measured by the sensor. At or above it the hardware engages aggressive
+                                    ///< protection, such as severe frequency clamping or fan overrides,
+                                    ///< because standard throttling is no longer sufficient.
+                                    ///< Returns 0 if the critical temperature is not available or cannot be retrieved.
+} zes_intel_temp_critical_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME
 /// @brief Driver info logs extension name
 #define ZES_INTEL_DRIVER_INFO_LOGS_EXP_NAME "ZES_intel_experimental_driver_info_logs"

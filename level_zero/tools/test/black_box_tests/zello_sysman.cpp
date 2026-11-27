@@ -631,7 +631,8 @@ void testSysmanTemperature(ze_device_handle_t &device) {
     VALIDATECALL(zesDeviceEnumTemperatureSensors(device, &count, handles.data()));
 
     for (const auto &handle : handles) {
-        zes_temp_properties_t properties = {};
+        zes_intel_temp_critical_exp_properties_t criticalProperties = {ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES};
+        zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &criticalProperties};
         VALIDATECALL(zesTemperatureGetProperties(handle, &properties));
 
         double temperature = 0;
@@ -640,6 +641,7 @@ void testSysmanTemperature(ze_device_handle_t &device) {
             std::cout << "For subDevice " << properties.subdeviceId << " temperature current state for "
                       << getTemperatureSensorType(properties.type) << " is: " << temperature << std::endl;
             std::cout << "maxTemperature = " << properties.maxTemperature << std::endl;
+            std::cout << "criticalTemperature = " << criticalProperties.criticalTemperature << std::endl;
         }
     }
 }

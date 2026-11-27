@@ -85,6 +85,8 @@ const std::string mockMemoryEmergencyHwmonFile0(mockTemperatureHwmonDir + "/hwmo
 const std::string mockMemoryTemperatureHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp3_input");
 const std::string mockGpuTemperatureHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp2_input");
 const std::string mockTemperatureHwmonSubDir0(mockTemperatureHwmonDir + "/hwmon0/");
+const std::string mockTemp2CriticalHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp2_crit");
+const std::string mockTemp3CriticalHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp3_crit");
 
 class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
   public:
@@ -108,6 +110,12 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
 
     ze_result_t scanResult = ZE_RESULT_SUCCESS;
     std::vector<std::string> directoryEntries = {"hwmon0"};
+    ze_result_t temp2CriticalReadResult = ZE_RESULT_SUCCESS;
+    ze_result_t temp3CriticalReadResult = ZE_RESULT_SUCCESS;
+    int32_t temp2CriticalValue = 100000;
+    int32_t temp3CriticalValue = 105000;
+    bool temp2CriticalExists = true;
+    bool temp3CriticalExists = true;
     ze_result_t hwmonNameReadResult0 = ZE_RESULT_SUCCESS;
     ze_result_t hwmonNameReadResult1 = ZE_RESULT_SUCCESS;
     ze_result_t temp2EmergencyReadResult = ZE_RESULT_SUCCESS;
@@ -169,6 +177,18 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
             }
             return gpuTemperatureReadResult;
         }
+        if (file == mockTemp2CriticalHwmonFile0) {
+            if (temp2CriticalReadResult == ZE_RESULT_SUCCESS) {
+                val = temp2CriticalValue;
+            }
+            return temp2CriticalReadResult;
+        }
+        if (file == mockTemp3CriticalHwmonFile0) {
+            if (temp3CriticalReadResult == ZE_RESULT_SUCCESS) {
+                val = temp3CriticalValue;
+            }
+            return temp3CriticalReadResult;
+        }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -200,6 +220,12 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
         }
         if (file == mockTemperatureHwmonSubDir0) {
             return true;
+        }
+        if (file == mockTemp2CriticalHwmonFile0) {
+            return temp2CriticalExists;
+        }
+        if (file == mockTemp3CriticalHwmonFile0) {
+            return temp3CriticalExists;
         }
         return false;
     }

@@ -141,7 +141,9 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNamesThe
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_STREQ("xe_amc_alert_reason", pSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).c_str());
     EXPECT_STREQ("temp2_emergency", pSysmanKmdInterface->getNodeFileName(NodeName::packageTemperatureEmergency).c_str());
+    EXPECT_STREQ("temp2_crit", pSysmanKmdInterface->getNodeFileName(NodeName::packageTemperatureCritical).c_str());
     EXPECT_STREQ("temp3_emergency", pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperatureEmergency).c_str());
+    EXPECT_STREQ("temp3_crit", pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperatureCritical).c_str());
     EXPECT_STREQ("temp3_input", pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).c_str());
     EXPECT_STREQ("temp2_input", pSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature).c_str());
 }
@@ -151,7 +153,9 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNameForU
     pMockSysmanKmdInterface->nodeNameToFileMap.clear();
     EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).empty());
     EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::packageTemperatureEmergency).empty());
+    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::packageTemperatureCritical).empty());
     EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperatureEmergency).empty());
+    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperatureCritical).empty());
     EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).empty());
     EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature).empty());
 }

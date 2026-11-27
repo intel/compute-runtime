@@ -110,6 +110,16 @@ class PublicWddmTemperatureImp : public L0::Sysman::WddmTemperatureImp {
     using L0::Sysman::WddmTemperatureImp::type;
 };
 
+class MockWddmCriticalTemperatureImp : public PublicWddmTemperatureImp {
+  public:
+    MockWddmCriticalTemperatureImp(L0::Sysman::OsSysman *pOsSysman) : PublicWddmTemperatureImp(pOsSysman) {}
+    ze_result_t getCriticalTemperature(double *pCriticalTemperature) override {
+        *pCriticalTemperature = mockCriticalTemperature;
+        return ZE_RESULT_SUCCESS;
+    }
+    double mockCriticalTemperature = 95.0;
+};
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

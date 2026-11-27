@@ -127,5 +127,6 @@ typedef struct _ze_device_readonly_memory_ext_properties_t {
 #define ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE static_cast<zes_structure_type_ext_t>(0x0004001D)
 #define ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_SAMPLE_PROPERTIES_EXP static_cast<zes_structure_type_ext_t>(0x0004001E)
 #define ZES_INTEL_STRUCTURE_TYPE_MEM_BANDWIDTH_EXP static_cast<zes_structure_type_ext_t>(0x0004001F)
+#define ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040020)
 
 #endif

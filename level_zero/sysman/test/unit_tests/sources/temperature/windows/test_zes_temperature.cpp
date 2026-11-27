@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/temperature/windows/sysman_os_temperature_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/temperature/windows/mock_temperature.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
 namespace Sysman {
@@ -71,6 +72,38 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidOsTemperatureObjectWhenGettingT
     EXPECT_FALSE(properties.isThreshold1Supported);
     EXPECT_FALSE(properties.isThreshold2Supported);
     EXPECT_EQ(properties.maxTemperature, pKmdSysManager->mockMaxTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingCriticalPropertiesThenZeroCriticalTemperatureIsReturned) {
+    auto handles = getTempHandles(temperatureHandleComponentCount);
+    for (auto handle : handles) {
+        zes_intel_temp_critical_exp_properties_t criticalProperties = {ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES, nullptr, -1.0};
+        zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &criticalProperties};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
+        EXPECT_EQ(&criticalProperties, properties.pNext);
+        EXPECT_DOUBLE_EQ(0.0, criticalProperties.criticalTemperature);
+    }
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenOsTemperatureReportingCriticalTemperatureWhenGettingCriticalPropertiesThenReportedCriticalTemperatureIsReturned) {
+    TemperatureImp temperatureImp(pOsSysman, false, 0u, ZES_TEMP_SENSORS_GPU, 0u);
+    auto pMockOsTemperature = std::make_unique<MockWddmCriticalTemperatureImp>(pOsSysman);
+    const double expectedCriticalTemperature = pMockOsTemperature->mockCriticalTemperature;
+    temperatureImp.pOsTemperature = std::move(pMockOsTemperature);
+
+    zes_intel_temp_critical_exp_properties_t criticalProperties = {ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES, nullptr, -1.0};
+    zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &criticalProperties};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.temperatureGetProperties(&properties));
+    EXPECT_DOUBLE_EQ(expectedCriticalTemperature, criticalProperties.criticalTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenUnknownStructureInPNextWhenGettingPropertiesThenInvalidArgumentIsReturned) {
+    auto handles = getTempHandles(temperatureHandleComponentCount);
+    for (auto handle : handles) {
+        zes_base_properties_t unknownProperties = {ZES_STRUCTURE_TYPE_FORCE_UINT32, nullptr};
+        zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &unknownProperties};
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesTemperatureGetProperties(handle, &properties));
+    }
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidOsTemperatureObjectWhenGettingTemperatureSensorThenCallSucceeds) {

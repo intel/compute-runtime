@@ -115,7 +115,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenGet
     auto handles = getTempHandles(temperatureHandleComponentCount);
     uint32_t sensorTypeIndex = 0;
     for (auto handle : handles) {
-        zes_temp_properties_t properties;
+        zes_temp_properties_t properties = {};
 
         ze_result_t result = zesTemperatureGetProperties(handle, &properties);
 

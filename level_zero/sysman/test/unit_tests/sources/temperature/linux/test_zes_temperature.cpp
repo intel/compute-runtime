@@ -9,6 +9,7 @@
 
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/temperature/linux/mock_sysfs_temperature.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 #include <algorithm>
 
@@ -25,6 +26,9 @@ constexpr double expectedMemoryTemperature = 39.0;
 constexpr double expectedGpuTemperature = 45.0;
 constexpr double expectedPackageEmergencyTemperature = 125.0;
 constexpr double expectedMemoryEmergencyTemperature = 111.0;
+constexpr double expectedPackageCriticalTemperature = 100.0;
+constexpr double expectedMemoryCriticalTemperature = 105.0;
+constexpr double unsetCriticalTemperature = -1.0;
 
 class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
@@ -310,6 +314,14 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     }
 
+    double getCriticalTemperature(zes_temp_sensors_t sensorType) {
+        TemperatureImp temperatureImp(pOsSysman, false, 0u, sensorType, 0u);
+        zes_intel_temp_critical_exp_properties_t criticalProperties = {ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES, nullptr, unsetCriticalTemperature};
+        zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &criticalProperties};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.temperatureGetProperties(&properties));
+        return criticalProperties.criticalTemperature;
+    }
+
     void setUpHwmonKmdInterfaceI915Upstream() {
         pFsAccess = new MockTemperatureFsAccess();
         pProcfsAccess = new MockTemperatureProcfsAccess();
@@ -519,6 +531,122 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenTemp3EmergencyNodeAppearingAfterReIn
     EXPECT_DOUBLE_EQ(expectedMemoryEmergencyTemperature, properties.maxTemperature);
 }
 
+TEST_F(SysmanDeviceTemperatureFixture, GivenXeTemperatureNodeMappingsWhenGettingCriticalPropertiesThenCriticalTemperatureIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+
+    EXPECT_DOUBLE_EQ(expectedPackageCriticalTemperature, getCriticalTemperature(ZES_TEMP_SENSORS_GPU));
+    EXPECT_DOUBLE_EQ(expectedMemoryCriticalTemperature, getCriticalTemperature(ZES_TEMP_SENSORS_MEMORY));
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenUnsupportedSensorTypeWhenGettingCriticalPropertiesThenZeroIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+
+    const std::vector<zes_temp_sensors_t> unsupportedSensorTypes = {ZES_TEMP_SENSORS_GLOBAL, ZES_TEMP_SENSORS_VOLTAGE_REGULATOR,
+                                                                    ZES_TEMP_SENSORS_GPU_BOARD, ZES_TEMP_SENSORS_VOLTAGE_REGULATOR_SINGLE,
+                                                                    ZES_TEMP_SENSORS_GPU_BOARD_SINGLE, ZES_TEMP_SENSORS_COMPOSITE};
+    for (const auto sensorType : unsupportedSensorTypes) {
+        EXPECT_DOUBLE_EQ(0.0, getCriticalTemperature(sensorType));
+    }
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenCriticalTemperatureNodeMissingWhenGettingCriticalPropertiesThenZeroIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp2CriticalExists = false;
+    pFsAccess->temp3CriticalExists = false;
+
+    EXPECT_DOUBLE_EQ(0.0, getCriticalTemperature(ZES_TEMP_SENSORS_GPU));
+    EXPECT_DOUBLE_EQ(0.0, getCriticalTemperature(ZES_TEMP_SENSORS_MEMORY));
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenCriticalTemperatureReadFailureWhenGettingCriticalPropertiesThenZeroIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp2CriticalReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pFsAccess->temp3CriticalReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_DOUBLE_EQ(0.0, getCriticalTemperature(ZES_TEMP_SENSORS_GPU));
+    EXPECT_DOUBLE_EQ(0.0, getCriticalTemperature(ZES_TEMP_SENSORS_MEMORY));
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenI915KmdInterfaceWhenGettingCriticalPropertiesThenZeroIsReturnedWithoutDirectoryLookup) {
+    setUpHwmonKmdInterfaceI915Upstream();
+
+    EXPECT_DOUBLE_EQ(0.0, getCriticalTemperature(ZES_TEMP_SENSORS_GPU));
+    EXPECT_DOUBLE_EQ(0.0, getCriticalTemperature(ZES_TEMP_SENSORS_MEMORY));
+    EXPECT_EQ(0u, pFsAccess->listDirectoryCalled);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenCriticalTemperatureNodeAppearingAfterReInitWhenGettingCriticalPropertiesThenCriticalTemperatureIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp2CriticalExists = false;
+
+    TemperatureImp temperatureImp(pOsSysman, false, 0u, ZES_TEMP_SENSORS_GPU, 0u);
+    zes_intel_temp_critical_exp_properties_t criticalProperties = {ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES, nullptr, unsetCriticalTemperature};
+    zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &criticalProperties};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.temperatureGetProperties(&properties));
+    EXPECT_DOUBLE_EQ(0.0, criticalProperties.criticalTemperature);
+
+    pFsAccess->temp2CriticalExists = true;
+    temperatureImp.reInit();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.temperatureGetProperties(&properties));
+    EXPECT_DOUBLE_EQ(expectedPackageCriticalTemperature, criticalProperties.criticalTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenCriticalPropertiesInPNextWhenGettingPropertiesThenStypeAndPNextArePreserved) {
+    setUpHwmonKmdInterfaceXe();
+
+    TemperatureImp temperatureImp(pOsSysman, false, 0u, ZES_TEMP_SENSORS_MEMORY, 0u);
+    zes_intel_temp_critical_exp_properties_t criticalProperties = {ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES, nullptr, unsetCriticalTemperature};
+    zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &criticalProperties};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.temperatureGetProperties(&properties));
+    EXPECT_EQ(ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, properties.stype);
+    EXPECT_EQ(&criticalProperties, properties.pNext);
+    EXPECT_DOUBLE_EQ(expectedMemoryCriticalTemperature, criticalProperties.criticalTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenUnknownStructureInPNextWhenGettingPropertiesThenInvalidArgumentIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+
+    TemperatureImp temperatureImp(pOsSysman, false, 0u, ZES_TEMP_SENSORS_MEMORY, 0u);
+    zes_base_properties_t unknownProperties = {ZES_STRUCTURE_TYPE_FORCE_UINT32, nullptr};
+    zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &unknownProperties};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, temperatureImp.temperatureGetProperties(&properties));
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenXeCriticalTemperatureNodesWhenQueryingCriticalPropertiesThroughApiThenGpuAndMemorySensorsReportCriticalTemperatures, IsBmgOrCri) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->memoryTemperatureExists = true;
+    pFsAccess->gpuTemperatureExists = true;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(device->toHandle(), &count, nullptr));
+    ASSERT_GT(count, 0u);
+    std::vector<zes_temp_handle_t> handles(count, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(device->toHandle(), &count, handles.data()));
+
+    bool gpuSensorFound = false;
+    bool memorySensorFound = false;
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_intel_temp_critical_exp_properties_t criticalProperties = {ZES_INTEL_STRUCTURE_TYPE_TEMP_CRITICAL_EXP_PROPERTIES, nullptr, unsetCriticalTemperature};
+        zes_temp_properties_t properties = {ZES_STRUCTURE_TYPE_TEMP_PROPERTIES, &criticalProperties};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
+        if (properties.type == ZES_TEMP_SENSORS_GPU) {
+            gpuSensorFound = true;
+            EXPECT_DOUBLE_EQ(expectedPackageCriticalTemperature, criticalProperties.criticalTemperature);
+        } else if (properties.type == ZES_TEMP_SENSORS_MEMORY) {
+            memorySensorFound = true;
+            EXPECT_DOUBLE_EQ(expectedMemoryCriticalTemperature, criticalProperties.criticalTemperature);
+        } else {
+            EXPECT_DOUBLE_EQ(0.0, criticalProperties.criticalTemperature);
+        }
+    }
+    EXPECT_TRUE(gpuSensorFound);
+    EXPECT_TRUE(memorySensorFound);
+}
+
 TEST_F(SysmanDeviceTemperatureFixture, GivenDevicePciBdfIsUnresolvableWhenGettingPropertiesThenDefaultMaxTemperatureIsReturned) {
     setUpHwmonKmdInterfaceXe();
     pSysfsAccess->realPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -569,9 +697,11 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonDirectoryIsSearchedWhenInitiali
     PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
-    EXPECT_EQ(0u, pFsAccess->listDirectoryPathRequested.find("/sys/bus/pci/devices/"));
-    EXPECT_EQ(std::string::npos, pFsAccess->listDirectoryPathRequested.find("/sys/class/drm/"));
-    EXPECT_EQ(mockTemperatureHwmonDir, pFsAccess->listDirectoryPathRequested);
+    ASSERT_FALSE(pFsAccess->listDirectoryPathRequested.empty());
+    const auto &hwmonDirRequested = pFsAccess->listDirectoryPathRequested;
+    EXPECT_TRUE(hwmonDirRequested.starts_with("/sys/bus/pci/devices/"));
+    EXPECT_EQ(std::string::npos, hwmonDirRequested.find("/sys/class/drm/"));
+    EXPECT_EQ(mockTemperatureHwmonDir, hwmonDirRequested);
 }
 
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBmgOrCri) {
