@@ -9,7 +9,9 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/cache_policy_from_xe3p_and_later.inl"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/enable_product.inl"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/xe3p_core/hw_cmds_nvlp.h"
 
@@ -116,4 +118,7 @@ void NVLP::setupHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAnd
 }
 
 void (*NVLP::setupHardwareInfo)(HardwareInfo *, bool) = NVLP::setupHardwareInfoImpl;
+
+template struct L1CachePolicyHelper<IGFX_NVL>;
+template EnableGfxProductHw<IGFX_NVL>::EnableGfxProductHw();
 } // namespace NEO

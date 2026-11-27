@@ -6,11 +6,9 @@
  */
 
 #ifdef SUPPORT_CRI
-template struct L1CachePolicyHelper<IGFX_CRI>;
 static EnableGfxProductHw<IGFX_CRI> enableGfxProductHwCRI;
 #endif
 
 #ifdef SUPPORT_NVLP
-template struct L1CachePolicyHelper<IGFX_NVL>;
 static EnableGfxProductHw<IGFX_NVL> enableGfxProductHwNVL;
 #endif
