@@ -10,6 +10,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/adapter_info_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/adapter_info_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_win_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_win_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/mapped_file_win_tests.cpp

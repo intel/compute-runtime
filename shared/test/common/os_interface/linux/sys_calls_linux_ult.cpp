@@ -316,6 +316,10 @@ unsigned long getNumThreads() {
     return 1;
 }
 
+bool isShutdownInProgress() {
+    return false;
+}
+
 int access(const std::string &pathName, int mode) {
     accessFuncCalled++;
     if (sysCallsAccess != nullptr) {

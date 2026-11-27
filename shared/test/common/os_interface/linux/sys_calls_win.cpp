@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,12 +12,6 @@
 #include <unistd.h>
 
 namespace NEO {
-
-namespace SysCalls {
-bool isShutdownInProgress() {
-    return false;
-}
-} // namespace SysCalls
 
 unsigned int readEnablePreemptionRegKey() {
     return 1;

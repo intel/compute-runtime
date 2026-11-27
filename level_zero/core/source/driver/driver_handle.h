@@ -241,6 +241,10 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices, ze_result_t *returnValue);
 
   protected:
+    ze_result_t createContextImpl(const ze_context_desc_t *desc,
+                                  uint32_t numDevices,
+                                  ze_device_handle_t *phDevices,
+                                  ze_context_handle_t *phContext);
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,
                                                NEO::SVMAllocsManager::MapBasedAllocationTracker &storage,
                                                NEO::SvmAllocationData *allocData,

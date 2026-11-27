@@ -9,6 +9,7 @@
 
 #include "shared/source/memory_manager/deferrable_deletion.h"
 #include "shared/source/os_interface/os_thread.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 
 #include <algorithm>
 #include <iterator>
@@ -19,26 +20,28 @@ DeferredDeleter::DeferredDeleter() = default;
 void DeferredDeleter::stop() {
     // Called with threadMutex acquired
     if (worker != nullptr) {
-        // Working thread was created so we can safely stop it
-        std::unique_lock<std::mutex> lock(queueMutex);
-        // Make sure that working thread really started
-        while (!doWorkInBackground) {
+        if (!SysCalls::isShutdownInProgress()) {
+            // Working thread was created so we can safely stop it
+            std::unique_lock<std::mutex> lock(queueMutex);
+            // Make sure that working thread really started
+            while (!doWorkInBackground) {
+                lock.unlock();
+                lock.lock();
+            }
+            // Signal working thread to finish its job
+            doWorkInBackground = false;
             lock.unlock();
-            lock.lock();
+            condition.notify_one();
+            // Wait for the working job to exit main loop
+            while (!exitedMainLoop) {
+                std::this_thread::yield();
+            }
         }
-        // Signal working thread to finish its job
-        doWorkInBackground = false;
-        lock.unlock();
-        condition.notify_one();
         worker->detach();
-        // Wait for the working job to exit main loop
-        while (!exitedMainLoop) {
-            std::this_thread::yield();
-        }
         // Delete working thread
         worker.reset();
     }
-    drain(false, false);
+    DeferredDeleter::drain(false, false);
 }
 
 void DeferredDeleter::safeStop() {
@@ -76,9 +79,18 @@ void DeferredDeleter::addClient() {
 void DeferredDeleter::removeClient() {
     std::lock_guard<std::mutex> lock(threadMutex);
     --numClients;
-    if (numClients == 0) {
-        stop();
+    if (numClients == 0 && !SysCalls::isShutdownInProgress()) {
+        this->drain(true, false);
     }
+}
+
+bool DeferredDeleter::deferDeletionIfHasClients(std::unique_ptr<DeferrableDeletion> &deletion) {
+    std::lock_guard<std::mutex> lock(this->threadMutex);
+    if (this->numClients == 0) {
+        return false;
+    }
+    this->deferDeletion(deletion.release());
+    return true;
 }
 
 void DeferredDeleter::ensureThread() {
@@ -125,9 +137,9 @@ void *DeferredDeleter::run(void *arg) {
 
 void DeferredDeleter::drain(bool blocking, bool hostptrsOnly) {
     clearQueue(hostptrsOnly);
-    if (blocking) {
+    if (blocking && !areElementsReleased(hostptrsOnly) && !SysCalls::isShutdownInProgress()) {
         while (!areElementsReleased(hostptrsOnly)) {
-            ;
+            std::this_thread::yield();
         }
     }
 }

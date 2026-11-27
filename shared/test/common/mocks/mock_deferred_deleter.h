@@ -66,8 +66,6 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     void forceStop();
 
-    void allowEarlyStopThread();
-
     void expectDrainBlockingValue(bool value);
 
     bool expectedDrainValue = false;
@@ -75,5 +73,8 @@ class MockDeferredDeleter : public DeferredDeleter {
     bool expectDrainCalled = false;
 
     void clearQueue(bool hostptrsOnly) override;
+
+  private:
+    void allowEarlyStopThread();
 };
 } // namespace NEO

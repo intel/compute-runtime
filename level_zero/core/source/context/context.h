@@ -382,6 +382,8 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
 
+    void registerDeferredDeleterClient();
+
     void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
         this->numDevices = numDevices;
         if (numDevices > 0) {

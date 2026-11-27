@@ -87,11 +87,28 @@ TEST_F(DeferredDeleterTest, WhenAddingAndRemovingClientsThenOperationsAreHandled
     EXPECT_TRUE(deleter->isThreadRunning());
     EXPECT_TRUE(deleter->isWorking());
     EXPECT_EQ(1, deleter->getClientsNum());
-    deleter->allowEarlyStopThread();
     deleter->DeferredDeleter::removeClient();
-    EXPECT_FALSE(deleter->isThreadRunning());
-    EXPECT_FALSE(deleter->isWorking());
+    EXPECT_TRUE(deleter->isThreadRunning());
+    EXPECT_TRUE(deleter->isWorking());
     EXPECT_EQ(0, deleter->getClientsNum());
+    deleter->forceStop();
+    EXPECT_FALSE(deleter->isThreadRunning());
+}
+
+TEST_F(DeferredDeleterTest, givenWorkerStartedByFirstClientWhenLastClientIsRemovedAndClientIsAddedAgainThenSameWorkerIsReused) {
+    deleter->DeferredDeleter::addClient();
+    waitForAsyncThread();
+    auto threadHandle = deleter->getThreadHandle();
+    EXPECT_NE(nullptr, threadHandle);
+
+    for (int i = 0; i < 3; i++) {
+        deleter->DeferredDeleter::removeClient();
+        EXPECT_EQ(threadHandle, deleter->getThreadHandle());
+        deleter->DeferredDeleter::addClient();
+        EXPECT_EQ(threadHandle, deleter->getThreadHandle());
+    }
+
+    deleter->DeferredDeleter::removeClient();
     deleter->forceStop();
     EXPECT_FALSE(deleter->isThreadRunning());
 }
@@ -119,23 +136,22 @@ TEST_F(DeferredDeleterTest, GivenThreadNotRunningWhenStoppingThenQueueIsEmptied)
     deleter->DeferredDeleter::deferDeletion(deletion);
     EXPECT_FALSE(deleter->isQueueEmpty());
     EXPECT_FALSE(deleter->isThreadRunning());
-    deleter->expectDrainBlockingValue(false);
     deleter->forceStop();
     EXPECT_TRUE(deleter->isQueueEmpty());
-    EXPECT_NE(0, deleter->drainCalled);
 }
 
-TEST_F(DeferredDeleterTest, GivenThreadRunningWhenStoppingThenQueueIsEmptied) {
+TEST_F(DeferredDeleterTest, GivenThreadRunningWhenLastClientIsRemovedThenQueueIsDrainedAndThreadIsKept) {
     deleter->DeferredDeleter::addClient();
     auto deletion = createDeletion();
     deleter->DeferredDeleter::deferDeletion(deletion);
     EXPECT_TRUE(deleter->isThreadRunning());
-    deleter->allowEarlyStopThread();
-    deleter->expectDrainBlockingValue(false);
+    deleter->expectDrainBlockingValue(true);
     deleter->DeferredDeleter::removeClient();
-    EXPECT_FALSE(deleter->isThreadRunning());
+    EXPECT_TRUE(deleter->isThreadRunning());
     EXPECT_TRUE(deleter->isQueueEmpty());
-    EXPECT_NE(0, deleter->drainCalled);
+    EXPECT_EQ(1, deleter->drainCalled);
+    deleter->forceStop();
+    EXPECT_FALSE(deleter->isThreadRunning());
 }
 
 TEST_F(DeferredDeleterTest, GivenAsyncThreadWaitsForQueueItemWhenDeletingThenQueueIsEmptied) {
@@ -148,8 +164,9 @@ TEST_F(DeferredDeleterTest, GivenAsyncThreadWaitsForQueueItemWhenDeletingThenQue
 
     EXPECT_TRUE(deleter->isThreadRunning());
     EXPECT_TRUE(deleter->isWorking());
-    deleter->allowEarlyStopThread();
     deleter->DeferredDeleter::removeClient();
+    EXPECT_TRUE(deleter->isThreadRunning());
+    deleter->forceStop();
 
     EXPECT_TRUE(deleter->isQueueEmpty());
 }
@@ -166,8 +183,9 @@ TEST_F(DeferredDeleterTest, GivenAsyncThreadClearQueueWithoutWaitingForQueueItem
     waitForAsyncThread();
 
     EXPECT_TRUE(deleter->isThreadRunning());
-    deleter->allowEarlyStopThread();
     deleter->DeferredDeleter::removeClient();
+    EXPECT_TRUE(deleter->isThreadRunning());
+    deleter->forceStop();
     EXPECT_TRUE(deleter->isQueueEmpty());
 }
 
@@ -192,8 +210,9 @@ TEST_F(DeferredDeleterTest, GivenAsyncThreadWaitsForQueueItemTwiceWhenDeletingTh
     auto secondDeletion = createDeletion();
     deleter->DeferredDeleter::deferDeletion(secondDeletion);
 
-    deleter->allowEarlyStopThread();
     deleter->DeferredDeleter::removeClient();
+    EXPECT_TRUE(deleter->isThreadRunning());
+    deleter->forceStop();
 
     EXPECT_TRUE(deleter->isQueueEmpty());
     EXPECT_EQ(0, deleter->getElementsToRelease());
