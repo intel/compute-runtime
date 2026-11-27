@@ -72,6 +72,10 @@ class DriverModel : public NonCopyableClass {
         return 0u;
     }
 
+    virtual uint32_t getDeviceMemoryMaxBandwidthInMbps(uint32_t tileId) {
+        return 0u;
+    }
+
     virtual bool isDriverAvailable() {
         return true;
     }

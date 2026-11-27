@@ -249,6 +249,7 @@ class IoctlHelper {
     virtual std::string getFileForMaxGpuFrequency() const = 0;
     virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const = 0;
     virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const = 0;
+    virtual std::string getFileForMaxMemoryBandwidthOfSubDevice(int tileId) const = 0;
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool requiresUserFenceSetup(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
@@ -347,6 +348,7 @@ class IoctlHelperI915 : public IoctlHelper {
     std::string getFileForMaxGpuFrequency() const override;
     std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const override;
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const override;
+    std::string getFileForMaxMemoryBandwidthOfSubDevice(int tileId) const override;
     void configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
                           std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) override;
     bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;

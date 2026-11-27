@@ -270,6 +270,26 @@ bool Drm::readSysFsAsString(const std::string &relativeFilePath, std::string &re
     return true;
 }
 
+bool Drm::readSysFsAsUint32(const std::string &relativeFilePath, uint32_t &readValue) {
+    if (relativeFilePath.empty()) {
+        return false;
+    }
+
+    std::string readString(64, '\0');
+    errno = 0;
+    if (readSysFsAsString(relativeFilePath, readString) == false) {
+        return false;
+    }
+
+    char *endPtr = nullptr;
+    const uint32_t value = static_cast<uint32_t>(std::strtoul(readString.data(), &endPtr, 10));
+    if ((endPtr == readString.data()) || (errno != 0)) {
+        return false;
+    }
+    readValue = value;
+    return true;
+}
+
 int Drm::queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) {
     GemContextParam contextParam = {0};
     contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamGttSize);
@@ -1210,19 +1230,19 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
 }
 
 uint32_t Drm::getDeviceMemoryMaxClockRateInMhz(uint32_t tileId) {
-    const std::string relativefilePath = ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(tileId);
-    std::string readString(64, '\0');
-    errno = 0;
-    if (readSysFsAsString(relativefilePath, readString) == false) {
-        return 0u;
-    }
-
-    char *endPtr = nullptr;
-    const uint32_t clkRate = static_cast<uint32_t>(std::strtoul(readString.data(), &endPtr, 10));
-    if ((endPtr == readString.data()) || (errno != 0)) {
+    uint32_t clkRate = 0u;
+    if (readSysFsAsUint32(ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(tileId), clkRate) == false) {
         return 0u;
     }
     return clkRate;
+}
+
+uint32_t Drm::getDeviceMemoryMaxBandwidthInMbps(uint32_t tileId) {
+    uint32_t maxBandwidthInMbps = 0u;
+    if (readSysFsAsUint32(ioctlHelper->getFileForMaxMemoryBandwidthOfSubDevice(tileId), maxBandwidthInMbps) == false) {
+        return 0u;
+    }
+    return maxBandwidthInMbps;
 }
 
 uint64_t Drm::getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId) {

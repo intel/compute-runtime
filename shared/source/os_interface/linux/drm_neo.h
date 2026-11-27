@@ -288,8 +288,10 @@ class Drm : public DriverModel {
     bool isVmBindPatIndexProgrammingSupported() const { return vmBindPatIndexProgrammingSupported; }
     uint32_t getDeviceMemoryMaxClockRateInMhz(uint32_t tileId) override;
     uint64_t getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId) override;
+    uint32_t getDeviceMemoryMaxBandwidthInMbps(uint32_t tileId) override;
     void cleanup() override;
     bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
+    bool readSysFsAsUint32(const std::string &relativeFilePath, uint32_t &readValue);
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();
     MOCKABLE_VIRTUAL std::string getSysFsPciPathBaseName();
     int getNumaNode();

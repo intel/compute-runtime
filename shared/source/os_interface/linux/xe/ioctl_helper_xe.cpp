@@ -2046,8 +2046,12 @@ inline std::string getDirectoryWithGTFrequencyFiles(int tileId, int gtId) {
     return "/device/tile" + std::to_string(tileId) + "/gt" + std::to_string(gtId) + "/freq0";
 }
 
+inline std::string getDirectoryWithMemFiles(int tileId) {
+    return "/device/tile" + std::to_string(tileId) + "/memory";
+}
+
 inline std::string getDirectoryWithMemFrequencyFiles(int tileId) {
-    return "/device/tile" + std::to_string(tileId) + "/memory/freq0";
+    return getDirectoryWithMemFiles(tileId) + "/freq0";
 }
 
 std::string IoctlHelperXe::getFileForMaxGpuFrequency() const {
@@ -2060,6 +2064,10 @@ std::string IoctlHelperXe::getFileForMaxGpuFrequencyOfSubDevice(int tileId) cons
 
 std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const {
     return getDirectoryWithMemFrequencyFiles(tileId) + "/max_freq";
+}
+
+std::string IoctlHelperXe::getFileForMaxMemoryBandwidthOfSubDevice(int tileId) const {
+    return getDirectoryWithMemFiles(tileId) + "/max_bw";
 }
 
 void IoctlHelperXe::configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,

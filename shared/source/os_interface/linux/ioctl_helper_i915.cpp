@@ -460,6 +460,10 @@ std::string IoctlHelperI915::getFileForMaxMemoryFrequencyOfSubDevice(int tileId)
     return "/gt/gt" + std::to_string(tileId) + "/mem_RP0_freq_mhz";
 }
 
+std::string IoctlHelperI915::getFileForMaxMemoryBandwidthOfSubDevice(int tileId) const {
+    return {};
+}
+
 void IoctlHelperI915::configureCcsMode(std::vector<std::string> &files, const std::string expectedFilePrefix, uint32_t ccsMode,
                                        std::vector<std::tuple<std::string, uint32_t>> &deviceCcsModeVec) {
 

@@ -1134,6 +1134,14 @@ TEST_F(IoctlHelperXeTest, whenGettingFileNamesForFrequencyThenProperStringIsRetu
     EXPECT_STREQ("/device/tile1/memory/freq0/max_freq", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
 }
 
+TEST_F(IoctlHelperXeTest, whenGettingFileNameForMaxMemoryBandwidthThenProperStringIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+    ioctlHelper->initialize();
+    EXPECT_STREQ("/device/tile1/memory/max_bw", ioctlHelper->getFileForMaxMemoryBandwidthOfSubDevice(1).c_str());
+}
+
 TEST_F(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     int ret;
     DebugManagerStateRestore restorer;

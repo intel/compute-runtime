@@ -154,6 +154,24 @@ TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryMaxClockRateInMhzIsCalledThe
     EXPECT_EQ(800u, drm.getDeviceMemoryMaxClockRateInMhz(0));
 }
 
+TEST(DrmTest, GivenValidSysfsNodeWhenGetDeviceMemoryMaxBandwidthInMbpsIsCalledThenReturnSuccess) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("800");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        return 4;
+    });
+    EXPECT_EQ(800u, drm.getDeviceMemoryMaxBandwidthInMbps(0));
+}
+
 TEST(DrmTest, givenFailedProductHelperSetupHardwareInfoWhenDrmSetupHardwareInfoCalledThenFailureIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -314,6 +332,67 @@ TEST(DrmTest, givenSysfsNodeReadFailsWithImproperDataWhenGetDeviceMemoryMaxClock
         return 4;
     });
     EXPECT_EQ(0u, drm.getDeviceMemoryMaxClockRateInMhz(0));
+}
+
+TEST(DrmTest, givenSysfsFileOpenFailsWhenGetDeviceMemoryMaxBandwidthInMbpsIsCalledThenZeroIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return -1;
+    });
+
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxBandwidthInMbps(0));
+}
+
+TEST(DrmTest, givenErrnoSetAfterSysfsReadWhenGetDeviceMemoryMaxBandwidthInMbpsIsCalledThenZeroIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("800");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        errno = 1;
+        return 4;
+    });
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxBandwidthInMbps(0));
+}
+
+TEST(DrmTest, givenSysfsNodeReadFailsWithImproperDataWhenGetDeviceMemoryMaxBandwidthInMbpsIsCalledThenReturnError) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string testData("abc");
+        memcpy(buf, testData.data(), testData.length() + 1);
+        return 4;
+    });
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxBandwidthInMbps(0));
+}
+
+TEST(DrmTest, givenEmptySysfsFilePathWhenGetDeviceMemoryMaxBandwidthInMbpsIsCalledThenReturnErrorWithoutOpeningFile) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("device");
+    VariableBackup<decltype(SysCalls::openFuncCalled)> openCounter(&SysCalls::openFuncCalled, 0u);
+
+    EXPECT_EQ(0u, drm.getDeviceMemoryMaxBandwidthInMbps(0));
+    EXPECT_EQ(0u, SysCalls::openFuncCalled);
 }
 
 TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {
