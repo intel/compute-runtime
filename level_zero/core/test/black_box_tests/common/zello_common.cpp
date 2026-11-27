@@ -590,7 +590,7 @@ void printDeviceProperties(const ze_device_properties_t &props) {
         for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
             std::cout << std::hex << static_cast<uint32_t>(props.uuid.id[i]) << " ";
         }
-        std::cout << "\n";
+        std::cout << std::dec << "\n";
     } else {
         std::cout << "Device : \n"
                   << " * name : " << props.name << "\n"

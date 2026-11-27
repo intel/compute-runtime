@@ -7,6 +7,7 @@
 
 #include "zello_common.h"
 #include "zello_compile.h"
+#include "zello_graph_test_helper.h"
 
 #include <algorithm>
 #include <chrono>
@@ -256,12 +257,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device0, &device0Properties));
     LevelZeroBlackBoxTests::printDeviceProperties(device0Properties);
 
-    std::vector<ze_driver_extension_properties_t> extensionVector;
-    ze_driver_extension_properties_t graphExtension{};
-    std::snprintf(graphExtension.name, sizeof(graphExtension.name), "%s", ZE_RECORD_REPLAY_GRAPH_EXT_NAME);
-    graphExtension.version = ZE_RECORD_REPLAY_GRAPH_EXT_VERSION_1_0;
-    extensionVector.push_back(graphExtension);
-    if (!LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionVector)) {
+    if (!GraphTests::isGraphExtensionPresent(driverHandle)) {
         std::cerr << "Graph extension not present" << std::endl;
         return 1;
     }

@@ -7,6 +7,7 @@
 
 #include "zello_common.h"
 #include "zello_compile.h"
+#include "zello_graph_test_helper.h"
 #include "zello_test_duration.h"
 
 #include <algorithm>
@@ -16,30 +17,8 @@
 #include <sstream>
 
 using TestKernelsContainer = std::map<std::string, ze_kernel_handle_t>;
-
-struct GraphDumpSettings {
-    bool dump = false;
-    ze_record_replay_graph_ext_dump_mode_t mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_DETAILED;
-};
-
-void dumpGraphToDotIfEnabled(ze_graph_handle_t virtualGraph, const std::string &testName, const GraphDumpSettings &dumpSettings) {
-    if (!dumpSettings.dump) {
-        return;
-    }
-    ze_record_replay_graph_ext_dump_desc_t dumpDesc = {};
-    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
-    dumpDesc.mode = dumpSettings.mode;
-    dumpDesc.pNext = nullptr;
-
-    std::string filename = testName + "_graph.gv";
-    ze_result_t dumpResult = zeGraphDumpContentsExt(virtualGraph, filename.c_str(), &dumpDesc);
-
-    if (dumpResult == ZE_RESULT_SUCCESS) {
-        std::cout << "Graph dumped to " << filename << std::endl;
-    } else {
-        std::cerr << "Failed to dump graph for test " << testName << " (result: " << std::hex << dumpResult << ")" << std::endl;
-    }
-}
+using GraphTests::dumpGraphToDotIfEnabled;
+using GraphTests::GraphDumpSettings;
 
 bool testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool aubMode, const GraphDumpSettings &dumpSettings) {
     bool validRet = true;
@@ -3700,9 +3679,7 @@ int main(int argc, char *argv[]) {
 
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
-    bool dumpGraph = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-d", "--dump_graph");
-    auto graphMode = static_cast<ze_record_replay_graph_ext_dump_mode_t>(LevelZeroBlackBoxTests::getParamValue(argc, argv, "-sm", "--dump_graph_mode", 0U));
-    GraphDumpSettings graphDumpSettings = {.dump = dumpGraph, .mode = graphMode};
+    const GraphDumpSettings graphDumpSettings = GraphTests::getGraphDumpSettings(argc, argv);
 
     constexpr uint32_t defaultUseCopyEngineForMemoryTransfers = 1;
     bool useCopyEngineForMemoryTransfers = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--use_copy_engine", defaultUseCopyEngineForMemoryTransfers) != 0;
@@ -3729,14 +3706,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device0, &device0Properties));
     LevelZeroBlackBoxTests::printDeviceProperties(device0Properties);
 
-    std::vector<ze_driver_extension_properties_t> extensionVector;
-    ze_driver_extension_properties_t graphExtension{};
-    std::string graphExtensionString = ZE_RECORD_REPLAY_GRAPH_EXT_NAME;
-    std::snprintf(graphExtension.name, sizeof(graphExtension.name), "%s", graphExtensionString.c_str());
-    graphExtension.version = ZE_RECORD_REPLAY_GRAPH_EXT_VERSION_1_0;
-    extensionVector.push_back(graphExtension);
-    bool graphExtensionPresent = LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionVector);
-    if (!graphExtensionPresent) {
+    if (!GraphTests::isGraphExtensionPresent(driverHandle)) {
         std::cerr << "Graph extension not present" << std::endl;
         return 1;
     }
