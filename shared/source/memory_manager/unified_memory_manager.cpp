@@ -569,6 +569,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.ipcSupportedAllocationByDefault = memoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault;
     unifiedMemoryProperties.flags.isUSMHostAllocation = true;
     unifiedMemoryProperties.flags.isHostInaccessibleAllocation = false;
+    unifiedMemoryProperties.flags.readOnly = memoryProperties.allocationFlags.flags.readOnly;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
 
     if (this->usmHostAllocationsCache) {

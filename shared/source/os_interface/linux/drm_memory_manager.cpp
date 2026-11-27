@@ -4295,6 +4295,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         auto gmm = createGmm(memoryPool, properties.size);
         auto bo = new BufferObject(properties.rootDeviceIndex, &drm, queryPatIndex(gmm.get(), memoryPool), openFd.handle, properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
+        bo->setAsReadOnly(properties.flags.readOnly);
 
         auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));

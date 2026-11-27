@@ -585,6 +585,27 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenExternalHostPointerWhenCreatingHostUnif
     svmManager->freeSVMAlloc(ptr);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenReadOnlyFlagWhenCreatingHostUnifiedMemoryAllocationThenReadOnlyIsPassedToAllocationProperties) {
+    auto externalHostPointer = reinterpret_cast<void *>(0x100000);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.allocationFlags.flags.readOnly = 1u;
+
+    for (auto hostPointer : {externalHostPointer, static_cast<void *>(nullptr)}) {
+        unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(hostPointer);
+        uint32_t validatedCount = 0u;
+        memoryManager->validateAllocateProperties = [&](const AllocationProperties &properties) {
+            EXPECT_EQ(1u, properties.flags.readOnly);
+            validatedCount++;
+        };
+
+        auto ptr = svmManager->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+        memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+        ASSERT_NE(nullptr, ptr);
+        EXPECT_EQ(1u, validatedCount);
+        svmManager->freeSVMAlloc(ptr);
+    }
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenDefaultSettingsAndExternalHostPointerWhenCreatingUnifiedMemoryAllocationThenRequestedSizeIsAlignedUpToPage) {
     constexpr size_t requestedSize = MemoryConstants::pageSize + 1;
     auto externalHostPointer = reinterpret_cast<void *>(0x100000);

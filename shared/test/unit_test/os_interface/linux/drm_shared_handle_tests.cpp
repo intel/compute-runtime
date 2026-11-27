@@ -1004,6 +1004,45 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentWhenCreat
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentWhenCreateMultiGraphicsAllocationWithReadOnlyFlagThenEveryAllocationHasMatchingReadOnlyBufferObject) {
+    uint32_t rootDevicesNumber = 2u;
+    RootDeviceIndicesContainer rootDeviceIndices;
+    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
+
+    executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
+    for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+        createDrmForRootDevice(i, true);
+        rootDeviceIndices.pushUnique(i);
+    }
+
+    memoryManager = new TestedDrmMemoryManager(true, false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    getDrm(0)->outputFd = 7;
+
+    for (const bool readOnly : {false, true}) {
+        MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
+        size_t size = 4096u;
+        AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, {});
+        properties.flags.readOnly = readOnly;
+        auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
+        ASSERT_NE(ptr, nullptr);
+
+        for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+            auto allocation = static_cast<DrmAllocation *>(multiGraphics.getGraphicsAllocation(i));
+            ASSERT_NE(nullptr, allocation);
+            ASSERT_NE(nullptr, allocation->getBO());
+            EXPECT_EQ(readOnly, allocation->getBO()->isReadOnlyGpuResource());
+        }
+        ASSERT_NE(nullptr, static_cast<DrmAllocation *>(multiGraphics.getDefaultGraphicsAllocation())->getMmapPtr());
+
+        for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+            memoryManager->freeGraphicsMemory(multiGraphics.getGraphicsAllocation(i));
+        }
+    }
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentWhenCreateMultiGraphicsAllocationThenSecondaryAllocationIsRegisteredAndHasNoSharedHandle) {
     uint32_t rootDevicesNumber = 2u;
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
