@@ -7161,7 +7161,9 @@ TEST(WddmMemoryManagerTest3, givenMultipleTilesWhenGetLocalMemorySizeIsCalledThe
 TEST(WddmMemoryManagerTest3, givenNewlyConstructedResidencyDataThenItIsNotResidentOnAnyOsContext) {
     auto maxOsContextCount = 3u;
     ResidencyData residencyData(maxOsContextCount);
-    EXPECT_FALSE(residencyData.resident);
+    for (auto contextId = 0u; contextId < maxOsContextCount; contextId++) {
+        EXPECT_EQ(false, residencyData.resident[contextId]);
+    }
 }
 
 TEST(WddmMemoryManagerTest3, WhenWddmMemoryManagerIsCreatedThenItIsNonCopyable) {

@@ -61,6 +61,7 @@ class WddmResidencyController {
     }
 
   protected:
+    void removeNonResidentFromEvictionAllocations(const std::vector<WddmAllocation *> &allocations);
     size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext);
 
     SpinLock lock;

@@ -110,12 +110,12 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
     if (result == true) {
         for (uint32_t i = 0; i < residencyCount; i++) {
             WddmAllocation *allocation = static_cast<WddmAllocation *>(backupResidencyContainer[i]);
-            allocation->getResidencyData().resident = true;
+            allocation->getResidencyData().resident[osContextId] = true;
             allocation->getResidencyData().updateCompletionData(currentFence, osContextId);
             DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), "fence value to reach for eviction = ", currentFence);
             for (uint32_t allocationId = 0; allocationId < allocation->getFragmentCount(); allocationId++) {
                 auto residencyData = allocation->fragmentsStorage->fragmentStorageData[allocationId].residency;
-                residencyData->resident = true;
+                residencyData->resident[osContextId] = true;
                 residencyData->updateCompletionData(currentFence, osContextId);
             }
         }
@@ -138,6 +138,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
  * @return returns total size in bytes of allocations which are not yet resident.
  */
 size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling, OsContextWin &osContext) {
+    auto osContextId = osContext.getContextId();
     size_t totalSize = 0;
     const size_t residencyCount = allocationsForResidency.size();
     handlesForResidency.clear();
@@ -152,17 +153,17 @@ size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocat
         const auto fragmentCount = allocation->getFragmentCount();
         UNRECOVERABLE_IF(fragmentCount > maxFragments);
 
-        DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), residencyData.resident ? "resident" : "not resident");
+        DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), residencyData.resident[osContextId] ? "resident" : "not resident");
         bool isAlreadyResident = true;
         if (fragmentCount > 0) {
             for (uint32_t allocationId = 0; allocationId < fragmentCount; allocationId++) {
-                if (!allocation->fragmentsStorage->fragmentStorageData[allocationId].residency->resident) {
+                if (!allocation->fragmentsStorage->fragmentStorageData[allocationId].residency->resident[osContextId]) {
                     handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage->fragmentStorageData[allocationId].osHandleStorage)->handle);
                     requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);
                     isAlreadyResident = false;
                 }
             }
-        } else if (!residencyData.resident) {
+        } else if (!residencyData.resident[osContextId]) {
             for (uint32_t gmmId = 0; gmmId < allocation->getNumGmms(); ++gmmId) {
                 handlesForResidency.push_back(allocation->getHandle(gmmId));
                 requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);

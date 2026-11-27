@@ -1304,7 +1304,7 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t 
             if (handle) {
                 handles[allocationCount++] = handle;
             }
-            handleStorage.fragmentStorageData[i].residency->resident = false;
+            std::fill(handleStorage.fragmentStorageData[i].residency->resident.begin(), handleStorage.fragmentStorageData[i].residency->resident.end(), false);
         }
     }
 

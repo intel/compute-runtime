@@ -136,7 +136,7 @@ TEST_F(WddmResidencyControllerMultiGpuSharedAllocationTest, givenSingleFragmentA
     bool requiresBlockingResidencyHandling = true;
     residencyController1->makeResidentResidencyAllocations(residencyPackGpu1, requiresBlockingResidencyHandling, csr1.get());
 
-    EXPECT_TRUE(allocationForGpu1->fragmentsStorage->fragmentStorageData[0].residency->resident);
+    EXPECT_TRUE(allocationForGpu1->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId1]);
     EXPECT_EQ(1u, wddm0->makeResidentResult.called);
 
     // GPU2: First makeResident of same allocation
@@ -146,7 +146,7 @@ TEST_F(WddmResidencyControllerMultiGpuSharedAllocationTest, givenSingleFragmentA
     residencyController2->makeResidentResidencyAllocations(residencyPackGpu2, requiresBlockingResidencyHandling, csr2.get());
 
     EXPECT_EQ(1u, wddm1->makeResidentResult.called);
-    EXPECT_TRUE(allocationForGpu2->fragmentsStorage->fragmentStorageData[0].residency->resident);
+    EXPECT_TRUE(allocationForGpu2->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId2]);
 
     // GPU1: Second makeResident - should not call WDDM (already resident)
     wddm0->makeResidentResult.called = 0;
@@ -163,7 +163,7 @@ TEST_F(WddmResidencyControllerMultiGpuSharedAllocationTest, givenSingleFragmentA
     EXPECT_EQ(0u, wddm1->makeResidentResult.called);
 
     // Simulate eviction on GPU1 only
-    allocationForGpu1->fragmentsStorage->fragmentStorageData[0].residency->resident = false;
+    allocationForGpu1->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId1] = false;
 
     // GPU1: Re-make resident after eviction
     wddm0->makeResidentResult.called = 0;
@@ -171,7 +171,7 @@ TEST_F(WddmResidencyControllerMultiGpuSharedAllocationTest, givenSingleFragmentA
     residencyController1->makeResidentResidencyAllocations(residencyPackGpu1AfterEvict, requiresBlockingResidencyHandling, csr1.get());
 
     EXPECT_EQ(1u, wddm0->makeResidentResult.called);
-    EXPECT_TRUE(allocationForGpu1->fragmentsStorage->fragmentStorageData[0].residency->resident);
+    EXPECT_TRUE(allocationForGpu1->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId1]);
 
     // GPU2: Still resident, no WDDM call needed
     wddm1->makeResidentResult.called = 0;
@@ -179,7 +179,7 @@ TEST_F(WddmResidencyControllerMultiGpuSharedAllocationTest, givenSingleFragmentA
     residencyController2->makeResidentResidencyAllocations(residencyPackGpu2AfterGpu1Evict, requiresBlockingResidencyHandling, csr2.get());
 
     EXPECT_EQ(0u, wddm1->makeResidentResult.called);
-    EXPECT_TRUE(allocationForGpu2->fragmentsStorage->fragmentStorageData[0].residency->resident);
+    EXPECT_TRUE(allocationForGpu2->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId2]);
 
     for (auto &allocation : multiAllocation.getGraphicsAllocations()) {
         memoryManager->freeGraphicsMemory(allocation);
