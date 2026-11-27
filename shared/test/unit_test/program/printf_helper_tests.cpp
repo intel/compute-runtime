@@ -8,6 +8,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/print_formatter.h"
+#include "shared/test/common/helpers/crt_assert_report_suppression.h"
 #include "shared/test/common/helpers/stream_capture.h"
 
 #include "gtest/gtest.h"
@@ -609,7 +610,6 @@ class PrintFormatterOutputBoundsTest : public PrintFormatterTest {
     static constexpr char guardByte = 0x5a;
 
     void SetUp() override {
-        stderrCapture.captureStderr();
         guardedFormatter.output = std::make_unique_for_overwrite<char[]>(guardedOutputSize);
         memset(guardedFormatter.output.get(), guardByte, guardedOutputSize);
     }
@@ -627,7 +627,7 @@ class PrintFormatterOutputBoundsTest : public PrintFormatterTest {
     }
 
     MockPrintFormatter guardedFormatter{underlyingBuffer, printfBufferSize};
-    StreamCapture stderrCapture;
+    CrtAssertReportSuppression crtAssertReportSuppression;
 };
 
 TEST_F(PrintFormatterOutputBoundsTest, GivenConversionFillingOutputBufferWhenPrintingTrailingCharactersThenNothingIsWrittenPastOutputBuffer) {

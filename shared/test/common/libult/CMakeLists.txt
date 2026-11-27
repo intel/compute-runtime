@@ -87,6 +87,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/mock_execution_environment_gmm_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/tbx_command_stream_fixture.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/crt_assert_report_suppression.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/custom_event_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/custom_event_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_helpers.cpp
@@ -199,6 +200,7 @@ target_sources(neo_libult_common PRIVATE
 
 set(neo_libult_common_SRCS_LIB_ULT_WIN
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/windows/memory_allocator_multi_device_fixture_windows.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/crt_assert_report_suppression_windows.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_adapter_luid.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.h
@@ -212,6 +214,7 @@ set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT_WIN ${neo_libult_com
 
 set(neo_libult_common_SRCS_LIB_ULT_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/linux/memory_allocator_multi_device_fixture_linux.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/crt_assert_report_suppression_linux.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_buffer_object_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/stream_capture_linux.cpp

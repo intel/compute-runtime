@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/os_interface/print.h"
-#include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/crt_assert_report_suppression.h"
 
 #include "gtest/gtest.h"
 
@@ -18,8 +18,7 @@ void customInvalidParameterHandler(const wchar_t *, const wchar_t *, const wchar
 
 TEST(SimpleSprintfWinTest, GivenInvalidConversionSpecifierWhenSimpleSprintfIsCalledThenZeroIsReturned) {
     char out[64] = {};
-    StreamCapture capture;
-    capture.captureStderr();
+    CrtAssertReportSuppression crtAssertReportSuppression;
 
     EXPECT_EQ(0U, simpleSprintf<int32_t>(out, sizeof(out), "%y", 1));
     EXPECT_EQ(0U, simpleSprintf(out, sizeof(out), "%y", "value"));
@@ -27,8 +26,7 @@ TEST(SimpleSprintfWinTest, GivenInvalidConversionSpecifierWhenSimpleSprintfIsCal
 
 TEST(SimpleSprintfWinTest, GivenThreadLocalInvalidParameterHandlerWhenSimpleSprintfIsCalledThenTheHandlerIsRestored) {
     char out[64] = {};
-    StreamCapture capture;
-    capture.captureStderr();
+    CrtAssertReportSuppression crtAssertReportSuppression;
     auto previousHandler = _set_thread_local_invalid_parameter_handler(customInvalidParameterHandler);
 
     simpleSprintf<int32_t>(out, sizeof(out), "%y", 1);
