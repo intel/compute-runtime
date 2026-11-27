@@ -186,6 +186,7 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
 
     if (copyOffloadHint && copyOffloadAllowed) {
         cmdList->enableCopyOperationOffload();
+        cmdList->enableBcsSplit();
     }
 
     if (returnValue != ZE_RESULT_SUCCESS) {

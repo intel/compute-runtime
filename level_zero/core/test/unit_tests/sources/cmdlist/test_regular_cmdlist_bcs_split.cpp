@@ -25,6 +25,7 @@ struct RegularCmdListBcsSplitTests : public InOrderCmdListFixture {
         constexpr int32_t defaultTransferDirection = ~(1 << static_cast<int32_t>(NEO::TransferDirection::localToLocal));
 
         NEO::debugManager.flags.SplitBcsCopy.set(1);
+        NEO::debugManager.flags.SplitBcsAggregatedEventsMode.set(1);
         NEO::debugManager.flags.SplitBcsRequiredTileCount.set(1);
         NEO::debugManager.flags.SplitBcsRequiredEnginesCount.set(numCopyEngines);
         NEO::debugManager.flags.SplitBcsMask.set(0b11110);
@@ -40,6 +41,28 @@ struct RegularCmdListBcsSplitTests : public InOrderCmdListFixture {
     template <GFXCORE_FAMILY gfxCoreFamily>
     DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>> createBcsSplitRegularCmdList() {
         return createRegularCmdList<gfxCoreFamily>(true);
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    void enableRecordedBcsSplit(WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>> &cmdList) {
+        if (cmdList.isBcsSplitEnabled()) {
+            return;
+        }
+
+        auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+        const bool splitSetUp = static_cast<Device *>(device)->bcsSplit->setupDevice(csr, cmdList.isCopyOnly(true), false);
+        cmdList.bcsSplitMode = splitSetUp ? BcsSplitParams::BcsSplitMode::recorded : BcsSplitParams::BcsSplitMode::disabled;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>> createBcsSplitRegularDualStreamCopyOffloadCmdList() {
+        NEO::debugManager.flags.OverrideCopyOffloadMode.set(static_cast<int32_t>(CopyOffloadModes::dualStream));
+
+        auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
+        cmdList->enableCopyOperationOffload();
+        enableRecordedBcsSplit(*cmdList);
+
+        return cmdList;
     }
 
     std::unique_ptr<VariableBackup<HardwareInfo>> hwInfoBackup;
@@ -530,6 +553,134 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenAppendMemoryCopyCa
 
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
+}
+
+HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularComputeCmdListWhenCreatingWithCopyOffloadHintThenRecordedSplitIsEnabled, IsAtLeastXeHpcCore) {
+    if (!device->getProductHelper().useAdditionalBlitProperties() || device->getGfxCoreHelper().crossEngineCacheFlushRequired()) {
+        GTEST_SKIP();
+    }
+
+    NEO::debugManager.flags.OverrideCopyOffloadMode.set(static_cast<int32_t>(CopyOffloadModes::dualStream));
+    NEO::debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(1);
+    NEO::debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+    auto isRecordedSplitEnabled = [&](ze_command_list_flags_t flags) {
+        ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+        cmdListDesc.flags = flags;
+
+        ze_command_list_handle_t hCmdList = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList));
+        auto splitMode = static_cast<WhiteBox<L0::CommandList> *>(CommandList::fromHandle(hCmdList))->bcsSplitMode;
+        zeCommandListDestroy(hCmdList);
+
+        return splitMode == BcsSplitParams::BcsSplitMode::recorded;
+    };
+
+    EXPECT_FALSE(isRecordedSplitEnabled(ZE_COMMAND_LIST_FLAG_IN_ORDER));
+    EXPECT_TRUE(isRecordedSplitEnabled(ZE_COMMAND_LIST_FLAG_IN_ORDER | ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT));
+}
+
+HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWithDualStreamCopyOffloadWhenAppendingSplitCopyThenSplitIsSynchronizedInComputeStream, IsAtLeastXeHpcCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto cmdList = createBcsSplitRegularDualStreamCopyOffloadCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(BcsSplitParams::BcsSplitMode::recorded, cmdList->bcsSplitMode);
+
+    constexpr size_t copySize = 32 * MemoryConstants::megaByte;
+
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, copySize, 1, &srcPtr);
+    context->allocHostMem(&hostDesc, copySize, 1, &dstPtr);
+
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(dstPtr, srcPtr, copySize, nullptr, 0, nullptr, memoryCopyParams));
+
+    EXPECT_FALSE(cmdList->subCmdListsForRecordedBcsSplit.empty());
+    EXPECT_FALSE(cmdList->isCopyOffloadStreamUsed());
+
+    auto mainCommandStream = cmdList->commandContainer.getCommandStream();
+
+    GenCmdList cmdListParsed;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdListParsed, mainCommandStream->getCpuBase(), mainCommandStream->getUsed()));
+
+    EXPECT_TRUE(findAll<MI_FLUSH_DW *>(cmdListParsed.begin(), cmdListParsed.end()).empty());
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+}
+
+HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWithoutInOrderDependenciesWhenAppendingSplitCopyThenSubCopiesWaitForCounterSignaledByMainCmdList, IsAtLeastXeHpcCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto cmdList = createBcsSplitRegularDualStreamCopyOffloadCmdList<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(BcsSplitParams::BcsSplitMode::recorded, cmdList->bcsSplitMode);
+    ASSERT_FALSE(cmdList->hasInOrderDependencies());
+
+    constexpr size_t copySize = 32 * MemoryConstants::megaByte;
+
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, copySize, 1, &srcPtr);
+    context->allocHostMem(&hostDesc, copySize, 1, &dstPtr);
+
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(dstPtr, srcPtr, copySize, nullptr, 0, nullptr, memoryCopyParams));
+
+    ASSERT_FALSE(cmdList->subCmdListsForRecordedBcsSplit.empty());
+
+    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(cmdList->isQwordInOrderCounter(), device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport);
+    const auto counterGpuAddress = cmdList->inOrderExecInfo->getBaseDeviceAddress() + cmdList->inOrderExecInfo->getAllocationOffset();
+
+    for (auto &subCmdList : cmdList->subCmdListsForRecordedBcsSplit) {
+        auto subCommandStream = static_cast<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(subCmdList)->commandContainer.getCommandStream();
+
+        GenCmdList cmdListParsed;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdListParsed, subCommandStream->getCpuBase(), subCommandStream->getUsed()));
+
+        auto itor = find<MI_SEMAPHORE_WAIT *>(cmdListParsed.begin(), cmdListParsed.end());
+        ASSERT_NE(cmdListParsed.end(), itor);
+        if (lriRequired) {
+            std::advance(itor, -2);
+        }
+
+        EXPECT_TRUE(verifyInOrderDependency<FamilyType>(itor, cmdList->getInOrderIncrementValue(), counterGpuAddress, cmdList->isQwordInOrderCounter(), true));
+    }
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+}
+
+HWTEST2_F(RegularCmdListBcsSplitTests, givenAggregatedSignalEventWhenAppendingSplitCopyThenSignalEventIsUsedForSubCopiesOnlyWithAdditionalBlitProperties, IsAtLeastXeHpcCore) {
+    auto cmdList = createBcsSplitRegularCmdList<FamilyType::gfxCoreFamily>();
+    enableRecordedBcsSplit(*cmdList);
+    ASSERT_EQ(BcsSplitParams::BcsSplitMode::recorded, cmdList->bcsSplitMode);
+
+    constexpr size_t copySize = 32 * MemoryConstants::megaByte;
+
+    void *srcPtr = nullptr;
+    void *dstPtr = nullptr;
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, copySize, 1, &srcPtr);
+    context->allocHostMem(&hostDesc, copySize, 1, &dstPtr);
+
+    const auto engineCount = static_cast<Device *>(device)->bcsSplit->cmdLists.size();
+    uint64_t *eventStorage = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto signalEvent = createAggregatedEvent(engineCount, engineCount, eventStorage);
+
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(dstPtr, srcPtr, copySize, signalEvent->toHandle(), 0, nullptr, memoryCopyParams));
+
+    EXPECT_EQ(!cmdList->isUsingAdditionalBlitProperties(), !cmdList->eventsForRecordedBcsSplit.empty());
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+    context->freeMem(eventStorage);
 }
 
 } // namespace ult

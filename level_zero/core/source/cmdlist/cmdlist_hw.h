@@ -557,6 +557,7 @@ struct CommandListCoreFamily : public CommandList {
 
     void setupFlagsForBcsSplit(CmdListMemoryCopyParams &memoryCopyParams, bool &hasStallingCmds, bool &copyOffloadFlush, const void *srcPtr, void *dstPtr, size_t srcSize, size_t dstSize);
 
+    void signalInOrderCounterForCrossEngineWait();
     bool beginCopyOffloadStreamRecording(bool copyOffloadOperation, bool writeOutsideOfDevice);
     void endCopyOffloadStreamRecording();
     void appendWaitOnCopyOffloadStreamCompletion();

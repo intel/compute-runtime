@@ -2339,19 +2339,24 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::beginCopyOffloadStreamRecording(bool copyOffloadOperation, bool writeOutsideOfDevice) {
-    if (!this->isRegularDualStreamCopyOffloadOperation(copyOffloadOperation) || this->copyOffloadStreamRecordingActive) {
-        return false;
-    }
-
-    // Copy offload stream is submitted to copy engine independently.
-    // It can start only when compute stream reaches current point, so in-order counter has to be signaled from compute stream.
+void CommandListCoreFamily<gfxCoreFamily>::signalInOrderCounterForCrossEngineWait() {
+    // Work recorded for another engine can start only when this stream reaches current point, so in-order counter has to be signaled from this stream.
     if (!hasInOrderDependencies() || this->latestOperationHasCbEventWithProfiling || isInOrderCounterSignalPending()) {
         appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
         handleInOrderCounterOverflow(false);
         inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
         addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::beginCopyOffloadStreamRecording(bool copyOffloadOperation, bool writeOutsideOfDevice) {
+    if (!this->isRegularDualStreamCopyOffloadOperation(copyOffloadOperation) || this->copyOffloadStreamRecordingActive) {
+        return false;
+    }
+
+    // Copy offload stream is submitted to copy engine independently.
+    signalInOrderCounterForCrossEngineWait();
 
     this->activeCopyOffloadQueueIndex = writeOutsideOfDevice ? DualStreamCopyOffload::copyOffloadWriteIndex : DualStreamCopyOffload::copyOffloadReadIndex;
     ensureCopyOffloadSubCmdList(this->activeCopyOffloadQueueIndex);
@@ -2560,6 +2565,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendRecordedBcsSplit(void *d
         auto &params = std::get<BcsSplitParams::MemCopy>(copyParams);
         return subCmdList->CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(params.dst, params.src, sizeParam, hSignalEventParam, 0u, nullptr, memoryCopyParams);
     };
+
+    signalInOrderCounterForCrossEngineWait();
 
     BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
     return this->device->bcsSplit->template appendRecordedInOrderSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, splitCall);

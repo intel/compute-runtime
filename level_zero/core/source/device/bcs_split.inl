@@ -119,7 +119,7 @@ void BcsSplit::appendPostSubCopySync(CommandListCoreFamily<gfxCoreFamily> *mainC
                                      bool useSignalEventForSubCopy,
                                      bool hasRelaxedOrderingDependencies) {
 
-    const bool dualStreamCopyOffload = mainCmdList->isDualStreamCopyOffloadOperation(mainCmdList->isCopyOffloadEnabled());
+    const bool dualStreamCopyOffload = mainCmdList->isImmediateType() && mainCmdList->isDualStreamCopyOffloadOperation(mainCmdList->isCopyOffloadEnabled());
 
     if (useSignalEventForSubCopy && mainCmdList->isInOrderExecutionEnabled()) {
         auto &inOrderExecHelper = signalEvent->getInOrderExecEventHelper();
@@ -251,7 +251,7 @@ ze_result_t BcsSplit::appendRecordedInOrderSplitCall(CommandListCoreFamily<gfxCo
     auto cmdListsForSplit = cmdList->getRegularCmdListsForSplit(size, splitSettings.perEngineMaxSize, this->cmdLists.size());
     auto engineCount = cmdListsForSplit.size();
 
-    const bool useSignalEventForSubcopy = Event::isAggregatedEvent(signalEvent) && (signalEvent->getInOrderIncrementValue(1) % engineCount == 0);
+    const bool useSignalEventForSubcopy = cmdList->isUsingAdditionalBlitProperties() && Event::isAggregatedEvent(signalEvent) && (signalEvent->getInOrderIncrementValue(1) % engineCount == 0);
 
     Event *markerEvent = nullptr;
     BcsSplitParams::SplitEventPackage *eventPackage = nullptr;
