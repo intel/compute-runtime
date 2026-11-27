@@ -880,7 +880,7 @@ TEST_F(MemoryTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFailsThenInvalidArgumentIsReturned) {
+TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFailsThenErrorIsReturned) {
     size_t size = 4096;
     size_t alignment = 4096;
     void *ptr = nullptr;
@@ -895,8 +895,7 @@ TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenMemoryAllocationFail
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
     ze_result_t result = context->allocHostMem(&hostDesc, size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
 }
 
 TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsExpectedProperties) {
