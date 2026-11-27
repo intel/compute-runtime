@@ -11,18 +11,5 @@ namespace NEO {
 
 struct Xe3pCoreFamily;
 
-using Family = Xe3pCoreFamily;
-
-struct EnableCoreXe3pHpgCore {
-    EnableCoreXe3pHpgCore() {
-        populateFactoryTable<GfxCoreHelperHw<Family>>();
-        populateFactoryTable<AUBCommandStreamReceiverHw<Family>>();
-        populateFactoryTable<CommandStreamReceiverHw<Family>>();
-        populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();
-        populateFactoryTable<DebuggerL0Hw<Family>>();
-        populateFactoryTable<GmmCallbacks<Family>>();
-    }
-};
-
-static EnableCoreXe3pHpgCore enable;
+static EnableCore<Xe3pCoreFamily> enable;
 } // namespace NEO

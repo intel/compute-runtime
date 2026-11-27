@@ -25,4 +25,15 @@ class ImageHw;
 template <typename GfxFamily>
 struct SamplerHw;
 
+template <typename GfxFamily>
+struct EnableOCL {
+    EnableOCL() {
+        populateFactoryTable<BufferHw<GfxFamily>>();
+        populateFactoryTable<ClGfxCoreHelperHw<GfxFamily>>();
+        populateFactoryTable<CommandQueueHw<GfxFamily>>();
+        populateFactoryTable<ImageHw<GfxFamily>>();
+        populateFactoryTable<SamplerHw<GfxFamily>>();
+    }
+};
+
 } // namespace NEO

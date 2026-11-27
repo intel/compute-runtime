@@ -24,4 +24,16 @@ class GfxCoreHelperHw;
 template <typename GfxFamily>
 struct GmmCallbacks;
 
+template <typename GfxFamily>
+struct EnableCore {
+    EnableCore() {
+        populateFactoryTable<GfxCoreHelperHw<GfxFamily>>();
+        populateFactoryTable<AUBCommandStreamReceiverHw<GfxFamily>>();
+        populateFactoryTable<CommandStreamReceiverHw<GfxFamily>>();
+        populateFactoryTable<TbxCommandStreamReceiverHw<GfxFamily>>();
+        populateFactoryTable<DebuggerL0Hw<GfxFamily>>();
+        populateFactoryTable<GmmCallbacks<GfxFamily>>();
+    }
+};
+
 } // namespace NEO

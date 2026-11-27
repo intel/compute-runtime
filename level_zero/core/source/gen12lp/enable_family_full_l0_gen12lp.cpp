@@ -11,13 +11,5 @@ namespace NEO {
 
 struct Gen12LpFamily;
 
-using Family = Gen12LpFamily;
-
-struct EnableL0Gen12LP {
-    EnableL0Gen12LP() {
-        L0::populateFactoryTable<L0::L0GfxCoreHelperHw<Family>>();
-    }
-};
-
-static EnableL0Gen12LP enable;
+static L0::EnableL0<Gen12LpFamily> enable;
 } // namespace NEO

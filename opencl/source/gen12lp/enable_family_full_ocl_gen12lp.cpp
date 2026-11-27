@@ -8,19 +8,8 @@
 #include "opencl/source/helpers/enable_family_full_ocl.h"
 
 namespace NEO {
+
 struct Gen12LpFamily;
 
-using Family = Gen12LpFamily;
-
-struct EnableOCLGen12LP {
-    EnableOCLGen12LP() {
-        populateFactoryTable<BufferHw<Family>>();
-        populateFactoryTable<ClGfxCoreHelperHw<Family>>();
-        populateFactoryTable<CommandQueueHw<Family>>();
-        populateFactoryTable<ImageHw<Family>>();
-        populateFactoryTable<SamplerHw<Family>>();
-    }
-};
-
-static EnableOCLGen12LP enable;
+static EnableOCL<Gen12LpFamily> enable;
 } // namespace NEO

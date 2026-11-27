@@ -8,19 +8,8 @@
 #include "opencl/source/helpers/enable_family_full_ocl.h"
 
 namespace NEO {
+
 struct Xe3CoreFamily;
 
-using Family = Xe3CoreFamily;
-
-struct EnableOCLXe3Core {
-    EnableOCLXe3Core() {
-        populateFactoryTable<BufferHw<Family>>();
-        populateFactoryTable<ClGfxCoreHelperHw<Family>>();
-        populateFactoryTable<CommandQueueHw<Family>>();
-        populateFactoryTable<ImageHw<Family>>();
-        populateFactoryTable<SamplerHw<Family>>();
-    }
-};
-
-static EnableOCLXe3Core enable;
+static EnableOCL<Xe3CoreFamily> enable;
 } // namespace NEO

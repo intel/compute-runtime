@@ -11,13 +11,5 @@ namespace NEO {
 
 struct XeHpcCoreFamily;
 
-using Family = XeHpcCoreFamily;
-
-struct EnableL0XeHpcCore {
-    EnableL0XeHpcCore() {
-        L0::populateFactoryTable<L0::L0GfxCoreHelperHw<Family>>();
-    }
-};
-
-static EnableL0XeHpcCore enable;
+static L0::EnableL0<XeHpcCoreFamily> enable;
 } // namespace NEO
