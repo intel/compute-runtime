@@ -68,10 +68,6 @@ ze_result_t ZE_APICALL zesIntelDriverEventListenExp(zes_driver_handle_t hDriver,
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t ZE_APICALL zesIntelDriverGetApiVersionExp(zes_driver_handle_t hDriver, zes_intel_api_version_exp_t *pVersion) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_properties_exp_t *pInfoLogProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -223,10 +219,6 @@ ze_result_t ZE_APICALL zesIntelDriverEventRegisterExp(zes_driver_handle_t hDrive
 
 ze_result_t ZE_APICALL zesIntelDriverEventListenExp(zes_driver_handle_t hDriver, uint64_t timeout, uint32_t count, zes_device_handle_t *phDevices, uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents, zes_event_type_flags_t *pDriverEvents) {
     return L0::zesIntelDriverEventListenExp(hDriver, timeout, count, phDevices, pNumDeviceEvents, pEvents, pDriverEvents);
-}
-
-ze_result_t ZE_APICALL zesIntelDriverGetApiVersionExp(zes_driver_handle_t hDriver, zes_intel_api_version_exp_t *pVersion) {
-    return L0::zesIntelDriverGetApiVersionExp(hDriver, pVersion);
 }
 
 ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_properties_exp_t *pInfoLogProperties) {

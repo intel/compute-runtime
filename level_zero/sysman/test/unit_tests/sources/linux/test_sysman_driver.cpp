@@ -432,9 +432,6 @@ TEST_F(SysmanDriverHandleTest,
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelMemoryBandwidthSampleCalculateExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverGetApiVersionExp", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportUnKnownPointer", &funPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
@@ -532,16 +529,6 @@ TEST_F(SysmanDriverHandleTest, GivenNeitherInitFlagSetWhenCallingGetApiVersionEn
 
     zes_api_version_t version = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverGetApiVersion(driverHandle->toHandle(), &version));
-}
-
-TEST_F(SysmanDriverHandleTest, GivenExperimentalGetApiVersionEntrypointWhenCalledThenUnsupportedFeatureIsReturned) {
-    zes_intel_api_version_exp_t version = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelDriverGetApiVersionExp(driverHandle->toHandle(), &version));
-
-    decltype(&::zesIntelDriverGetApiVersionExp) pfnGetApiVersionExp = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverGetApiVersionExp", reinterpret_cast<void **>(&pfnGetApiVersionExp)));
-    ASSERT_NE(nullptr, pfnGetApiVersionExp);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pfnGetApiVersionExp(driverHandle->toHandle(), &version));
 }
 
 TEST_F(SysmanDriverHandleTest, GivenInitializedDriverHandleWhenCallingGetUuidTimestampThenSameNonZeroTimestampIsReturned) {

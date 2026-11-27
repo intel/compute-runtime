@@ -223,9 +223,6 @@ TEST_F(SysmanDriverHandleTest,
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverEventListenExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverGetApiVersionExp", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 using SysmanRescanDriverHandleTest = SysmanDriverHandleTest;
