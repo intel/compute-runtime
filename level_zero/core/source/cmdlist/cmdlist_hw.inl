@@ -354,7 +354,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = productHelper.getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess();
     this->isPostImageWriteFlushRequired = hwInfo.caps.postImageWriteFlushRequired;
     this->isPreImageReadFlushRequired = hwInfo.caps.preImageReadFlushRequired;
-    this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
+    this->shouldRegisterEnqueuedWalkerWithProfiling = hwInfo.caps.goSyncWithWalkerPostSyncRequired;
     this->postSyncRequiredForAllWalkers = productHelper.isPostSyncRequiredForAllWalkers();
     if (this->postSyncRequiredForAllWalkers) {
         neoDevice->getRootDeviceEnvironmentRef().initDummyAllocation();

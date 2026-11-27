@@ -58,6 +58,7 @@ struct Caps {
     bool forceEmuInt32DivRemSPRequired = false;
     bool ftrXe2Compression = false;
     bool globalBindlessAllocatorEnabled = false;
+    bool goSyncWithWalkerPostSyncRequired = false;
     bool grfLimitedPreferredSlmSizeEnabled = false;
     bool hvAlign4Required = false;
     bool initBuiltinAsyncSupported = false;

@@ -181,7 +181,6 @@ class ProductHelperHw : public ProductHelper {
     bool isNonCoherentTimestampsModeEnabled() const override;
     bool getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const override;
     bool checkBcsForDirectSubmissionStop() const override;
-    bool shouldRegisterEnqueuedWalkerWithProfiling() const override;
     uint32_t getAvailableSlmSizePerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isDeviceCapsReaderSupported() const override;

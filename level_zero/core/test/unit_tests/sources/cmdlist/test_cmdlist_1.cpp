@@ -2528,7 +2528,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
         ultCsr->isWalkerWithProfilingEnqueued = false;
     };
 
-    bool expectWalkerWithProfilingEnqueued = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
+    bool expectWalkerWithProfilingEnqueued = this->device->getNEODevice()->getHardwareInfo().caps.goSyncWithWalkerPostSyncRequired;
     // non-pipelined state
     verifyWalkerWithProfilingEnqueued(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, launchParams), expectWalkerWithProfilingEnqueued);
 
@@ -2664,7 +2664,7 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
         EXPECT_EQ(whiteBoxCmdList->getAndClearIsWalkerWithProfilingEnqueued(), dispatchFlag);
     };
 
-    auto expectFlagEnabled = true && device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
+    auto expectFlagEnabled = device->getNEODevice()->getHardwareInfo().caps.goSyncWithWalkerPostSyncRequired;
     // non-pipelined state
     verifyFlag(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event, 0, nullptr, launchParams), expectFlagEnabled);
 

@@ -144,7 +144,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         this->defaultBuiltInMode = compilerProductHelper.getDefaultBuiltInAddressingMode(
             ApiSpecificConfig::getBindlessMode(device->getDevice()));
         this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported();
-        this->shouldRegisterEnqueuedWalkerWithProfiling = productHelper.shouldRegisterEnqueuedWalkerWithProfiling();
+        this->shouldRegisterEnqueuedWalkerWithProfiling = hwInfo.caps.goSyncWithWalkerPostSyncRequired;
         this->isBarrierForImplicitDependenciesAllowed = productHelper.isResolveDependenciesByPipeControlsSupported();
         this->postSyncRequiredForAllWalkers = productHelper.isPostSyncRequiredForAllWalkers();
         if (this->postSyncRequiredForAllWalkers) {

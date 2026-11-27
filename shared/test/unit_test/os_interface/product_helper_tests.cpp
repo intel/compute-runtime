@@ -1331,10 +1331,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenGettingMinMiddleSizeForBuilti
     EXPECT_EQ(std::numeric_limits<size_t>::max(), productHelper->getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
-    EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIsDeviceCapsReaderSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isDeviceCapsReaderSupported());
 }

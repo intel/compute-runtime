@@ -117,11 +117,6 @@ uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const Hardw
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() const {
-    return true;
-}
-
-template <>
 size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferType) const {
     size_t threshold = 0u;
 

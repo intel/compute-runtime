@@ -63,6 +63,7 @@ struct CapsCri : CapsXe3pCore {
     static constexpr bool bcsSplitAggregatedModeEnabled = true;
     static constexpr bool bcsVirtualEngineForAllCopyEnginesSupported = true;
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
+    static constexpr bool goSyncWithWalkerPostSyncRequired = true;
     static constexpr bool grfLimitedPreferredSlmSizeEnabled = true;
     static constexpr bool readOnlyAllocationsSupported = true;
 };

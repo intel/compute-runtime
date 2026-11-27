@@ -1280,7 +1280,7 @@ HWTEST_F(DispatchWalkerTest, givenProfilingEnabledWhenProgrammingWalkerThenSetIs
             CsrDependencies(),
             walkerArgsWithoutImplicitArgs);
 
-        EXPECT_EQ(pClDevice->getRootDeviceEnvironment().getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling(), pCmdQ->getAndClearIsWalkerWithProfilingEnqueued());
+        EXPECT_EQ(pClDevice->getHardwareInfo().caps.goSyncWithWalkerPostSyncRequired, pCmdQ->getAndClearIsWalkerWithProfilingEnqueued());
     }
 
     event->release();

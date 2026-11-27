@@ -80,6 +80,7 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsCri.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsCri.ftrXe2Compression);
     EXPECT_TRUE(capsCri.globalBindlessAllocatorEnabled);
+    EXPECT_TRUE(capsCri.goSyncWithWalkerPostSyncRequired);
     EXPECT_TRUE(capsCri.grfLimitedPreferredSlmSizeEnabled);
     EXPECT_FALSE(capsCri.hvAlign4Required);
     EXPECT_FALSE(capsCri.initBuiltinAsyncSupported);
@@ -162,6 +163,7 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsNvlPA0.forceEmuInt32DivRemSPRequired);
     EXPECT_TRUE(capsNvlPA0.ftrXe2Compression);
     EXPECT_TRUE(capsNvlPA0.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsNvlPA0.goSyncWithWalkerPostSyncRequired);
     EXPECT_FALSE(capsNvlPA0.grfLimitedPreferredSlmSizeEnabled);
     EXPECT_FALSE(capsNvlPA0.hvAlign4Required);
     EXPECT_FALSE(capsNvlPA0.initBuiltinAsyncSupported);
@@ -237,6 +239,7 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsNvlPB0.forceEmuInt32DivRemSPRequired);
     EXPECT_TRUE(capsNvlPB0.ftrXe2Compression);
     EXPECT_TRUE(capsNvlPB0.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsNvlPB0.goSyncWithWalkerPostSyncRequired);
     EXPECT_FALSE(capsNvlPB0.grfLimitedPreferredSlmSizeEnabled);
     EXPECT_FALSE(capsNvlPB0.hvAlign4Required);
     EXPECT_FALSE(capsNvlPB0.initBuiltinAsyncSupported);

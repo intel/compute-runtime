@@ -197,10 +197,6 @@ CRITEST_F(CriProductHelper, givenGrfCount160Or192WhenCallAdjustMaxThreadsPerThre
     }
 }
 
-CRITEST_F(CriProductHelper, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenTrueReturned) {
-    EXPECT_TRUE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
