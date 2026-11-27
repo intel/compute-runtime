@@ -70,6 +70,23 @@ TEST_F(GraphicsAllocationPhysicalMemoryMappingTest, givenMappingLinkedToPhysical
     EXPECT_FALSE(physicalGmmDestroyed);
 }
 
+TEST_F(GraphicsAllocationPhysicalMemoryMappingTest, givenMappingLinkedToPhysicalAllocationWhenQueryingNumGmmsThenNumGmmsOfPhysicalAllocationIsReturned) {
+    constexpr uint32_t physicalNumGmms = 3u;
+    physicalAllocation.resizeGmms(physicalNumGmms);
+    MockGraphicsAllocation mappedAllocation;
+    mappedAllocation.setMappedPhysicalAllocation(&physicalAllocation);
+
+    EXPECT_EQ(physicalNumGmms, mappedAllocation.getNumGmms());
+}
+
+TEST_F(GraphicsAllocationPhysicalMemoryMappingTest, givenMappingLinkedToPhysicalAllocationWhenSettingGmmsOnMappingThenAbortIsThrown) {
+    MockGraphicsAllocation mappedAllocation;
+    mappedAllocation.setMappedPhysicalAllocation(&physicalAllocation);
+
+    EXPECT_THROW(mappedAllocation.setGmm(std::make_unique<MockGmm>(gmmHelper), 0u), std::exception);
+    EXPECT_THROW(mappedAllocation.resizeGmms(2u), std::exception);
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspectionIdsAreSetToZero) {
     MockGraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
     for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {

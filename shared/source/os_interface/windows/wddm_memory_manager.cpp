@@ -540,7 +540,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     wddmAllocation->storageInfo = storageInfo;
 
     if (!createGpuAllocationsWithRetry(wddmAllocation.get())) {
-        wddmAllocation->setDefaultGmm(std::unique_ptr<Gmm>{});
         return nullptr;
     }
 
@@ -553,7 +552,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
         if (!cpuPtr) {
             if (!adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa)) {
                 destroyAllocationHandles(*wddmAllocation);
-                wddmAllocation->setDefaultGmm(std::unique_ptr<Gmm>{});
                 return nullptr;
             }
         }
@@ -569,7 +567,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
         if (wddmAllocation->getReservedAddressPtr()) {
             releaseReservedCpuAddressRange(wddmAllocation->getReservedAddressPtr(), wddmAllocation->getReservedAddressSize(), wddmAllocation->getRootDeviceIndex());
         }
-        wddmAllocation->setDefaultGmm(std::unique_ptr<Gmm>{});
         return nullptr;
     }
     wddmAllocation->setCpuAddress(cpuPtr);
@@ -641,9 +638,6 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
         size_t reserveSizeAligned = alignedSize + allocationData.alignment;
         bool ret = getWddm(wddmAllocation->getRootDeviceIndex()).reserveValidAddressRange(reserveSizeAligned, mapPtr);
         if (!ret) {
-            for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
-                wddmAllocation->setGmm(std::unique_ptr<Gmm>{}, gmmId);
-            }
             freeSystemMemory(wddmAllocation->getDriverAllocatedCpuPtr());
             return nullptr;
         }
@@ -654,9 +648,6 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
     }
 
     if (!createWddmAllocation(wddmAllocation.get(), wddmAllocGpuPtr)) {
-        for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
-            wddmAllocation->setGmm(std::unique_ptr<Gmm>{}, gmmId);
-        }
         freeSystemMemory(wddmAllocation->getDriverAllocatedCpuPtr());
         return nullptr;
     }
@@ -715,7 +706,6 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
         size_t reserveSizeAligned = sizeAligned + allocationData.alignment;
         bool ret = getWddm(wddmAllocation->getRootDeviceIndex()).reserveValidAddressRange(reserveSizeAligned, mapPtr);
         if (!ret) {
-            wddmAllocation->setDefaultGmm(std::unique_ptr<Gmm>{});
             freeSystemMemory(pSysMem);
             return nullptr;
         }
@@ -724,7 +714,6 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
     }
 
     if (!createWddmAllocation(wddmAllocation.get(), mapPtr)) {
-        wddmAllocation->setDefaultGmm(std::unique_ptr<Gmm>{});
         freeSystemMemory(pSysMem);
         return nullptr;
     }
@@ -784,9 +773,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     }
 
     if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
-        for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
-            wddmAllocation->setGmm(std::unique_ptr<Gmm>{}, gmmId);
-        }
         return nullptr;
     }
 
@@ -891,7 +877,6 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     wddmAllocation->storageInfo = storageInfo;
 
     if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
-        wddmAllocation->setDefaultGmm(std::unique_ptr<Gmm>{});
         freeSystemMemory(pSysMem);
         return nullptr;
     }
@@ -1070,7 +1055,6 @@ GraphicsAllocation *WddmMemoryManager::createImageAllocationFromSection(const Sh
                                                        maxOsContextCount);
     allocation->setDefaultGmm(std::move(gmm));
     if (!createWddmAllocation(allocation.get(), nullptr)) {
-        allocation->setDefaultGmm(std::unique_ptr<Gmm>{});
         return nullptr;
     }
 
@@ -1173,9 +1157,6 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     }
     if (hasGpuVirtualAddress) {
         freeGpuVirtualAddressMappings(this->getWddm(gfxAllocation->getRootDeviceIndex()), *input, getMappedGmmCount(*input), false);
-    }
-    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
     }
     uint64_t handle = 0;
     if (input->peekInternalHandle(nullptr, handle, nullptr) == 0) {
@@ -1866,9 +1847,6 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
 
     if (!createPhysicalAllocation(wddmAllocation.get())) {
-        for (auto handleId = 0u; handleId < wddmAllocation->getNumGmms(); handleId++) {
-            wddmAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
-        }
         status = AllocationStatus::Error;
         return nullptr;
     }
@@ -2008,18 +1986,12 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 
     if (!heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type)) {
         if (!adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa)) {
-            for (auto handleId = 0u; handleId < wddmAllocation->getNumGmms(); handleId++) {
-                wddmAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
-            }
             status = AllocationStatus::Error;
             return nullptr;
         }
     }
 
     if (!createWddmAllocation(wddmAllocation.get(), requiredGpuVa)) {
-        for (auto handleId = 0u; handleId < wddmAllocation->getNumGmms(); handleId++) {
-            wddmAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
-        }
         status = AllocationStatus::Error;
         return nullptr;
     }

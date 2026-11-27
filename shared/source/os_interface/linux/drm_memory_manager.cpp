@@ -1017,7 +1017,6 @@ bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAll
             for (auto bo : drmAlloc->getBOs()) {
                 unreference(bo, false);
             }
-            allocation->setDefaultGmm(std::unique_ptr<Gmm>{});
             delete allocation;
         }
     }
@@ -2347,10 +2346,6 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         ioctlHelper->munmapFunction(*this, drmAlloc->getMmapPtr(), drmAlloc->getMmapSize());
     }
 
-    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
-    }
-
     if (gfxAllocation->getFragmentCount()) {
         std::unique_lock<std::recursive_mutex> hostPtrManagerLock;
         if (debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
@@ -3414,18 +3409,12 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const Al
     auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
 
     if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), 0u, maxOsContextCount, MemoryConstants::pageSize64k)) {
-        for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
-            allocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
-        }
         status = AllocationStatus::Error;
         return nullptr;
     }
     if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
         for (auto bo : drmAllocation->getBOs()) {
             delete bo;
-        }
-        for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
-            allocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
         }
         status = AllocationStatus::Error;
         return nullptr;
@@ -3492,9 +3481,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         const bool evicted = self->evictFromRegisteredContexts(*drmAllocation);
         for (auto bo : drmAllocation->getBOs()) {
             delete bo;
-        }
-        for (auto handleId = 0u; handleId < drmAllocation->getNumGmms(); handleId++) {
-            drmAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
         }
         // a range still mapped in the VM must not be reused
         if (evicted) {
@@ -3565,9 +3551,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     if ((localMemoryReservationRequired && !reserveLocalMemory(*drmAllocation)) ||
         !createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount, finalAlignment)) {
         releaseLocalMemoryReservation(*drmAllocation);
-        for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
-            allocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
-        }
         gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
         status = AllocationStatus::Error;
         return nullptr;

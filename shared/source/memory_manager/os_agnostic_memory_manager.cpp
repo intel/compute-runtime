@@ -336,9 +336,6 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         DEBUG_BREAK_IF(true);
         return;
     }
-    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
-    }
 
     removeAllocationFromDownloadAllocationsInCsr(gfxAllocation);
 

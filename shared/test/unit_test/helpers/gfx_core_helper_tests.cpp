@@ -576,7 +576,6 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocatio
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 
@@ -612,7 +611,6 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAll
     }
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(state, allocation.getDefaultGmm()));
 
-    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 
@@ -648,7 +646,6 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompre
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 
@@ -685,7 +682,6 @@ HWTEST2_F(GfxCoreHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceSta
     auto mocsProgrammed = state->getMemoryObjectControlState() >> 1;
     EXPECT_EQ(1u, mocsProgrammed);
 
-    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 
@@ -722,7 +718,6 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAll
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 

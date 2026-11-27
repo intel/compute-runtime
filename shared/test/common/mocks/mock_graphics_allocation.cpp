@@ -7,7 +7,6 @@
 
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
@@ -19,11 +18,5 @@ MockGraphicsAllocation::MockGraphicsAllocation(void *buffer, size_t sizeIn) : Me
 MockGraphicsAllocation::MockGraphicsAllocation(void *buffer, uint64_t gpuAddr, size_t sizeIn) : MemoryAllocation(0, 1u /*num gmms*/, AllocationType::unknown, buffer, gpuAddr, 0llu, sizeIn, MemoryPool::memoryNull, MemoryManager::maxOsContextCount) {}
 
 MockGraphicsAllocation::MockGraphicsAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn) : MemoryAllocation(rootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::memoryNull, MemoryManager::maxOsContextCount) {}
-
-MockGraphicsAllocation::~MockGraphicsAllocation() {
-    for (auto handleId = 0u; handleId < this->getNumGmms(); handleId++) {
-        this->setGmm(std::unique_ptr<Gmm>{}, handleId);
-    }
-}
 
 } // namespace NEO

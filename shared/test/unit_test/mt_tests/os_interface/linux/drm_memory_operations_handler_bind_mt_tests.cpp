@@ -67,6 +67,4 @@ TEST(DrmMemoryOperationsHandlerBindMtTest, givenCompressedAllocationWhenThreadsD
     EXPECT_EQ(numThreads, succeeded.load());
     EXPECT_EQ(vmBindCalledBefore + bindsPerDecompression, drm->getMockIoctlHelper()->vmBindCalled);
     EXPECT_FALSE(allocation.isCompressionEnabled());
-
-    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }

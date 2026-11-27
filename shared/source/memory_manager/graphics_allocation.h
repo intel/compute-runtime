@@ -491,23 +491,14 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
         return getGmm(0u);
     }
     Gmm *getGmm(uint32_t handleId) const {
-        if (parentAllocation) {
-            return parentAllocation->getGmm(handleId);
-        }
-        if (mappedPhysicalAllocation) {
-            return mappedPhysicalAllocation->getGmm(handleId);
-        }
-        return gmms[handleId].get();
+        return this->getGmmOwner().gmms[handleId].get();
     }
     void setDefaultGmm(std::unique_ptr<Gmm> gmm);
     void setGmm(std::unique_ptr<Gmm> gmm, uint32_t handleId);
     void resizeGmms(uint32_t size);
 
     uint32_t getNumGmms() const {
-        if (parentAllocation) {
-            return parentAllocation->getNumGmms();
-        }
-        return static_cast<uint32_t>(gmms.size());
+        return static_cast<uint32_t>(this->getGmmOwner().gmms.size());
     }
 
     uint32_t getUsedPageSize() const;
@@ -655,6 +646,16 @@ class GraphicsAllocation : NEO::NonCopyableAndNonMovableClass {
     }
 
   protected:
+    const GraphicsAllocation &getGmmOwner() const {
+        if (this->parentAllocation) {
+            return this->parentAllocation->getGmmOwner();
+        }
+        if (this->mappedPhysicalAllocation) {
+            return this->mappedPhysicalAllocation->getGmmOwner();
+        }
+        return *this;
+    }
+
     std::vector<uint32_t> inspectionIds;
     std::vector<std::unique_ptr<Gmm>> gmms;
     AubInfo aubInfo;
