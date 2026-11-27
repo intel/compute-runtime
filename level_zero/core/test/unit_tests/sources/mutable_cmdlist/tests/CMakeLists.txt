@@ -10,6 +10,7 @@ target_sources(${TARGET_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/mcl_program_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_kernels_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_cmdlist_tests_2.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_hw_command_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_indirect_data_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel_group_tests.cpp

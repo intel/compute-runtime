@@ -33,6 +33,9 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_meminfo_parsing_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_numa_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests_2.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests_3.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_with_aub_dump_tests.cpp
