@@ -5,9 +5,14 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/windows/mock_shared_section.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
@@ -258,6 +263,223 @@ TEST_F(WddmMemoryManagerAllocationFromSectionTest, givenCreatingAllocationFailsW
     EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSectionHandle(sectionHandle, properties));
     EXPECT_EQ(1u, SysCalls::unmapViewOfFileCalled);
     EXPECT_EQ(view, SysCalls::unmapViewOfFileLastAddress);
+}
+
+struct WddmMemoryManagerPhysicalHostMemoryTest : public ::testing::Test {
+    void SetUp() override {
+        auto osEnvironment = new OsEnvironmentWin();
+        osEnvironment->gdi.reset(new MockGdi());
+        executionEnvironment.osEnvironment.reset(osEnvironment);
+        executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
+        for (auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
+            rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+            rootDeviceEnvironment->initGmm();
+            auto rootDeviceWddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
+            rootDeviceWddm->init();
+            rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(rootDeviceWddm);
+        }
+        executionEnvironment.initializeMemoryManager();
+        memoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
+        wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
+        auto svmGpuAddress = memoryManager->getGfxPartition(0u)->getHeapMinimalAddress(HeapIndex::heapSvm) + MemoryConstants::pageSize2M;
+        svmGpuRange = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper()->canonize(svmGpuAddress);
+        rootDeviceIndices.pushUnique(0u);
+    }
+
+    UniqueGraphicsAllocation allocatePhysicalHostMemory(MemoryManager::AllocationStatus &status) {
+        AllocationData allocationData;
+        allocationData.allFlags = 0;
+        allocationData.size = physicalSize;
+        allocationData.flags.allocateMemory = true;
+        allocationData.flags.useSystemMemory = true;
+        allocationData.flags.isUSMHostAllocation = true;
+        return makeUniqueGraphicsAllocation(this->memoryManager.get(), this->memoryManager->allocatePhysicalHostMemory(allocationData, status));
+    }
+
+    static constexpr uint32_t numRootDevices = 2u;
+    static constexpr size_t physicalSize = 2 * MemoryConstants::pageSize64k;
+    static constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+    static constexpr size_t mappingOffset = MemoryConstants::pageSize64k;
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<MockWddmMemoryManager> memoryManager;
+    WddmMock *wddm = nullptr;
+    uint64_t svmGpuRange = 0u;
+    RootDeviceIndicesContainer rootDeviceIndices;
+    VariableBackup<size_t> closeHandleCalledBackup{&SysCalls::closeHandleCalled, 0u};
+    VariableBackup<size_t> unmapViewOfFileCalledBackup{&SysCalls::unmapViewOfFileCalled, 0u};
+    VariableBackup<LPCVOID> unmapViewOfFileLastAddressBackup{&SysCalls::unmapViewOfFileLastAddress, nullptr};
+    VariableBackup<size_t> createFileMapping2CalledBackup{&SysCalls::createFileMapping2Called, 0u};
+    VariableBackup<HANDLE> createFileMapping2ResultBackup{&SysCalls::createFileMapping2Result};
+    VariableBackup<SysCalls::CreateFileMapping2Call> createFileMapping2LastCallBackup{&SysCalls::createFileMapping2LastCall, {}};
+    VariableBackup<size_t> mapViewOfFile3CalledBackup{&SysCalls::mapViewOfFile3Called, 0u};
+    VariableBackup<bool> mapViewOfFile3FailsBackup{&SysCalls::mapViewOfFile3Fails, false};
+    VariableBackup<SysCalls::MapViewOfFile3Call> mapViewOfFile3LastCallBackup{&SysCalls::mapViewOfFile3LastCall, {}};
+    VariableBackup<size_t> unmapViewOfFile2CalledBackup{&SysCalls::unmapViewOfFile2Called, 0u};
+    VariableBackup<SysCalls::UnmapViewOfFile2Call> unmapViewOfFile2LastCallBackup{&SysCalls::unmapViewOfFile2LastCall, {}};
+    VariableBackup<size_t> virtualAlloc2CalledBackup{&SysCalls::virtualAlloc2Called, 0u};
+    VariableBackup<SysCalls::VirtualAlloc2Call> virtualAlloc2LastCallBackup{&SysCalls::virtualAlloc2LastCall, {}};
+    VariableBackup<size_t> virtualFreeCalledBackup{&SysCalls::virtualFreeCalled, 0u};
+    VariableBackup<MEMORY_BASIC_INFORMATION> virtualQueryMemoryBasicInformationBackup{&SysCalls::virtualQueryMemoryBasicInformation, {}};
+};
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenRequiredStartAddressWhenReservingAndFreeingCpuAddressThenPlaceholderIsReservedAndReleasedAfterCoalescing) {
+    const uint64_t requiredStartAddress = MemoryConstants::gigaByte;
+    const size_t size = 4 * MemoryConstants::pageSize64k;
+
+    auto addressRange = memoryManager->reserveCpuAddress(requiredStartAddress, size);
+    EXPECT_EQ(requiredStartAddress, addressRange.address);
+    EXPECT_EQ(size, addressRange.size);
+    EXPECT_EQ(1u, SysCalls::virtualAlloc2Called);
+    EXPECT_EQ(addrToPtr(requiredStartAddress), SysCalls::virtualAlloc2LastCall.baseAddress);
+    EXPECT_EQ(size, SysCalls::virtualAlloc2LastCall.size);
+    EXPECT_EQ(static_cast<ULONG>(MEM_RESERVE | MEM_RESERVE_PLACEHOLDER), SysCalls::virtualAlloc2LastCall.allocationType);
+    EXPECT_EQ(static_cast<ULONG>(PAGE_NOACCESS), SysCalls::virtualAlloc2LastCall.pageProtection);
+
+    memoryManager->freeCpuAddress(addressRange);
+    ASSERT_EQ(2u, SysCalls::virtualFreeCalled);
+    EXPECT_EQ(addrToPtr(requiredStartAddress), SysCalls::virtualFreeCalls[0].address);
+    EXPECT_EQ(size, SysCalls::virtualFreeCalls[0].size);
+    EXPECT_EQ(static_cast<DWORD>(MEM_RELEASE | MEM_COALESCE_PLACEHOLDERS), SysCalls::virtualFreeCalls[0].freeType);
+    EXPECT_EQ(addrToPtr(requiredStartAddress), SysCalls::virtualFreeCalls[1].address);
+    EXPECT_EQ(0u, SysCalls::virtualFreeCalls[1].size);
+    EXPECT_EQ(static_cast<DWORD>(MEM_RELEASE), SysCalls::virtualFreeCalls[1].freeType);
+}
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenPhysicalHostMemoryWhenAllocatingThenKmdAllocationIsCreatedOverPagefileSectionViewWhichIsReleasedOnFree) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto physicalAllocation = allocatePhysicalHostMemory(status);
+    ASSERT_NE(nullptr, physicalAllocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    auto wddmAllocation = static_cast<WddmAllocation *>(physicalAllocation.get());
+    EXPECT_EQ(1u, SysCalls::createFileMapping2Called);
+    EXPECT_EQ(static_cast<ULONG>(PAGE_READWRITE), SysCalls::createFileMapping2LastCall.pageProtection);
+    EXPECT_EQ(static_cast<ULONG>(SEC_COMMIT), SysCalls::createFileMapping2LastCall.allocationAttributes);
+    EXPECT_EQ(physicalSize, SysCalls::createFileMapping2LastCall.maximumSize);
+    EXPECT_EQ(1u, SysCalls::mapViewOfFile3Called);
+    EXPECT_EQ(nullptr, SysCalls::mapViewOfFile3LastCall.baseAddress);
+    EXPECT_EQ(physicalSize, SysCalls::mapViewOfFile3LastCall.viewSize);
+    EXPECT_EQ(SysCalls::createFileMapping2Result, wddmAllocation->getSectionHandle());
+    EXPECT_EQ(SysCalls::mapViewOfFile3DefaultView, wddmAllocation->getSectionView());
+    EXPECT_EQ(SysCalls::mapViewOfFile3DefaultView, wddmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(1u, wddm->createAllocationResult.called);
+    EXPECT_EQ(0u, wddm->lockResult.called);
+
+    physicalAllocation.reset();
+    EXPECT_EQ(1u, SysCalls::unmapViewOfFileCalled);
+    EXPECT_EQ(SysCalls::mapViewOfFile3DefaultView, SysCalls::unmapViewOfFileLastAddress);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+}
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenSectionCreationFailsWhenAllocatingPhysicalHostMemoryThenNullptrIsReturned) {
+    SysCalls::createFileMapping2Result = nullptr;
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+
+    EXPECT_EQ(nullptr, allocatePhysicalHostMemory(status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+    EXPECT_EQ(0u, SysCalls::mapViewOfFile3Called);
+    EXPECT_EQ(0u, wddm->createAllocationResult.called);
+}
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenSectionViewMappingFailsWhenAllocatingPhysicalHostMemoryThenSectionIsClosedAndNullptrIsReturned) {
+    SysCalls::mapViewOfFile3Fails = true;
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+
+    EXPECT_EQ(nullptr, allocatePhysicalHostMemory(status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+    EXPECT_EQ(0u, wddm->createAllocationResult.called);
+    EXPECT_EQ(0u, SysCalls::unmapViewOfFileCalled);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+}
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenKmdAllocationFailsWhenAllocatingPhysicalHostMemoryThenViewIsUnmappedAndSectionIsClosedAndNullptrIsReturned) {
+    wddm->failCreateAllocation = true;
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+
+    EXPECT_EQ(nullptr, allocatePhysicalHostMemory(status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+    EXPECT_EQ(1u, SysCalls::unmapViewOfFileCalled);
+    EXPECT_EQ(SysCalls::mapViewOfFile3DefaultView, SysCalls::unmapViewOfFileLastAddress);
+    EXPECT_EQ(1u, SysCalls::closeHandleCalled);
+}
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenSvmReservationOnTwoRootDevicesWhenMappingPhysicalHostMemoryThenFirstMappingOwnsSectionViewWhichReplacesPlaceholderAndIsUnmappedPreservingPlaceholder) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto physicalAllocation = allocatePhysicalHostMemory(status);
+    ASSERT_NE(nullptr, physicalAllocation);
+    rootDeviceIndices.pushUnique(1u);
+    MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices - 1};
+
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation.get(), svmGpuRange, mappingSize, mappingOffset, true));
+    EXPECT_EQ(2u, SysCalls::virtualFreeCalled);
+    EXPECT_EQ(addrToPtr(svmGpuRange), SysCalls::virtualFreeCalls[1].address);
+    EXPECT_EQ(mappingSize, SysCalls::virtualFreeCalls[1].size);
+    EXPECT_EQ(static_cast<DWORD>(MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER), SysCalls::virtualFreeCalls[1].freeType);
+    EXPECT_EQ(2u, SysCalls::mapViewOfFile3Called);
+    EXPECT_EQ(SysCalls::createFileMapping2Result, SysCalls::mapViewOfFile3LastCall.fileMapping);
+    EXPECT_EQ(addrToPtr(svmGpuRange), SysCalls::mapViewOfFile3LastCall.baseAddress);
+    EXPECT_EQ(mappingOffset, SysCalls::mapViewOfFile3LastCall.offset);
+    EXPECT_EQ(mappingSize, SysCalls::mapViewOfFile3LastCall.viewSize);
+    EXPECT_EQ(static_cast<ULONG>(MEM_REPLACE_PLACEHOLDER), SysCalls::mapViewOfFile3LastCall.allocationType);
+    auto firstMapping = static_cast<WddmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(0u));
+    auto secondMapping = static_cast<WddmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(1u));
+    EXPECT_TRUE(firstMapping && firstMapping->isPlaceholderViewMapped());
+    EXPECT_TRUE(secondMapping && !secondMapping->isPlaceholderViewMapped());
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation.get(), svmGpuRange, mappingSize, true));
+    EXPECT_EQ(1u, SysCalls::unmapViewOfFile2Called);
+    EXPECT_EQ(addrToPtr(svmGpuRange), SysCalls::unmapViewOfFile2LastCall.baseAddress);
+    EXPECT_EQ(static_cast<ULONG>(MEM_PRESERVE_PLACEHOLDER), SysCalls::unmapViewOfFile2LastCall.unmapFlags);
+}
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenRangeSplitIntoPlaceholdersByEarlierMappingsWhenMappingPhysicalHostMemoryThenOverlappedPlaceholdersAreMergedBeforeRangeIsSplitOff) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto physicalAllocation = allocatePhysicalHostMemory(status);
+    ASSERT_NE(nullptr, physicalAllocation);
+    MultiGraphicsAllocation multiGraphicsAllocation{0u};
+    const auto firstPlaceholderBase = addrToPtr(svmGpuRange - MemoryConstants::pageSize64k);
+    SysCalls::virtualQueryMemoryBasicInformation.AllocationBase = firstPlaceholderBase;
+    SysCalls::virtualQueryMemoryBasicInformation.BaseAddress = addrToPtr(svmGpuRange + MemoryConstants::pageSize64k);
+    SysCalls::virtualQueryMemoryBasicInformation.RegionSize = 2 * MemoryConstants::pageSize64k;
+
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation.get(), svmGpuRange, mappingSize, mappingOffset, true));
+    ASSERT_EQ(2u, SysCalls::virtualFreeCalled);
+    EXPECT_EQ(firstPlaceholderBase, SysCalls::virtualFreeCalls[0].address);
+    EXPECT_EQ(4 * MemoryConstants::pageSize64k, SysCalls::virtualFreeCalls[0].size);
+    EXPECT_EQ(static_cast<DWORD>(MEM_RELEASE | MEM_COALESCE_PLACEHOLDERS), SysCalls::virtualFreeCalls[0].freeType);
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation.get(), svmGpuRange, mappingSize, true));
+}
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenGpuOnlyReservationWhenMappingPhysicalHostMemoryThenNoCpuViewIsMapped) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto physicalAllocation = allocatePhysicalHostMemory(status);
+    ASSERT_NE(nullptr, physicalAllocation);
+    MultiGraphicsAllocation multiGraphicsAllocation{0u};
+
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation.get(), svmGpuRange, mappingSize, mappingOffset, false));
+    EXPECT_EQ(0u, SysCalls::virtualFreeCalled);
+    EXPECT_EQ(1u, SysCalls::mapViewOfFile3Called);
+    auto mapping = static_cast<WddmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(0u));
+    EXPECT_TRUE(mapping && !mapping->isPlaceholderViewMapped());
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation.get(), svmGpuRange, mappingSize, false));
+    EXPECT_EQ(0u, SysCalls::unmapViewOfFile2Called);
+}
+
+TEST_F(WddmMemoryManagerPhysicalHostMemoryTest, givenMappingCpuViewFailsWhenMappingPhysicalHostMemoryToSvmReservationThenGpuMappingIsReleasedAndMapFails) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    auto physicalAllocation = allocatePhysicalHostMemory(status);
+    ASSERT_NE(nullptr, physicalAllocation);
+    MultiGraphicsAllocation multiGraphicsAllocation{0u};
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper()->getClientContext());
+    const auto gmmFreeCallsBeforeMap = gmmClientContext->freeGpuVirtualAddressCalled;
+    SysCalls::mapViewOfFile3Fails = true;
+
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation.get(), svmGpuRange, mappingSize, mappingOffset, true));
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(0u));
+    EXPECT_EQ(gmmFreeCallsBeforeMap + 1, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(0u, SysCalls::unmapViewOfFile2Called);
 }
 
 namespace {

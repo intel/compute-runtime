@@ -2610,21 +2610,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCreatePhysicalAllocationFailureWhenAllo
     EXPECT_EQ(nullptr, allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenLockResourceFailureWhenAllocatingPhysicalHostMemoryThenNullptrIsReturned) {
-    AllocationData allocationData;
-    allocationData.allFlags = 0;
-    allocationData.size = MemoryConstants::pageSize64k;
-    allocationData.flags.allocateMemory = true;
-    allocationData.flags.useSystemMemory = true;
-    allocationData.flags.isUSMHostAllocation = true;
-
-    wddm->callBaseDestroyAllocations = false;
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
-    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
-    EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
-}
-
 TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeAboveHeapLimitWhenMapThenMapFails) {
     AllocationData allocationData;
     allocationData.allFlags = 0;

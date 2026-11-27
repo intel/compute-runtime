@@ -239,6 +239,7 @@ bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAl
 
 bool WddmMemoryManager::destroyPhysicalHostMemoryMapping(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation &mappedAllocation, size_t size) {
     const auto rootDeviceIndex = mappedAllocation.getRootDeviceIndex();
+    this->unmapPhysicalHostMemoryFromCpuAddress(static_cast<WddmAllocation &>(mappedAllocation));
     const bool isGpuVaFreed = this->getWddm(rootDeviceIndex).freeGmmGpuVirtualAddress(mappedAllocation.getDefaultGmm(), mappedAllocation.getGpuAddress(), size, true) == STATUS_SUCCESS;
     multiGraphicsAllocation.removeAllocation(rootDeviceIndex);
     this->removeAllocationFromResidencyControllers(mappedAllocation);
@@ -411,6 +412,14 @@ bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCo
 
         this->registerPhysicalMemoryMapping(*physicalAllocation);
         multiGraphicsAllocation.addAllocation(mappingAlloc.release());
+    }
+
+    if (isSvmReservation) {
+        auto cpuViewOwner = static_cast<WddmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndices[0]));
+        if (!this->mapPhysicalHostMemoryToCpuAddress(*wddmPhysical, *cpuViewOwner, offset)) {
+            cleanupMappedAllocations();
+            return false;
+        }
     }
 
     return true;
@@ -1204,6 +1213,9 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         [[maybe_unused]] auto unmapStatus = SysCalls::unmapViewOfFile(input->getSectionView());
         DEBUG_BREAK_IF(!unmapStatus);
     }
+    if (input->getSectionHandle()) {
+        SysCalls::closeHandle(input->getSectionHandle());
+    }
 
     delete gfxAllocation;
 }
@@ -1415,15 +1427,6 @@ AddressRange WddmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredS
 
 void WddmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
     getWddm(rootDeviceIndex).freeGpuVirtualAddress(addressRange.address, addressRange.size);
-}
-
-AddressRange WddmMemoryManager::reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) {
-    void *ptr = osMemory->osReserveCpuAddressRange(addrToPtr(requiredStartAddress), size, false);
-    return {castToUint64(ptr), size};
-}
-
-void WddmMemoryManager::freeCpuAddress(AddressRange addressRange) {
-    osMemory->osReleaseCpuAddressRange(addrToPtr(addressRange.address), addressRange.size);
 }
 
 void WddmMemoryManager::destroyAllocationHandles(WddmAllocation &allocation) {
@@ -1863,9 +1866,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     return wddmAllocation.release();
 }
 
-GraphicsAllocation *WddmMemoryManager::allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) {
-    status = AllocationStatus::Error;
-
+std::unique_ptr<WddmAllocation> WddmMemoryManager::createPhysicalHostAllocation(const AllocationData &allocationData, void *systemMemory) {
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
@@ -1877,12 +1878,12 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalHostMemory(const Allocati
     StorageInfo storageInfo{};
     storageInfo.isLockable = true;
 
-    auto gmm = std::make_unique<Gmm>(gmmHelper, nullptr, allocationData.size, allocationData.alignment,
+    auto gmm = std::make_unique<Gmm>(gmmHelper, systemMemory, allocationData.size, allocationData.alignment,
                                      CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo()),
                                      storageInfo, gmmRequirements);
 
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, 1u, allocationData.type,
-                                                       nullptr, 0, allocationData.size, nullptr,
+                                                       systemMemory, 0, allocationData.size, nullptr,
                                                        MemoryPool::system64KBPages, 0u, maxOsContextCount);
     allocation->setDefaultGmm(std::move(gmm));
     allocation->storageInfo = storageInfo;
@@ -1890,16 +1891,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalHostMemory(const Allocati
     if (!createPhysicalAllocation(allocation.get())) {
         return nullptr;
     }
-
-    auto cpuPtr = lockResource(allocation.get());
-    if (!cpuPtr) {
-        destroyAllocationHandles(*allocation);
-        return nullptr;
-    }
-
-    allocation->setCpuAddress(cpuPtr);
-    status = AllocationStatus::Success;
-    return allocation.release();
+    return allocation;
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {

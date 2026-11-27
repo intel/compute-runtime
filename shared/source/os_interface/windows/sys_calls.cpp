@@ -201,6 +201,36 @@ BOOL unmapViewOfFile(LPCVOID lpBaseAddress) {
     return UnmapViewOfFile(lpBaseAddress);
 }
 
+// Only onecore.lib, which the driver does not link, provides an import library for these kernelbase functions.
+template <typename FunctionT>
+FunctionT getKernelBaseFunction(const char *name) {
+    return reinterpret_cast<FunctionT>(GetProcAddress(GetModuleHandleA("kernelbase.dll"), name));
+}
+
+HANDLE createFileMapping2(HANDLE file, LPSECURITY_ATTRIBUTES securityAttributes, ULONG desiredAccess, ULONG pageProtection, ULONG allocationAttributes, ULONG64 maximumSize, PCWSTR name) {
+    auto createFileMapping2Func = getKernelBaseFunction<decltype(&CreateFileMapping2)>("CreateFileMapping2");
+    return createFileMapping2Func(file, securityAttributes, desiredAccess, pageProtection, allocationAttributes, maximumSize, name, nullptr, 0);
+}
+
+PVOID mapViewOfFile3(HANDLE fileMapping, HANDLE process, PVOID baseAddress, ULONG64 offset, SIZE_T viewSize, ULONG allocationType, ULONG pageProtection) {
+    auto mapViewOfFile3Func = getKernelBaseFunction<decltype(&MapViewOfFile3)>("MapViewOfFile3");
+    return mapViewOfFile3Func(fileMapping, process, baseAddress, offset, viewSize, allocationType, pageProtection, nullptr, 0);
+}
+
+BOOL unmapViewOfFile2(HANDLE process, PVOID baseAddress, ULONG unmapFlags) {
+    auto unmapViewOfFile2Func = getKernelBaseFunction<decltype(&UnmapViewOfFile2)>("UnmapViewOfFile2");
+    return unmapViewOfFile2Func(process, baseAddress, unmapFlags);
+}
+
+PVOID virtualAlloc2(HANDLE process, PVOID baseAddress, SIZE_T size, ULONG allocationType, ULONG pageProtection) {
+    auto virtualAlloc2Func = getKernelBaseFunction<decltype(&VirtualAlloc2)>("VirtualAlloc2");
+    return virtualAlloc2Func(process, baseAddress, size, allocationType, pageProtection, nullptr, 0);
+}
+
+BOOL virtualFree(LPVOID address, SIZE_T size, DWORD freeType) {
+    return VirtualFree(address, size, freeType);
+}
+
 void coTaskMemFree(LPVOID pv) {
     CoTaskMemFree(pv);
 }

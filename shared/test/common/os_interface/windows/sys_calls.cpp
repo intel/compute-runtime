@@ -143,6 +143,25 @@ SIZE_T mapViewOfFileLastNumberOfBytesToMap = 0u;
 size_t unmapViewOfFileCalled = 0u;
 LPCVOID unmapViewOfFileLastAddress = nullptr;
 
+size_t createFileMapping2Called = 0u;
+HANDLE createFileMapping2Result = reinterpret_cast<HANDLE>(dummyHandle);
+CreateFileMapping2Call createFileMapping2LastCall = {};
+
+size_t mapViewOfFile3Called = 0u;
+bool mapViewOfFile3Fails = false;
+PVOID mapViewOfFile3DefaultView = reinterpret_cast<PVOID>(0x10000000);
+MapViewOfFile3Call mapViewOfFile3LastCall = {};
+
+size_t unmapViewOfFile2Called = 0u;
+UnmapViewOfFile2Call unmapViewOfFile2LastCall = {};
+
+constexpr uintptr_t virtualAlloc2DefaultAddress = 0x20000000;
+size_t virtualAlloc2Called = 0u;
+VirtualAlloc2Call virtualAlloc2LastCall = {};
+
+size_t virtualFreeCalled = 0u;
+VirtualFreeCall virtualFreeCalls[virtualFreeCallsCapacity] = {};
+
 size_t setProcessPowerThrottlingStateCalled = 0u;
 ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue{};
 
@@ -563,6 +582,41 @@ LPVOID mapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwF
 BOOL unmapViewOfFile(LPCVOID lpBaseAddress) {
     unmapViewOfFileCalled++;
     unmapViewOfFileLastAddress = lpBaseAddress;
+    return TRUE;
+}
+
+HANDLE createFileMapping2(HANDLE file, LPSECURITY_ATTRIBUTES securityAttributes, ULONG desiredAccess, ULONG pageProtection, ULONG allocationAttributes, ULONG64 maximumSize, PCWSTR name) {
+    createFileMapping2Called++;
+    createFileMapping2LastCall = {pageProtection, allocationAttributes, maximumSize};
+    return createFileMapping2Result;
+}
+
+PVOID mapViewOfFile3(HANDLE fileMapping, HANDLE process, PVOID baseAddress, ULONG64 offset, SIZE_T viewSize, ULONG allocationType, ULONG pageProtection) {
+    mapViewOfFile3Called++;
+    mapViewOfFile3LastCall = {fileMapping, baseAddress, offset, viewSize, allocationType};
+    if (mapViewOfFile3Fails) {
+        return nullptr;
+    }
+    return baseAddress ? baseAddress : mapViewOfFile3DefaultView;
+}
+
+BOOL unmapViewOfFile2(HANDLE process, PVOID baseAddress, ULONG unmapFlags) {
+    unmapViewOfFile2Called++;
+    unmapViewOfFile2LastCall = {baseAddress, unmapFlags};
+    return TRUE;
+}
+
+PVOID virtualAlloc2(HANDLE process, PVOID baseAddress, SIZE_T size, ULONG allocationType, ULONG pageProtection) {
+    virtualAlloc2Called++;
+    virtualAlloc2LastCall = {baseAddress, size, allocationType, pageProtection};
+    return baseAddress ? baseAddress : reinterpret_cast<PVOID>(virtualAlloc2DefaultAddress);
+}
+
+BOOL virtualFree(LPVOID address, SIZE_T size, DWORD freeType) {
+    if (virtualFreeCalled < virtualFreeCallsCapacity) {
+        virtualFreeCalls[virtualFreeCalled] = {address, size, freeType};
+    }
+    virtualFreeCalled++;
     return TRUE;
 }
 

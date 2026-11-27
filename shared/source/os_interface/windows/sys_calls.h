@@ -59,6 +59,11 @@ BOOL getFileSizeEx(HANDLE hFile, PLARGE_INTEGER lpFileSize);
 HANDLE createFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName);
 LPVOID mapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
 BOOL unmapViewOfFile(LPCVOID lpBaseAddress);
+HANDLE createFileMapping2(HANDLE file, LPSECURITY_ATTRIBUTES securityAttributes, ULONG desiredAccess, ULONG pageProtection, ULONG allocationAttributes, ULONG64 maximumSize, PCWSTR name);
+PVOID mapViewOfFile3(HANDLE fileMapping, HANDLE process, PVOID baseAddress, ULONG64 offset, SIZE_T viewSize, ULONG allocationType, ULONG pageProtection);
+BOOL unmapViewOfFile2(HANDLE process, PVOID baseAddress, ULONG unmapFlags);
+PVOID virtualAlloc2(HANDLE process, PVOID baseAddress, SIZE_T size, ULONG allocationType, ULONG pageProtection);
+BOOL virtualFree(LPVOID address, SIZE_T size, DWORD freeType);
 BOOL duplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle, LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions);
 HANDLE openProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId);
 

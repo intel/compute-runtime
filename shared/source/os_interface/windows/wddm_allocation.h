@@ -134,6 +134,10 @@ class WddmAllocation : public GraphicsAllocation {
 
     void *getSectionView() const { return sectionView; }
     void setSectionView(void *sectionView) { this->sectionView = sectionView; }
+    HANDLE getSectionHandle() const { return sectionHandle; }
+    void setSectionHandle(HANDLE sectionHandle) { this->sectionHandle = sectionHandle; }
+    bool isPlaceholderViewMapped() const { return placeholderViewMapped; }
+    void setPlaceholderViewMapped(bool placeholderViewMapped) { this->placeholderViewMapped = placeholderViewMapped; }
 
     ResidencyData &getResidencyData() {
         if (parentAllocation) {
@@ -154,10 +158,12 @@ class WddmAllocation : public GraphicsAllocation {
     std::vector<D3DKMT_HANDLE> handles;
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
     void *sectionView = nullptr;
+    HANDLE sectionHandle = nullptr;
     uint32_t shareable = 0u;
     bool allocInFrontWindowPool = false;
     bool physicalMemoryReservation = false;
     bool mappedPhysicalMemoryReservation = false;
+    bool placeholderViewMapped = false;
     bool makeResidentBeforeLockRequired = false;
     bool ipcSupportedAllocationByDefault = false;
     bool inEvictionAllocations = false;

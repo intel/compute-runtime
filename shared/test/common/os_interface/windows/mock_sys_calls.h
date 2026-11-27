@@ -128,6 +128,47 @@ extern size_t unmapViewOfFileCalled;
 extern LPCVOID unmapViewOfFileLastAddress;
 extern MEMORY_BASIC_INFORMATION virtualQueryMemoryBasicInformation;
 extern SIZE_T virtualQueryResult;
+struct CreateFileMapping2Call {
+    ULONG pageProtection;
+    ULONG allocationAttributes;
+    ULONG64 maximumSize;
+};
+extern size_t createFileMapping2Called;
+extern HANDLE createFileMapping2Result;
+extern CreateFileMapping2Call createFileMapping2LastCall;
+struct MapViewOfFile3Call {
+    HANDLE fileMapping;
+    PVOID baseAddress;
+    ULONG64 offset;
+    SIZE_T viewSize;
+    ULONG allocationType;
+};
+extern size_t mapViewOfFile3Called;
+extern bool mapViewOfFile3Fails;
+extern PVOID mapViewOfFile3DefaultView;
+extern MapViewOfFile3Call mapViewOfFile3LastCall;
+struct UnmapViewOfFile2Call {
+    PVOID baseAddress;
+    ULONG unmapFlags;
+};
+extern size_t unmapViewOfFile2Called;
+extern UnmapViewOfFile2Call unmapViewOfFile2LastCall;
+struct VirtualAlloc2Call {
+    PVOID baseAddress;
+    SIZE_T size;
+    ULONG allocationType;
+    ULONG pageProtection;
+};
+extern size_t virtualAlloc2Called;
+extern VirtualAlloc2Call virtualAlloc2LastCall;
+struct VirtualFreeCall {
+    LPVOID address;
+    SIZE_T size;
+    DWORD freeType;
+};
+constexpr size_t virtualFreeCallsCapacity = 2u;
+extern size_t virtualFreeCalled;
+extern VirtualFreeCall virtualFreeCalls[virtualFreeCallsCapacity];
 extern SIZE_T (*sysCallsVirtualQuery)(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
 } // namespace SysCalls
 } // namespace NEO

@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
@@ -16,6 +17,7 @@
 #include "shared/source/os_interface/windows/sys_calls_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
+#include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
@@ -484,6 +486,16 @@ class DrmOrWddmMemoryManagerTest : public ::testing::Test {
         memoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
     }
 
+    AllocationData createPhysicalHostAllocationData() const {
+        AllocationData allocationData;
+        allocationData.allFlags = 0;
+        allocationData.size = MemoryConstants::pageSize64k;
+        allocationData.flags.allocateMemory = true;
+        allocationData.flags.useSystemMemory = true;
+        allocationData.flags.isUSMHostAllocation = true;
+        return allocationData;
+    }
+
     WddmAllocation *createShareableAllocationWithNtHandle() {
         auto allocation = new WddmAllocation(0u, 1u, AllocationType::buffer, nullptr, 0u, MemoryConstants::pageSize,
                                              nullptr, MemoryPool::system4KBPages, 1u, 1u);
@@ -540,4 +552,36 @@ TEST_F(DrmOrWddmMemoryManagerTest, givenWslWhenCreatingAllocationFromSectionHand
     AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::bufferHostMemory, mockDeviceBitfield);
 
     EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSectionHandle(reinterpret_cast<HANDLE>(0x4321), properties));
+}
+
+TEST_F(DrmOrWddmMemoryManagerTest, givenWslWhenAllocatingPhysicalHostMemoryThenLockedKmdAllocationWithoutSectionIsReturned) {
+    auto status = MemoryManager::AllocationStatus::Error;
+    auto allocation = makeUniqueGraphicsAllocation(memoryManager.get(), memoryManager->allocatePhysicalHostMemory(createPhysicalHostAllocationData(), status));
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(1u, wddm->lockResult.called);
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(nullptr, static_cast<WddmAllocation *>(allocation.get())->getSectionHandle());
+    EXPECT_EQ(nullptr, static_cast<WddmAllocation *>(allocation.get())->getSectionView());
+}
+
+TEST_F(DrmOrWddmMemoryManagerTest, givenWslAndLockResourceFailureWhenAllocatingPhysicalHostMemoryThenHandlesAreDestroyedAndNullptrIsReturned) {
+    wddm->callBaseDestroyAllocations = false;
+    auto status = MemoryManager::AllocationStatus::Success;
+
+    EXPECT_EQ(nullptr, memoryManager->allocatePhysicalHostMemory(createPhysicalHostAllocationData(), status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+    EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
+}
+
+TEST_F(DrmOrWddmMemoryManagerTest, givenWslWhenMappingPhysicalHostMemoryToCpuAddressThenNoCpuViewIsMapped) {
+    WddmAllocation physicalAllocation(0u, 1u, AllocationType::bufferHostMemory, nullptr, 0u, MemoryConstants::pageSize64k, nullptr, MemoryPool::system64KBPages, 0u, 1u);
+    WddmAllocation mappedAllocation(0u, 1u, AllocationType::bufferHostMemory, nullptr, 0u, MemoryConstants::pageSize64k, nullptr, MemoryPool::system64KBPages, 0u, 1u);
+
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToCpuAddress(physicalAllocation, mappedAllocation, 0u));
+    EXPECT_FALSE(mappedAllocation.isPlaceholderViewMapped());
+
+    memoryManager->unmapPhysicalHostMemoryFromCpuAddress(mappedAllocation);
+    EXPECT_FALSE(mappedAllocation.isPlaceholderViewMapped());
 }
