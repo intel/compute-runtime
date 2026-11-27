@@ -1210,14 +1210,14 @@ void CommandList::resetBcsSplitEvents(bool release) {
     }
 }
 
-void CommandList::dispatchRecordedBcsSplit() {
+void CommandList::dispatchRecordedBcsSplit(bool highPriority) {
     if (this->bcsSplitMode != BcsSplitParams::BcsSplitMode::recorded) {
         return;
     }
 
     resetBcsSplitEvents(false);
 
-    device->bcsSplit->dispatchRecordedCmdLists(this->subCmdListsForRecordedBcsSplit);
+    device->bcsSplit->dispatchRecordedCmdLists(this->subCmdListsForRecordedBcsSplit, highPriority);
 }
 
 BcsSplitParams::CmdListsForSplitContainer CommandList::getRegularCmdListsForSplit(size_t totalTransferSize, size_t perEngineMaxSize, size_t splitQueuesCount) {

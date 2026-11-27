@@ -2333,6 +2333,191 @@ HWTEST2_F(HighPriorityBcsSplitTests, givenHighPriorityImmediateCmdListWithBcsSpl
     context->freeMem(devicePtr);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>> createClosedRecordedBcsSplitCmdList(L0::Device *device, BcsSplit &bcsSplit) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>> cmdList(static_cast<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>> *>(
+        CommandList::create(device, NEO::EngineGroupType::copy, ZE_COMMAND_LIST_FLAG_IN_ORDER, returnValue, false)));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(BcsSplitParams::BcsSplitMode::recorded, cmdList->bcsSplitMode);
+
+    const auto splitCmdListsCount = bcsSplit.cmdLists.size();
+    cmdList->getRegularCmdListsForSplit(splitCmdListsCount, 1, splitCmdListsCount);
+    EXPECT_EQ(splitCmdListsCount, cmdList->subCmdListsForRecordedBcsSplit.size());
+    cmdList->close();
+
+    return cmdList;
+}
+
+DestroyableZeUniquePtr<L0::CommandQueue> createCopyQueue(L0::Device *device, uint32_t copyOrdinal, ze_command_queue_priority_t priority, const ze_queue_priority_desc_t *priorityDesc) {
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    queueDesc.pNext = priorityDesc;
+    queueDesc.ordinal = copyOrdinal;
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    queueDesc.priority = priority;
+
+    ze_command_queue_handle_t queueHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&queueDesc, &queueHandle));
+    return DestroyableZeUniquePtr<L0::CommandQueue>(L0::CommandQueue::fromHandle(queueHandle));
+}
+
+DestroyableZeUniquePtr<L0::CommandQueue> createCopyQueueWithPriority(L0::Device *device, uint32_t copyOrdinal, ze_command_queue_priority_t priority) {
+    return createCopyQueue(device, copyOrdinal, priority, nullptr);
+}
+
+DestroyableZeUniquePtr<L0::CommandQueue> createCopyQueueWithPriorityLevel(L0::Device *device, uint32_t copyOrdinal, int priorityLevel) {
+    ze_queue_priority_desc_t priorityDesc = {};
+    priorityDesc.stype = ZE_STRUCTURE_TYPE_QUEUE_PRIORITY_DESC;
+    priorityDesc.priority = priorityLevel;
+    return createCopyQueue(device, copyOrdinal, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, &priorityDesc);
+}
+
+void executeOnQueue(L0::CommandQueue *queue, L0::CommandList *cmdList) {
+    ASSERT_NE(nullptr, queue);
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queue->executeCommandLists(1u, &cmdListHandle, nullptr, internalOptions));
+}
+
+std::vector<TaskCountType> getSplitCsrsTaskCounts(const std::vector<L0::CommandList *> &splitCmdLists) {
+    std::vector<TaskCountType> taskCounts;
+    for (auto splitCmdList : splitCmdLists) {
+        taskCounts.push_back(splitCmdList->getCsr(false)->peekTaskCount());
+    }
+    return taskCounts;
+}
+
+void expectAllTaskCountsIncreased(const std::vector<TaskCountType> &taskCountsBefore, const std::vector<TaskCountType> &taskCountsAfter) {
+    ASSERT_EQ(taskCountsBefore.size(), taskCountsAfter.size());
+    for (size_t i = 0; i < taskCountsBefore.size(); i++) {
+        EXPECT_GT(taskCountsAfter[i], taskCountsBefore[i]);
+    }
+}
+
+HWTEST2_F(HighPriorityBcsSplitTests, givenRecordedBcsSplitRegularCmdListWhenExecutedOnQueuesWithNegativePriorityLevelAndHighPriorityThenHighPrioritySplitCmdListsAreCreatedOnceAndUsed, IsAtLeastXe2HpgCore) {
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+    ASSERT_TRUE(highPrioritySecondaryEnginesAvailable());
+
+    auto testedBcsSplit = static_cast<BcsSplitTestable *>(bcsSplit);
+    auto regularCmdList = createClosedRecordedBcsSplitCmdList<FamilyType::gfxCoreFamily>(device, *bcsSplit);
+    EXPECT_TRUE(bcsSplit->hpCmdLists.empty());
+
+    const auto clientCountBeforeExecute = testedBcsSplit->clientCount;
+    const auto regularTaskCountsBeforeExecute = getSplitCsrsTaskCounts(bcsSplit->cmdLists);
+
+    auto priorityLevelQueue = createCopyQueueWithPriorityLevel(device, queryCopyOrdinal(), -1);
+    executeOnQueue(priorityLevelQueue.get(), regularCmdList.get());
+
+    ASSERT_EQ(expectedEnginesCount, bcsSplit->hpCmdLists.size());
+    EXPECT_EQ(clientCountBeforeExecute, testedBcsSplit->clientCount);
+    EXPECT_EQ(regularTaskCountsBeforeExecute, getSplitCsrsTaskCounts(bcsSplit->cmdLists));
+    for (auto hpCmdList : bcsSplit->hpCmdLists) {
+        EXPECT_TRUE(hpCmdList->getCsr(false)->getOsContext().isHighPriority());
+        EXPECT_NE(0u, hpCmdList->getCsr(false)->peekTaskCount());
+    }
+
+    const auto hpCmdListsAfterFirstExecute = bcsSplit->hpCmdLists;
+    const auto hpTaskCountsBeforeSecondExecute = getSplitCsrsTaskCounts(bcsSplit->hpCmdLists);
+
+    auto highPriorityQueue = createCopyQueueWithPriority(device, queryCopyOrdinal(), ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+    executeOnQueue(highPriorityQueue.get(), regularCmdList.get());
+
+    EXPECT_EQ(hpCmdListsAfterFirstExecute, bcsSplit->hpCmdLists);
+    expectAllTaskCountsIncreased(hpTaskCountsBeforeSecondExecute, getSplitCsrsTaskCounts(bcsSplit->hpCmdLists));
+    EXPECT_EQ(regularTaskCountsBeforeExecute, getSplitCsrsTaskCounts(bcsSplit->cmdLists));
+}
+
+HWTEST2_F(HighPriorityBcsSplitTests, givenRecordedBcsSplitRegularCmdListWhenExecutedOnNormalPriorityQueuesThenRegularSplitCmdListsAreUsed, IsAtLeastXe2HpgCore) {
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+
+    auto regularCmdList = createClosedRecordedBcsSplitCmdList<FamilyType::gfxCoreFamily>(device, *bcsSplit);
+
+    auto normalPriorityQueue = createCopyQueueWithPriority(device, queryCopyOrdinal(), ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+    auto nonNegativePriorityLevelQueue = createCopyQueueWithPriorityLevel(device, queryCopyOrdinal(), 0);
+
+    for (auto queue : {normalPriorityQueue.get(), nonNegativePriorityLevelQueue.get()}) {
+        const auto regularTaskCountsBeforeExecute = getSplitCsrsTaskCounts(bcsSplit->cmdLists);
+
+        executeOnQueue(queue, regularCmdList.get());
+
+        EXPECT_TRUE(bcsSplit->hpCmdLists.empty());
+        expectAllTaskCountsIncreased(regularTaskCountsBeforeExecute, getSplitCsrsTaskCounts(bcsSplit->cmdLists));
+    }
+}
+
+HWTEST2_F(HighPriorityBcsSplitTests, givenHighPrioritySplitCmdListsCountDifferentThanRegularWhenRecordedBcsSplitRegularCmdListExecutedOnHighPriorityQueueThenRegularSplitCmdListsAreUsed, IsAtLeastXe2HpgCore) {
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+    ASSERT_TRUE(highPrioritySecondaryEnginesAvailable());
+
+    auto regularCmdList = createClosedRecordedBcsSplitCmdList<FamilyType::gfxCoreFamily>(device, *bcsSplit);
+    auto highPriorityQueue = createCopyQueueWithPriority(device, queryCopyOrdinal(), ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+    executeOnQueue(highPriorityQueue.get(), regularCmdList.get());
+    ASSERT_EQ(expectedEnginesCount, bcsSplit->hpCmdLists.size());
+
+    auto removedHpCmdList = bcsSplit->hpCmdLists.back();
+    bcsSplit->hpCmdLists.pop_back();
+
+    const auto regularTaskCountsBeforeExecute = getSplitCsrsTaskCounts(bcsSplit->cmdLists);
+    const auto hpTaskCountsBeforeExecute = getSplitCsrsTaskCounts(bcsSplit->hpCmdLists);
+
+    executeOnQueue(highPriorityQueue.get(), regularCmdList.get());
+
+    expectAllTaskCountsIncreased(regularTaskCountsBeforeExecute, getSplitCsrsTaskCounts(bcsSplit->cmdLists));
+    EXPECT_EQ(hpTaskCountsBeforeExecute, getSplitCsrsTaskCounts(bcsSplit->hpCmdLists));
+
+    bcsSplit->hpCmdLists.push_back(removedHpCmdList);
+}
+
+HWTEST2_F(HighPriorityBcsSplitTests, givenHighPrioritySplitCsrsCollectionFailedWhenRecordedBcsSplitRegularCmdListExecutedOnHighPriorityQueueAgainThenCollectionIsNotRetried, IsAtLeastXe2HpgCore) {
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+    ASSERT_TRUE(highPrioritySecondaryEnginesAvailable());
+
+    auto testedBcsSplit = static_cast<BcsSplitTestable *>(bcsSplit);
+    auto regularCmdList = createClosedRecordedBcsSplitCmdList<FamilyType::gfxCoreFamily>(device, *bcsSplit);
+    auto highPriorityQueue = createCopyQueueWithPriority(device, queryCopyOrdinal(), ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+
+    const auto owningQueueCountsBeforeExecute = getSplitSecondaryCsrsOwningQueueCounts();
+
+    testedBcsSplit->splitSettings.minRequiredTotalCsrCount = expectedEnginesCount + 1;
+    executeOnQueue(highPriorityQueue.get(), regularCmdList.get());
+
+    EXPECT_TRUE(bcsSplit->hpCmdLists.empty());
+    EXPECT_EQ(owningQueueCountsBeforeExecute, getSplitSecondaryCsrsOwningQueueCounts());
+
+    testedBcsSplit->splitSettings.minRequiredTotalCsrCount = expectedEnginesCount;
+    const auto regularTaskCountsBeforeSecondExecute = getSplitCsrsTaskCounts(bcsSplit->cmdLists);
+
+    executeOnQueue(highPriorityQueue.get(), regularCmdList.get());
+
+    EXPECT_TRUE(bcsSplit->hpCmdLists.empty());
+    EXPECT_EQ(owningQueueCountsBeforeExecute, getSplitSecondaryCsrsOwningQueueCounts());
+    expectAllTaskCountsIncreased(regularTaskCountsBeforeSecondExecute, getSplitCsrsTaskCounts(bcsSplit->cmdLists));
+}
+
+HWTEST2_F(AggregatedBcsSplitTests, givenNoHighPrioritySecondaryEnginesWhenRecordedBcsSplitRegularCmdListExecutedOnHighPriorityQueueThenRegularSplitCmdListsAreUsed, IsAtLeastXe2HpgCore) {
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+
+    auto regularCmdList = createClosedRecordedBcsSplitCmdList<FamilyType::gfxCoreFamily>(device, *bcsSplit);
+    const auto regularTaskCountsBeforeExecute = getSplitCsrsTaskCounts(bcsSplit->cmdLists);
+
+    auto highPriorityQueue = createCopyQueueWithPriority(device, queryCopyOrdinal(), ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+    executeOnQueue(highPriorityQueue.get(), regularCmdList.get());
+
+    EXPECT_TRUE(bcsSplit->hpCmdLists.empty());
+    expectAllTaskCountsIncreased(regularTaskCountsBeforeExecute, getSplitCsrsTaskCounts(bcsSplit->cmdLists));
+}
+
 struct MultiRootAggregatedBcsSplitTests : public AggregatedBcsSplitTests {
     void SetUp() override {
         expectedNumRootDevices = 2;

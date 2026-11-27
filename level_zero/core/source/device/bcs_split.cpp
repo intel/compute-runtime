@@ -64,8 +64,7 @@ bool BcsSplit::setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnab
     }
 
     if (createHighPriorityQueues) {
-        this->hpCsrs = highPriorityCsrs;
-        createCmdListsForCsrs(highPriorityCsrs, this->hpCmdLists, this->hpH2dCmdLists, this->hpD2hCmdLists);
+        createHighPriorityCmdLists(highPriorityCsrs);
     }
 
     this->clientCount++;
@@ -117,6 +116,33 @@ bool BcsSplit::collectHighPriorityCsrs(BcsSplitParams::CsrContainer &csrs) {
     }
 
     return true;
+}
+
+bool BcsSplit::ensureHighPriorityQueues() {
+    std::lock_guard<std::mutex> lock(this->mtx);
+
+    if (!this->hpCmdLists.empty()) {
+        return true;
+    }
+
+    if (this->highPriorityQueuesUnavailable) {
+        return false;
+    }
+
+    BcsSplitParams::CsrContainer highPriorityCsrs;
+    if (!collectHighPriorityCsrs(highPriorityCsrs)) {
+        this->highPriorityQueuesUnavailable = true;
+        return false;
+    }
+
+    createHighPriorityCmdLists(highPriorityCsrs);
+
+    return true;
+}
+
+void BcsSplit::createHighPriorityCmdLists(const BcsSplitParams::CsrContainer &csrs) {
+    this->hpCsrs = csrs;
+    createCmdListsForCsrs(csrs, this->hpCmdLists, this->hpH2dCmdLists, this->hpD2hCmdLists);
 }
 
 void BcsSplit::createCmdListsForCsrs(const BcsSplitParams::CsrContainer &csrs, std::vector<CommandList *> &allCmdLists, std::vector<CommandList *> &h2dLists, std::vector<CommandList *> &d2hLists) {
@@ -191,6 +217,7 @@ void BcsSplit::releaseResources() {
             csr->releaseQueueOwnership();
         }
         hpCsrs.clear();
+        this->highPriorityQueuesUnavailable = false;
         this->events.releaseResources();
     }
 }
@@ -238,10 +265,13 @@ uint64_t BcsSplit::getAggregatedEventIncrementValForSplit(const Event *signalEve
     return retVal;
 }
 
-void BcsSplit::dispatchRecordedCmdLists(const std::vector<CommandList *> &recordedSubCmdLists) {
+void BcsSplit::dispatchRecordedCmdLists(const std::vector<CommandList *> &recordedSubCmdLists, bool highPriority) {
+    const bool useHighPriorityQueues = highPriority && splitSettings.highPriorityQueuesSupported && ensureHighPriorityQueues() && (this->hpCmdLists.size() == this->cmdLists.size());
+    auto &splitCmdLists = useHighPriorityQueues ? this->hpCmdLists : this->cmdLists;
+
     CommandListExecutionInternalOptions internalOptions = {};
     for (auto i = 0u; i < recordedSubCmdLists.size(); i++) {
-        auto splitImmCmdList = this->cmdLists[i];
+        auto splitImmCmdList = splitCmdLists[i];
         auto recordedCmdListHandle = recordedSubCmdLists[i]->toHandle();
 
         splitImmCmdList->appendCommandLists(1, &recordedCmdListHandle, nullptr, 0, nullptr, internalOptions);

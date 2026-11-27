@@ -773,7 +773,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         makeResidentAndMigrate(ctx.isMigrationRequested, commandList->getCmdContainer().getResidencyContainer());
-        commandList->dispatchRecordedBcsSplit();
+        commandList->dispatchRecordedBcsSplit(this->csr->getOsContext().isHighPriority());
 
         auto copyOffloadDispatchResult = this->dispatchCopyOffloadCmdList(commandList, ctx);
         if (copyOffloadDispatchResult != ZE_RESULT_SUCCESS) {

@@ -102,7 +102,7 @@ class BcsSplit {
                                                ze_event_handle_t *phWaitEvents,
                                                AppendCallFuncT<gfxCoreFamily> appendCall);
 
-    void dispatchRecordedCmdLists(const std::vector<CommandList *> &recordedSubCmdLists);
+    void dispatchRecordedCmdLists(const std::vector<CommandList *> &recordedSubCmdLists, bool highPriority);
 
     bool setupDevice(NEO::CommandStreamReceiver *csr, bool copyOffloadEnabled, bool highPriority);
     void releaseResources();
@@ -120,6 +120,8 @@ class BcsSplit {
     void setupEnginesMask();
     bool collectRegularCsrs(BcsSplitParams::CsrContainer &csrs);
     bool collectHighPriorityCsrs(BcsSplitParams::CsrContainer &csrs);
+    bool ensureHighPriorityQueues();
+    void createHighPriorityCmdLists(const BcsSplitParams::CsrContainer &csrs);
     void createCmdListsForCsrs(const BcsSplitParams::CsrContainer &csrs, std::vector<CommandList *> &allCmdLists, std::vector<CommandList *> &h2dLists, std::vector<CommandList *> &d2hLists);
     void populateCsrsForQueues(BcsSplitParams::CsrContainer &csrs, const EngineLookupFuncT &getEngine);
 
@@ -151,6 +153,7 @@ class BcsSplit {
     NEO::BcsSplitSettings splitSettings = {};
     uint32_t clientCount = 0u;
     BcsSplitParams::CsrContainer hpCsrs;
+    bool highPriorityQueuesUnavailable = false;
 
     std::mutex mtx;
 };

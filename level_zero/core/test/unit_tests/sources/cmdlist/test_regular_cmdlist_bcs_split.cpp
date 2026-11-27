@@ -461,7 +461,7 @@ HWTEST2_F(RegularCmdListBcsSplitTests, givenRegularCmdListWhenDispatchRecordedBc
     cmdList->appendMemoryCopy(dstPtr, srcPtr, copySize, nullptr, 0, nullptr, memoryCopyParams);
     cmdList->close();
 
-    cmdList->dispatchRecordedBcsSplit();
+    cmdList->dispatchRecordedBcsSplit(false);
 
     EXPECT_TRUE(markerEvent->reservedForRecordedCmdList);
     EXPECT_FALSE(cmdList->eventsForRecordedBcsSplit.empty());

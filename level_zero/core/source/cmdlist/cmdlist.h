@@ -748,7 +748,7 @@ struct CommandList : _ze_command_list_handle_t {
     void enableBcsSplit();
     void storeEventsForBcsSplit(BcsSplitParams::SplitEventPackage *package);
     BcsSplitParams::CmdListsForSplitContainer getRegularCmdListsForSplit(size_t totalTransferSize, size_t perEngineMaxSize, size_t splitQueuesCount);
-    void dispatchRecordedBcsSplit();
+    void dispatchRecordedBcsSplit(bool highPriority);
 
     void disableFlatCapture();
 
