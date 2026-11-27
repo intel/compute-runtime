@@ -25,3 +25,4 @@ For a top-level overview of how the project is structured and how its components
 ### [System Memory Allocations in Level Zero](SYSTEM_MEMORY_ALLOCATIONS.md)
 ### [Device Memory Accounting and Reservations](DEVICE_MEMORY_ACCOUNTING.md)
 ### [Shared System USM](SHARED_SYSTEM_USM.md)
+### [NUMA Aware Host USM Placement](NUMA_AWARE_HOST_USM.md)
