@@ -47,7 +47,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::getLocalOnlyRequired;
     using MemoryManager::gfxPartitions;
     using MemoryManager::internalLocalMemoryUsageBankSelector;
-    using MemoryManager::isNonSvmBuffer;
     using MemoryManager::multiContextResourceDestructor;
     using MemoryManager::overrideAllocationData;
     using MemoryManager::pageFaultManager;

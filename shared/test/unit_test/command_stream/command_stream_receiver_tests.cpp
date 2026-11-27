@@ -2531,7 +2531,11 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     bool runPopulateOsHandlesExpects = false;
     bool runAllocateGraphicsMemoryForNonSvmHostPtrExpects = false;
 
-    if (!mockMemoryManager->useNonSvmHostPtrAlloc(AllocationType::externalHostPtr, device->getRootDeviceIndex())) {
+    AllocationData allocationData;
+    allocationData.type = AllocationType::externalHostPtr;
+    allocationData.hostPtr = memory;
+    allocationData.rootDeviceIndex = device->getRootDeviceIndex();
+    if (!mockMemoryManager->useNonSvmHostPtrAlloc(allocationData)) {
         runPopulateOsHandlesExpects = true;
         mockMemoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::InvalidHostPointer;
     } else {
@@ -2570,7 +2574,11 @@ TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocatio
     bool runPopulateOsHandlesExpects = false;
     bool runAllocateGraphicsMemoryForNonSvmHostPtrExpects = false;
 
-    if (!mockMemoryManager->useNonSvmHostPtrAlloc(AllocationType::externalHostPtr, device->getRootDeviceIndex())) {
+    AllocationData allocationData;
+    allocationData.type = AllocationType::externalHostPtr;
+    allocationData.hostPtr = memory;
+    allocationData.rootDeviceIndex = device->getRootDeviceIndex();
+    if (!mockMemoryManager->useNonSvmHostPtrAlloc(allocationData)) {
         runPopulateOsHandlesExpects = true;
         mockMemoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::InvalidHostPointer;
     } else {

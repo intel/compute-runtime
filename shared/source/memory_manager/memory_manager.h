@@ -389,9 +389,6 @@ class MemoryManager {
     LocalMemoryUsageBankSelector *getLocalMemoryUsageBankSelector(AllocationType allocationType, uint32_t rootDeviceIndex);
 
     bool isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex);
-    MOCKABLE_VIRTUAL bool isNonSvmBuffer(const void *hostPtr, AllocationType allocationType, uint32_t rootDeviceIndex) {
-        return hostPtr && !isHostPointerTrackingEnabled(rootDeviceIndex) && (allocationType == AllocationType::bufferHostMemory);
-    }
 
     virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) {};
     virtual void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) {};
@@ -486,7 +483,7 @@ class MemoryManager {
 
     static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
 
-    bool useNonSvmHostPtrAlloc(AllocationType allocationType, uint32_t rootDeviceIndex);
+    bool useNonSvmHostPtrAlloc(const AllocationData &allocationData);
     virtual StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) = 0;

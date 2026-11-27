@@ -3884,42 +3884,66 @@ HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsS
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhen64BitAndHostPtrTrackingDisabledThenNonSvmHostPtrUsageIsSet) {
-
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableHostPtrTracking.set(0);
 
-    bool expectedValue = !is32bit;
+    int hostPtr = 0;
+    AllocationData allocationData;
+    allocationData.hostPtr = &hostPtr;
 
-    auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::externalHostPtr, 0u);
-    EXPECT_EQ(expectedValue, result);
-
-    result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::mapAllocation, 0u);
-    EXPECT_EQ(expectedValue, result);
+    allocationData.type = AllocationType::externalHostPtr;
+    EXPECT_EQ(!is32bit, memoryManager->useNonSvmHostPtrAlloc(allocationData));
+    allocationData.type = AllocationType::mapAllocation;
+    EXPECT_EQ(!is32bit, memoryManager->useNonSvmHostPtrAlloc(allocationData));
+    allocationData.type = AllocationType::buffer;
+    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
+    allocationData.type = AllocationType::bufferHostMemory;
+    EXPECT_TRUE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
+    allocationData.hostPtr = nullptr;
+    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingModeThenNonSvmHostPtrUsageIsSet) {
     memoryManager->setForceNonSvmForExternalHostPtr(true);
 
-    auto result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::externalHostPtr, 0u);
-    EXPECT_EQ(true, result);
-    result = memoryManager->useNonSvmHostPtrAlloc(AllocationType::bufferHostMemory, 0u);
-    EXPECT_EQ(false, result);
+    AllocationData allocationData;
+    allocationData.type = AllocationType::externalHostPtr;
+    EXPECT_TRUE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
+    allocationData.type = AllocationType::bufferHostMemory;
+    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
 }
 
-HWTEST_F(MemoryAllocatorTest, givenMemoryManagerThenNonSvmBufferIsSetForBufferHostMemory) {
-    HardwareInfo hwInfoLocal = *defaultHwInfo;
-    memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->setHwInfoAndInitHelpers(&hwInfoLocal);
-    int buffer = 0;
-    EXPECT_FALSE(memoryManager->isNonSvmBuffer(&buffer, AllocationType::externalHostPtr, 0u));
-    EXPECT_EQ(!is32bit, memoryManager->isNonSvmBuffer(&buffer, AllocationType::bufferHostMemory, 0u));
+HWTEST_F(MemoryAllocatorTest, givenUsmHostAllocationWhenHostPtrIsSetThenNonSvmHostPtrIsNotUsed) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableHostPtrTracking.set(0);
+    memoryManager->setForceNonSvmForExternalHostPtr(true);
+
+    int hostPtr = 0;
+    AllocationData allocationData;
+    allocationData.flags.isUSMHostAllocation = true;
+    allocationData.type = AllocationType::externalHostPtr;
+    EXPECT_TRUE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
+
+    allocationData.hostPtr = &hostPtr;
+    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
+    allocationData.type = AllocationType::bufferHostMemory;
+    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenHostPtrTrackingEnabledThenNonSvmHostPtrIsNotUsed) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableHostPtrTracking.set(1);
 
-    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(AllocationType::externalHostPtr, 0u));
-    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(AllocationType::mapAllocation, 0u));
+    int hostPtr = 0;
+    AllocationData allocationData;
+    allocationData.hostPtr = &hostPtr;
+
+    allocationData.type = AllocationType::externalHostPtr;
+    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
+    allocationData.type = AllocationType::mapAllocation;
+    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
+    allocationData.type = AllocationType::bufferHostMemory;
+    EXPECT_FALSE(memoryManager->useNonSvmHostPtrAlloc(allocationData));
 }
 
 using PageTableManagerTest = ::testing::Test;

@@ -1095,8 +1095,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if ((allocationData.flags.shareable && !allocationData.flags.isUSMHostAllocation) || allocationData.flags.isHostInaccessibleAllocation) {
         return allocateMemoryByKMD(allocationData);
     }
-    if (((false == allocationData.flags.isUSMHostAllocation) || (nullptr == allocationData.hostPtr)) &&
-        (useNonSvmHostPtrAlloc(allocationData.type, allocationData.rootDeviceIndex) || isNonSvmBuffer(allocationData.hostPtr, allocationData.type, allocationData.rootDeviceIndex))) {
+    if (useNonSvmHostPtrAlloc(allocationData)) {
         return allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
     }
     bool use32Allocator = heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type);
@@ -1391,18 +1390,24 @@ bool MemoryManager::isHostPointerTrackingEnabled(uint32_t rootDeviceIndex) {
     return is32bit;
 }
 
-bool MemoryManager::useNonSvmHostPtrAlloc(AllocationType allocationType, uint32_t rootDeviceIndex) {
-    bool isExternalHostPtrAlloc = (allocationType == AllocationType::externalHostPtr);
-    bool isMapAlloc = (allocationType == AllocationType::mapAllocation);
-
-    if (forceNonSvmForExternalHostPtr && isExternalHostPtrAlloc) {
+bool MemoryManager::useNonSvmHostPtrAlloc(const AllocationData &allocationData) {
+    if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {
+        return false;
+    }
+    if (forceNonSvmForExternalHostPtr && allocationData.type == AllocationType::externalHostPtr) {
         return true;
     }
-
-    if constexpr (is32bit) {
+    if (isHostPointerTrackingEnabled(allocationData.rootDeviceIndex)) {
         return false;
-    } else {
-        return !isHostPointerTrackingEnabled(rootDeviceIndex) && (isExternalHostPtrAlloc || isMapAlloc);
+    }
+    switch (allocationData.type) {
+    case AllocationType::externalHostPtr:
+    case AllocationType::mapAllocation:
+        return !is32bit;
+    case AllocationType::bufferHostMemory:
+        return allocationData.hostPtr != nullptr;
+    default:
+        return false;
     }
 }
 
