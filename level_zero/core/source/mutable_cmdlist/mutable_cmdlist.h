@@ -227,7 +227,7 @@ struct MutableCommandList {
 
     virtual MutableComputeWalker *getCommandWalker(size_t offsetToWalkerCommand, uint16_t indirectOffset, uint16_t scratchOffset) = 0;
 
-    virtual void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent, bool apiRequiredExternalGraphEvent) = 0;
+    virtual void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, uint32_t inOrderHostCounterSlot, Event *newEvent, bool apiRequiredExternalGraphEvent) = 0;
 
     virtual bool isCbEventBoundToCmdList(Event *event) const = 0;
     virtual NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc) = 0;

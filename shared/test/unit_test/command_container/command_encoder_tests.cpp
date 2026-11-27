@@ -214,10 +214,10 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
 
         auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, nullptr, mockDevice, 2);
 
-        EXPECT_EQ(deviceNode->getCpuBase(), inOrderExecInfo->getBaseHostAddress());
+        EXPECT_EQ(deviceNode->getCpuBase(), inOrderExecInfo->getBaseHostAddress(0));
         EXPECT_EQ(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getDeviceCounterAllocation());
         EXPECT_EQ(deviceNode->getGpuAddress(), inOrderExecInfo->getBaseDeviceAddress());
-        EXPECT_EQ(nullptr, inOrderExecInfo->getHostCounterAllocation());
+        EXPECT_EQ(nullptr, inOrderExecInfo->getHostCounterAllocation(0));
         EXPECT_FALSE(inOrderExecInfo->isHostStorageDuplicated());
 
         auto heaplessEnabled = mockDevice.getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo);
@@ -254,17 +254,17 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         constexpr uint32_t partitionCount = 2u;
         auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, hostNode, mockDevice, partitionCount);
 
-        EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(), hostNode->getGpuAddress());
-        EXPECT_NE(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
-        EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getHostCounterAllocation());
+        EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(0), hostNode->getGpuAddress());
+        EXPECT_NE(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation(0));
+        EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getHostCounterAllocation(0));
         EXPECT_NE(0u, inOrderExecInfo->getDeviceNodeGpuAddress());
         size_t deviceNodeSize = sizeof(uint64_t) * (mockDevice.getGfxCoreHelper().inOrderAtomicSignallingEnabled() ? 1u : partitionCount);
         EXPECT_EQ(deviceNodeSize, inOrderExecInfo->getDeviceNodeWriteSize());
-        EXPECT_NE(0u, inOrderExecInfo->getHostNodeGpuAddress());
+        EXPECT_NE(0u, inOrderExecInfo->getHostNodeGpuAddress(0));
         EXPECT_EQ(sizeof(uint64_t) * partitionCount, inOrderExecInfo->getHostNodeWriteSize());
 
-        EXPECT_NE(deviceNode->getCpuBase(), inOrderExecInfo->getBaseHostAddress());
-        EXPECT_EQ(ptrOffset(inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer(), offset), inOrderExecInfo->getBaseHostAddress());
+        EXPECT_NE(deviceNode->getCpuBase(), inOrderExecInfo->getBaseHostAddress(0));
+        EXPECT_EQ(ptrOffset(inOrderExecInfo->getHostCounterAllocation(0)->getUnderlyingBuffer(), offset), inOrderExecInfo->getBaseHostAddress(0));
         EXPECT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
     }
 
@@ -276,12 +276,12 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         auto deviceAllocHostAddress = reinterpret_cast<uint64_t *>(deviceNode->getCpuBase());
         EXPECT_EQ(0u, inOrderExecInfo.getCounterValue());
         EXPECT_EQ(0u, inOrderExecInfo.getAllocationOffset());
-        EXPECT_EQ(0u, *inOrderExecInfo.getBaseHostAddress());
+        EXPECT_EQ(0u, *inOrderExecInfo.getBaseHostAddress(0));
         EXPECT_EQ(0u, *deviceAllocHostAddress);
 
         inOrderExecInfo.addCounterValue(2);
         inOrderExecInfo.setAllocationOffset(4);
-        *inOrderExecInfo.getBaseHostAddress() = 5;
+        *inOrderExecInfo.getBaseHostAddress(0) = 5;
         *deviceAllocHostAddress = 6;
 
         EXPECT_EQ(2u, inOrderExecInfo.getCounterValue());
@@ -291,12 +291,199 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
 
         EXPECT_EQ(0u, inOrderExecInfo.getCounterValue());
         EXPECT_EQ(0u, inOrderExecInfo.getAllocationOffset());
-        EXPECT_EQ(0u, *inOrderExecInfo.getBaseHostAddress());
+        EXPECT_EQ(0u, *inOrderExecInfo.getBaseHostAddress(0));
         EXPECT_EQ(0u, *deviceAllocHostAddress);
     }
 
     tempNode1->returnTag();
     tempNode2->returnTag();
+}
+
+HWTEST_F(CommandEncoderTests, givenDuplicatedHostStorageWhenHostCounterSlotIsAddedThenSlotUsesOwnInitializedNode) {
+    class ExposedInOrderExecInfo : public InOrderExecInfo {
+      public:
+        using InOrderExecInfo::immWritePostSyncWriteOffset;
+        using InOrderExecInfo::InOrderExecInfo;
+    };
+
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+
+    constexpr uint32_t partitionCount = 2u;
+    ExposedInOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), mockDevice, partitionCount, true);
+
+    EXPECT_TRUE(inOrderExecInfo.hasHostCounterSlot(0));
+    EXPECT_FALSE(inOrderExecInfo.hasHostCounterSlot(1));
+    EXPECT_FALSE(inOrderExecInfo.hasHostCounterSlot(2));
+    EXPECT_EQ(nullptr, inOrderExecInfo.getHostCounterAllocation(2));
+    EXPECT_EQ(0u, inOrderExecInfo.getBaseHostGpuAddress(2));
+    EXPECT_EQ(0u, inOrderExecInfo.getHostNodeGpuAddress(2));
+    EXPECT_EQ(0u, inOrderExecInfo.getLastSignalHostSlot());
+
+    auto slotNode = hostTagAllocator.getTag();
+    auto slotHostAddress = reinterpret_cast<uint64_t *>(slotNode->getCpuBase());
+    auto slotSecondPartitionAddress = reinterpret_cast<uint64_t *>(ptrOffset(slotNode->getCpuBase(), inOrderExecInfo.immWritePostSyncWriteOffset));
+    *slotHostAddress = 0x123;
+    *slotSecondPartitionAddress = 0x123;
+
+    inOrderExecInfo.addHostCounterSlot(2, slotNode);
+
+    EXPECT_TRUE(inOrderExecInfo.hasHostCounterSlot(2));
+    EXPECT_FALSE(inOrderExecInfo.hasHostCounterSlot(1));
+    EXPECT_EQ(slotHostAddress, inOrderExecInfo.getBaseHostAddress(2));
+    EXPECT_EQ(slotNode->getGpuAddress(), inOrderExecInfo.getBaseHostGpuAddress(2));
+    EXPECT_EQ(slotNode->getGpuAddress(), inOrderExecInfo.getHostNodeGpuAddress(2));
+    EXPECT_EQ(slotNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo.getHostCounterAllocation(2));
+    EXPECT_NE(inOrderExecInfo.getBaseHostGpuAddress(0), inOrderExecInfo.getBaseHostGpuAddress(2));
+    EXPECT_EQ(inOrderExecInfo.getInitialCounterValue(), *slotHostAddress);
+    EXPECT_EQ(inOrderExecInfo.getInitialCounterValue(), *slotSecondPartitionAddress);
+
+    inOrderExecInfo.setLastSignalHostSlot(2);
+    EXPECT_EQ(2u, inOrderExecInfo.getLastSignalHostSlot());
+
+    inOrderExecInfo.reset();
+    EXPECT_EQ(0u, inOrderExecInfo.getLastSignalHostSlot());
+    EXPECT_TRUE(inOrderExecInfo.hasHostCounterSlot(2));
+}
+
+HWTEST_F(CommandEncoderTests, givenHostCounterSlotsWhenInOrderExecInfoIsDestroyedThenAllHostNodesAreReturned) {
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+
+    auto hostNode = hostTagAllocator.getTag();
+    auto slot1Node = hostTagAllocator.getTag();
+    auto slot2Node = hostTagAllocator.getTag();
+
+    {
+        InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostNode, mockDevice, 1, true);
+        inOrderExecInfo.addHostCounterSlot(1, slot1Node);
+        inOrderExecInfo.addHostCounterSlot(2, slot2Node);
+        EXPECT_TRUE(hostTagAllocator.returnedToFreePoolNodes.empty());
+    }
+
+    ASSERT_EQ(3u, hostTagAllocator.returnedToFreePoolNodes.size());
+    EXPECT_EQ(hostNode, hostTagAllocator.returnedToFreePoolNodes[0]);
+    EXPECT_EQ(slot1Node, hostTagAllocator.returnedToFreePoolNodes[1]);
+    EXPECT_EQ(slot2Node, hostTagAllocator.returnedToFreePoolNodes[2]);
+}
+
+HWTEST_F(CommandEncoderTests, givenHostCounterSlotsWhenPollingCounterThenOnlyRequestedSlotIsChecked) {
+    VariableBackup<WaitUtils::WaitpkgUse> waitpkgUseBackup(&WaitUtils::waitpkgUse, WaitUtils::WaitpkgUse::noUse);
+    VariableBackup<uint32_t> waitCountBackup(&WaitUtils::waitCount, 1u);
+
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+
+    InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), mockDevice, 1, true);
+    inOrderExecInfo.addHostCounterSlot(1, hostTagAllocator.getTag());
+
+    const uint64_t waitValue = inOrderExecInfo.getInitialCounterValue() + 1;
+
+    *inOrderExecInfo.getBaseHostAddress(0) = waitValue;
+
+    EXPECT_TRUE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, 0, false));
+    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 1, 0, false));
+    EXPECT_FALSE(inOrderExecInfo.isCounterDone(waitValue, 0, 1));
+
+    *inOrderExecInfo.getBaseHostAddress(1) = waitValue;
+
+    EXPECT_TRUE(inOrderExecInfo.isCounterDone(waitValue, 0, 1));
+}
+
+HWTEST_F(CommandEncoderTests, givenHostCounterSlotsWhenInitializingAllocationsFromHostThenAllSlotsAreReset) {
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+
+    InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), mockDevice, 1, true);
+    inOrderExecInfo.addHostCounterSlot(1, hostTagAllocator.getTag());
+    inOrderExecInfo.addHostCounterSlot(2, hostTagAllocator.getTag());
+
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        *inOrderExecInfo.getBaseHostAddress(hostCounterSlot) = 5;
+    }
+
+    inOrderExecInfo.initializeAllocationsFromHost(false);
+
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        EXPECT_EQ(inOrderExecInfo.getInitialCounterValue(), *inOrderExecInfo.getBaseHostAddress(hostCounterSlot));
+    }
+}
+
+HWTEST_F(CommandEncoderTests, givenHostCounterSlotInTbxWhenSlotIsAddedThenUploadOnlyNewNodeToSimulation) {
+    MockDevice mockDevice;
+    auto &csr = mockDevice.getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+
+    InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), mockDevice, 1, true);
+    EXPECT_EQ(2u, csr.writeMemoryParams.totalCallCount);
+
+    auto slotNode = hostTagAllocator.getTag();
+    inOrderExecInfo.addHostCounterSlot(1, slotNode);
+    EXPECT_EQ(3u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(slotNode->getBaseGraphicsAllocation()->getGraphicsAllocation(mockDevice.getRootDeviceIndex()), csr.writeMemoryParams.latestGfxAllocation);
+
+    inOrderExecInfo.reset();
+    EXPECT_EQ(6u, csr.writeMemoryParams.totalCallCount);
+}
+
+HWTEST_F(CommandEncoderTests, givenHostCounterSlotWhenUpdatingInOrderExecEventStateThenSlotDataIsUsed) {
+    MockDevice mockDevice;
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<false>> hostTagAllocator(0, mockDevice.getMemoryManager());
+
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), mockDevice, 1, true);
+    constexpr uint32_t hostCounterSlot = 1;
+    inOrderExecInfo->addHostCounterSlot(hostCounterSlot, hostTagAllocator.getTag());
+
+    InOrderExecEventHelper eventHelper;
+    eventHelper.initializeLocalTempStorage();
+    EXPECT_EQ(0u, eventHelper.getHostCounterSlot());
+
+    eventHelper.updateInOrderExecState(inOrderExecInfo, 2, 0, hostCounterSlot);
+    EXPECT_EQ(hostCounterSlot, eventHelper.getHostCounterSlot());
+    EXPECT_EQ(inOrderExecInfo->getHostCounterAllocation(hostCounterSlot), eventHelper.getHostCounterAllocation());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(hostCounterSlot), eventHelper.getBaseHostGpuAddress());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostAddress(hostCounterSlot), eventHelper.getBaseHostCpuAddress());
+
+    eventHelper.unsetInOrderExecInfo();
+    EXPECT_EQ(0u, eventHelper.getHostCounterSlot());
+
+    eventHelper.releaseResources(*mockDevice.getMemoryManager());
+}
+
+HWTEST_F(CommandEncoderTests, givenImported2WayIpcDataWhenHostCounterIpcDataChangesThenImportRefreshIsNeeded) {
+    MockDevice mockDevice;
+
+    InOrderExecEventHelper eventHelper;
+    eventHelper.initializeLocalTempStorage();
+    eventHelper.set2WayIpcSharingEnabled(true);
+
+    eventHelper.setDeviceAllocIpcHandle(1, 8, 3);
+    eventHelper.setHostAllocIpcHandle(2, 16);
+    eventHelper.setLatestImported2WayIpcData(1, 8, 2, 16, 3);
+    EXPECT_FALSE(eventHelper.is2WayIpcImportRefreshNeeded());
+
+    eventHelper.setHostAllocIpcHandle(4, 16);
+    EXPECT_TRUE(eventHelper.is2WayIpcImportRefreshNeeded());
+    eventHelper.setLatestImported2WayIpcData(1, 8, 4, 16, 3);
+    EXPECT_FALSE(eventHelper.is2WayIpcImportRefreshNeeded());
+
+    eventHelper.setHostAllocIpcHandle(4, 24);
+    EXPECT_TRUE(eventHelper.is2WayIpcImportRefreshNeeded());
+
+    eventHelper.releaseResources(*mockDevice.getMemoryManager());
 }
 
 HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenSetLastCounterValueIsCalledThenItReturnsProperQueries) {
@@ -594,27 +781,27 @@ HWTEST_F(CommandEncoderTests, givenMultiPartitionInOrderExecInfoWhenPollCounterC
     ExposedInOrderExecInfo inOrderExecInfo(deviceNode, nullptr, mockDevice, 2, false);
 
     const uint64_t waitValue = inOrderExecInfo.getInitialCounterValue() + 1;
-    auto secondPartitionAddress = ptrOffset(inOrderExecInfo.getBaseHostAddress(), inOrderExecInfo.immWritePostSyncWriteOffset);
+    auto secondPartitionAddress = ptrOffset(inOrderExecInfo.getBaseHostAddress(0), inOrderExecInfo.immWritePostSyncWriteOffset);
 
     auto pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
     auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
 
-    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, false));
+    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, 0, false));
     EXPECT_EQ(pauseCountBefore + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter.load());
     EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
 
-    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, true));
+    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, 0, true));
     EXPECT_EQ(yieldCountBefore + 1, CpuIntrinsicsTests::yieldCounter.load());
 
-    *inOrderExecInfo.getBaseHostAddress() = waitValue;
-    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, false));
+    *inOrderExecInfo.getBaseHostAddress(0) = waitValue;
+    EXPECT_FALSE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, 0, false));
 
     *secondPartitionAddress = waitValue;
 
     pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
     yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
 
-    EXPECT_TRUE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, false));
+    EXPECT_TRUE(inOrderExecInfo.pollCounterCompletion(waitValue, 0, 0, 0, false));
     EXPECT_EQ(pauseCountBefore + (2 * WaitUtils::waitCount), CpuIntrinsicsTests::pauseCounter.load());
     EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
 }
@@ -638,30 +825,30 @@ HWTEST_F(CommandEncoderTests, givenMultiPartitionInOrderExecInfoWhenIsCounterDon
 
     const uint64_t initialValue = inOrderExecInfo.getInitialCounterValue();
     const uint64_t waitValue = initialValue + 1;
-    auto secondPartitionAddress = ptrOffset(inOrderExecInfo.getBaseHostAddress(), inOrderExecInfo.immWritePostSyncWriteOffset);
+    auto secondPartitionAddress = ptrOffset(inOrderExecInfo.getBaseHostAddress(0), inOrderExecInfo.immWritePostSyncWriteOffset);
 
     auto pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
     auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
 
-    EXPECT_FALSE(inOrderExecInfo.isCounterDone(waitValue, 0));
+    EXPECT_FALSE(inOrderExecInfo.isCounterDone(waitValue, 0, 0));
     EXPECT_EQ(pauseCountBefore + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter.load());
     EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
 
-    *inOrderExecInfo.getBaseHostAddress() = waitValue;
-    EXPECT_FALSE(inOrderExecInfo.isCounterDone(waitValue, 0));
+    *inOrderExecInfo.getBaseHostAddress(0) = waitValue;
+    EXPECT_FALSE(inOrderExecInfo.isCounterDone(waitValue, 0, 0));
 
     *secondPartitionAddress = waitValue;
 
-    EXPECT_TRUE(inOrderExecInfo.isCounterDone(waitValue, 0));
+    EXPECT_TRUE(inOrderExecInfo.isCounterDone(waitValue, 0, 0));
     EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
 
-    *inOrderExecInfo.getBaseHostAddress() = initialValue;
+    *inOrderExecInfo.getBaseHostAddress(0) = initialValue;
     *secondPartitionAddress = initialValue;
     inOrderExecInfo.setLastWaitedCounterValue(waitValue, 0);
 
     pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
 
-    EXPECT_TRUE(inOrderExecInfo.isCounterDone(waitValue, 0));
+    EXPECT_TRUE(inOrderExecInfo.isCounterDone(waitValue, 0, 0));
     EXPECT_EQ(pauseCountBefore, CpuIntrinsicsTests::pauseCounter.load());
 }
 

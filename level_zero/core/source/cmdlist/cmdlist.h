@@ -726,6 +726,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
     void enableInOrderExecution();
+    uint32_t getCopyOffloadHostCounterSlot();
     bool isInOrderExecutionEnabled() const { return inOrderExecInfo.get(); }
     bool isInOrderExecutionRequested() const { return NEO::isValueSet(flags, ZE_COMMAND_LIST_FLAG_IN_ORDER); }
     void storeReferenceTsToMappedEvents(bool clear);
@@ -744,7 +745,15 @@ struct CommandList : _ze_command_list_handle_t {
     size_t getInOrderExecDeviceRequiredSize() const;
     uint64_t getInOrderExecDeviceGpuAddress() const;
     size_t getInOrderExecHostRequiredSize() const;
-    uint64_t getInOrderExecHostGpuAddress() const;
+    size_t getInOrderExecHostSlotRequiredSize() const;
+    uint64_t getInOrderExecHostGpuAddress(uint32_t hostCounterSlot) const;
+    uint32_t getInOrderHostCounterSlot(bool copyOffloadOperation) {
+        if (!isDualStreamCopyOffloadOperation(copyOffloadOperation) || !inOrderExecInfo->isHostStorageDuplicated()) [[likely]] {
+            return DualStreamCopyOffload::mainStreamHostCounterSlot;
+        }
+        return getCopyOffloadHostCounterSlot();
+    }
+    void addInOrderHostCountersToResidency(NEO::CommandContainer &container) const;
     void enableBcsSplit();
     void storeEventsForBcsSplit(BcsSplitParams::SplitEventPackage *package);
     BcsSplitParams::CmdListsForSplitContainer getRegularCmdListsForSplit(size_t totalTransferSize, size_t perEngineMaxSize, size_t splitQueuesCount);

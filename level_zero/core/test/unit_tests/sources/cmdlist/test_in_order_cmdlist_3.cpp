@@ -314,7 +314,7 @@ HWTEST_F(InOrderIpcTests, givenCounterOffsetWhenSignalingThenRefreshIpcData) {
 
     enableEventSharing(*events[1]);
     assignInternalHandle(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation());
-    assignInternalHandle(immCmdList1->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(immCmdList1->inOrderExecInfo->getHostCounterAllocation(0));
 
     EXPECT_NE(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList2->inOrderExecInfo->getDeviceCounterAllocation());
 
@@ -1092,6 +1092,114 @@ HWTEST_F(InOrderIpcTests, givenExporterSetsNewAllocDataWhenImporterQueriesStatus
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
 }
 
+HWTEST_F(InOrderIpcTests, givenExporterSetsNewHostAllocDataWhenImporterQueriesStatusThenRefreshAllocations) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+    ASSERT_TRUE(exporterHelper.isHostStorageDuplicated());
+
+    static_cast<WhiteboxInOrderExecInfo *>(exporterHelper.inOrderExecInfo.get())->initializeAllocationsFromHost();
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    ze_event_handle_t newEvent = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &newEvent));
+
+    auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
+    auto &newHelper = static_cast<WhiteboxInOrderExecEventHelper &>(newEventMock->getInOrderExecEventHelper());
+
+    EXPECT_FALSE(newHelper.is2WayIpcImportRefreshNeeded());
+
+    auto oldBaseHostGpuAddress = newHelper.getBaseHostGpuAddress();
+
+    auto eventDataPtr = newHelper.getInOrderExecEventDataPtr();
+    eventDataPtr->hostIpcAllocOffset = exporterHelper.getInOrderExecEventDataPtr()->hostIpcAllocOffset + 8;
+
+    EXPECT_TRUE(newHelper.is2WayIpcImportRefreshNeeded());
+
+    newEventMock->refreshImported2WayIpcCbData();
+
+    EXPECT_FALSE(newHelper.is2WayIpcImportRefreshNeeded());
+
+    EXPECT_NE(oldBaseHostGpuAddress, newHelper.getBaseHostGpuAddress());
+
+    EXPECT_EQ(eventDataPtr->hostAllocIpcHandle, newHelper.imported2WayHostCounterHandle);
+    EXPECT_EQ(eventDataPtr->hostIpcAllocOffset, newHelper.imported2WayHostCounterOffset);
+
+    zeEventCounterBasedCloseIpcHandle(newEvent);
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+}
+
+HWTEST_F(InOrderIpcTests, givenExportedEventWhenSignalledOnOtherHostCounterSlotThenHostIpcDataIsExportedAgain) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
+    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    auto eventDataPtr = exporterHelper.getInOrderExecEventDataPtr();
+    const auto deviceIpcAllocOffset = eventDataPtr->deviceIpcAllocOffset;
+    const auto hostIpcAllocOffset = eventDataPtr->hostIpcAllocOffset;
+
+    constexpr uint32_t newHostCounterSlot = 2;
+    inOrderExecInfo->addHostCounterSlot(newHostCounterSlot, device->getHostInOrderCounterAllocator()->getTag());
+    assignInternalHandle(inOrderExecInfo->getHostCounterAllocation(newHostCounterSlot));
+
+    events[0]->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), newHostCounterSlot);
+
+    EXPECT_EQ(newHostCounterSlot, exporterHelper.getHostCounterSlot());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(newHostCounterSlot), exporterHelper.getBaseHostGpuAddress());
+    EXPECT_EQ(deviceIpcAllocOffset, eventDataPtr->deviceIpcAllocOffset);
+    EXPECT_NE(hostIpcAllocOffset, eventDataPtr->hostIpcAllocOffset);
+    EXPECT_EQ(ptrDiff(inOrderExecInfo->getBaseHostAddress(newHostCounterSlot), inOrderExecInfo->getHostCounterAllocation(newHostCounterSlot)->getUnderlyingBuffer()), eventDataPtr->hostIpcAllocOffset);
+    EXPECT_EQ(static_cast<MemoryAllocation *>(inOrderExecInfo->getHostCounterAllocation(newHostCounterSlot))->internalHandle, eventDataPtr->hostAllocIpcHandle);
+    EXPECT_FALSE(exporterHelper.is2WayIpcImportRefreshNeeded());
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+}
+
+HWTEST_F(InOrderIpcTests, given2WayIpcEventWhenCheckingCommunicationUpdateThenCompareDeviceAndHostCounterAddresses) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+
+    auto event = events[0].get();
+    auto &helper = static_cast<WhiteboxInOrderExecEventHelper &>(event->getInOrderExecEventHelper());
+    const auto deviceGpuVa = helper.getBaseDeviceAddress();
+    const auto hostGpuVa = helper.getBaseHostGpuAddress();
+
+    EXPECT_FALSE(event->isCbIpcCommunicationUpdateNeeded(deviceGpuVa + sizeof(uint64_t), hostGpuVa + sizeof(uint64_t)));
+
+    helper.set2WayIpcSharingEnabled(true);
+    EXPECT_FALSE(event->isCbIpcCommunicationUpdateNeeded(deviceGpuVa, hostGpuVa));
+    EXPECT_TRUE(event->isCbIpcCommunicationUpdateNeeded(deviceGpuVa, hostGpuVa + sizeof(uint64_t)));
+    EXPECT_TRUE(event->isCbIpcCommunicationUpdateNeeded(deviceGpuVa + sizeof(uint64_t), hostGpuVa));
+    helper.set2WayIpcSharingEnabled(false);
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+}
+
 HWTEST_F(InOrderIpcTests, givenNon2WayIpcEventWhenCheckingRefreshNeededThenReturnFalse) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
@@ -1201,7 +1309,7 @@ HWTEST_F(InOrderIpcTests, givenImportedEventWhenHostSynchronizeThenImplicitlyRef
 
     enableEventSharing(*events[0]);
     assignInternalHandle(immCmdList2->inOrderExecInfo->getDeviceCounterAllocation());
-    assignInternalHandle(immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(immCmdList2->inOrderExecInfo->getHostCounterAllocation(0));
 
     auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper);
     static_cast<WhiteboxInOrderExecInfo *>(exporterHelper.inOrderExecInfo.get())->initializeAllocationsFromHost();
@@ -1288,7 +1396,7 @@ HWTEST_F(InOrderIpcTests, givenImportedEventWhenAppendWaitOnEventsThenImplicitly
 
     enableEventSharing(*events[0]);
     assignInternalHandle(immCmdList2->inOrderExecInfo->getDeviceCounterAllocation());
-    assignInternalHandle(immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(immCmdList2->inOrderExecInfo->getHostCounterAllocation(0));
 
     auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper);
     static_cast<WhiteboxInOrderExecInfo *>(exporterHelper.inOrderExecInfo.get())->initializeAllocationsFromHost();
@@ -1362,7 +1470,7 @@ HWTEST_F(InOrderRegularCmdListTests, givenInOrderCmdListWhenQueryingRequiredSize
     EXPECT_NE(0u, deviceNodeAddress);
     auto hostRequiredSize = regularCmdList->getInOrderExecHostRequiredSize();
     EXPECT_EQ(0u, hostRequiredSize);
-    auto hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress();
+    auto hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress(0);
     EXPECT_EQ(0u, hostNodeAddress);
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
@@ -1370,7 +1478,7 @@ HWTEST_F(InOrderRegularCmdListTests, givenInOrderCmdListWhenQueryingRequiredSize
     regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     hostRequiredSize = regularCmdList->getInOrderExecHostRequiredSize();
     EXPECT_EQ(sizeof(uint64_t), hostRequiredSize);
-    hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress();
+    hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress(0);
     EXPECT_NE(0u, hostNodeAddress);
 }
 
@@ -1378,7 +1486,7 @@ HWTEST_F(InOrderRegularCmdListTests, givenInOrderCmdListWhenClearingInOrderExecC
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
 
     auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
-    auto *hostAddress = regularCmdList->inOrderExecInfo->getBaseHostAddress();
+    auto *hostAddress = regularCmdList->inOrderExecInfo->getBaseHostAddress(0);
     ASSERT_NE(nullptr, hostAddress);
 
     *hostAddress = 0x1234;
@@ -1444,7 +1552,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     regularCmdList->close();
 
     deviceNodeAddress = regularCmdList->getInOrderExecDeviceGpuAddress();
-    auto hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress();
+    auto hostNodeAddress = regularCmdList->getInOrderExecHostGpuAddress(0);
 
     usedSpaceBefore = mockCmdQHw->commandStream.getUsed();
     commandListHandle = regularCmdList->toHandle();
@@ -1506,7 +1614,7 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenExporterSignalsThenImpor
 
     enableEventSharing(*events[0]);
     assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
-    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation(0));
 
     // get IPC handle - exports allocs normally
     ze_ipc_event_counter_based_handle_t zeIpcData = {};
@@ -1577,7 +1685,7 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenImporterSignalsThenExpor
 
     enableEventSharing(*events[0]);
     assignInternalHandle(immCmdList->inOrderExecInfo->getDeviceCounterAllocation());
-    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation());
+    assignInternalHandle(immCmdList->inOrderExecInfo->getHostCounterAllocation(0));
 
     // capture eventDataPtr after migration to tag node (before migration it points to released local temp storage)
     auto exporterEventDataPtr = exporterHelper.getInOrderExecEventDataPtr();

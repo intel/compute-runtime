@@ -151,7 +151,7 @@ HWTEST_F(InOrderIpcSocketTests, givenEventWithTrackedIpcHandlesWhenUpdateInOrder
     auto newInOrderExecInfo = immCmdList2->inOrderExecInfo;
     EXPECT_NE(newInOrderExecInfo->getBaseDeviceAddress(), events[0]->getInOrderExecEventHelper().getBaseDeviceAddress());
 
-    events[0]->updateInOrderExecState(newInOrderExecInfo, 1, 0);
+    events[0]->updateInOrderExecState(newInOrderExecInfo, 1, 0, 0);
 
     EXPECT_LT(events[0]->exportedIpcServerHandles.size(), handleCountAfterFullExport);
 }

@@ -27,6 +27,8 @@ namespace DualStreamCopyOffload {
 inline constexpr uint32_t copyOffloadReadIndex = 0u;
 inline constexpr uint32_t copyOffloadWriteIndex = 1u;
 inline constexpr size_t numCopyOffloadQueues = copyOffloadWriteIndex + 1;
+inline constexpr uint32_t mainStreamHostCounterSlot = 0u;
+inline constexpr uint32_t getHostCounterSlot(size_t copyOffloadQueueIndex) { return static_cast<uint32_t>(copyOffloadQueueIndex) + 1u; }
 } // namespace DualStreamCopyOffload
 
 } // namespace L0

@@ -33,8 +33,10 @@ InOrderExecInfo::~InOrderExecInfo() {
     if (deviceCounterNode) {
         deviceCounterNode->returnTag();
     }
-    if (hostCounterNode) {
-        hostCounterNode->returnTag();
+    for (auto hostCounterNode : hostCounterNodes) {
+        if (hostCounterNode) {
+            hostCounterNode->returnTag();
+        }
     }
 
     // forced return - All related objects (CmdList and Events) already destroyed
@@ -42,16 +44,17 @@ InOrderExecInfo::~InOrderExecInfo() {
 }
 
 InOrderExecInfo::InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool atomicDeviceSignalling)
-    : device(device), deviceCounterNode(deviceCounterNode), hostCounterNode(hostCounterNode), rootDeviceIndex(device.getRootDeviceIndex()), atomicDeviceSignalling(atomicDeviceSignalling) {
+    : device(device), deviceCounterNode(deviceCounterNode), rootDeviceIndex(device.getRootDeviceIndex()), atomicDeviceSignalling(atomicDeviceSignalling) {
 
     numDevicePartitionsToWait = atomicDeviceSignalling ? 1 : partitionCount;
     numHostPartitionsToWait = partitionCount;
 
     if (hostCounterNode) {
-        hostAddress = reinterpret_cast<uint64_t *>(hostCounterNode->getCpuBase());
+        hostCounterNodes[0] = hostCounterNode;
+        hostAddresses[0] = reinterpret_cast<uint64_t *>(hostCounterNode->getCpuBase());
         duplicatedHostStorage = true;
     } else if (deviceCounterNode) {
-        hostAddress = reinterpret_cast<uint64_t *>(deviceCounterNode->getCpuBase());
+        hostAddresses[0] = reinterpret_cast<uint64_t *>(deviceCounterNode->getCpuBase());
     }
 
     if (deviceCounterNode) {
@@ -71,6 +74,10 @@ void InOrderExecInfo::setSimulationUploadCsr(NEO::CommandStreamReceiver *csr) {
     isSimulationMode = selectedCsr->isTbxMode() || selectedCsr->isAubMode();
 }
 
+size_t InOrderExecInfo::getSimulationUploadSize(uint32_t partitionCount) const {
+    return alignUp(sizeof(uint64_t), immWritePostSyncWriteOffset) * partitionCount;
+}
+
 void InOrderExecInfo::uploadCounterNodeToSimulation(TagNodeBase &node, size_t size) {
     if (!simulationUploadCsr) {
         return;
@@ -88,10 +95,6 @@ void InOrderExecInfo::uploadAllocationsToSimulation() {
         return;
     }
 
-    const auto getUploadSize = [&](uint32_t partitionCount) -> size_t {
-        return alignUp(sizeof(uint64_t), immWritePostSyncWriteOffset) * partitionCount;
-    };
-
     if (deviceCounterNode) {
         // In atomic + duplicated mode device counter is GPU-owned.
         // Skip host upload only in pure AUB mode to avoid overwrite.
@@ -100,12 +103,14 @@ void InOrderExecInfo::uploadAllocationsToSimulation() {
                                                          simulationUploadCsr->isAubMode() &&
                                                          !simulationUploadCsr->isTbxMode();
         if (!skipDeviceCounterUploadToSimulation) {
-            uploadCounterNodeToSimulation(*deviceCounterNode, getUploadSize(numDevicePartitionsToWait));
+            uploadCounterNodeToSimulation(*deviceCounterNode, getSimulationUploadSize(numDevicePartitionsToWait));
         }
     }
 
-    if (hostCounterNode) {
-        uploadCounterNodeToSimulation(*hostCounterNode, getUploadSize(numHostPartitionsToWait));
+    for (auto hostCounterNode : hostCounterNodes) {
+        if (hostCounterNode) {
+            uploadCounterNodeToSimulation(*hostCounterNode, getSimulationUploadSize(numHostPartitionsToWait));
+        }
     }
 
     lastSimulationUploadCsr = simulationUploadCsr;
@@ -123,12 +128,12 @@ void InOrderExecInfo::resetLastWaitedCounterValue() {
     }
 }
 
-bool InOrderExecInfo::isCounterDone(uint64_t waitValue, uint32_t allocationOffset) const {
-    return this->isCounterAlreadyDone(waitValue, allocationOffset) || this->pollCounterCompletion(waitValue, allocationOffset, 0, false);
+bool InOrderExecInfo::isCounterDone(uint64_t waitValue, uint32_t allocationOffset, uint32_t hostCounterSlot) const {
+    return this->isCounterAlreadyDone(waitValue, allocationOffset) || this->pollCounterCompletion(waitValue, allocationOffset, hostCounterSlot, 0, false);
 }
 
-bool InOrderExecInfo::pollCounterCompletion(uint64_t waitValue, uint32_t allocationOffset, int64_t timeSinceWaitStartedInMicroSeconds, bool blockOnMiss) const {
-    const uint64_t *pollAddress = ptrOffset(this->hostAddress, allocationOffset);
+bool InOrderExecInfo::pollCounterCompletion(uint64_t waitValue, uint32_t allocationOffset, uint32_t hostCounterSlot, int64_t timeSinceWaitStartedInMicroSeconds, bool blockOnMiss) const {
+    const uint64_t *pollAddress = ptrOffset(getBaseHostAddress(hostCounterSlot), allocationOffset);
     for (uint32_t i = 0; i < this->numHostPartitionsToWait; i++) {
         if (!WaitUtils::pollFunctionWithPredicate<const uint64_t>(pollAddress, waitValue, std::greater_equal<uint64_t>(), timeSinceWaitStartedInMicroSeconds,
                                                                   WaitUtils::waitpkgCounterValue, WaitUtils::waitPkgThresholdInMicroSeconds, blockOnMiss)) {
@@ -140,22 +145,37 @@ bool InOrderExecInfo::pollCounterCompletion(uint64_t waitValue, uint32_t allocat
     return true;
 }
 
-void InOrderExecInfo::initializeAllocationsFromHost(bool shouldUploadToSimulation) {
+void InOrderExecInfo::initializeNodeFromHost(TagNodeBase &node, uint32_t partitionCount) {
     const uint64_t initialValue = getInitialCounterValue();
 
-    const auto initializeNodeFromHost = [&](TagNodeBase &node, uint32_t partitionCount) {
-        for (uint32_t i = 0; i < partitionCount; i++) {
-            uint64_t *ptr = reinterpret_cast<uint64_t *>(ptrOffset(node.getCpuBase(), allocationOffset + (i * immWritePostSyncWriteOffset)));
-            *ptr = initialValue;
-        }
-    };
+    for (uint32_t i = 0; i < partitionCount; i++) {
+        uint64_t *ptr = reinterpret_cast<uint64_t *>(ptrOffset(node.getCpuBase(), allocationOffset + (i * immWritePostSyncWriteOffset)));
+        *ptr = initialValue;
+    }
+}
 
+void InOrderExecInfo::addHostCounterSlot(uint32_t hostCounterSlot, TagNodeBase *hostCounterNode) {
+    UNRECOVERABLE_IF(!duplicatedHostStorage || !hostCounterNode || hasHostCounterSlot(hostCounterSlot));
+
+    hostCounterNodes[hostCounterSlot] = hostCounterNode;
+    hostAddresses[hostCounterSlot] = reinterpret_cast<uint64_t *>(hostCounterNode->getCpuBase());
+
+    initializeNodeFromHost(*hostCounterNode, numHostPartitionsToWait);
+
+    if (isSimulationMode) {
+        uploadCounterNodeToSimulation(*hostCounterNode, getSimulationUploadSize(numHostPartitionsToWait));
+    }
+}
+
+void InOrderExecInfo::initializeAllocationsFromHost(bool shouldUploadToSimulation) {
     if (deviceCounterNode) {
         initializeNodeFromHost(*deviceCounterNode, numDevicePartitionsToWait);
     }
 
-    if (hostCounterNode) {
-        initializeNodeFromHost(*hostCounterNode, numHostPartitionsToWait);
+    for (auto hostCounterNode : hostCounterNodes) {
+        if (hostCounterNode) {
+            initializeNodeFromHost(*hostCounterNode, numHostPartitionsToWait);
+        }
     }
 
     resetLastWaitedCounterValue();
@@ -170,6 +190,7 @@ void InOrderExecInfo::initializeAllocationsFromHost(bool shouldUploadToSimulatio
 void InOrderExecInfo::reset() {
     resetCounterValue();
     allocationOffset = 0;
+    lastSignalHostSlot = 0;
 
     initializeAllocationsFromHost();
 }
@@ -188,11 +209,13 @@ NEO::GraphicsAllocation *InOrderExecInfo::getDeviceCounterAllocation() const {
     return deviceCounterNode ? deviceCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex) : nullptr;
 }
 
-NEO::GraphicsAllocation *InOrderExecInfo::getHostCounterAllocation() const {
+NEO::GraphicsAllocation *InOrderExecInfo::getHostCounterAllocation(uint32_t hostCounterSlot) const {
+    auto hostCounterNode = hostCounterNodes[hostCounterSlot];
     return hostCounterNode ? hostCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex) : nullptr;
 }
 
-uint64_t InOrderExecInfo::getBaseHostGpuAddress() const {
+uint64_t InOrderExecInfo::getBaseHostGpuAddress(uint32_t hostCounterSlot) const {
+    auto hostCounterNode = hostCounterNodes[hostCounterSlot];
     return hostCounterNode ? hostCounterNode->getGpuAddress() : 0;
 }
 
@@ -230,8 +253,8 @@ void InOrderExecInfo::setupInterruptFence() {
     }
 }
 
-uint64_t InOrderExecInfo::getHostNodeGpuAddress() const {
-    if (hostCounterNode) {
+uint64_t InOrderExecInfo::getHostNodeGpuAddress(uint32_t hostCounterSlot) const {
+    if (auto hostCounterNode = hostCounterNodes[hostCounterSlot]) {
         return hostCounterNode->getGpuAddress() + allocationOffset;
     }
     return 0;
@@ -324,12 +347,14 @@ void InOrderExecEventHelper::assignInOrderExecInfo(std::shared_ptr<InOrderExecIn
     }
 }
 
-void InOrderExecEventHelper::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset) {
+void InOrderExecEventHelper::updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset, uint32_t newHostCounterSlot) {
     assignInOrderExecInfo(newInOrderExecInfo);
 
     assignData(newSignalValue, newAllocationOffset, inOrderExecInfo->getNumDevicePartitionsToWait(), inOrderExecInfo->getNumHostPartitionsToWait(), inOrderExecInfo->getDeviceCounterAllocation(),
-               inOrderExecInfo->getHostCounterAllocation(), inOrderExecInfo->getBaseDeviceAddress(), inOrderExecInfo->getBaseHostGpuAddress(), inOrderExecInfo->getBaseHostAddress(), 0, 0, inOrderExecInfo->isHostStorageDuplicated(),
-               inOrderExecInfo->isExternalMemoryExecInfo());
+               inOrderExecInfo->getHostCounterAllocation(newHostCounterSlot), inOrderExecInfo->getBaseDeviceAddress(), inOrderExecInfo->getBaseHostGpuAddress(newHostCounterSlot), inOrderExecInfo->getBaseHostAddress(newHostCounterSlot), 0, 0,
+               inOrderExecInfo->isHostStorageDuplicated(), inOrderExecInfo->isExternalMemoryExecInfo());
+
+    this->hostCounterSlot = newHostCounterSlot;
 }
 
 void InOrderExecEventHelper::unsetInOrderExecInfo() {
@@ -339,6 +364,7 @@ void InOrderExecEventHelper::unsetInOrderExecInfo() {
         assignData(0, 0, 0, 0, nullptr, nullptr, 0, 0, nullptr, 0, 0, false, false);
         dataAssigned = false;
     }
+    hostCounterSlot = 0;
 }
 
 void InOrderExecEventHelper::releaseNotUsedTempTimestampNodes() {
@@ -378,6 +404,7 @@ void InOrderExecEventHelper::copyData(InOrderExecEventHelper &output) {
     output.assignData(eventDataPtr->counterValue, eventDataPtr->counterOffset, eventDataPtr->devicePartitions, eventDataPtr->hostPartitions,
                       getDeviceCounterAllocation(), getHostCounterAllocation(), getBaseDeviceAddress(), getBaseHostGpuAddress(), getBaseHostCpuAddress(),
                       incrementValue, getAggregatedEventUsageCounter(), isHostStorageDuplicated(), isFromExternalMemory());
+    output.hostCounterSlot = hostCounterSlot;
 }
 
 void InOrderExecEventHelper::initializeFromTagNode(TagNodeBase &node, uint32_t rootDeviceIndex) {
@@ -449,7 +476,9 @@ bool InOrderExecEventHelper::is2WayIpcImportRefreshNeeded() const {
 
     const bool dataIsDifferent = (eventDataPtr->exporterProcessId != this->imported2WayExportedPid) ||
                                  (eventDataPtr->deviceAllocIpcHandle != this->imported2WayDeviceCounterHandle) ||
-                                 (eventDataPtr->deviceIpcAllocOffset != this->imported2WayCounterOffset);
+                                 (eventDataPtr->deviceIpcAllocOffset != this->imported2WayCounterOffset) ||
+                                 (eventDataPtr->hostAllocIpcHandle != this->imported2WayHostCounterHandle) ||
+                                 (eventDataPtr->hostIpcAllocOffset != this->imported2WayHostCounterOffset);
 
     return dataIsDifferent;
 }

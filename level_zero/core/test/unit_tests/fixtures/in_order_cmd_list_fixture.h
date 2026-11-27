@@ -44,6 +44,7 @@ struct InOrderFixtureMockEvent : public EventImp<uint32_t> {
     using EventImp<uint32_t>::Event::isTimestampEvent;
     using EventImp<uint32_t>::Event::cbEventWithProfiling;
     using EventImp<uint32_t>::Event::inOrderExecHelper;
+    using EventImp<uint32_t>::Event::isCbIpcCommunicationUpdateNeeded;
     using EventImp<uint32_t>::isTimestampPopulated;
     using EventImp<uint32_t>::eventPoolAllocation;
     using EventImp<uint32_t>::maxPacketCount;
@@ -96,6 +97,8 @@ class WhiteboxInOrderExecEventHelper : public InOrderExecEventHelper {
     using InOrderExecEventHelper::imported2WayCounterOffset;
     using InOrderExecEventHelper::imported2WayDeviceCounterHandle;
     using InOrderExecEventHelper::imported2WayExportedPid;
+    using InOrderExecEventHelper::imported2WayHostCounterHandle;
+    using InOrderExecEventHelper::imported2WayHostCounterOffset;
     using InOrderExecEventHelper::inOrderExecInfo;
     using InOrderExecEventHelper::sharableEventDataHelper;
     using InOrderExecEventHelper::timestampNodes;
@@ -239,6 +242,13 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         if (copyOffloadEnabled) {
             cmdList->enableCopyOperationOffload();
             cmdList->copyOperationFenceSupported = device->getProductHelper().isDeviceToHostCopySignalingFenceRequired();
+            if (inOrderExecution && preallocateCopyOffloadHostCounterSlots && cmdList->inOrderExecInfo->isHostStorageDuplicated()) {
+                for (size_t queueIndex = 0; queueIndex < DualStreamCopyOffload::numCopyOffloadQueues; queueIndex++) {
+                    if (cmdList->cmdQImmediateCopyOffload[queueIndex]) {
+                        cmdList->inOrderExecInfo->addHostCounterSlot(DualStreamCopyOffload::getHostCounterSlot(queueIndex), device->getHostInOrderCounterAllocator()->getTag());
+                    }
+                }
+            }
         }
 
         if (inOrderExecution) {
@@ -253,10 +263,15 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     template <GFXCORE_FAMILY gfxCoreFamily, typename CmdListT>
     void completeHostAddress(CmdListT *cmdList) {
         uint64_t maxValue = std::numeric_limits<uint64_t>::max();
-        void *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(), cmdList->inOrderExecInfo->getAllocationOffset());
-        for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
-            memcpy(hostAddress, &maxValue, sizeof(maxValue));
-            hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+        for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+            if ((hostCounterSlot > 0) && !cmdList->inOrderExecInfo->hasHostCounterSlot(hostCounterSlot)) {
+                continue;
+            }
+            void *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(hostCounterSlot), cmdList->inOrderExecInfo->getAllocationOffset());
+            for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+                memcpy(hostAddress, &maxValue, sizeof(maxValue));
+                hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+            }
         }
     }
 
@@ -337,6 +352,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
     CmdListMemoryCopyParams copyParams = {};
+    bool preallocateCopyOffloadHostCounterSlots = true;
 };
 
 template <typename GfxFamily>
@@ -521,7 +537,17 @@ struct AggregatedBcsSplitTests : public ::testing::Test {
                                                                                          copyOnly ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute,
                                                                                          returnValue));
 
-        *commandList->getInOrderExecInfo()->getBaseHostAddress() = std::numeric_limits<uint64_t>::max();
+        auto &inOrderExecInfo = commandList->getInOrderExecInfo();
+        if (inOrderExecInfo->isHostStorageDuplicated() && commandList->isDualStreamCopyOffloadOperation(true)) {
+            for (size_t queueIndex = 0; queueIndex < DualStreamCopyOffload::numCopyOffloadQueues; queueIndex++) {
+                inOrderExecInfo->addHostCounterSlot(DualStreamCopyOffload::getHostCounterSlot(queueIndex), device->getHostInOrderCounterAllocator()->getTag());
+            }
+        }
+        for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+            if ((hostCounterSlot == 0) || inOrderExecInfo->hasHostCounterSlot(hostCounterSlot)) {
+                *inOrderExecInfo->getBaseHostAddress(hostCounterSlot) = std::numeric_limits<uint64_t>::max();
+            }
+        }
 
         return commandList;
     }

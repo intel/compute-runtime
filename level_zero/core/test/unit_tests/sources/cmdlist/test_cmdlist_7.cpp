@@ -2432,7 +2432,7 @@ struct CommandListCsrReassignmentTests : public CommandListCsrReuseTests {
 
     static void setInOrderCounterMemory(CommandList *commandList, uint64_t counterValue) {
         auto &inOrderExecInfo = commandList->inOrderExecInfo;
-        *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = counterValue;
+        *ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset()) = counterValue;
     }
 
     static void markCsrIdle(NEO::CommandStreamReceiver *csr) {

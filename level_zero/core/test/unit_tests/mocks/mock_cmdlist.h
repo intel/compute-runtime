@@ -285,6 +285,8 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::getHostPtrAlloc;
     using BaseClass::getInOrderIncrementValue;
     using BaseClass::handleInOrderImplicitDependencies;
+    using BaseClass::hasPendingInOrderWork;
+    using BaseClass::hasPendingStagingDependency;
     using BaseClass::heaplessModeEnabled;
     using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
@@ -322,6 +324,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::programPauseOnEnqueueCommands;
     using BaseClass::queryKernelTimestampsDataAllocations;
     using BaseClass::queueThrottle;
+    using BaseClass::recordStagingDependency;
     using BaseClass::relaxedOrderingCounter;
     using BaseClass::releasePreviousCsrCompletionTarget;
     using BaseClass::requiredStreamState;

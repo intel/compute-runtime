@@ -427,7 +427,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenAppendingCopyTh
     ASSERT_NE(nullptr, deviceCounterAllocation);
     EXPECT_NE(0u, copyCsr->makeResidentAllocations[deviceCounterAllocation]);
 
-    if (auto *hostCounterAllocation = immCmdList->inOrderExecInfo->getHostCounterAllocation()) {
+    if (auto *hostCounterAllocation = immCmdList->inOrderExecInfo->getHostCounterAllocation(0)) {
         EXPECT_NE(0u, copyCsr->makeResidentAllocations[hostCounterAllocation]);
     }
 
@@ -2736,7 +2736,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
             auto storeDw = genCmdCast<MI_STORE_DATA_IMM *>(*miStoreDws[i + partitionCount]);
             ASSERT_NE(nullptr, storeDw);
 
-            auto gpuAddress = immCmdList->inOrderExecInfo->getBaseHostGpuAddress() + (i * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+            auto gpuAddress = immCmdList->inOrderExecInfo->getBaseHostGpuAddress(DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadReadIndex)) + (i * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
             EXPECT_EQ(gpuAddress, storeDw->getAddress());
             EXPECT_EQ(1u, storeDw->getDataDword0());
         }
@@ -2958,8 +2958,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
     uint64_t *hostAddress = nullptr;
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
-        hostAddress = inOrderExecInfo->getBaseHostAddress();
-        expectedAlloc = inOrderExecInfo->getHostCounterAllocation();
+        hostAddress = inOrderExecInfo->getBaseHostAddress(0);
+        expectedAlloc = inOrderExecInfo->getHostCounterAllocation(0);
     } else {
 
         expectedAlloc = inOrderExecInfo->getDeviceCounterAllocation();
@@ -2995,6 +2995,15 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
     EXPECT_EQ(1u, mainQueueCsr->checkGpuHangDetectedCalled);
     EXPECT_EQ(0u, offloadCsr->checkGpuHangDetectedCalled);
 
+    uint64_t *copyHostAddress = hostAddress;
+    GraphicsAllocation *expectedCopyAlloc = expectedAlloc;
+    constexpr auto copyHostCounterSlot = DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadReadIndex);
+    if (inOrderExecInfo->hasHostCounterSlot(copyHostCounterSlot)) {
+        copyHostAddress = inOrderExecInfo->getBaseHostAddress(copyHostCounterSlot);
+        expectedCopyAlloc = inOrderExecInfo->getHostCounterAllocation(copyHostCounterSlot);
+    }
+    *copyHostAddress = 0;
+
     immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, copyParams);
 
     EXPECT_EQ(0u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
@@ -3007,7 +3016,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
         EXPECT_EQ(1u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     } else {
         EXPECT_EQ(mainCsrDownloadedAlloc, expectedAlloc);
-        EXPECT_EQ(offloadCsrDownloadedAlloc, expectedAlloc);
+        EXPECT_EQ(offloadCsrDownloadedAlloc, expectedCopyAlloc);
         EXPECT_EQ(1u, mainCsrCallCounter);
         EXPECT_EQ(1u, offloadCsrCallCounter);
         EXPECT_EQ(1u, mainQueueCsr->checkGpuHangDetectedCalled);
@@ -3017,6 +3026,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
         EXPECT_EQ(0u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     }
     *hostAddress = std::numeric_limits<uint64_t>::max();
+    *copyHostAddress = std::numeric_limits<uint64_t>::max();
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAllocationsFromBothCsrs, IsAtLeastXeCore) {
@@ -3034,7 +3044,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAlloc
     auto eventPool = createEvents<FamilyType>(1, false);
 
     if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
-        uint64_t *hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress();
+        uint64_t *hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress(0);
         *hostAddress = 3;
     } else {
         auto deviceAlloc = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
@@ -3087,7 +3097,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
     uint64_t *hostAddress = nullptr;
     if (inOrderExecInfo->isHostStorageDuplicated()) {
-        hostAddress = inOrderExecInfo->getBaseHostAddress();
+        hostAddress = inOrderExecInfo->getBaseHostAddress(0);
     } else {
         hostAddress = static_cast<uint64_t *>(inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
     }
@@ -3133,7 +3143,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
     uint64_t *hostAddress = nullptr;
     if (inOrderExecInfo->isHostStorageDuplicated()) {
-        hostAddress = inOrderExecInfo->getBaseHostAddress();
+        hostAddress = inOrderExecInfo->getBaseHostAddress(0);
     } else {
         hostAddress = static_cast<uint64_t *>(inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
     }

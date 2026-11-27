@@ -541,6 +541,41 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2WithVariousAto
     }
 }
 
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenDuplicatedHostStorageWithHostCounterSlotsWhenCallingSetupPostSyncForInOrderExecThenHostCounterOfSelectedSlotIsWritten, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> hostTagAllocator(0, pDevice->getMemoryManager());
+
+    InOrderExecInfo inOrderExecInfo(deviceTagAllocator.getTag(), hostTagAllocator.getTag(), *pDevice, 1, true);
+    inOrderExecInfo.addHostCounterSlot(1, hostTagAllocator.getTag());
+    inOrderExecInfo.addHostCounterSlot(2, hostTagAllocator.getTag());
+
+    auto &postSyncArgs = dispatchArgs.postSyncArgs;
+    postSyncArgs.inOrderExecInfo = &inOrderExecInfo;
+    postSyncArgs.inOrderCounterValue = 3;
+
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        WalkerType walkerCmd = FamilyType::template getInitGpuWalker<WalkerType>();
+        postSyncArgs.inOrderHostCounterSlot = hostCounterSlot;
+
+        EncodePostSync<FamilyType>::template setupPostSyncForInOrderExec<WalkerType>(walkerCmd, postSyncArgs);
+
+        auto &postSyncData = walkerCmd.getPostSync();
+        EXPECT_EQ(inOrderExecInfo.getBaseDeviceAddress(), postSyncData.getDestinationAddress());
+
+        auto &postSyncData1 = walkerCmd.getPostSyncOpn1();
+        EXPECT_EQ(FamilyType::POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, postSyncData1.getOperation());
+        EXPECT_EQ(inOrderExecInfo.getBaseHostGpuAddress(hostCounterSlot), postSyncData1.getDestinationAddress());
+        EXPECT_EQ(3u, postSyncData1.getImmediateData());
+    }
+}
+
 HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, GivenComputeWalker2AndDefaultArgsWhencallingAdjustTimestampPacketThenCorrectValuesAreSet, IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 

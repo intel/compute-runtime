@@ -1856,7 +1856,7 @@ HWTEST_F(StagingBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListWithPen
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     cmdList.enableInOrderExecution();
     cmdList.inOrderExecInfo->addCounterValue(1);
-    *cmdList.inOrderExecInfo->getBaseHostAddress() = 0;
+    *cmdList.inOrderExecInfo->getBaseHostAddress(0) = 0;
 
     size_t src[size] = {};
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
@@ -1948,7 +1948,7 @@ struct StagingBuffersExternalDependencyFixture : public StagingHostSignaledEvent
 
     template <typename CmdListT>
     void completeInOrderWork(CmdListT &cmdList) {
-        *cmdList.inOrderExecInfo->getBaseHostAddress() = cmdList.inOrderExecInfo->getCounterValue();
+        *cmdList.inOrderExecInfo->getBaseHostAddress(0) = cmdList.inOrderExecInfo->getCounterValue();
     }
 
     template <typename CmdListT>
@@ -2677,7 +2677,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListW
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     cmdList.enableInOrderExecution();
     cmdList.inOrderExecInfo->addCounterValue(1);
-    *cmdList.inOrderExecInfo->getBaseHostAddress() = 0;
+    *cmdList.inOrderExecInfo->getBaseHostAddress(0) = 0;
 
     ze_image_desc_t imgDesc = {};
     imgDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -2762,7 +2762,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemNotAllowedAndInOrderCmdLi
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     cmdList.enableInOrderExecution();
     cmdList.inOrderExecInfo->addCounterValue(1);
-    *cmdList.inOrderExecInfo->getBaseHostAddress() = 0;
+    *cmdList.inOrderExecInfo->getBaseHostAddress(0) = 0;
 
     ze_image_desc_t imgDesc = {};
     imgDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -2791,7 +2791,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListW
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     cmdList.enableInOrderExecution();
     cmdList.inOrderExecInfo->addCounterValue(1);
-    *cmdList.inOrderExecInfo->getBaseHostAddress() = cmdList.inOrderExecInfo->getCounterValue();
+    *cmdList.inOrderExecInfo->getBaseHostAddress(0) = cmdList.inOrderExecInfo->getCounterValue();
 
     ze_image_desc_t imgDesc = {};
     imgDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;

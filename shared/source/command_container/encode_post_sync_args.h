@@ -25,6 +25,7 @@ struct EncodePostSyncArgs {
     uint64_t inOrderIncrementGpuAddress = 0;
     uint64_t inOrderIncrementValue = 0;
     uint64_t dummyPostSyncAddress = 0;
+    uint32_t inOrderHostCounterSlot = 0;
     Device *device = nullptr;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
     NEO::TagNodeBase *tsNode = nullptr;

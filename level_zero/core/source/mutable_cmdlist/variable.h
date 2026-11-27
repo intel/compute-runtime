@@ -91,6 +91,7 @@ struct EventValueProperties {
     uint32_t packetCount = 0;
     uint32_t waitPackets = 0;
     uint32_t inOrderAllocationOffset = 0;
+    uint32_t inOrderHostCounterSlot = 0;
 
     bool counterBasedEvent = false;
     bool inOrderIncrementEvent = false;

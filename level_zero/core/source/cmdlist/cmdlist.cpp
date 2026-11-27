@@ -1159,7 +1159,7 @@ uint64_t CommandList::getInOrderExecDeviceGpuAddress() const {
     return gpuAddress;
 }
 
-size_t CommandList::getInOrderExecHostRequiredSize() const {
+size_t CommandList::getInOrderExecHostSlotRequiredSize() const {
     size_t size = 0;
     if (isInOrderExecutionEnabled()) {
         size = inOrderExecInfo->getHostNodeWriteSize();
@@ -1167,13 +1167,43 @@ size_t CommandList::getInOrderExecHostRequiredSize() const {
     return size;
 }
 
-uint64_t CommandList::getInOrderExecHostGpuAddress() const {
+size_t CommandList::getInOrderExecHostRequiredSize() const {
+    size_t size = 0;
+    if (isInOrderExecutionEnabled()) {
+        for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+            if (inOrderExecInfo->hasHostCounterSlot(hostCounterSlot)) {
+                size += inOrderExecInfo->getHostNodeWriteSize();
+            }
+        }
+    }
+    return size;
+}
+
+uint64_t CommandList::getInOrderExecHostGpuAddress(uint32_t hostCounterSlot) const {
     uint64_t gpuAddress = 0;
     if (isInOrderExecutionEnabled()) {
-        gpuAddress = inOrderExecInfo->getHostNodeGpuAddress();
+        gpuAddress = inOrderExecInfo->getHostNodeGpuAddress(hostCounterSlot);
         UNRECOVERABLE_IF(!isAligned(gpuAddress, sizeof(uint64_t)));
     }
     return gpuAddress;
+}
+
+static_assert(DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::numCopyOffloadQueues - 1) < NEO::InOrderExecInfo::maxHostCounterSlots);
+
+uint32_t CommandList::getCopyOffloadHostCounterSlot() {
+    const auto hostCounterSlot = DualStreamCopyOffload::getHostCounterSlot(this->activeCopyOffloadQueueIndex);
+    if (!inOrderExecInfo->hasHostCounterSlot(hostCounterSlot)) {
+        inOrderExecInfo->addHostCounterSlot(hostCounterSlot, this->device->getHostInOrderCounterAllocator()->getTag());
+    }
+    return hostCounterSlot;
+}
+
+void CommandList::addInOrderHostCountersToResidency(NEO::CommandContainer &container) const {
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        if (auto hostCounterAllocation = inOrderExecInfo->getHostCounterAllocation(hostCounterSlot)) {
+            container.addToResidencyContainer(hostCounterAllocation);
+        }
+    }
 }
 
 void CommandList::enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode) {

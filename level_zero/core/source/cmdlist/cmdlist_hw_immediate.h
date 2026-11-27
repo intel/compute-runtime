@@ -327,6 +327,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     std::atomic<bool> dependenciesPresent{false};
     uint64_t stagingDependencyCounterValue = 0;
     uint32_t stagingDependencyAllocationOffset = 0;
+    uint32_t stagingDependencyHostCounterSlot = 0;
     struct SynchronizationTaskCounts {
         bool matches(TaskCountType mainTaskCount, TaskCountType copyOffloadTaskCount) const {
             return main.load() == mainTaskCount && copyOffload.load() == copyOffloadTaskCount;

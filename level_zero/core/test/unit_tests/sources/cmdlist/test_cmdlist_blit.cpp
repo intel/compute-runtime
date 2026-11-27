@@ -2037,21 +2037,21 @@ HWTEST2_F(AggregatedBcsSplitTests, givenMarkerEventWhenCheckingCompletionThenRes
     auto ptr = allocHostMem();
 
     auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
-    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress(0) = 0;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[0]->marker->getInOrderExecBaseSignalValue());
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[1]->marker->getInOrderExecBaseSignalValue());
-    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress(0) = 2;
 
     cmdListHw->appendMemoryCopy(ptr, ptr, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[0]->marker->getInOrderExecBaseSignalValue());
 
     context->freeMem(ptr);
 
-    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 3;
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress(0) = 3;
 }
 
 HWTEST2_F(AggregatedBcsSplitTests, givenUserPtrWhenAppendCalledThenCreateOnlyOneTempAlloc, IsAtLeastXeHpcCore) {
@@ -2301,7 +2301,7 @@ HWTEST2_F(HighPriorityBcsSplitTests, givenHighPriorityImmediateCmdListWithBcsSpl
 
     DestroyableZeUniquePtr<L0::CommandList> hpCmdList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    *hpCmdList->getInOrderExecInfo()->getBaseHostAddress() = std::numeric_limits<uint64_t>::max();
+    *hpCmdList->getInOrderExecInfo()->getBaseHostAddress(0) = std::numeric_limits<uint64_t>::max();
 
     auto hpCmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(hpCmdList.get());
     ASSERT_TRUE(hpCmdListHw->isBcsSplitEnabled());
@@ -2532,7 +2532,7 @@ HWTEST2_F(MultiRootAggregatedBcsSplitTests, givenRemoteAllocWhenCopyRequestedThe
     auto ptr = allocHostMem();
     auto remoteAlloc = allocDeviceMem(device1);
     auto cmdListHw = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(cmdList.get());
-    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 0;
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress(0) = 0;
 
     cmdListHw->appendMemoryCopy(remoteAlloc, ptr, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[0]->marker->getInOrderExecBaseSignalValue());
@@ -2540,7 +2540,7 @@ HWTEST2_F(MultiRootAggregatedBcsSplitTests, givenRemoteAllocWhenCopyRequestedThe
     cmdListHw->appendMemoryCopy(ptr, remoteAlloc, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdListHw->inOrderExecInfo->getCounterValue(), bcsSplit->events.getEventResources().packages[1]->marker->getInOrderExecBaseSignalValue());
 
-    *cmdListHw->inOrderExecInfo->getBaseHostAddress() = 2;
+    *cmdListHw->inOrderExecInfo->getBaseHostAddress(0) = 2;
 
     context->freeMem(ptr);
     context->freeMem(remoteAlloc);

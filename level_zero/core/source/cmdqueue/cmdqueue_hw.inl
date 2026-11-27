@@ -1175,9 +1175,11 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleInOrderNoop(CommandList
         UNRECOVERABLE_IF(deviceNodeGpuAddress == 0u);
         NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, deviceNodeGpuAddress, commandList->getInOrderExecDeviceRequiredSize());
 
-        auto hostNodeGpuAddress = commandList->getInOrderExecHostGpuAddress();
-        if (hostNodeGpuAddress != 0) {
-            NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, hostNodeGpuAddress, commandList->getInOrderExecHostRequiredSize());
+        for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+            auto hostNodeGpuAddress = commandList->getInOrderExecHostGpuAddress(hostCounterSlot);
+            if (hostNodeGpuAddress != 0) {
+                NEO::EncodeDataMemory<GfxFamily>::programNoop(ctx.currentPatchPreambleBuffer, hostNodeGpuAddress, commandList->getInOrderExecHostSlotRequiredSize());
+            }
         }
     }
 }

@@ -570,7 +570,7 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
     if (inOrderExecInfo->isHostStorageDuplicated()) {
         it = find<MI_STORE_DATA_IMM *>(++it, cmdList2.end());
         auto miStoreCmd = genCmdCast<MI_STORE_DATA_IMM *>(*it);
-        auto hostAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
+        auto hostAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0));
         EXPECT_EQ(hostAddress, miStoreCmd->getAddress());
         EXPECT_EQ(immCmdList->isQwordInOrderCounter(), miStoreCmd->getStoreQword());
         EXPECT_EQ(2u, miStoreCmd->getDataDword0());

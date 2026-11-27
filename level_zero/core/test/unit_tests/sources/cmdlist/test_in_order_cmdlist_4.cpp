@@ -530,11 +530,11 @@ HWTEST_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingFromDifferentCm
     auto heaplessPrologProgrammed = ultCsr->heaplessPrologProgrammed;
 
     if (heaplessPrologProgrammed) {
-        EXPECT_NE(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation());
-        EXPECT_NE(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+        EXPECT_NE(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation(0));
+        EXPECT_NE(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation(0));
     } else {
-        EXPECT_EQ(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation());
-        EXPECT_EQ(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+        EXPECT_EQ(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation(0));
+        EXPECT_EQ(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation(0));
     }
 
     immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, event0Handle, 0, nullptr, launchParams);
@@ -573,31 +573,31 @@ HWTEST_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingThenEnsureHostAllo
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
 
-    EXPECT_NE(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation());
-    EXPECT_NE(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList1->inOrderExecInfo->getHostCounterAllocation());
-    EXPECT_NE(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation());
-    EXPECT_NE(immCmdList2->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+    EXPECT_NE(nullptr, immCmdList1->inOrderExecInfo->getHostCounterAllocation(0));
+    EXPECT_NE(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList1->inOrderExecInfo->getHostCounterAllocation(0));
+    EXPECT_NE(nullptr, immCmdList2->inOrderExecInfo->getHostCounterAllocation(0));
+    EXPECT_NE(immCmdList2->inOrderExecInfo->getDeviceCounterAllocation(), immCmdList2->inOrderExecInfo->getHostCounterAllocation(0));
 
-    EXPECT_EQ(AllocationType::timestampPacketTagBuffer, immCmdList1->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
-    EXPECT_EQ(immCmdList1->inOrderExecInfo->getBaseHostAddress(), immCmdList1->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer());
-    EXPECT_FALSE(immCmdList1->inOrderExecInfo->getHostCounterAllocation()->isAllocatedInLocalMemoryPool());
+    EXPECT_EQ(AllocationType::timestampPacketTagBuffer, immCmdList1->inOrderExecInfo->getHostCounterAllocation(0)->getAllocationType());
+    EXPECT_EQ(immCmdList1->inOrderExecInfo->getBaseHostAddress(0), immCmdList1->inOrderExecInfo->getHostCounterAllocation(0)->getUnderlyingBuffer());
+    EXPECT_FALSE(immCmdList1->inOrderExecInfo->getHostCounterAllocation(0)->isAllocatedInLocalMemoryPool());
 
-    EXPECT_EQ(immCmdList1->inOrderExecInfo->getHostCounterAllocation(), immCmdList2->inOrderExecInfo->getHostCounterAllocation());
+    EXPECT_EQ(immCmdList1->inOrderExecInfo->getHostCounterAllocation(0), immCmdList2->inOrderExecInfo->getHostCounterAllocation(0));
 
-    auto hostAllocOffset = ptrDiff(immCmdList2->inOrderExecInfo->getBaseHostAddress(), immCmdList1->inOrderExecInfo->getBaseHostAddress());
+    auto hostAllocOffset = ptrDiff(immCmdList2->inOrderExecInfo->getBaseHostAddress(0), immCmdList1->inOrderExecInfo->getBaseHostAddress(0));
     EXPECT_NE(0u, hostAllocOffset);
 
-    EXPECT_EQ(AllocationType::timestampPacketTagBuffer, immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
-    EXPECT_EQ(immCmdList2->inOrderExecInfo->getBaseHostAddress(), ptrOffset(immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer(), hostAllocOffset));
-    EXPECT_FALSE(immCmdList2->inOrderExecInfo->getHostCounterAllocation()->isAllocatedInLocalMemoryPool());
+    EXPECT_EQ(AllocationType::timestampPacketTagBuffer, immCmdList2->inOrderExecInfo->getHostCounterAllocation(0)->getAllocationType());
+    EXPECT_EQ(immCmdList2->inOrderExecInfo->getBaseHostAddress(0), ptrOffset(immCmdList2->inOrderExecInfo->getHostCounterAllocation(0)->getUnderlyingBuffer(), hostAllocOffset));
+    EXPECT_FALSE(immCmdList2->inOrderExecInfo->getHostCounterAllocation(0)->isAllocatedInLocalMemoryPool());
 
     immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, event0Handle, 0, nullptr, launchParams);
 
-    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[immCmdList1->inOrderExecInfo->getHostCounterAllocation()]);
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[immCmdList1->inOrderExecInfo->getHostCounterAllocation(0)]);
 
     immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &event0Handle, launchParams);
 
-    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[immCmdList1->inOrderExecInfo->getHostCounterAllocation()]);
+    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[immCmdList1->inOrderExecInfo->getHostCounterAllocation(0)]);
 }
 
 HWTEST_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenClearEventCsrList) {
@@ -808,7 +808,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     uint64_t *hostAddress = nullptr;
     if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
-        hostAddress = ptrOffset(immCmdList->inOrderExecInfo->getBaseHostAddress(), counterOffset);
+        hostAddress = ptrOffset(immCmdList->inOrderExecInfo->getBaseHostAddress(0), counterOffset);
     } else {
         hostAddress = static_cast<uint64_t *>(ptrOffset(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer(), counterOffset));
     }
@@ -1220,7 +1220,7 @@ HWTEST_F(InOrderCmdListTests, givenGpuHangWhenCallingSynchronizeThenDontMarkCoun
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
 
-    auto *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    auto *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
         *hostAddress = 0;
         hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
@@ -1246,7 +1246,7 @@ HWTEST_F(InOrderCmdListTests, givenGpuHangWhenCallingSynchronizeThenDontMarkCoun
     ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
 
     // counter is not memoized as waited, so let the cmd list destructor's in order wait complete
-    hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
         *hostAddress = std::numeric_limits<uint64_t>::max();
         hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
@@ -1562,7 +1562,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
     uint64_t inOrderSyncVa = inOrderExecInfo->getBaseDeviceAddress();
-    uint64_t sdiSyncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t sdiSyncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     uint8_t ptr[64] = {};
 
@@ -1685,7 +1685,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderRegularCmdListWhen
     uint8_t ptr[64] = {};
 
     uint64_t inOrderSyncVa = regularCmdList->inOrderExecInfo->getBaseDeviceAddress();
-    uint64_t sdiSyncVa = regularCmdList->inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(regularCmdList->inOrderExecInfo->getBaseHostAddress()) : regularCmdList->inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t sdiSyncVa = regularCmdList->inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(regularCmdList->inOrderExecInfo->getBaseHostAddress(0)) : regularCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
     const bool counterSignalPending = regularCmdList->isInOrderCounterSignalPending();
@@ -1952,7 +1952,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2107,7 +2107,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2152,7 +2152,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     ASSERT_NE(nullptr, sdiCmd);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2195,7 +2195,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     ASSERT_NE(nullptr, sdiCmd);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2301,7 +2301,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2357,7 +2357,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2413,7 +2413,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2455,7 +2455,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularInOrderCmdListWhen
     ASSERT_NE(nullptr, sdiCmd);
 
     auto inOrderExecInfo = regularCmdList->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(regularCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2634,7 +2634,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenPr
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
     auto inOrderExecInfo = immCmdList2->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
 
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList2->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -2741,7 +2741,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
     auto inOrderExecInfo = immCmdList2->inOrderExecInfo;
-    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0)) : inOrderExecInfo->getBaseDeviceAddress();
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList2->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());

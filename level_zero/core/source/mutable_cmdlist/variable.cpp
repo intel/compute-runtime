@@ -150,6 +150,7 @@ ze_result_t Variable::setAsSignalEvent(Event *event, MutableComputeWalker *walke
     if (this->desc.eventValue.counterBasedEvent) {
         this->desc.eventValue.inOrderExecBaseSignalValue = event->getInOrderExecBaseSignalValue();
         this->desc.eventValue.inOrderAllocationOffset = event->getInOrderAllocationOffset();
+        this->desc.eventValue.inOrderHostCounterSlot = event->getInOrderExecEventHelper().getHostCounterSlot();
     }
     this->desc.size = 0;
     this->desc.eventValue.qwordInUse = cmdList->isQwordInOrderCounter();
@@ -681,6 +682,7 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     if (this->desc.eventValue.counterBasedEvent && !this->desc.eventValue.inOrderIncrementEvent) {
         this->cmdList->switchCounterBasedEvents(this->desc.eventValue.inOrderExecBaseSignalValue,
                                                 this->desc.eventValue.inOrderAllocationOffset,
+                                                this->desc.eventValue.inOrderHostCounterSlot,
                                                 newEvent,
                                                 this->desc.eventValue.apiRequiredExternal);
 
@@ -726,6 +728,7 @@ ze_result_t Variable::setSignalEventVariable(size_t size, const void *argVal) {
     if (this->desc.eventValue.counterBasedEvent) {
         this->desc.eventValue.inOrderExecBaseSignalValue = newEvent->getInOrderExecBaseSignalValue();
         this->desc.eventValue.inOrderAllocationOffset = newEvent->getInOrderAllocationOffset();
+        this->desc.eventValue.inOrderHostCounterSlot = newEvent->getInOrderExecEventHelper().getHostCounterSlot();
     }
     desc.state = State::initialized;
     return ZE_RESULT_SUCCESS;

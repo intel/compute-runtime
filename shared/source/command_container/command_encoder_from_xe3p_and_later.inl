@@ -170,7 +170,7 @@ void EncodePostSync<Family>::setupPostSyncForInOrderExec(CommandType &cmd, const
     }
 
     if (args.inOrderExecInfo->isHostStorageDuplicated()) {
-        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(), data, 0, mocs, false, requiresSystemMemoryFence);
+        setPostSyncData(getPostSync(cmd, postSyncId++), POSTSYNC_DATA_TYPE::OPERATION_WRITE_IMMEDIATE_DATA, args.inOrderExecInfo->getBaseHostGpuAddress(args.inOrderHostCounterSlot), data, 0, mocs, false, requiresSystemMemoryFence);
     }
 
     if (args.inOrderExecInfo->getInterruptFence()) {

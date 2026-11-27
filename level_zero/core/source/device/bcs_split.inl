@@ -235,7 +235,7 @@ ze_result_t BcsSplit::appendSubSplitCommon(CommandListCoreFamily<gfxCoreFamily> 
 
     if (useSignalEventForSubcopy) {
         subCmdList->getCmdContainer().addToResidencyContainer(subCmdList->getInOrderExecInfo()->getDeviceCounterAllocation());
-        subCmdList->getCmdContainer().addToResidencyContainer(subCmdList->getInOrderExecInfo()->getHostCounterAllocation());
+        subCmdList->addInOrderHostCountersToResidency(subCmdList->getCmdContainer());
     }
 
     auto result = appendCall(subCmdList, localCopyParams, localSize, subCopyOutEventHandle, aggregatedEventIncrementVal);

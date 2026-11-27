@@ -150,7 +150,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     MutableComputeWalker *getCommandWalker(CommandBufferOffset offsetToWalkerCommand, uint16_t indirectOffset, uint16_t scratchOffset) override;
     uint32_t getInlineDataSize() const;
 
-    void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent, bool apiRequiredExternalGraphEvent) override;
+    void switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, uint32_t inOrderHostCounterSlot, Event *newEvent, bool apiRequiredExternalGraphEvent) override;
     bool isCbEventBoundToCmdList(Event *event) const override {
         return CommandListCoreFamily<gfxCoreFamily>::isCbEventBoundToCmdList(event);
     }

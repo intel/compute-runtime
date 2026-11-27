@@ -1789,7 +1789,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     for (bool inOrderExecution : {false, true}) {
         if (inOrderExecution && !inOrderExecAlreadyEnabled) {
             whiteBoxCmdList->enableInOrderExecution();
-            uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+            uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(0), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
             for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
                 *hostAddress = std::numeric_limits<uint64_t>::max();
                 hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
@@ -2178,7 +2178,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
     whiteBoxCmdList->enableInOrderExecution();
-    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(0), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
         *hostAddress = std::numeric_limits<uint64_t>::max();
         hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
@@ -2239,7 +2239,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThe
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
     whiteBoxCmdList->enableInOrderExecution();
-    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(0), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
         *hostAddress = std::numeric_limits<uint64_t>::max();
         hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
@@ -2336,7 +2336,7 @@ HWTEST2_F(CommandListCreateWithDedicatedInternalEngineTests, givenInOrderExecuti
     auto whiteBoxCmdList0 = CommandList::whiteboxCast(commandList0.get());
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
     whiteBoxCmdList->enableInOrderExecution();
-    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(0), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
         *hostAddress = std::numeric_limits<uint64_t>::max();
         hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
@@ -2431,7 +2431,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
     std::unique_ptr<WhiteBox<L0::CommandList>> cmdList;
     cmdList.reset(CommandList::whiteboxCast(CommandList::createImmediate(device, &desc, false, engineGroupType, returnValue)));
     cmdList->enableInOrderExecution();
-    uint64_t *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(), cmdList->inOrderExecInfo->getAllocationOffset());
+    uint64_t *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(0), cmdList->inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
         *hostAddress = std::numeric_limits<uint64_t>::max();
         hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());

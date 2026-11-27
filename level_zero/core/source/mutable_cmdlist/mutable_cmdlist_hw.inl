@@ -615,10 +615,10 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::reset() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void MutableCommandListCoreFamily<gfxCoreFamily>::switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, Event *newEvent, bool apiRequiredExternalGraphEvent) {
+void MutableCommandListCoreFamily<gfxCoreFamily>::switchCounterBasedEvents(uint64_t inOrderExecBaseSignalValue, uint32_t inOrderAllocationOffset, uint32_t inOrderHostCounterSlot, Event *newEvent, bool apiRequiredExternalGraphEvent) {
     newEvent->setApiRequiredGraphExternalEvent(apiRequiredExternalGraphEvent);
     newEvent->setIsSignalledAsGraphInternalEvent(this->getIsGraphInstantiationTarget());
-    newEvent->updateInOrderExecState(CommandList::inOrderExecInfo, inOrderExecBaseSignalValue, inOrderAllocationOffset);
+    newEvent->updateInOrderExecState(CommandList::inOrderExecInfo, inOrderExecBaseSignalValue, inOrderAllocationOffset, inOrderHostCounterSlot);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

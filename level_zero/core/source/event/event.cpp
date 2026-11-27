@@ -486,9 +486,9 @@ ImportedCbAllocationsForIpc Event::importCbAllocationsForIpcFor2WaySharing(Devic
     return out;
 }
 
-bool Event::isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const {
+bool Event::isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa, uint64_t newCounterHostGpuVa) const {
     return (inOrderExecHelper.is2WayIpcSharingEnabled() &&
-            (newCounterDeviceGpuVa != inOrderExecHelper.getBaseDeviceAddress()));
+            ((newCounterDeviceGpuVa != inOrderExecHelper.getBaseDeviceAddress()) || (newCounterHostGpuVa != inOrderExecHelper.getBaseHostGpuAddress())));
 }
 
 ze_result_t Event::exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAssignedData) {
@@ -524,25 +524,26 @@ ze_result_t Event::exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAs
         exportedIpcServerHandles.push_back(handle);
     }
 
-    // make sure that exporter will not attempt to refresh itself
-    inOrderExecHelper.setLatestImported2WayIpcData(handle, deviceOffset, NEO::SysCalls::getProcessId());
+    uint64_t hostHandle = 0;
+    size_t hostOffset = 0;
 
     if (inOrderExecHelper.isHostStorageDuplicated()) {
         auto hostAlloc = inOrderExecHelper.getHostCounterAllocation();
-        if (int retCode = hostAlloc->createInternalHandle(memoryManager, 0, handle, nullptr); retCode != 0) {
+        if (int retCode = hostAlloc->createInternalHandle(memoryManager, 0, hostHandle, nullptr); retCode != 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         memoryManager->registerIpcExportedAllocation(hostAlloc);
         if (context->isSocketHandleSharingSupported()) {
-            context->registerIpcHandleWithServer(handle);
-            exportedIpcServerHandles.push_back(handle);
+            context->registerIpcHandleWithServer(hostHandle);
+            exportedIpcServerHandles.push_back(hostHandle);
         }
 
-        auto hostOffset = ptrDiff(inOrderExecHelper.getBaseHostCpuAddress(), hostAlloc->getUnderlyingBuffer());
-        inOrderExecHelper.setHostAllocIpcHandle(handle, hostOffset);
-    } else {
-        inOrderExecHelper.setHostAllocIpcHandle(0, 0);
+        hostOffset = ptrDiff(inOrderExecHelper.getBaseHostCpuAddress(), hostAlloc->getUnderlyingBuffer());
     }
+    inOrderExecHelper.setHostAllocIpcHandle(hostHandle, hostOffset);
+
+    // make sure that exporter will not attempt to refresh itself
+    inOrderExecHelper.setLatestImported2WayIpcData(handle, deviceOffset, hostHandle, hostOffset, NEO::SysCalls::getProcessId());
 
     inOrderExecHelper.setHasImportedIpcAllocs(false);
 
@@ -561,7 +562,8 @@ void Event::refreshImported2WayIpcCbData() {
 
     inOrderExecHelper.assignAllocationsFromImport(*device->getNEODevice()->getMemoryManager(), *imported.deviceAlloc, *imported.hostAlloc);
 
-    inOrderExecHelper.setLatestImported2WayIpcData(inOrderExecEventData->deviceAllocIpcHandle, inOrderExecEventData->deviceIpcAllocOffset, inOrderExecEventData->exporterProcessId);
+    inOrderExecHelper.setLatestImported2WayIpcData(inOrderExecEventData->deviceAllocIpcHandle, inOrderExecEventData->deviceIpcAllocOffset, inOrderExecEventData->hostAllocIpcHandle,
+                                                   inOrderExecEventData->hostIpcAllocOffset, inOrderExecEventData->exporterProcessId);
 }
 
 ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
@@ -650,7 +652,8 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
         inOrderExecHelper.assignData(inOrderExecEventData->counterValue, inOrderExecEventData->counterOffset, inOrderExecEventData->devicePartitions, inOrderExecEventData->hostPartitions,
                                      imported.deviceAlloc, imported.hostAlloc, deviceGpuVa, hostGpuVa, hostCpuVa, 0, 0, (imported.deviceAlloc != imported.hostAlloc), true);
 
-        inOrderExecHelper.setLatestImported2WayIpcData(inOrderExecEventData->deviceAllocIpcHandle, inOrderExecEventData->deviceIpcAllocOffset, inOrderExecEventData->exporterProcessId);
+        inOrderExecHelper.setLatestImported2WayIpcData(inOrderExecEventData->deviceAllocIpcHandle, inOrderExecEventData->deviceIpcAllocOffset, inOrderExecEventData->hostAllocIpcHandle,
+                                                       inOrderExecEventData->hostIpcAllocOffset, inOrderExecEventData->exporterProcessId);
     } else {
         auto node = device->getInOrderSharableEventDataAllocator()->getTag();
         node->initialize();
@@ -1110,18 +1113,18 @@ void Event::setIsCompleted() {
     unsetCmdQueue();
 }
 
-void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset) {
+void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset, uint32_t hostCounterSlot) {
     resetCompletionStatus();
     clearCleanupTaskCounts();
 
-    const bool ipcExportUpdateNeeded = isCbIpcCommunicationUpdateNeeded(newInOrderExecInfo->getBaseDeviceAddress());
+    const bool ipcExportUpdateNeeded = isCbIpcCommunicationUpdateNeeded(newInOrderExecInfo->getBaseDeviceAddress(), newInOrderExecInfo->getBaseHostGpuAddress(hostCounterSlot));
 
     if (ipcExportUpdateNeeded) {
         unregisterExportedIpcHandles();
         inOrderExecHelper.releaseImportedAllocations(*device->getNEODevice()->getMemoryManager());
     }
 
-    inOrderExecHelper.updateInOrderExecState(newInOrderExecInfo, signalValue, allocationOffset);
+    inOrderExecHelper.updateInOrderExecState(newInOrderExecInfo, signalValue, allocationOffset, hostCounterSlot);
 
     if (ipcExportUpdateNeeded) {
         exportCbAllocationsFor2WayIpcSharing(false);

@@ -1796,6 +1796,63 @@ HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenReadAndWriteCopiesWhen
     EXPECT_EQ(2 * incrementValue, writeWaitValues[0]);
 }
 
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenDuplicatedCounterStorageWhenRecordingReadAndWriteCopiesThenEachStreamSignalsItsOwnHostCounterSlot, IsCRI) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    auto &inOrderExecInfo = cmdList->inOrderExecInfo;
+    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
+
+    constexpr auto mainSlot = DualStreamCopyOffload::mainStreamHostCounterSlot;
+    constexpr auto readSlot = DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadReadIndex);
+    constexpr auto writeSlot = DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadWriteIndex);
+
+    const auto hostSlotSize = cmdList->getInOrderExecHostSlotRequiredSize();
+    EXPECT_NE(0u, hostSlotSize);
+    EXPECT_EQ(hostSlotSize, cmdList->getInOrderExecHostRequiredSize());
+    EXPECT_EQ(0u, cmdList->getInOrderExecHostGpuAddress(readSlot));
+    EXPECT_EQ(0u, cmdList->getInOrderExecHostGpuAddress(writeSlot));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    EXPECT_EQ(readSlot, inOrderExecInfo->getLastSignalHostSlot());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    EXPECT_EQ(writeSlot, inOrderExecInfo->getLastSignalHostSlot());
+
+    EXPECT_EQ(3 * hostSlotSize, cmdList->getInOrderExecHostRequiredSize());
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        EXPECT_NE(0u, cmdList->getInOrderExecHostGpuAddress(hostCounterSlot));
+        EXPECT_EQ(inOrderExecInfo->getHostNodeGpuAddress(hostCounterSlot), cmdList->getInOrderExecHostGpuAddress(hostCounterSlot));
+    }
+
+    auto countSdis = [](GenCmdList &cmds, uint64_t address) {
+        uint32_t count = 0;
+        for (auto &it : findAll<MI_STORE_DATA_IMM *>(cmds.begin(), cmds.end())) {
+            if (genCmdCast<MI_STORE_DATA_IMM *>(*it)->getAddress() == address) {
+                count++;
+            }
+        }
+        return count;
+    };
+
+    auto readCmds = parseStream<FamilyType>(*getCopyOffloadCmdList(*cmdList)->getCmdContainer().getCommandStream(), 0);
+    EXPECT_EQ(1u, countSdis(readCmds, inOrderExecInfo->getBaseHostGpuAddress(readSlot)));
+    EXPECT_EQ(0u, countSdis(readCmds, inOrderExecInfo->getBaseHostGpuAddress(mainSlot)));
+    EXPECT_EQ(0u, countSdis(readCmds, inOrderExecInfo->getBaseHostGpuAddress(writeSlot)));
+
+    auto writeCmds = parseStream<FamilyType>(*getCopyOffloadWriteCmdList(*cmdList)->getCmdContainer().getCommandStream(), 0);
+    EXPECT_EQ(1u, countSdis(writeCmds, inOrderExecInfo->getBaseHostGpuAddress(writeSlot)));
+    EXPECT_EQ(0u, countSdis(writeCmds, inOrderExecInfo->getBaseHostGpuAddress(mainSlot)));
+    EXPECT_EQ(0u, countSdis(writeCmds, inOrderExecInfo->getBaseHostGpuAddress(readSlot)));
+
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        *inOrderExecInfo->getBaseHostAddress(hostCounterSlot) = 0x1234;
+    }
+    cmdList->clearInOrderExecCounterAllocation();
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        EXPECT_EQ(inOrderExecInfo->getInitialCounterValue(), *inOrderExecInfo->getBaseHostAddress(hostCounterSlot));
+    }
+}
+
 HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenWriteCopyAsLastOperationWhenClosingThenComputeStreamWaitsForCompletionAndBothStreamsAreClosed, IsCRI) {
     auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
     auto mainStream = cmdList->getCmdContainer().getCommandStream();
@@ -2078,6 +2135,39 @@ HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenPatchPreambleAndOnlyWr
     auto patchPreambleCounterWaits = getSemaphoreWaitValues<FamilyType>(writeQueueCmds, getPatchPreambleCounterDeviceAddress(*cmdQueue));
     ASSERT_EQ(1u, patchPreambleCounterWaits.size());
     EXPECT_EQ(1u, patchPreambleCounterWaits[0]);
+}
+
+HWTEST2_F(RegularCmdListCopyOffloadWriteStreamTests, givenPatchPreambleAndHostCounterSlotsWhenExecutingCmdListThenAllHostCounterSlotsAreCleared, IsCRI) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto cmdList = createGraphCmdList<FamilyType::gfxCoreFamily>();
+    auto &inOrderExecInfo = cmdList->inOrderExecInfo;
+    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendWriteCopy(*cmdList, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    cmdQueue->setPatchingPreamble(true);
+
+    const auto usedBefore = cmdQueue->commandStream.getUsed();
+    auto cmdListHandle = cmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+
+    auto queueCmds = parseStream<FamilyType>(cmdQueue->commandStream, usedBefore);
+    auto miStoreCmds = findAll<MI_STORE_DATA_IMM *>(queueCmds.begin(), queueCmds.end());
+
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        const auto hostNodeGpuAddress = inOrderExecInfo->getHostNodeGpuAddress(hostCounterSlot);
+        ASSERT_NE(0u, hostNodeGpuAddress);
+        auto clearCmdIt = std::find_if(miStoreCmds.begin(), miStoreCmds.end(), [&](auto &it) {
+            return genCmdCast<MI_STORE_DATA_IMM *>(*it)->getAddress() == hostNodeGpuAddress;
+        });
+        ASSERT_NE(miStoreCmds.end(), clearCmdIt);
+        EXPECT_EQ(0u, genCmdCast<MI_STORE_DATA_IMM *>(**clearCmdIt)->getDataDword0());
+    }
 }
 
 struct RegularCmdListCopyOffloadWriteStreamSingleCopyEngineTests : public RegularCmdListCopyOffloadTests {

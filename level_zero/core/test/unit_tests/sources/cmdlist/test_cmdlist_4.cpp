@@ -1956,7 +1956,8 @@ HWTEST_F(CommandListCreateTests, givenRegularOutOfOrderCommandListWhenGettingInO
     EXPECT_EQ(0u, commandList->getInOrderExecDeviceRequiredSize());
     EXPECT_EQ(0u, commandList->getInOrderExecDeviceGpuAddress());
     EXPECT_EQ(0u, commandList->getInOrderExecHostRequiredSize());
-    EXPECT_EQ(0u, commandList->getInOrderExecHostGpuAddress());
+    EXPECT_EQ(0u, commandList->getInOrderExecHostSlotRequiredSize());
+    EXPECT_EQ(0u, commandList->getInOrderExecHostGpuAddress(0));
 }
 
 HWTEST_F(CommandListCreateTests, givenCooperativeDescriptorWhenCloneAppendKernelIsCalledThenClonedValueDesciriptorIsAvailable) {

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -1830,12 +1831,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
+    mutableCommandList->switchCounterBasedEvents(0, 0, 0, event, false);
     EXPECT_TRUE(event->getIsSignalledAsGraphInternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(false);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
+    mutableCommandList->switchCounterBasedEvents(0, 0, 0, event, false);
     EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenHostCounterSlotWhenSwitchingCounterBasedEventThenEventUsesStoredHostCounterSlot) {
+    auto &inOrderExecInfo = mutableCommandList->getBase()->getInOrderExecInfo();
+    if (!inOrderExecInfo->isHostStorageDuplicated()) {
+        GTEST_SKIP();
+    }
+
+    constexpr uint32_t hostCounterSlot = 1;
+    inOrderExecInfo->addHostCounterSlot(hostCounterSlot, device->getHostInOrderCounterAllocator()->getTag());
+
+    auto *event = createTestEvent(true, true, false, false, false);
+    mutableCommandList->switchCounterBasedEvents(1, 0, hostCounterSlot, event, false);
+
+    auto &eventHelper = event->getInOrderExecEventHelper();
+    EXPECT_EQ(hostCounterSlot, eventHelper.getHostCounterSlot());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(hostCounterSlot), eventHelper.getBaseHostGpuAddress());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostAddress(hostCounterSlot), eventHelper.getBaseHostCpuAddress());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
@@ -1845,7 +1866,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_TRUE(event->isExternalEvent());
 
     mutableCommandList->getBase()->setIsGraphInstantiationTarget(true);
-    mutableCommandList->switchCounterBasedEvents(0, 0, event, false);
+    mutableCommandList->switchCounterBasedEvents(0, 0, 0, event, false);
     EXPECT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 }
 

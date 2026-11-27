@@ -827,11 +827,11 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     auto syncAllocation = mockNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, nullptr, *neoDevice, 1, false);
-    *inOrderExecInfo->getBaseHostAddress() = 1;
+    *inOrderExecInfo->getBaseHostAddress(0) = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     result = event->hostSynchronize(timeout);
@@ -844,7 +844,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event2->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event2->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
     syncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     ultCsr->downloadAllocationsCalledCount = 0;
     eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
@@ -916,10 +916,10 @@ HWTEST_F(EventSignalerPreviousContextsTests, givenCounterBasedEventWithSignalerP
         ASSERT_NE(nullptr, event);
 
         auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(tagAllocator.getTag(), nullptr, *neoDevice, 1, false);
-        *inOrderExecInfo->getBaseHostAddress() = 1;
+        *inOrderExecInfo->getBaseHostAddress(0) = 1;
         event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
         event->getInOrderExecEventHelper().initializeLocalTempStorage();
-        event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+        event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
 
         event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
         previousContextCsr->downloadAllocationsCalledCount = 0;
@@ -984,10 +984,10 @@ HWTEST_F(EventSignalerPreviousContextsTests, givenNotCompletedCounterBasedEventW
             ASSERT_NE(nullptr, event);
 
             auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(tagAllocator.getTag(), nullptr, *neoDevice, 1, false);
-            *inOrderExecInfo->getBaseHostAddress() = 0;
+            *inOrderExecInfo->getBaseHostAddress(0) = 0;
             event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
             event->getInOrderExecEventHelper().initializeLocalTempStorage();
-            event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+            event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
 
             if (previousContextAttached) {
                 event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
@@ -1080,11 +1080,11 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreamble
     };
 
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, nullptr, *neoDevice, 1, false);
-    *inOrderExecInfo->getBaseHostAddress() = 1;
+    *inOrderExecInfo->getBaseHostAddress(0) = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
     event->externalEvent = true;
 
     event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
@@ -1101,7 +1101,7 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreamble
 
     event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event2->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event2->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
     event2->externalEvent = true;
     event2->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
 
@@ -1176,11 +1176,11 @@ HWTEST_F(EventTests, givenNotExternalCbEventWithPatchPreambleAssignedWhenHostSyn
     };
 
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, nullptr, *neoDevice, 1, false);
-    *inOrderExecInfo->getBaseHostAddress() = 1;
+    *inOrderExecInfo->getBaseHostAddress(0) = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
     event->externalEvent = false;
 
     event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
@@ -1382,11 +1382,11 @@ HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeUsesWaitFenceThenPre
     };
 
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, nullptr, *neoDevice, 1, false);
-    *inOrderExecInfo->getBaseHostAddress() = 1;
+    *inOrderExecInfo->getBaseHostAddress(0) = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
     event->externalEvent = true;
 
     event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
@@ -1433,11 +1433,11 @@ HWTEST_F(EventTests, givenExternalCbEventWithIncompletePreambleWhenHostSynchroni
     MockGraphicsAllocation preambleDevAllocation(nullptr, preambleDevAddress, sizeof(patchPreambleData));
 
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, nullptr, *neoDevice, 1, false);
-    *inOrderExecInfo->getBaseHostAddress() = 1;
+    *inOrderExecInfo->getBaseHostAddress(0) = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
     event->externalEvent = true;
 
     event->getInOrderExecEventHelper().assignPatchPreambleData(counterValue, patchPreambleHostAddress, preambleAllocation.getGpuAddress(), &preambleAllocation, preambleDevAddress, &preambleDevAllocation);
@@ -1523,11 +1523,11 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
     auto hostSyncAllocation = hostMockNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(deviceMockNode, hostMockNode, *neoDevice, 1, false);
-    *inOrderExecInfo->getBaseHostAddress() = 1;
+    *inOrderExecInfo->getBaseHostAddress(0) = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     result = event->hostSynchronize(timeout);
@@ -1541,7 +1541,7 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
 
     event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event2->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event2->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
     hostSyncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     ultCsr->downloadAllocationsCalledCount = 0;
     eventAddress = static_cast<TagAddressType *>(event->getHostAddress());
@@ -2690,7 +2690,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     auto inOrderExecInfo0 = NEO::InOrderExecInfo::create(device->getDeviceInOrderCounterAllocator()->getTag(), nullptr, *device->getNEODevice(), 1);
     inOrderExecInfo0->setLastWaitedCounterValue(1, 0);
     event0->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event0->updateInOrderExecState(inOrderExecInfo0, 1, 0);
+    event0->updateInOrderExecState(inOrderExecInfo0, 1, 0, 0);
 
     uint64_t counter = 2;
 

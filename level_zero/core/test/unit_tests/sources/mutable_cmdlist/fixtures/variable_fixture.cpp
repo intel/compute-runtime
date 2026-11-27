@@ -230,7 +230,8 @@ void VariableInOrderFixture::attachCbEvent(Event *event, L0::ult::MockCommandLis
 
     event->updateInOrderExecState(cmdList->inOrderExecInfo,
                                   this->cmdListInOrderCounterValue,
-                                  this->cmdListInOrderAllocationOffset);
+                                  this->cmdListInOrderAllocationOffset,
+                                  0);
     if (event->isEventTimestampFlagSet()) {
         event->resetInOrderTimestampNode(this->device->getInOrderTimestampAllocator()->getTag(), 1);
     }

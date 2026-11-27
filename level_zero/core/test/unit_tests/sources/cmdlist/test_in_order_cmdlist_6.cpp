@@ -157,7 +157,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     }
 
     regularCmdList->inOrderExecInfo->setAllocationOffset(123);
-    auto hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress());
+    auto hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress(0));
     *hostAddr = 0x1234;
     regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining = true;
 
@@ -167,7 +167,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     EXPECT_NE(originalInOrderExecInfo.get(), regularCmdList->inOrderExecInfo.get());
     EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->getCounterValue());
     EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->getAllocationOffset());
-    hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress());
+    hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress(0));
     EXPECT_EQ(0u, *hostAddr);
     EXPECT_FALSE(regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining);
 }
@@ -332,7 +332,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
 
         ASSERT_NE(nullptr, sdiCmd);
 
-        auto gpuAddress = regularCmdList->inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(regularCmdList->inOrderExecInfo->getBaseHostAddress()) : regularCmdList->inOrderExecInfo->getBaseDeviceAddress();
+        auto gpuAddress = regularCmdList->inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(regularCmdList->inOrderExecInfo->getBaseHostAddress(0)) : regularCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
         EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
         EXPECT_EQ(regularCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -370,7 +370,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
 
         ASSERT_NE(nullptr, sdiCmd);
 
-        auto gpuAddress = regularCmdList->inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(regularCmdList->inOrderExecInfo->getBaseHostAddress()) : regularCmdList->inOrderExecInfo->getBaseDeviceAddress();
+        auto gpuAddress = regularCmdList->inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(regularCmdList->inOrderExecInfo->getBaseHostAddress(0)) : regularCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
         EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
         EXPECT_EQ(regularCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
@@ -558,7 +558,7 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTempNodeWhenCallingSync
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto inOrderExecInfo = static_cast<WhiteboxInOrderExecInfo *>(cmdList->inOrderExecInfo.get());
-    auto hostAddress = inOrderExecInfo->getBaseHostAddress();
+    auto hostAddress = inOrderExecInfo->getBaseHostAddress(0);
     *hostAddress = 3;
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
@@ -589,7 +589,7 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTempNodeWhenCallingHost
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto inOrderExecInfo = static_cast<WhiteboxInOrderExecInfo *>(cmdList->inOrderExecInfo.get());
-    auto hostAddress = inOrderExecInfo->getBaseHostAddress();
+    auto hostAddress = inOrderExecInfo->getBaseHostAddress(0);
     *hostAddress = 3;
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
@@ -633,7 +633,7 @@ HWTEST_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDispa
     auto node2 = events[0]->inOrderExecHelper.getTimestampNode(0);
 
     *static_cast<Event::State *>(ptrOffset(events[0]->inOrderExecHelper.getTimestampNode(0)->getCpuBase(), events[0]->getContextEndOffset())) = Event::State::STATE_SIGNALED;
-    auto hostAddress = cmdList->inOrderExecInfo->getBaseHostAddress();
+    auto hostAddress = cmdList->inOrderExecInfo->getBaseHostAddress(0);
     *hostAddress = 3;
 
     // return node1 to pool
@@ -1996,7 +1996,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSi
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++miAtomics[0]));
     ASSERT_NE(nullptr, sdiCmd);
 
-    EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), sdiCmd->getAddress());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation(0)->getGpuAddress(), sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(partitionCount * 2, sdiCmd->getDataDword0());
     EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
@@ -2070,7 +2070,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutA
     auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(sdiCmds[nextSdi]));
     ASSERT_NE(nullptr, sdiCmd);
 
-    EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), sdiCmd->getAddress());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation(0)->getGpuAddress(), sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(expectedSignalValue, sdiCmd->getDataDword0());
     EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
@@ -2224,7 +2224,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    auto hostAddress0 = immCmdList->inOrderExecInfo->isHostStorageDuplicated() ? immCmdList->inOrderExecInfo->getBaseHostAddress() : static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    auto hostAddress0 = immCmdList->inOrderExecInfo->isHostStorageDuplicated() ? immCmdList->inOrderExecInfo->getBaseHostAddress(0) : static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
     auto hostAddress1 = ptrOffset(hostAddress0, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
 
     *hostAddress0 = 0;
@@ -2466,7 +2466,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
     ASSERT_NE(nullptr, implicitCounterSdi);
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
-        counterGpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
+        counterGpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0));
     }
 
     EXPECT_EQ(counterGpuAddress, implicitCounterSdi->getAddress());
@@ -2524,7 +2524,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
     ASSERT_NE(nullptr, sdiCmd);
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
-        gpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
+        gpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0));
     }
 
     EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
@@ -2589,7 +2589,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
 
     *immCmdList->getCsr(false)->getBarrierCountTagAddress() = 0u;
     immCmdList->getCsr(false)->getNextBarrierCount();
-    *immCmdList->inOrderExecInfo->getBaseHostAddress() = 0;
+    *immCmdList->inOrderExecInfo->getBaseHostAddress(0) = 0;
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     // implicit dependencies
@@ -2616,7 +2616,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     size_t offset = cmdStream->getUsed();
     size_t subCopyOffset = static_cast<Device *>(device)->bcsSplit->cmdLists[0]->getCmdContainer().getCommandStream()->getUsed();
 
-    *immCmdList->inOrderExecInfo->getBaseHostAddress() = 0;
+    *immCmdList->inOrderExecInfo->getBaseHostAddress(0) = 0;
 
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 1, &eventHandle, copyParams);
 
@@ -2671,7 +2671,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
     ASSERT_NE(nullptr, sdiCmd);
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
-        gpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
+        gpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress(0));
     }
 
     EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
@@ -2725,7 +2725,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadAndBcsDispatchAndCounterBased
     EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
 
     auto eventObj = Event::fromHandle(handle);
-    *static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getBaseHostAddress()) = 3u;
+    *static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getBaseHostAddress(0)) = 3u;
     EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(-1));
 
     if (device->getProductHelper().isDcFlushAllowed()) {
@@ -3186,6 +3186,183 @@ HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenLatestCopyFlushedToWriteQueue
 
     EXPECT_FALSE(readCsr->downloadAllocationCalled);
     EXPECT_TRUE(writeCsr->downloadAllocationCalled);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenDuplicatedCounterStorageWhenAppendingToMainReadAndWriteQueuesThenEachQueueSignalsItsOwnHostCounterSlot, IsCRI) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    preallocateCopyOffloadHostCounterSlots = false;
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
+    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
+
+    constexpr auto mainSlot = DualStreamCopyOffload::mainStreamHostCounterSlot;
+    constexpr auto readSlot = DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadReadIndex);
+    constexpr auto writeSlot = DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadWriteIndex);
+
+    EXPECT_TRUE(inOrderExecInfo->hasHostCounterSlot(mainSlot));
+    EXPECT_FALSE(inOrderExecInfo->hasHostCounterSlot(readSlot));
+    EXPECT_FALSE(inOrderExecInfo->hasHostCounterSlot(writeSlot));
+
+    const auto deviceMem = allocDeviceMem(sizeof(copyData1));
+    const auto hostMem = allocHostMem(sizeof(copyData1));
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto getHostCounterSdiSlots = [&](size_t offset) {
+        std::vector<uint32_t> slots;
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+        for (auto &it : findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end())) {
+            auto storeDw = genCmdCast<MI_STORE_DATA_IMM *>(*it);
+            for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+                if (inOrderExecInfo->hasHostCounterSlot(hostCounterSlot) && (storeDw->getAddress() == inOrderExecInfo->getBaseHostGpuAddress(hostCounterSlot))) {
+                    EXPECT_EQ(getLowPart(inOrderExecInfo->getCounterValue()), storeDw->getDataDword0());
+                    slots.push_back(hostCounterSlot);
+                }
+            }
+        }
+        return slots;
+    };
+
+    auto offset = cmdStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(deviceMem, hostMem, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(inOrderExecInfo->hasHostCounterSlot(readSlot));
+    EXPECT_FALSE(inOrderExecInfo->hasHostCounterSlot(writeSlot));
+    EXPECT_EQ(readSlot, inOrderExecInfo->getLastSignalHostSlot());
+    EXPECT_EQ(std::vector<uint32_t>{readSlot}, getHostCounterSdiSlots(offset));
+
+    offset = cmdStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(hostMem, deviceMem, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(inOrderExecInfo->hasHostCounterSlot(writeSlot));
+    EXPECT_EQ(writeSlot, inOrderExecInfo->getLastSignalHostSlot());
+    EXPECT_EQ(std::vector<uint32_t>{writeSlot}, getHostCounterSdiSlots(offset));
+
+    EXPECT_NE(inOrderExecInfo->getBaseHostGpuAddress(mainSlot), inOrderExecInfo->getBaseHostGpuAddress(readSlot));
+    EXPECT_NE(inOrderExecInfo->getBaseHostGpuAddress(mainSlot), inOrderExecInfo->getBaseHostGpuAddress(writeSlot));
+    EXPECT_NE(inOrderExecInfo->getBaseHostGpuAddress(readSlot), inOrderExecInfo->getBaseHostGpuAddress(writeSlot));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    EXPECT_EQ(mainSlot, inOrderExecInfo->getLastSignalHostSlot());
+
+    completeHostAddress<FamilyType::gfxCoreFamily>(immCmdList.get());
+    context->freeMem(deviceMem);
+    context->freeMem(hostMem);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenDuplicatedCounterStorageWhenCounterBasedEventIsSignalledOnDifferentQueuesThenEventStoresHostCounterSlotOfLatestSignal, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
+    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
+
+    constexpr auto writeSlot = DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadWriteIndex);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto &eventHelper = events[0]->getInOrderExecEventHelper();
+
+    const auto deviceMem = allocDeviceMem(sizeof(copyData1));
+    const auto hostMem = allocHostMem(sizeof(copyData1));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(hostMem, deviceMem, sizeof(copyData1), events[0]->toHandle(), 0, nullptr, copyParams));
+
+    EXPECT_EQ(writeSlot, eventHelper.getHostCounterSlot());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(writeSlot), eventHelper.getBaseHostGpuAddress());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostAddress(writeSlot), eventHelper.getBaseHostCpuAddress());
+    EXPECT_EQ(inOrderExecInfo->getHostCounterAllocation(writeSlot), eventHelper.getHostCounterAllocation());
+    EXPECT_EQ(inOrderExecInfo->getBaseDeviceAddress(), eventHelper.getBaseDeviceAddress());
+
+    CmdListWaitEventParameters waitEventsParameters{};
+    CmdListSignalEventParameters signalEventParameters{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(events[0]->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
+    EXPECT_EQ(inOrderExecInfo->getLastSignalHostSlot(), eventHelper.getHostCounterSlot());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(inOrderExecInfo->getLastSignalHostSlot()), eventHelper.getBaseHostGpuAddress());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+
+    EXPECT_EQ(DualStreamCopyOffload::mainStreamHostCounterSlot, eventHelper.getHostCounterSlot());
+    EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(DualStreamCopyOffload::mainStreamHostCounterSlot), eventHelper.getBaseHostGpuAddress());
+
+    context->freeMem(deviceMem);
+    context->freeMem(hostMem);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenLatestSignalOnWriteQueueWhenCheckingInOrderCompletionThenWriteQueueHostCounterSlotIsPolled, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadWriteIndex]);
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
+    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
+
+    constexpr auto mainSlot = DualStreamCopyOffload::mainStreamHostCounterSlot;
+    constexpr auto writeSlot = DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadWriteIndex);
+
+    const auto deviceMem = allocDeviceMem(sizeof(copyData1));
+    const auto hostMem = allocHostMem(sizeof(copyData1));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(hostMem, deviceMem, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+    ASSERT_EQ(writeSlot, inOrderExecInfo->getLastSignalHostSlot());
+
+    const auto counterValue = inOrderExecInfo->getCounterValue();
+    *inOrderExecInfo->getBaseHostAddress(mainSlot) = counterValue;
+    *inOrderExecInfo->getBaseHostAddress(writeSlot) = counterValue - 1;
+
+    EXPECT_TRUE(immCmdList->hasPendingInOrderWork());
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->synchronizeInOrderExecution(0, true));
+
+    immCmdList->recordStagingDependency();
+    EXPECT_TRUE(immCmdList->hasPendingStagingDependency());
+
+    *inOrderExecInfo->getBaseHostAddress(writeSlot) = counterValue;
+
+    EXPECT_FALSE(immCmdList->hasPendingStagingDependency());
+    EXPECT_FALSE(immCmdList->hasPendingInOrderWork());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->synchronizeInOrderExecution(0, true));
+
+    context->freeMem(deviceMem);
+    context->freeMem(hostMem);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenDuplicatedCounterStorageDisabledWhenAppendingCopiesThenOnlyMainHostCounterSlotIsUsed, IsCRI) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
+    ASSERT_FALSE(inOrderExecInfo->isHostStorageDuplicated());
+
+    const auto deviceMem = allocDeviceMem(sizeof(copyData1));
+    const auto hostMem = allocHostMem(sizeof(copyData1));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(deviceMem, hostMem, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(hostMem, deviceMem, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_EQ(DualStreamCopyOffload::mainStreamHostCounterSlot, inOrderExecInfo->getLastSignalHostSlot());
+    for (uint32_t hostCounterSlot = 0; hostCounterSlot < NEO::InOrderExecInfo::maxHostCounterSlots; hostCounterSlot++) {
+        EXPECT_FALSE(inOrderExecInfo->hasHostCounterSlot(hostCounterSlot));
+    }
+    EXPECT_EQ(inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer(), inOrderExecInfo->getBaseHostAddress(DualStreamCopyOffload::mainStreamHostCounterSlot));
+
+    context->freeMem(deviceMem);
+    context->freeMem(hostMem);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenImmCmdListWithoutCopyOffloadWhenAppendingCopiesThenNoAdditionalHostCounterSlotIsAllocated, IsCRI) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
+    ASSERT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
+
+    const auto deviceMem = allocDeviceMem(sizeof(copyData1));
+    const auto hostMem = allocHostMem(sizeof(copyData1));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(hostMem, deviceMem, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    EXPECT_EQ(DualStreamCopyOffload::mainStreamHostCounterSlot, inOrderExecInfo->getLastSignalHostSlot());
+    EXPECT_TRUE(inOrderExecInfo->hasHostCounterSlot(DualStreamCopyOffload::mainStreamHostCounterSlot));
+    EXPECT_FALSE(inOrderExecInfo->hasHostCounterSlot(DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadReadIndex)));
+    EXPECT_FALSE(inOrderExecInfo->hasHostCounterSlot(DualStreamCopyOffload::getHostCounterSlot(DualStreamCopyOffload::copyOffloadWriteIndex)));
+
+    context->freeMem(deviceMem);
+    context->freeMem(hostMem);
 }
 
 HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingImageToHostUsmThenReadQueueIsUsed, IsCRI) {

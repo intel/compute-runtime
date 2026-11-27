@@ -403,7 +403,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndUsmHostP
     ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc));
 
     auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
-    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset());
 
     inOrderExecInfo->addCounterValue(1);
     *hostCounter = 0;
@@ -442,7 +442,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndUsmHostP
     ASSERT_GE(device->getProductHelper().getCpuCopyThreshold(TransferType::deviceUsmToHostUsm), copySize);
 
     auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
-    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset());
 
     inOrderExecInfo->addCounterValue(1);
     *hostCounter = 0;
@@ -471,7 +471,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenSyncModeInOrderImmediateCommandListWhe
     ASSERT_GE(device->getProductHelper().getCpuCopyThreshold(TransferType::deviceUsmToHostUsm), copySize);
 
     auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
-    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    auto hostCounter = ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset());
 
     inOrderExecInfo->addCounterValue(1);
     *hostCounter = 0;
@@ -503,7 +503,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenMultiPartitionInOrderImmediateCommandL
     auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
     ASSERT_EQ(2u, inOrderExecInfo->getNumHostPartitionsToWait());
 
-    auto firstPartition = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+    auto firstPartition = ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset());
     auto secondPartition = ptrOffset(firstPartition, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
 
     inOrderExecInfo->addCounterValue(1);
@@ -541,7 +541,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListWhenCopySiz
 
     auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
     inOrderExecInfo->addCounterValue(1);
-    *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = 0;
+    *ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset()) = 0;
 
     auto pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
 
@@ -564,7 +564,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndNonUsmHo
 
     auto inOrderExecInfo = cmdList.inOrderExecInfo.get();
     inOrderExecInfo->addCounterValue(1);
-    *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = 0;
+    *ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset()) = 0;
 
     EXPECT_TRUE(cmdList.hasPendingInOrderWork());
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));

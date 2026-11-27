@@ -341,7 +341,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenSkippedWalkerPostSyncAndDupl
     auto &hostPostSync = walker->getPostSyncOpn1();
     EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, hostPostSync.getOperation());
     EXPECT_EQ(3u, hostPostSync.getImmediateData());
-    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseHostGpuAddress(), hostPostSync.getDestinationAddress());
+    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseHostGpuAddress(0), hostPostSync.getDestinationAddress());
 }
 
 HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchingWalkerThenSetCorrectPostSyncFields, IsAtLeastXe3pCore) {
@@ -421,7 +421,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
         if (compactEvent0) {
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData1.getOperation());
         } else {
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation(0)->getGpuAddress(), postSyncData1.getDestinationAddress());
             EXPECT_FALSE(postSyncData1.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData1.getSerializePostsyncOps());
             EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
@@ -467,7 +467,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenInterruptEventWhenDispatchin
             EXPECT_FALSE(postSyncData.getSerializePostsyncOps());
             EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation(0)->getGpuAddress(), postSyncData1.getDestinationAddress());
             EXPECT_FALSE(postSyncData1.getInterruptSignalEnable());
             EXPECT_FALSE(postSyncData1.getSerializePostsyncOps());
 
@@ -568,7 +568,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventWhenDispatchingW
         if (compactEvent0) {
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData1.getOperation());
         } else {
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation(0)->getGpuAddress(), postSyncData1.getDestinationAddress());
         }
 
         auto &postSyncData2 = walkerCmd->getPostSyncOpn2();
@@ -612,7 +612,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventWhenDispatchingW
         if (compactEvent1) {
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_NO_WRITE, postSyncData1.getOperation());
         } else {
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation(0)->getGpuAddress(), postSyncData1.getDestinationAddress());
         }
 
         auto &postSyncData2 = walkerCmd->getPostSyncOpn2();
@@ -697,7 +697,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenDuplicatedHostStorageEnabled
         } else {
             EXPECT_EQ(POSTSYNC_DATA_2::OPERATION_WRITE_IMMEDIATE_DATA, postSyncData1.getOperation());
             EXPECT_EQ(1u, postSyncData1.getImmediateData());
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), postSyncData1.getDestinationAddress());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getHostCounterAllocation(0)->getGpuAddress(), postSyncData1.getDestinationAddress());
             EXPECT_TRUE(postSyncData1.getDataportPipelineFlush());
             EXPECT_TRUE(postSyncData1.getDataportSubsliceCacheFlush());
             EXPECT_FALSE(postSyncData.getInterruptSignalEnable());

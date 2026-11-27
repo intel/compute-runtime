@@ -2869,7 +2869,7 @@ HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRelaxedOrderingAndRegularCmdListAn
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = CommandList::whiteboxCast(immCommandList.get());
     whiteBoxCmdList->enableInOrderExecution();
-    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(0), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
     for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
         *hostAddress = std::numeric_limits<uint64_t>::max();
         hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());

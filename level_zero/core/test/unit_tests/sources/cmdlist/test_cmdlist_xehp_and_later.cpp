@@ -2808,7 +2808,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, result));
     ASSERT_NE(nullptr, event.get());
 
-    event->updateInOrderExecState(commandList2->inOrderExecInfo, commandList2->inOrderExecInfo->getCounterValue(), commandList2->inOrderExecInfo->getAllocationOffset());
+    event->updateInOrderExecState(commandList2->inOrderExecInfo, commandList2->inOrderExecInfo->getCounterValue(), commandList2->inOrderExecInfo->getAllocationOffset(), 0);
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};

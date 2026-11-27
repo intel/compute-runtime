@@ -339,8 +339,8 @@ HWTEST_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCou
         ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
         uint32_t hostCopyData = 0;
-        auto hostAddress0 = static_cast<uint64_t *>(immCmdList0->inOrderExecInfo->getBaseHostAddress());
-        auto hostAddress1 = static_cast<uint64_t *>(immCmdList1->inOrderExecInfo->getBaseHostAddress());
+        auto hostAddress0 = static_cast<uint64_t *>(immCmdList0->inOrderExecInfo->getBaseHostAddress(0));
+        auto hostAddress1 = static_cast<uint64_t *>(immCmdList1->inOrderExecInfo->getBaseHostAddress(0));
 
         *hostAddress0 = 1;
         *hostAddress1 = 1;
@@ -568,7 +568,7 @@ HWTEST_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThenL
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
 
     auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
-    *inOrderExecInfo->getBaseHostAddress() = 2u;
+    *inOrderExecInfo->getBaseHostAddress(0) = 2u;
 
     auto status = events[1]->hostSynchronize(-1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
@@ -634,7 +634,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderImmediateCommandListWhenHostSynchroniz
     immCmdList->latestFlushIsHostVisible = true;
 
     auto &inOrderExecInfo = immCmdList->inOrderExecInfo;
-    *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = 0;
+    *ptrOffset(inOrderExecInfo->getBaseHostAddress(0), inOrderExecInfo->getAllocationOffset()) = 0;
 
     ASSERT_FALSE(inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset()));
 
@@ -967,7 +967,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedEventWithoutT
     event->completionTimeout = 0;
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
-    auto hostCounterAddress = cmdList->inOrderExecInfo->isHostStorageDuplicated() ? cmdList->inOrderExecInfo->getBaseHostAddress() : static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    auto hostCounterAddress = cmdList->inOrderExecInfo->isHostStorageDuplicated() ? cmdList->inOrderExecInfo->getBaseHostAddress(0) : static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
     *hostCounterAddress = 0;
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
@@ -995,7 +995,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularTimestampEventWith
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
     event->hostEventSetValue(Event::STATE_CLEARED);
     ASSERT_FALSE(event->isCounterBased());
-    auto hostCounterAddress = cmdList->inOrderExecInfo->isHostStorageDuplicated() ? cmdList->inOrderExecInfo->getBaseHostAddress() : static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    auto hostCounterAddress = cmdList->inOrderExecInfo->isHostStorageDuplicated() ? cmdList->inOrderExecInfo->getBaseHostAddress(0) : static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
     *hostCounterAddress = 0;
 
     ze_kernel_timestamp_result_t kernelTimestamps = {};
@@ -1325,27 +1325,27 @@ HWTEST_F(InOrderCmdListTests, whenCreatingInOrderExecInfoThenReuseHostAlloc) {
     auto tag = device->getHostInOrderCounterAllocator()->getTag();
 
     auto immCmdList1 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto gpuVa1 = immCmdList1->inOrderExecInfo->getBaseHostAddress();
+    auto gpuVa1 = immCmdList1->inOrderExecInfo->getBaseHostAddress(0);
 
     auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto gpuVa2 = immCmdList2->inOrderExecInfo->getBaseHostAddress();
+    auto gpuVa2 = immCmdList2->inOrderExecInfo->getBaseHostAddress(0);
 
     EXPECT_NE(gpuVa1, gpuVa2);
 
     // allocation from the same allocator
-    EXPECT_EQ(immCmdList1->inOrderExecInfo->getHostCounterAllocation(), tag->getBaseGraphicsAllocation()->getGraphicsAllocation(0));
+    EXPECT_EQ(immCmdList1->inOrderExecInfo->getHostCounterAllocation(0), tag->getBaseGraphicsAllocation()->getGraphicsAllocation(0));
 
     immCmdList1.reset();
 
     auto immCmdList3 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto gpuVa3 = immCmdList3->inOrderExecInfo->getBaseHostAddress();
+    auto gpuVa3 = immCmdList3->inOrderExecInfo->getBaseHostAddress(0);
 
     EXPECT_EQ(gpuVa1, gpuVa3);
 
     immCmdList2.reset();
 
     auto immCmdList4 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto gpuVa4 = immCmdList4->inOrderExecInfo->getBaseHostAddress();
+    auto gpuVa4 = immCmdList4->inOrderExecInfo->getBaseHostAddress(0);
 
     EXPECT_EQ(gpuVa2, gpuVa4);
 
@@ -1366,7 +1366,7 @@ HWTEST_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignmen
     auto hostAddress = static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
 
     if (cmdList->isHeaplessModeEnabled() && cmdList->inOrderExecInfo->isHostStorageDuplicated()) {
-        hostAddress = static_cast<uint64_t *>(cmdList->inOrderExecInfo->getBaseHostAddress());
+        hostAddress = static_cast<uint64_t *>(cmdList->inOrderExecInfo->getBaseHostAddress(0));
     }
 
     auto eventPool = createEvents<FamilyType>(1, true);
@@ -1843,7 +1843,7 @@ HWTEST_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCa
         cmdList->initialize(inputDevice, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);
         cmdList->enableInOrderExecution();
-        uint64_t *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(), cmdList->inOrderExecInfo->getAllocationOffset());
+        uint64_t *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(0), cmdList->inOrderExecInfo->getAllocationOffset());
         for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
             *hostAddress = std::numeric_limits<uint64_t>::max();
             hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
@@ -1968,7 +1968,7 @@ HWTEST_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingStoreDataImmThenPr
             ASSERT_NE(nullptr, sdiCmd);
 
             if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
-                EXPECT_EQ(reinterpret_cast<uint64_t>(immCmdList->inOrderExecInfo->getBaseHostAddress()), sdiCmd->getAddress());
+                EXPECT_EQ(reinterpret_cast<uint64_t>(immCmdList->inOrderExecInfo->getBaseHostAddress(0)), sdiCmd->getAddress());
             } else {
                 EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
             }
@@ -2115,7 +2115,7 @@ HWTEST_F(InOrderCmdListTests, givenInOrderCmdListWhenWaitingOnHostThenDontProgra
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
-        auto hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress();
+        auto hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress(0);
         *hostAddress = 3;
     } else {
         auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
@@ -2666,7 +2666,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
 
     if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
 
-        auto hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress();
+        auto hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress(0);
         *hostAddress = immCmdList->inOrderExecInfo->getCounterValue();
     } else {
         auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());

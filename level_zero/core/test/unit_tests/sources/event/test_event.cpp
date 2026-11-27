@@ -5019,7 +5019,7 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWithBlitAdditionalPropert
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event->getInOrderExecEventHelper().initializeLocalTempStorage();
-    event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+    event->updateInOrderExecState(inOrderExecInfo, 1, 0, 0);
 
     event->resetAdditionalTimestampNode(blitTagAllocator.getTag(), 1, false);
 

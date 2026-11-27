@@ -642,9 +642,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
         if (this->isInOrderExecutionEnabled() && this->inOrderExecInfo.get() && this->isCopyOffloadCmdQImmediate(cmdQ)) {
             this->commandContainer.addToResidencyContainer(this->getDeviceCounterAllocForResidency(this->inOrderExecInfo->getDeviceCounterAllocation()));
-            if (auto *hostCounterAllocation = this->inOrderExecInfo->getHostCounterAllocation()) {
-                this->commandContainer.addToResidencyContainer(hostCounterAllocation);
-            }
+            this->addInOrderHostCountersToResidency(this->commandContainer);
         }
 
         cmdQ->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
@@ -1996,7 +1994,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasPendingInOrderWork() cons
         return false;
     }
 
-    return !this->inOrderExecInfo->isCounterDone(this->inOrderExecInfo->getCounterValue(), this->inOrderExecInfo->getAllocationOffset());
+    return !this->inOrderExecInfo->isCounterDone(this->inOrderExecInfo->getCounterValue(), this->inOrderExecInfo->getAllocationOffset(), this->inOrderExecInfo->getLastSignalHostSlot());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2005,6 +2003,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::recordStagingDependency() {
     if (isInOrderExecutionEnabled()) {
         this->stagingDependencyCounterValue = this->inOrderExecInfo->getCounterValue();
         this->stagingDependencyAllocationOffset = this->inOrderExecInfo->getAllocationOffset();
+        this->stagingDependencyHostCounterSlot = this->inOrderExecInfo->getLastSignalHostSlot();
         return;
     }
 
@@ -2025,7 +2024,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasPendingStagingDependency(
         if (counterRestartedAfterRecord) {
             return false;
         }
-        return !this->inOrderExecInfo->isCounterDone(this->stagingDependencyCounterValue, this->stagingDependencyAllocationOffset);
+        return !this->inOrderExecInfo->isCounterDone(this->stagingDependencyCounterValue, this->stagingDependencyAllocationOffset, this->stagingDependencyHostCounterSlot);
     }
 
     const auto mainTaskCount = this->stagingDependencyTaskCounts.main.load();
@@ -2148,6 +2147,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSi
     if (this->latestOperationHasCbEventWithProfiling || this->isInOrderCounterSignalPending()) {
         this->appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
         this->inOrderExecInfo->addCounterValue(this->getInOrderIncrementValue());
+        this->inOrderExecInfo->setLastSignalHostSlot(DualStreamCopyOffload::mainStreamHostCounterSlot);
         this->handleInOrderCounterOverflow(false);
         ret = flushImmediate(ret, false, true, false, NEO::AppendOperations::nonKernel, false, nullptr, false, nullptr, nullptr);
     }
@@ -2435,6 +2435,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     ze_result_t status = ZE_RESULT_NOT_READY;
 
     auto waitValue = inOrderExecInfo->getCounterValue();
+    const auto hostCounterSlot = inOrderExecInfo->getLastSignalHostSlot();
 
     const auto waitStartTime = NEO::HostClock::getCurrentTimeInNs();
     auto lastHangCheckTime = waitStartTime;
@@ -2443,8 +2444,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     std::vector<NEO::CommandStreamReceiver::TimeType> previousCsrsLastHangCheckTimes(this->previousCsrsAwaitingCompletion.size(), lastHangCheckTime);
 
     do {
-        if (inOrderExecInfo->getHostCounterAllocation()) {
-            csr->downloadAllocation(*inOrderExecInfo->getHostCounterAllocation());
+        if (auto hostCounterAllocation = inOrderExecInfo->getHostCounterAllocation(hostCounterSlot)) {
+            csr->downloadAllocation(*hostCounterAllocation);
         } else {
             UNRECOVERABLE_IF(!inOrderExecInfo->getDeviceCounterAllocation());
             csr->downloadAllocation(*inOrderExecInfo->getDeviceCounterAllocation());
@@ -2453,7 +2454,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
         bool signaled = true;
 
         if (csr->getType() != NEO::CommandStreamReceiverType::aub) {
-            signaled = inOrderExecInfo->pollCounterCompletion(waitValue, inOrderExecInfo->getAllocationOffset(), timeDiff / 1000, true);
+            signaled = inOrderExecInfo->pollCounterCompletion(waitValue, inOrderExecInfo->getAllocationOffset(), hostCounterSlot, timeDiff / 1000, true);
         }
 
         if (signaled) {

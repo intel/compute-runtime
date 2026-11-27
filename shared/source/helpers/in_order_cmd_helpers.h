@@ -8,12 +8,14 @@
 #pragma once
 
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/defs.h"
 
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <memory>
@@ -58,6 +60,8 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
   public:
     ~InOrderExecInfo();
 
+    static constexpr uint32_t maxHostCounterSlots = 3;
+
     InOrderExecInfo() = delete;
 
     static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount);
@@ -65,13 +69,24 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool atomicDeviceSignalling);
 
     NEO::GraphicsAllocation *getDeviceCounterAllocation() const;
-    NEO::GraphicsAllocation *getHostCounterAllocation() const;
-    uint64_t *getBaseHostAddress() const { return hostAddress; }
+    NEO::GraphicsAllocation *getHostCounterAllocation(uint32_t hostCounterSlot) const;
+    uint64_t *getBaseHostAddress(uint32_t hostCounterSlot) const {
+        DEBUG_BREAK_IF(!hostAddresses[hostCounterSlot]);
+        return hostAddresses[hostCounterSlot];
+    }
     uint64_t getBaseDeviceAddress() const { return deviceAddress; }
-    uint64_t getBaseHostGpuAddress() const;
+    uint64_t getBaseHostGpuAddress(uint32_t hostCounterSlot) const;
+
+    bool hasHostCounterSlot(uint32_t hostCounterSlot) const { return hostCounterNodes[hostCounterSlot] != nullptr; }
+    void addHostCounterSlot(uint32_t hostCounterSlot, TagNodeBase *hostCounterNode);
+    uint32_t getLastSignalHostSlot() const { return lastSignalHostSlot; }
+    void setLastSignalHostSlot(uint32_t hostCounterSlot) {
+        DEBUG_BREAK_IF(duplicatedHostStorage && !hasHostCounterSlot(hostCounterSlot));
+        lastSignalHostSlot = hostCounterSlot;
+    }
 
     uint64_t getDeviceNodeGpuAddress() const;
-    uint64_t getHostNodeGpuAddress() const;
+    uint64_t getHostNodeGpuAddress(uint32_t hostCounterSlot) const;
     size_t getDeviceNodeWriteSize() const {
         if (deviceCounterNode) {
             const size_t deviceAllocationWriteSize = sizeof(uint64_t) * numDevicePartitionsToWait;
@@ -80,7 +95,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
         return 0;
     }
     size_t getHostNodeWriteSize() const {
-        if (hostCounterNode) {
+        if (duplicatedHostStorage) {
             const size_t hostAllocationWriteSize = sizeof(uint64_t) * numHostPartitionsToWait;
             return hostAllocationWriteSize;
         }
@@ -120,8 +135,8 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
         return lastWaitedCounterValue[allocationOffset != 0] >= waitValue;
     }
 
-    bool isCounterDone(uint64_t waitValue, uint32_t allocationOffset) const;
-    bool pollCounterCompletion(uint64_t waitValue, uint32_t allocationOffset, int64_t timeSinceWaitStartedInMicroSeconds, bool blockOnMiss) const;
+    bool isCounterDone(uint64_t waitValue, uint32_t allocationOffset, uint32_t hostCounterSlot) const;
+    bool pollCounterCompletion(uint64_t waitValue, uint32_t allocationOffset, uint32_t hostCounterSlot, int64_t timeSinceWaitStartedInMicroSeconds, bool blockOnMiss) const;
 
     void pushTempTimestampNode(TagNodeBase *node, uint64_t value, uint32_t allocationOffset);
     void releaseNotUsedTempTimestampNodes(bool forceReturn);
@@ -134,11 +149,14 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
   protected:
     using CounterAndOffsetPairT = std::pair<uint64_t, uint32_t>;
 
+    size_t getSimulationUploadSize(uint32_t partitionCount) const;
     void uploadCounterNodeToSimulation(TagNodeBase &node, size_t size);
+    void initializeNodeFromHost(TagNodeBase &node, uint32_t partitionCount);
 
     NEO::Device &device;
     NEO::TagNodeBase *deviceCounterNode = nullptr;
-    NEO::TagNodeBase *hostCounterNode = nullptr;
+    std::array<NEO::TagNodeBase *, maxHostCounterSlots> hostCounterNodes = {};
+    std::array<uint64_t *, maxHostCounterSlots> hostAddresses = {};
     std::vector<std::pair<NEO::TagNodeBase *, CounterAndOffsetPairT>> tempTimestampNodes;
 
     std::mutex mutex;
@@ -147,12 +165,12 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint64_t counterValue = 0;
     uint64_t programmedCounterValue = 0;
     uint64_t deviceAddress = 0;
-    uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;
     uint32_t numHostPartitionsToWait = 0;
     uint32_t allocationOffset = 0;
     uint32_t rootDeviceIndex = 0;
     uint32_t immWritePostSyncWriteOffset = 0;
+    uint32_t lastSignalHostSlot = 0;
     std::optional<std::unique_ptr<SyncFence>> interruptFence;
     bool duplicatedHostStorage = false;
     bool atomicDeviceSignalling = false;
@@ -228,7 +246,7 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void initializeLocalTempStorage();
 
     void releaseResources(MemoryManager &memoryManager);
-    void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset);
+    void updateInOrderExecState(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo, uint64_t newSignalValue, uint32_t newAllocationOffset, uint32_t newHostCounterSlot);
     void copyData(InOrderExecEventHelper &output);
 
     bool isDataAssigned() const { return dataAssigned; }
@@ -254,6 +272,7 @@ class InOrderExecEventHelper : public NonCopyableClass {
     NEO::GraphicsAllocation *getHostCounterAllocation() const { return hostCounterAllocation; }
     bool isHostStorageDuplicated() const { return hostStorageDuplicated; }
     bool isFromExternalMemory() const { return fromExternalMemory; }
+    uint32_t getHostCounterSlot() const { return hostCounterSlot; }
 
     uint64_t getIncrementValue() const { return incrementValue; }
 
@@ -313,9 +332,11 @@ class InOrderExecEventHelper : public NonCopyableClass {
     void set2WayIpcSharingEnabled(bool enabled) { twoWayIpcSharing = enabled; }
     bool is2WayIpcSharingEnabled() const { return twoWayIpcSharing; }
 
-    void setLatestImported2WayIpcData(uint64_t deviceCounterHandle, size_t deviceCounterOffset, unsigned int exporterPid) {
+    void setLatestImported2WayIpcData(uint64_t deviceCounterHandle, size_t deviceCounterOffset, uint64_t hostCounterHandle, size_t hostCounterOffset, unsigned int exporterPid) {
         imported2WayDeviceCounterHandle = deviceCounterHandle;
         imported2WayCounterOffset = deviceCounterOffset;
+        imported2WayHostCounterHandle = hostCounterHandle;
+        imported2WayHostCounterOffset = hostCounterOffset;
         imported2WayExportedPid = exporterPid;
     }
 
@@ -362,9 +383,12 @@ class InOrderExecEventHelper : public NonCopyableClass {
     uint64_t incrementValue = 0;
     uint64_t aggregatedEventUsageCounter = 0;
     uint64_t imported2WayDeviceCounterHandle = 0;
+    uint64_t imported2WayHostCounterHandle = 0;
     uint64_t patchPreambleCounter = 0;
     size_t imported2WayCounterOffset = 0;
+    size_t imported2WayHostCounterOffset = 0;
     unsigned int imported2WayExportedPid = 0;
+    uint32_t hostCounterSlot = 0;
     bool twoWayIpcSharing = false;
     bool hostStorageDuplicated = false;
     bool fromExternalMemory = false;

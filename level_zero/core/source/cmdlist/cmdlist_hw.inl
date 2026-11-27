@@ -220,7 +220,7 @@ void CommandListCoreFamily<gfxCoreFamily>::assignInOrderExecInfoToEvent(Event *e
     if (false == getIsGraphInstantiationTarget()) {
         event->setRecordedSignalEntry({});
     }
-    event->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
+    event->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), inOrderExecInfo->getLastSignalHostSlot());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -238,7 +238,10 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
     inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
 
-    this->addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
+    const auto hostCounterSlot = getInOrderHostCounterSlot(params.copyOffloadOperation);
+    inOrderExecInfo->setLastSignalHostSlot(hostCounterSlot);
+
+    this->addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation(hostCounterSlot));
 
     if (signalEvent) {
         if (signalEvent->getInOrderIncrementValue(this->partitionCount) == 0) {
@@ -2352,7 +2355,8 @@ void CommandListCoreFamily<gfxCoreFamily>::signalInOrderCounterForCrossEngineWai
         appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
         handleInOrderCounterOverflow(false);
         inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
-        addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
+        inOrderExecInfo->setLastSignalHostSlot(DualStreamCopyOffload::mainStreamHostCounterSlot);
+        addResidency(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation(DualStreamCopyOffload::mainStreamHostCounterSlot));
     }
 }
 
@@ -4462,7 +4466,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
     inOrderExecInfo->setProgrammedCounterValue(signalValue);
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
-        appendSdiInOrderCounterSignalling(inOrderExecInfo->getBaseHostGpuAddress(), signalValue, copyOffloadOperation);
+        appendSdiInOrderCounterSignalling(inOrderExecInfo->getBaseHostGpuAddress(getInOrderHostCounterSlot(copyOffloadOperation)), signalValue, copyOffloadOperation);
     }
 
     if (!skipAggregatedEventSignaling && Event::isAggregatedEvent(signalEvent)) {

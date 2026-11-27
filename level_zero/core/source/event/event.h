@@ -339,7 +339,7 @@ struct Event : _ze_event_handle_t {
     void setMetricNotification(MetricCollectorEventNotify *metricNotification) {
         this->metricNotification = metricNotification;
     }
-    void updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
+    void updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset, uint32_t hostCounterSlot);
     void updateInOrdeState(NEO::InOrderExecEventHelper &input);
     bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::explicitlyEnabled) || (counterBasedMode == CounterBasedMode::implicitlyEnabled)); }
     bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::explicitlyEnabled); }
@@ -477,7 +477,7 @@ struct Event : _ze_event_handle_t {
     ze_result_t enableExtensions(const EventDescriptor &eventDescriptor);
     NEO::GraphicsAllocation *getExternalCounterAllocationFromAddress(uint64_t *address) const;
     ze_result_t exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAssignedData);
-    bool isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const;
+    bool isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa, uint64_t newCounterHostGpuVa) const;
     void unregisterExportedIpcHandles();
     MOCKABLE_VIRTUAL uint64_t getCompletionTimeout() const { return completionTimeoutMs; }
 
