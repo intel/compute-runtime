@@ -2044,9 +2044,12 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryAtCanonica
     auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, mappedAllocation);
 
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
     const auto freeCalledBefore = wddm->freeGpuVirtualAddressResult.called;
     const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
+    EXPECT_EQ(gmmFreeCalledBefore, gmmClientContext->freeGpuVirtualAddressCalled);
     EXPECT_EQ(freeCalledBefore, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(reserveCalledBefore, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
@@ -2280,9 +2283,12 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryOutsideSvm
     auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, mappedAllocation);
 
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
     const auto freeCalledBefore = wddm->freeGpuVirtualAddressResult.called;
     const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
+    EXPECT_EQ(gmmFreeCalledBefore, gmmClientContext->freeGpuVirtualAddressCalled);
     EXPECT_EQ(freeCalledBefore, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(reserveCalledBefore, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
@@ -2399,7 +2405,7 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenUnmappedMappingOfPhysicalDeviceMemoryWh
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInSvmRangeWhenUnmappingThenNoReservationIsRestoredAndUnmapSucceedsAlthoughFreeIsRejected) {
+TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInSvmRangeWhenUnmappingThenNoReservationIsRestoredAndUnmapSucceedsAlthoughFreeFails) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
     const auto gfxPartition = memoryManager->getGfxPartition(0u);
@@ -2416,11 +2422,15 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInSvmRange
     auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, mappedAllocation);
 
-    VariableBackup<bool> failFreeBackup(&wddm->failFreeGpuVirtualAddress, true);
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    VariableBackup<uint64_t> gmmFreeStatusBackup(&gmmClientContext->freeGpuVirtualAddressStatusToReturn, static_cast<uint64_t>(STATUS_UNSUCCESSFUL));
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
     const auto freeCalledBefore = wddm->freeGpuVirtualAddressResult.called;
     const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_EQ(freeCalledBefore + 1u, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(gmmFreeCalledBefore + physicalAllocation->getNumGmms(), gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_TRUE(gmmClientContext->freeGpuVirtualAddressExplicitFreeRequiredPassed);
+    EXPECT_EQ(freeCalledBefore, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(reserveCalledBefore, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
     memoryManager->freeGraphicsMemory(physicalAllocation);
@@ -2445,11 +2455,14 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryWhenUpdati
 
     MemoryFlags readOnlyFlags{};
     readOnlyFlags.readOnly = true;
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
     const auto freeCalledBefore = wddm->freeGpuVirtualAddressResult.called;
     const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
     const auto mapCalledBefore = wddm->mapGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->updatePhysicalDeviceMemoryMappingAccess(*mappedAllocation, gpuRange, allocationData.size, &readOnlyFlags, 0u, rootDeviceIndex));
 
+    EXPECT_EQ(gmmFreeCalledBefore, gmmClientContext->freeGpuVirtualAddressCalled);
     EXPECT_EQ(freeCalledBefore, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(reserveCalledBefore, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(mapCalledBefore + mappedAllocation->getNumGmms(), wddm->mapGpuVirtualAddressResult.called);
@@ -2460,7 +2473,7 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryWhenUpdati
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInSvmRangeWhenUpdatingItsAccessThenItIsMappedAgainWithoutReservationAlthoughFreeIsRejected) {
+TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInSvmRangeWhenUpdatingItsAccessThenItIsMappedAgainWithoutReservationAlthoughFreeFails) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
     const auto gfxPartition = memoryManager->getGfxPartition(0u);
@@ -2477,13 +2490,17 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInSvmRange
     auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, mappedAllocation);
 
-    VariableBackup<bool> failFreeBackup(&wddm->failFreeGpuVirtualAddress, true);
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    VariableBackup<uint64_t> gmmFreeStatusBackup(&gmmClientContext->freeGpuVirtualAddressStatusToReturn, static_cast<uint64_t>(STATUS_UNSUCCESSFUL));
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
     MemoryFlags readOnlyFlags{};
     readOnlyFlags.readOnly = true;
     const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
     const auto mapCalledBefore = wddm->mapGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->updatePhysicalDeviceMemoryMappingAccess(*mappedAllocation, gpuRange, allocationData.size, &readOnlyFlags, 0u, rootDeviceIndex));
 
+    EXPECT_EQ(gmmFreeCalledBefore + physicalAllocation->getNumGmms(), gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_TRUE(gmmClientContext->freeGpuVirtualAddressExplicitFreeRequiredPassed);
     EXPECT_EQ(reserveCalledBefore, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(mapCalledBefore + mappedAllocation->getNumGmms(), wddm->mapGpuVirtualAddressResult.called);
     EXPECT_EQ(gpuRange, mappedAllocation->getGpuAddress());
@@ -2750,46 +2767,11 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndGpuRangeInSvmHeapW
     auto freeCallsBeforeUnmap = wddm->freeGpuVirtualAddressResult.called;
     auto reserveCallsBeforeUnmap = wddm->reserveGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size, true));
-    EXPECT_EQ(gmmFreeCallsBeforeUnmap, gmmClientContext->freeGpuVirtualAddressCalled);
-    EXPECT_EQ(freeCallsBeforeUnmap + 1, wddm->freeGpuVirtualAddressResult.called);
-    EXPECT_EQ(reserveCallsBeforeUnmap, wddm->reserveGpuVirtualAddressResult.called);
-    EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenGpuVaRejectedByGdiFreeWhenUnmapPhysicalHostMemoryThenGpuVaIsFreedThroughGmm) {
-    auto gfxPartition = memoryManager->getGfxPartition(0);
-    auto svmGpuAddress = gfxPartition->getHeapMinimalAddress(HeapIndex::heapSvm) + MemoryConstants::pageSize2M;
-
-    AllocationData allocationData;
-    allocationData.allFlags = 0;
-    allocationData.size = MemoryConstants::pageSize64k;
-    allocationData.flags.allocateMemory = true;
-    allocationData.flags.useSystemMemory = true;
-    allocationData.flags.isUSMHostAllocation = true;
-
-    auto gpuRange = rootDeviceEnvironment->getGmmHelper()->canonize(svmGpuAddress);
-
-    MemoryManager::AllocationStatus status;
-    auto allocation = memoryManager->allocatePhysicalHostMemory(allocationData, status);
-    ASSERT_NE(nullptr, allocation);
-    ASSERT_EQ(MemoryManager::AllocationStatus::Success, status);
-
-    RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.pushUnique(0);
-    MultiGraphicsAllocation multiGraphicsAllocations{1};
-    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u, true));
-
-    auto gmmClientContext = reinterpret_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
-    auto gmmFreeCallsBeforeUnmap = gmmClientContext->freeGpuVirtualAddressCalled;
-    auto freeCallsBeforeUnmap = wddm->freeGpuVirtualAddressResult.called;
-    wddm->failFreeGpuVirtualAddress = true;
-    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, multiGraphicsAllocations.getGraphicsAllocation(0), gpuRange, allocationData.size, true));
-    wddm->failFreeGpuVirtualAddress = false;
-    EXPECT_EQ(freeCallsBeforeUnmap + 1, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(gmmFreeCallsBeforeUnmap + 1, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(freeCallsBeforeUnmap, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(svmGpuAddress, gmmClientContext->freeGpuVirtualAddressBaseAddressPassed);
+    EXPECT_TRUE(gmmClientContext->freeGpuVirtualAddressExplicitFreeRequiredPassed);
+    EXPECT_EQ(reserveCallsBeforeUnmap, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -2859,7 +2841,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMappingOfPhysicalHostMemoryInEvictionCo
     EXPECT_EQ(evictionAllocations.end(), std::find(evictionAllocations.begin(), evictionAllocations.end(), mappedAllocation));
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryFromRootDevice0MappedOnRootDevice1AndGpuVaRejectedByGdiFreeWhenUnmapThenGpuVaIsFreedThroughGmmClientContextOfRootDevice1) {
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryFromRootDevice0MappedOnRootDevice1WhenUnmapThenGpuVaIsFreedThroughGmmClientContextOfRootDevice1) {
     constexpr uint32_t mappingRootDeviceIndex = 1u;
     auto mappingRootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[mappingRootDeviceIndex].get();
     auto mappingWddm = static_cast<WddmMock *>(mappingRootDeviceEnvironment->osInterface->getDriverModel()->as<Wddm>());
@@ -2891,9 +2873,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryFromRootDevice0Mapped
     ASSERT_NE(physicalGmmClientContext, mappingGmmClientContext);
     auto physicalGmmFreeCallsBeforeUnmap = physicalGmmClientContext->freeGpuVirtualAddressCalled;
     auto mappingGmmFreeCallsBeforeUnmap = mappingGmmClientContext->freeGpuVirtualAddressCalled;
-    mappingWddm->failFreeGpuVirtualAddress = true;
+    auto mappingFreeCallsBeforeUnmap = mappingWddm->freeGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, multiGraphicsAllocations.getGraphicsAllocation(mappingRootDeviceIndex), gpuRange, allocationData.size, true));
-    mappingWddm->failFreeGpuVirtualAddress = false;
+    EXPECT_EQ(mappingFreeCallsBeforeUnmap, mappingWddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(physicalGmmFreeCallsBeforeUnmap, physicalGmmClientContext->freeGpuVirtualAddressCalled);
     EXPECT_EQ(mappingGmmFreeCallsBeforeUnmap + 1, mappingGmmClientContext->freeGpuVirtualAddressCalled);
     EXPECT_EQ(svmGpuAddress, mappingGmmClientContext->freeGpuVirtualAddressBaseAddressPassed);
@@ -2902,7 +2884,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryFromRootDevice0Mapped
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenGpuVaFreedNeitherByGdiNorByGmmWhenUnmapPhysicalHostMemoryFromSvmReservationThenUnmapFails) {
+TEST_F(WddmMemoryManagerSimpleTest, givenGmmFreeOfGpuVaFailsWhenUnmapPhysicalHostMemoryFromSvmReservationThenUnmapFails) {
     auto gfxPartition = memoryManager->getGfxPartition(0);
     auto svmGpuAddress = gfxPartition->getHeapMinimalAddress(HeapIndex::heapSvm) + MemoryConstants::pageSize2M;
 
@@ -2927,11 +2909,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenGpuVaFreedNeitherByGdiNorByGmmWhenUnmap
 
     auto gmmClientContext = reinterpret_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
     auto reserveCallsBeforeUnmap = wddm->reserveGpuVirtualAddressResult.called;
-    wddm->failFreeGpuVirtualAddress = true;
-    gmmClientContext->freeGpuVirtualAddressStatusToReturn = STATUS_UNSUCCESSFUL;
+    VariableBackup<uint64_t> gmmFreeStatusBackup(&gmmClientContext->freeGpuVirtualAddressStatusToReturn, static_cast<uint64_t>(STATUS_UNSUCCESSFUL));
     EXPECT_FALSE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, multiGraphicsAllocations.getGraphicsAllocation(0), gpuRange, allocationData.size, true));
-    gmmClientContext->freeGpuVirtualAddressStatusToReturn = 0u;
-    wddm->failFreeGpuVirtualAddress = false;
     EXPECT_EQ(reserveCallsBeforeUnmap, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
 
@@ -2968,8 +2947,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonSvmReservationInSvmHeapWhenUnmapPhys
     auto freeCallsBeforeUnmap = wddm->freeGpuVirtualAddressResult.called;
     auto reserveCallsBeforeUnmap = wddm->reserveGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size, false));
-    EXPECT_EQ(gmmFreeCallsBeforeUnmap, gmmClientContext->freeGpuVirtualAddressCalled);
-    EXPECT_EQ(freeCallsBeforeUnmap + 1, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(gmmFreeCallsBeforeUnmap + 1, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(freeCallsBeforeUnmap, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(reserveCallsBeforeUnmap + 1, wddm->reserveGpuVirtualAddressResult.called);
 
     auto reserveGpuVaArg = getLastCallReserveGpuVaArg();
@@ -3051,8 +3030,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSvmReservationInStandard64KBHeapWhenUnm
     auto freeCallsBeforeUnmap = wddm->freeGpuVirtualAddressResult.called;
     auto reserveCallsBeforeUnmap = wddm->reserveGpuVirtualAddressResult.called;
     EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, allocation, gpuRange, allocationData.size, true));
-    EXPECT_EQ(gmmFreeCallsBeforeUnmap, gmmClientContext->freeGpuVirtualAddressCalled);
-    EXPECT_EQ(freeCallsBeforeUnmap + 1, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(gmmFreeCallsBeforeUnmap + 1, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(freeCallsBeforeUnmap, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(reserveCallsBeforeUnmap, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
 
@@ -3107,9 +3086,10 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryMappedAtDifferentAddr
     MultiGraphicsAllocation multiGraphicsAllocations{1};
     EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u, true));
 
-    EXPECT_EQ(gmmFreeCallsBefore, gmmClientContext->freeGpuVirtualAddressCalled);
-    EXPECT_EQ(freeGpuVirtualAddressCalledBefore + 1u, wddm->freeGpuVirtualAddressResult.called);
-    EXPECT_EQ(gmmHelper->canonize(inRangeGpuAddress + MemoryConstants::pageSize64k), wddm->freeGpuVirtualAddressResult.uint64ParamPassed);
+    EXPECT_EQ(gmmFreeCallsBefore + 1u, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(freeGpuVirtualAddressCalledBefore, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(inRangeGpuAddress + MemoryConstants::pageSize64k, gmmClientContext->freeGpuVirtualAddressBaseAddressPassed);
+    EXPECT_TRUE(gmmClientContext->freeGpuVirtualAddressExplicitFreeRequiredPassed);
     EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -3227,6 +3207,7 @@ TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueWhenMapp
 TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueWhenMappingOnPeerFailsThenMappingIsFreedAndMapFails) {
     VariableBackup<bool> failPeerMapBackup(&failPeerMapForHostMap, true);
     auto freeGpuVirtualAddressCalledBefore = wddm->freeGpuVirtualAddressResult.called;
+    auto gmmFreeGpuVirtualAddressCalledBefore = getMockGmmClientContext(0u)->freeGpuVirtualAddressCalled;
     auto reserveGpuVirtualAddressCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
 
     GraphicsAllocation *allocation = nullptr;
@@ -3235,7 +3216,9 @@ TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueWhenMapp
     EXPECT_FALSE(mapPhysicalHostMemory(allocation, multiGraphicsAllocations, gpuRange));
 
     EXPECT_EQ(1u, peerMapCallsForHostMap.size());
-    EXPECT_EQ(freeGpuVirtualAddressCalledBefore + 1u, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(freeGpuVirtualAddressCalledBefore, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(gmmFreeGpuVirtualAddressCalledBefore + 1u, getMockGmmClientContext(0u)->freeGpuVirtualAddressCalled);
+    EXPECT_TRUE(getMockGmmClientContext(0u)->freeGpuVirtualAddressExplicitFreeRequiredPassed);
     EXPECT_EQ(reserveGpuVirtualAddressCalledBefore + 1u, wddm->reserveGpuVirtualAddressResult.called);
     auto reserveArg = getLastCallReserveGpuVaArg();
     ASSERT_NE(nullptr, reserveArg);
@@ -3248,6 +3231,7 @@ TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueWhenMapp
 TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueAndSvmReservationWhenMappingOnPeerFailsThenMappingIsFreedWithoutReservingGpuVirtualAddress) {
     VariableBackup<bool> failPeerMapBackup(&failPeerMapForHostMap, true);
     auto freeGpuVirtualAddressCalledBefore = wddm->freeGpuVirtualAddressResult.called;
+    auto gmmFreeGpuVirtualAddressCalledBefore = getMockGmmClientContext(0u)->freeGpuVirtualAddressCalled;
     auto reserveGpuVirtualAddressCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
 
     GraphicsAllocation *allocation = nullptr;
@@ -3256,7 +3240,9 @@ TEST_F(WddmMemoryManagerPeerPagingQueueHostMapTest, givenPeerPagingQueueAndSvmRe
     EXPECT_FALSE(mapPhysicalHostMemory(allocation, multiGraphicsAllocations, gpuRange, 0u, true));
 
     EXPECT_EQ(1u, peerMapCallsForHostMap.size());
-    EXPECT_EQ(freeGpuVirtualAddressCalledBefore + 1u, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(freeGpuVirtualAddressCalledBefore, wddm->freeGpuVirtualAddressResult.called);
+    EXPECT_EQ(gmmFreeGpuVirtualAddressCalledBefore + 1u, getMockGmmClientContext(0u)->freeGpuVirtualAddressCalled);
+    EXPECT_TRUE(getMockGmmClientContext(0u)->freeGpuVirtualAddressExplicitFreeRequiredPassed);
     EXPECT_EQ(reserveGpuVirtualAddressCalledBefore, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(nullptr, multiGraphicsAllocations.getGraphicsAllocation(0));
     memoryManager->freeGraphicsMemory(allocation);
@@ -3356,12 +3342,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalHostMemoryAndVirtualMemoryWhenU
     ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocations, allocation, gpuRange, allocationData.size, 0u, false));
 
     auto gmmClientContext = reinterpret_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
-    wddm->failFreeGpuVirtualAddress = true;
-    gmmClientContext->freeGpuVirtualAddressStatusToReturn = STATUS_UNSUCCESSFUL;
+    VariableBackup<uint64_t> gmmFreeStatusBackup(&gmmClientContext->freeGpuVirtualAddressStatusToReturn, static_cast<uint64_t>(STATUS_UNSUCCESSFUL));
     EXPECT_FALSE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocations, multiGraphicsAllocations.getGraphicsAllocation(0), gpuRange, allocationData.size, false));
     EXPECT_EQ(1u, wddm->reserveGpuVirtualAddressResult.called);
-    gmmClientContext->freeGpuVirtualAddressStatusToReturn = 0u;
-    wddm->failFreeGpuVirtualAddress = false;
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -3748,6 +3731,40 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaI
     wddm->destroyAllocation(&allocation, nullptr);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenFreeingItThenGpuVirtualAddressOfEachHandleIsFreedWhereItWasMapped) {
+    constexpr uint32_t numGmms = 3u;
+    constexpr uint64_t gpuPreferredVa = 0x20000ull;
+    auto allocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmHelper(), numGmms);
+    allocation->setAllocationType(AllocationType::buffer);
+    allocation->storageInfo.multiStorage = true;
+    ASSERT_TRUE(memoryManager->createWddmAllocation(allocation.get(), reinterpret_cast<void *>(gpuPreferredVa)));
+
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
+    const auto gmmSize = allocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
+    memoryManager->freeGraphicsMemory(allocation.release());
+
+    EXPECT_EQ(gmmFreeCalledBefore + numGmms, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(gpuPreferredVa + (numGmms - 1) * gmmSize, gmmClientContext->freeGpuVirtualAddressBaseAddressPassed);
+    EXPECT_FALSE(gmmClientContext->freeGpuVirtualAddressExplicitFreeRequiredPassed);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocationMappedThroughDefaultHandleWhenFreeingItThenOnlyGpuVirtualAddressOfDefaultGmmIsFreedAtMappedAddress) {
+    constexpr uint32_t numGmms = 3u;
+    auto allocation = std::make_unique<MockWddmAllocation>(rootDeviceEnvironment->getGmmHelper(), numGmms);
+    allocation->setAllocationType(AllocationType::buffer);
+    ASSERT_TRUE(memoryManager->createWddmAllocation(allocation.get(), nullptr));
+    allocation->setAllocationOffset(MemoryConstants::cacheLineSize);
+
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
+    const auto mappedAddress = rootDeviceEnvironment->getGmmHelper()->decanonize(allocation->getGpuAddressWithoutOffset());
+    memoryManager->freeGraphicsMemory(allocation.release());
+
+    EXPECT_EQ(gmmFreeCalledBefore + 1u, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(mappedAddress, gmmClientContext->freeGpuVirtualAddressBaseAddressPassed);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysicalAllocationIsCalledThenAllocationSuccess) {
     uint32_t numGmms = 10;
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
@@ -3881,6 +3898,49 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenMapGpuVirtualA
     EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenMappingSecondHandleFailsThenGpuVirtualAddressOfFirstHandleIsFreedThroughGmmClientContextAndHandlesAreDestroyed) {
+    wddm->callBaseMapGpuVa = false;
+    const uint64_t gpuRange = 0x10000;
+
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 2u);
+    allocation.setAllocationType(AllocationType::buffer);
+    allocation.storageInfo.multiStorage = true;
+
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
+    const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
+    VariableBackup<uint32_t> mapGpuVaFailFromCallBackup(&wddm->mapGpuVaFailFromCall, wddm->mapGpuVirtualAddressResult.called + 2u);
+
+    EXPECT_FALSE(memoryManager->mapGpuVirtualAddress(&allocation, reinterpret_cast<void *>(gpuRange), nullptr, 0u));
+
+    EXPECT_EQ(gmmFreeCalledBefore + 1u, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(gpuRange, gmmClientContext->freeGpuVirtualAddressBaseAddressPassed);
+    EXPECT_FALSE(gmmClientContext->freeGpuVirtualAddressExplicitFreeRequiredPassed);
+    EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandlePhysicalAllocationInSvmRangeWhenMappingSecondHandleFailsThenGpuVirtualAddressOfFirstHandleIsFreedThroughGmmClientContext) {
+    wddm->callBaseMapGpuVa = false;
+    const uint64_t gpuRange = memoryManager->getGfxPartition(0u)->getHeapMinimalAddress(HeapIndex::heapSvm) + MemoryConstants::megaByte;
+    const size_t size = 2 * MemoryConstants::pageSize64k;
+
+    MockWddmAllocation physicalAllocation(rootDeviceEnvironment->getGmmHelper(), 2u);
+    physicalAllocation.setAllocationType(AllocationType::buffer);
+    physicalAllocation.storageInfo.multiStorage = true;
+    physicalAllocation.setPhysicalMemoryReservation(true);
+
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
+    VariableBackup<uint32_t> mapGpuVaFailFromCallBackup(&wddm->mapGpuVaFailFromCall, wddm->mapGpuVirtualAddressResult.called + 2u);
+
+    MultiGraphicsAllocation multiGraphicsAllocation(physicalAllocation.getRootDeviceIndex());
+    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, size, nullptr, 0u));
+
+    EXPECT_EQ(gmmFreeCalledBefore + 1u, gmmClientContext->freeGpuVirtualAddressCalled);
+    EXPECT_EQ(rootDeviceEnvironment->getGmmHelper()->decanonize(gpuRange), gmmClientContext->freeGpuVirtualAddressBaseAddressPassed);
+    EXPECT_TRUE(gmmClientContext->freeGpuVirtualAddressExplicitFreeRequiredPassed);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandlePhysicalAllocationWhenMappingSecondHandleFailsThenCallerReservationIsKeptWithoutDestroyingHandles) {
     wddm->callBaseMapGpuVa = false;
     placeEveryAddressOutsideSvmHeap(0u);
@@ -3893,6 +3953,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandlePhysicalAllocationWhenMappin
     physicalAllocation.setPhysicalMemoryReservation(true);
 
     const auto mapCalledBefore = wddm->mapGpuVirtualAddressResult.called;
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmHelper()->getClientContext());
+    const auto gmmFreeCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
     const auto freeCalledBefore = wddm->freeGpuVirtualAddressResult.called;
     const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
     const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
@@ -3903,6 +3965,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandlePhysicalAllocationWhenMappin
     wddm->mapGpuVaFailFromCall = 0u;
 
     EXPECT_EQ(mapCalledBefore + 3u, wddm->mapGpuVirtualAddressResult.called);
+    EXPECT_EQ(gmmFreeCalledBefore, gmmClientContext->freeGpuVirtualAddressCalled);
     EXPECT_EQ(freeCalledBefore, wddm->freeGpuVirtualAddressResult.called);
     EXPECT_EQ(reserveCalledBefore, wddm->reserveGpuVirtualAddressResult.called);
     EXPECT_EQ(destroyCalledBefore, wddm->destroyAllocationResult.called);

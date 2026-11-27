@@ -23,12 +23,13 @@ class MapGpuVirtualAddressGmm {
 
 class FreeGpuVirtualAddressGmm {
   public:
-    FreeGpuVirtualAddressGmm(D3DKMT_HANDLE hAdapter, D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_SIZE_T size, GmmResourceInfo *resourceInfoHandle, Gdi *gdi) : hAdapter(hAdapter), baseAddress(baseAddress), size(size), resourceInfoHandle(resourceInfoHandle), gdi(gdi) {}
+    FreeGpuVirtualAddressGmm(D3DKMT_HANDLE hAdapter, D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_SIZE_T size, GmmResourceInfo *resourceInfoHandle, Gdi *gdi, bool explicitFreeRequired) : hAdapter(hAdapter), baseAddress(baseAddress), size(size), resourceInfoHandle(resourceInfoHandle), gdi(gdi), explicitFreeRequired(explicitFreeRequired) {}
     D3DKMT_HANDLE hAdapter;
     D3DGPU_VIRTUAL_ADDRESS baseAddress;
     D3DGPU_SIZE_T size;
     GmmResourceInfo *resourceInfoHandle;
     Gdi *gdi;
+    bool explicitFreeRequired;
 };
 
 class DeallocateGmm {

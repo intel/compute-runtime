@@ -56,6 +56,29 @@ namespace NEO {
 
 using AllocationStatus = MemoryManager::AllocationStatus;
 
+namespace {
+bool isMappedPerHandle(const WddmAllocation &allocation) {
+    return allocation.getNumGmms() > 1 && allocation.storageInfo.multiStorage;
+}
+
+uint32_t getMappedGmmCount(const WddmAllocation &allocation) {
+    return isMappedPerHandle(allocation) ? allocation.getNumGmms() : 1u;
+}
+
+void freeGpuVirtualAddressMappings(Wddm &wddm, const WddmAllocation &allocation, uint32_t mappedGmmCount, bool explicitFreeRequired) {
+    auto gpuAddress = allocation.getGpuAddressWithoutOffset();
+    for (auto handleId = 0u; handleId < mappedGmmCount; handleId++) {
+        auto gmm = allocation.getGmm(handleId);
+        if (gmm == nullptr) {
+            return;
+        }
+        const auto mappedSize = gmm->gmmResourceInfo->getSizeAllocation();
+        wddm.freeGmmGpuVirtualAddress(gmm, gpuAddress, mappedSize, explicitFreeRequired);
+        gpuAddress += mappedSize;
+    }
+}
+} // namespace
+
 template bool WddmMemoryManager::adjustGpuPtrToHostAddressSpace<is32bit>(WddmAllocation &wddmAllocation, void *&requiredGpuVa);
 
 WddmMemoryManager::~WddmMemoryManager() = default;
@@ -114,7 +137,8 @@ bool WddmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphics
     }
 
     const auto wddm = static_cast<OsContextWin *>(osContext)->getWddm();
-    freeGpuVaMappingOutsideReservation(*wddm, gpuRange, bufferSize, rootDeviceIndex);
+    const auto &wddmMappedAllocation = static_cast<const WddmAllocation &>(*mappedAllocation);
+    this->freeGpuVaMappingOutsideReservation(*wddm, wddmMappedAllocation, getMappedGmmCount(wddmMappedAllocation), gpuRange, rootDeviceIndex);
 
     const auto mappedRootDeviceIndex = mappedAllocation->getRootDeviceIndex();
     multiGraphicsAllocation.removeAllocation(mappedRootDeviceIndex);
@@ -139,8 +163,7 @@ bool WddmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphics
     return true;
 }
 
-// Either way the next map at this address replaces the mapping.
-void WddmMemoryManager::freeGpuVaMappingOutsideReservation(Wddm &wddm, uint64_t gpuRange, size_t bufferSize, uint32_t rootDeviceIndex) {
+void WddmMemoryManager::freeGpuVaMappingOutsideReservation(Wddm &wddm, const WddmAllocation &mappedAllocation, uint32_t mappedGmmCount, uint64_t gpuRange, uint32_t rootDeviceIndex) {
     const auto decanonizedAddress = getGmmHelper(rootDeviceIndex)->decanonize(gpuRange);
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     HeapIndex heapIndex = HeapIndex::heapStandard64KB;
@@ -149,9 +172,8 @@ void WddmMemoryManager::freeGpuVaMappingOutsideReservation(Wddm &wddm, uint64_t 
     if (gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(decanonizedAddress, heapIndex, heapPageSize) && heapIndex != HeapIndex::heapSvm) {
         return;
     }
-    // In the SVM range the GPU VA mirrors a CPU address reservation. The free is best effort and its result is ignored.
-    D3DGPU_VIRTUAL_ADDRESS addressToFree = gpuRange;
-    wddm.freeGpuVirtualAddress(addressToFree, bufferSize);
+    // In the SVM range the GPU VA mirrors a CPU address reservation. No allocation destroy follows, so the GPU VA is freed explicitly.
+    freeGpuVirtualAddressMappings(wddm, mappedAllocation, mappedGmmCount, true);
 }
 
 void WddmMemoryManager::removeAllocationFromResidencyControllers(GraphicsAllocation &allocation) {
@@ -180,15 +202,6 @@ HeapIndex WddmMemoryManager::selectHeapForPhysicalHostMemoryMapping(uint32_t roo
     size_t pageSize = 0u;
     this->getGfxPartition(rootDeviceIndex)->getHeapIndexAndPageSizeBasedOnAddress(decanonizedGpuAddress, heapIndex, pageSize);
     return heapIndex;
-}
-
-bool WddmMemoryManager::freePhysicalHostMemoryMapping(uint32_t rootDeviceIndex, Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS gpuAddress, size_t size) {
-    auto &wddm = getWddm(rootDeviceIndex);
-    auto gpuAddressToFree = gpuAddress;
-    if (wddm.freeGpuVirtualAddress(gpuAddressToFree, size)) {
-        return true;
-    }
-    return wddm.freeGmmGpuVirtualAddress(gmm, gpuAddress, size) == STATUS_SUCCESS;
 }
 
 bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool isSvmReservation) {
@@ -226,7 +239,7 @@ bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAl
 
 bool WddmMemoryManager::destroyPhysicalHostMemoryMapping(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation &mappedAllocation, size_t size) {
     const auto rootDeviceIndex = mappedAllocation.getRootDeviceIndex();
-    const bool isGpuVaFreed = this->freePhysicalHostMemoryMapping(rootDeviceIndex, mappedAllocation.getDefaultGmm(), mappedAllocation.getGpuAddress(), size);
+    const bool isGpuVaFreed = this->getWddm(rootDeviceIndex).freeGmmGpuVirtualAddress(mappedAllocation.getDefaultGmm(), mappedAllocation.getGpuAddress(), size, true) == STATUS_SUCCESS;
     multiGraphicsAllocation.removeAllocation(rootDeviceIndex);
     this->removeAllocationFromResidencyControllers(mappedAllocation);
     this->unregisterPhysicalMemoryMapping(mappedAllocation);
@@ -295,7 +308,7 @@ bool WddmMemoryManager::appliesVirtualMemoryAccessFlags(const GraphicsAllocation
 
 bool WddmMemoryManager::updatePhysicalDeviceMemoryMappingAccess(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryFlags, size_t offset, uint32_t rootDeviceIndex) {
     auto &wddmMappedAllocation = static_cast<WddmAllocation &>(mappedAllocation);
-    freeGpuVaMappingOutsideReservation(getWddm(mappedAllocation.getRootDeviceIndex()), gpuRange, bufferSize, rootDeviceIndex);
+    this->freeGpuVaMappingOutsideReservation(this->getWddm(mappedAllocation.getRootDeviceIndex()), wddmMappedAllocation, getMappedGmmCount(wddmMappedAllocation), gpuRange, rootDeviceIndex);
 
     // mapGpuVirtualAddress rather than mapPhysicalMemoryToGpuVa: a failed map must keep the mapping
     // marked as such, or the failure path would destroy the handles it shares with the physical allocation.
@@ -369,13 +382,13 @@ bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCo
 
         mappedGpuAddress = gmmHelper->canonize(mapGPUVA.VirtualAddress);
         if (mappedGpuAddress != gpuRange) {
-            freePhysicalHostMemoryMapping(rootDeviceIndex, physicalGmm, mappedGpuAddress, bufferSize);
+            wddm.freeGmmGpuVirtualAddress(physicalGmm, mappedGpuAddress, bufferSize, true);
             cleanupMappedAllocations();
             return false;
         }
 
         if (!wddm.mapGpuVirtualAddressOnPeerAdapters(mapGPUVA, physicalGmm)) {
-            freePhysicalHostMemoryMapping(rootDeviceIndex, physicalGmm, mappedGpuAddress, bufferSize);
+            wddm.freeGmmGpuVirtualAddress(physicalGmm, mappedGpuAddress, bufferSize, true);
             if (!isSvmReservation) {
                 uint64_t reservedAddress = 0u;
                 wddm.reserveGpuVirtualAddress(decanonizedAddress, minimumAddress, maximumAddress, bufferSize, &reservedAddress);
@@ -1158,12 +1171,10 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
             DEBUG_BREAK_IF(!status);
         }
     }
+    if (hasGpuVirtualAddress) {
+        freeGpuVirtualAddressMappings(this->getWddm(gfxAllocation->getRootDeviceIndex()), *input, getMappedGmmCount(*input), false);
+    }
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        auto gmm = gfxAllocation->getGmm(handleId);
-        if (gmm && hasGpuVirtualAddress) {
-            auto gpuAddress = input->getGpuAddress();
-            getWddm(gfxAllocation->getRootDeviceIndex()).freeGmmGpuVirtualAddress(gfxAllocation->getGmm(handleId), gpuAddress, input->getAlignedSize());
-        }
         gfxAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
     }
     uint64_t handle = 0;
@@ -1547,13 +1558,17 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
                                                gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), addressToMap, gpuAddress, allocation->getAllocationType(), flags, 0u);
         }
         if (!status) {
+            const bool handlesSharedWithPhysicalAllocation = allocation->isPhysicalMemoryReservation() || allocation->isMappedPhysicalMemoryReservation();
+            if (!handlesSharedWithPhysicalAllocation) {
+                freeGpuVirtualAddressMappings(wddm, *allocation, currentHandle, false);
+            }
             if (allocation->getReservedGpuVirtualAddress()) {
                 wddm.freeGpuVirtualAddress(allocation->getReservedGpuVirtualAddressToModify(), allocation->getReservedSizeForGpuVirtualAddress());
             }
-            if (!allocation->isPhysicalMemoryReservation() && !allocation->isMappedPhysicalMemoryReservation()) {
+            if (!handlesSharedWithPhysicalAllocation) {
                 destroyAllocationHandles(*allocation);
             } else if (allocation->isMappedPhysicalMemoryReservation() && currentHandle > 0u) {
-                freeGpuVaMappingOutsideReservation(wddm, castToUint64(preferredGpuVirtualAddress), allocation->getUnderlyingBufferSize(), allocation->getRootDeviceIndex());
+                this->freeGpuVaMappingOutsideReservation(wddm, *allocation, currentHandle, castToUint64(preferredGpuVirtualAddress), allocation->getRootDeviceIndex());
             }
             return false;
         }
@@ -2025,7 +2040,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 }
 
 bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr, const MemoryFlags *flags, size_t offset) {
-    if (allocation->getNumGmms() > 1 && allocation->storageInfo.multiStorage) {
+    if (isMappedPerHandle(*allocation)) {
         // The multi-handle path spreads the allocation across several GMMs/chunks and has
         // no per-handle offset, so a non-zero offset cannot be honored here. Reject it
         // explicitly rather than silently mapping the whole allocation at offset 0.

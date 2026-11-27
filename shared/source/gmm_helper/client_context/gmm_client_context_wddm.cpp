@@ -27,9 +27,12 @@ uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFree
     if (gmmResource->IsResourceMappedCompressible()) {
         GMM_FREEGPUVIRTUALADDRESS gmmFreeAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size, 1, &gmmResource};
         return clientContext->FreeGpuVirtualAddress(&gmmFreeAddress);
-    } else {
-        return STATUS_UNSUCCESSFUL;
     }
+    if (!pFreeGpuVa->explicitFreeRequired) {
+        return STATUS_SUCCESS;
+    }
+    D3DKMT_FREEGPUVIRTUALADDRESS freeGpuVirtualAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size};
+    return pFreeGpuVa->gdi->freeGpuVirtualAddress(&freeGpuVirtualAddress);
 }
 long GmmClientContext::deallocate2(DeallocateGmm *deallocateGmm) {
     GMM_DESTROYALLOCATION2 gmmDestroyAllocation2{};

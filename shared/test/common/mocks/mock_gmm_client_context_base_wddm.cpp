@@ -19,6 +19,7 @@ uint64_t MockGmmClientContextBase::mapGpuVirtualAddress(MapGpuVirtualAddressGmm 
 uint64_t MockGmmClientContextBase::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
     freeGpuVirtualAddressCalled++;
     freeGpuVirtualAddressBaseAddressPassed = pFreeGpuVa->baseAddress;
+    freeGpuVirtualAddressExplicitFreeRequiredPassed = pFreeGpuVa->explicitFreeRequired;
     return freeGpuVirtualAddressStatusToReturn;
 }
 long MockGmmClientContextBase::deallocate2(DeallocateGmm *deallocateGmm) {

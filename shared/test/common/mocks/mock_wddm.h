@@ -262,7 +262,6 @@ class WddmMock : public Wddm {
     bool callBaseWaitFromCpu = true;
     bool callBaseWaitFromCpuWithTimeout = true;
     WaitStatus waitFromCpuWithTimeoutReturnValue = WaitStatus::ready;
-    bool failFreeGpuVirtualAddress = false;
     uint32_t waitExternalSemaphoresFromGpuCalled = 0;
     OsContextWin *waitExternalSemaphoresFromGpuOsContext = nullptr;
     std::vector<ExternalSemaphoreOperation> waitExternalSemaphoresFromGpuWaits;

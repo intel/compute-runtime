@@ -684,7 +684,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
 
     if (!mapGpuVirtualAddressOnPeerAdapters(mapGPUVA, gmm)) {
         if (preferredAddress == 0u) {
-            freeGmmGpuVirtualAddress(gmm, gpuPtr, size);
+            freeGmmGpuVirtualAddress(gmm, gpuPtr, size, false);
             gpuPtr = 0;
         }
         return false;
@@ -714,7 +714,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
                 engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, false);
                 updatedAuxTablesCount--;
             });
-            freeGmmGpuVirtualAddress(gmm, gpuPtr, size);
+            freeGmmGpuVirtualAddress(gmm, gpuPtr, size, false);
             gpuPtr = 0;
             return false;
         }
@@ -769,11 +769,9 @@ NTSTATUS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress,
     return status;
 }
 
-uint64_t Wddm::freeGmmGpuVirtualAddress(Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
-    uint64_t status = STATUS_SUCCESS;
-    FreeGpuVirtualAddressGmm freeGpuva = {getAdapter(), rootDeviceEnvironment.getGmmHelper()->decanonize(gpuPtr), size, gmm->gmmResourceInfo.get(), getGdi()};
-    status = rootDeviceEnvironment.getGmmHelper()->getClientContext()->freeGpuVirtualAddress(&freeGpuva);
-    return status;
+uint64_t Wddm::freeGmmGpuVirtualAddress(Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS gpuPtr, uint64_t size, bool explicitFreeRequired) {
+    FreeGpuVirtualAddressGmm freeGpuva = {getAdapter(), rootDeviceEnvironment.getGmmHelper()->decanonize(gpuPtr), size, gmm->gmmResourceInfo.get(), getGdi(), explicitFreeRequired};
+    return rootDeviceEnvironment.getGmmHelper()->getClientContext()->freeGpuVirtualAddress(&freeGpuva);
 }
 
 bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {

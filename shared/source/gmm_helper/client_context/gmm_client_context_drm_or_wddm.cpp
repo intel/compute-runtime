@@ -14,7 +14,11 @@ uint64_t GmmClientContext::mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpu
     return pMapGpuVa->gdi->mapGpuVirtualAddress(pMapGpuVa->mapGpuVirtualAddressParams);
 }
 uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
-    return STATUS_UNSUCCESSFUL;
+    if (!pFreeGpuVa->explicitFreeRequired) {
+        return STATUS_SUCCESS;
+    }
+    D3DKMT_FREEGPUVIRTUALADDRESS freeGpuVirtualAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size};
+    return pFreeGpuVa->gdi->freeGpuVirtualAddress(&freeGpuVirtualAddress);
 }
 long GmmClientContext::deallocate2(DeallocateGmm *deallocateGmm) {
     return deallocateGmm->gdi->destroyAllocation2(deallocateGmm->destroyAllocation2);
