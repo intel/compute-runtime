@@ -17,17 +17,7 @@
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
-    return !hwInfo.capabilityTable.isIntegratedDevice;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
     return !hwInfo.capabilityTable.isIntegratedDevice;
 }
 
@@ -60,23 +50,8 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isL1PolicyMissmatchCheckNeeded() const {
     return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
-    return false;
 }
 
 template <>

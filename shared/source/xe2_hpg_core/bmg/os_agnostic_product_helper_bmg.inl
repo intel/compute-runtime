@@ -54,11 +54,6 @@ bool ProductHelperHw<gfxProduct>::checkBcsForDirectSubmissionStop() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
-    return false;
-}
-
-template <>
 size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferType) const {
     size_t threshold = 0u;
 

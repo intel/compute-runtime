@@ -14,16 +14,6 @@
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
-    return !hwInfo.capabilityTable.isIntegratedDevice;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isGlobalFenceInPostSyncRequired(const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -87,21 +77,6 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureExtra(StateCo
         propertiesSupport.enableBreakpoints = true;
         propertiesSupport.enableForceExternalHaltAndForceException = true;
     }
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
-    return false;
 }
 
 template <>

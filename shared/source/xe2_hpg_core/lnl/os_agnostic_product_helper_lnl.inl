@@ -34,9 +34,4 @@ bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBu
     return isWriteToImageFromBuffer;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
-    return false;
-}
-
 } // namespace NEO

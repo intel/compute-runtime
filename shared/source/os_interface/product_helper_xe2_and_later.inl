@@ -85,4 +85,29 @@ uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
     return 2u;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
+    return !hwInfo.capabilityTable.isIntegratedDevice;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
+    return false;
+}
+
 } // namespace NEO
