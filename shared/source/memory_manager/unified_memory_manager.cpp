@@ -879,6 +879,7 @@ void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
     ContainerReadWriteLockType lock(mtx);
     internalAllocationsMap.erase(svmAllocData.getAllocId());
     removeFromSvmAllocs(svmAllocData);
+    ++this->freedAllocationsCounter;
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
@@ -1280,6 +1281,7 @@ void SVMAllocsManager::freeSVMData(SvmAllocationData *svmData) {
     ContainerReadWriteLockType lock(mtx);
     internalAllocationsMap.erase(svmData->getAllocId());
     removeFromSvmAllocs(*svmData);
+    ++this->freedAllocationsCounter;
 }
 
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {

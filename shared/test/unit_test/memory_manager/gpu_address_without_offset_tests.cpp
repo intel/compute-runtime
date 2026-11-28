@@ -125,6 +125,25 @@ TEST_F(SvmAllocsTrackingTest, givenAllocationOffsetSetBeforeInsertWhenFreeingSvm
     EXPECT_NE(nullptr, svmManager->getSVMAlloc(reinterpret_cast<void *>(higherAllocation.getGpuAddress())));
 }
 
+TEST_F(SvmAllocsTrackingTest, whenSvmAllocationIsFreedOrRemovedFromTrackerThenFreedAllocationsCounterIsIncremented) {
+    auto ptr = svmManager->createSVMAlloc(MemoryConstants::pageSize, {}, rootDeviceIndices, deviceBitfields);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_EQ(0u, svmManager->freedAllocationsCounter.load());
+
+    svmManager->freeSVMAlloc(ptr);
+    EXPECT_EQ(1u, svmManager->freedAllocationsCounter.load());
+
+    MockGraphicsAllocation allocation(nullptr, 0xFFFF800600EE0000ull, 0x1000);
+    SvmAllocationData svmData(mockRootDeviceIndex);
+    svmData.gpuAllocations.addAllocation(&allocation);
+    svmData.size = 0x1000;
+    svmManager->insertSVMAlloc(svmData);
+    EXPECT_EQ(1u, svmManager->freedAllocationsCounter.load());
+
+    svmManager->removeSVMAlloc(svmData);
+    EXPECT_EQ(2u, svmManager->freedAllocationsCounter.load());
+}
+
 using SvmDeferFreeTrackingTest = Test<SVMMemoryAllocatorFixture<true, 1u>>;
 
 TEST_F(SvmDeferFreeTrackingTest, givenAllocationOffsetWhenDeferredFreeIsProcessedThenDeferFreeEntryIsErased) {

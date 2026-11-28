@@ -52,6 +52,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
         kernel.resetSharedObjectsPatchAddresses();
     }
 
+    kernel.revalidateSvmAllocArgs();
+
     bool haveRequiredWorkGroupSize = false;
 
     if (kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] != 0) {
